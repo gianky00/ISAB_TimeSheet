@@ -327,7 +327,7 @@ class ScadenzeAnalysisDialog(QDialog):
         layout = QHBoxLayout()
         layout.setSpacing(15)
 
-        def add_l(
+        def add_l(  # noqa: PLR0913
             txt: Any,
             color_v: str,
             weight: str = "normal",

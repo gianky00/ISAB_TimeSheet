@@ -61,7 +61,7 @@ def check_mutatest() -> bool | None:
     try:
         # Usiamo -h invece di --version perché mutatest non supporta --version
         subprocess.run([mutatest_path, "-h"], capture_output=True, check=True)
-        return True
+        return True  # noqa: TRY300
     except (subprocess.CalledProcessError, FileNotFoundError):
         print(f"{Colors.RED}[ERRORE] 'mutatest' non trovato.{Colors.END}")
         return False
@@ -180,7 +180,7 @@ def generate_final_report(results: list):
                 f.write(f"- **Problema:** {s['survived']} mutanti sono sopravvissuti.\n")
                 f.write("- **Locazioni critiche:**\n")
                 f.writelines(f"  - `{d}`\n" for d in details[:10])  # Limitiamo i primi 10 per leggibilità
-                if len(details) > 10:
+                if len(details) > 10:  # noqa: PLR2004
                     f.write(f"  - ... e altri {len(details) - 10} mutanti.\n")
 
                 f.write(

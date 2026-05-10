@@ -153,7 +153,7 @@ class TimbraturePage:
                         pass
 
             if not arrow_element:
-                raise AutomationError("Impossibile trovare la freccia del fornitore.")
+                raise AutomationError("Impossibile trovare la freccia del fornitore.")  # noqa: TRY301
 
             option_xpath = f"//li[contains(text(), '{fornitore}')]"
             option = WebDriverWait(self.driver, 5).until(

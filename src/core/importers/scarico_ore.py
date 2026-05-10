@@ -75,7 +75,7 @@ class ScaricoOreImporter(BaseImporter):
                                 if match:
                                     r = int(match.group(1))
                                     cnt = max(cnt, r)
-                return cnt
+                return cnt  # noqa: TRY300
             except Exception:
                 return 0
 
@@ -317,7 +317,7 @@ class ScaricoOreImporter(BaseImporter):
                 font = cell.font
                 if font and font.color and font.color.type == "rgb":
                     rgb = str(font.color.rgb)
-                    hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
+                    hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"  # noqa: PLR2004
                     if hex_code != "#000000":
                         row_styles.setdefault(key, {})["fg"] = hex_code
 
@@ -327,7 +327,7 @@ class ScaricoOreImporter(BaseImporter):
                     start_color = fill.start_color
                     if start_color and start_color.type == "rgb":
                         rgb = str(start_color.rgb)
-                        hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
+                        hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"  # noqa: PLR2004
                         if hex_code not in {"#000000", "#FFFFFF"}:
                             row_styles.setdefault(key, {})["bg"] = hex_code
 

@@ -5,11 +5,12 @@ Interfaccia avanzata per la raccolta diagnostica e la segnalazione di anomalie t
 Gestisce la creazione di pacchetti ZIP contenenti log, analytics e audit trail, con integrazione Outlook.
 """
 
-import getpass
+import getpass  # noqa: I001
 import logging
 import os
 import secrets
 import shutil
+from typing import Any
 from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
@@ -113,26 +114,39 @@ class BugReportDialog(QDialog):
         self._update_size_estimate()
 
     def setup_ui(self) -> None:
-        """Configura il layout, i campi di testo, le checkbox delle opzioni e i pulsanti di azione."""
+        """Configura il layout principale richiamando i vari helper di sezione."""
         layout = QVBoxLayout(self)
-        layout_spacing = 12
-        layout.setSpacing(layout_spacing)
+        layout.setSpacing(12)
 
         palette = get_palette()
+        self._setup_global_styles(palette)
 
-        # Style
+        self._setup_header_section(layout, palette)
+        self._setup_description_area(layout, palette)
+        self._setup_options_group(layout, palette)
+
+        self.lbl_size = QLabel("Dimensione stimata: ~50 KB")
+        self.lbl_size.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px; margin-top: 5px;")
+        layout.addWidget(self.lbl_size)
+
+        self._setup_status_section(layout, palette)
+        self._setup_buttons_area(layout)
+
+    def _setup_global_styles(self, palette: Any) -> None:
+        """Applica lo stile globale CSS al dialogo."""
         btn_style = f"""
-      QPushButton {{
-        background-color: {palette.primary}; color: {palette.on_primary}; border: none;
-        padding: 10px 20px; border-radius: 6px; font-weight: 600; min-width: 120px;
-      }}
-      QPushButton:hover {{ background-color: {palette.primary_variant}; }}
-      QPushButton:pressed {{ background-color: {palette.primary_variant}; }}
-      QPushButton:disabled {{ background-color: {palette.disabled}; color: {COLORS["text_light"]}; }}
-    """
+            QPushButton {{
+                background-color: {palette.primary}; color: {palette.on_primary}; border: none;
+                padding: 10px 20px; border-radius: 6px; font-weight: 600; min-width: 120px;
+            }}
+            QPushButton:hover {{ background-color: {palette.primary_variant}; }}
+            QPushButton:pressed {{ background-color: {palette.primary_variant}; }}
+            QPushButton:disabled {{ background-color: {palette.disabled}; color: {COLORS["text_light"]}; }}
+        """
         self.setStyleSheet(btn_style)
 
-        # Header
+    def _setup_header_section(self, layout: QVBoxLayout, palette: Any) -> None:
+        """Configura l'intestazione informativa."""
         lbl_info = QLabel(
             "Descrivi il problema riscontrato con il maggior dettaglio possibile.\n"
             "Se possibile, indica i passaggi per riprodurlo."
@@ -141,7 +155,8 @@ class BugReportDialog(QDialog):
         lbl_info.setWordWrap(True)
         layout.addWidget(lbl_info)
 
-        # Text Area
+    def _setup_description_area(self, layout: QVBoxLayout, palette: Any) -> None:
+        """Configura l'area di testo per la descrizione del bug."""
         self.txt_description = StandardTextEdit()
         self.txt_description.setPlaceholderText(
             "Es: Ho cliccato su Scarica PDL e l'app si è chiusa... Stavo lavorando sul cantiere X..."
@@ -150,11 +165,11 @@ class BugReportDialog(QDialog):
             f"background-color: {palette.surface}; border: 1px solid {palette.border}; "
             "border-radius: 4px; padding: 8px; min-height: 100px;"
         )
-        max_text_height = 120
-        self.txt_description.setMaximumHeight(max_text_height)
+        self.txt_description.setMaximumHeight(120)
         layout.addWidget(self.txt_description)
 
-        # Options Group
+    def _setup_options_group(self, layout: QVBoxLayout, palette: Any) -> None:
+        """Configura il gruppo delle opzioni di diagnostica."""
         options_group = StandardGroupBox("Contenuto Report")
         options_group.setStyleSheet(
             f"QGroupBox {{ font-weight: 600; color: {palette.on_surface}; margin-top: 10px; }}"
@@ -188,8 +203,7 @@ class BugReportDialog(QDialog):
             f"background: {palette.surface}; border: 1px solid {palette.border}; border-radius: 4px; "
             "padding: 4px 8px; font-family: monospace;"
         )
-        trace_max_width = 200
-        self.txt_trace_id.setMaximumWidth(trace_max_width)
+        self.txt_trace_id.setMaximumWidth(200)
         trace_layout.addWidget(lbl_trace)
         trace_layout.addWidget(self.txt_trace_id)
         trace_layout.addStretch()
@@ -197,12 +211,8 @@ class BugReportDialog(QDialog):
 
         layout.addWidget(options_group)
 
-        # Size Estimate
-        self.lbl_size = QLabel("Dimensione stimata: ~50 KB")
-        self.lbl_size.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px; margin-top: 5px;")
-        layout.addWidget(self.lbl_size)
-
-        # Privacy Warning
+    def _setup_status_section(self, layout: QVBoxLayout, palette: Any) -> None:
+        """Configura gli avvisi sulla privacy e la barra di progresso."""
         warning_frame = QFrame()
         warning_frame.setStyleSheet(
             f"background-color: {COLORS['bg_warning_pastel']}; border: 1px solid {COLORS['warning_light']}; border-radius: 6px; padding: 8px;"
@@ -217,7 +227,6 @@ class BugReportDialog(QDialog):
         warning_layout.addWidget(lbl_warning)
         layout.addWidget(warning_frame)
 
-        # Progress
         self.progress = StandardProgressBar()
         self.progress.setVisible(False)
         self.progress.setRange(0, 0)
@@ -227,14 +236,12 @@ class BugReportDialog(QDialog):
         )
         layout.addWidget(self.progress)
 
-        # Preview Area (initially hidden)
         self.preview_group = StandardGroupBox("File inclusi nel report")
         self.preview_group.setVisible(False)
         preview_layout = QVBoxLayout(self.preview_group)
         self.preview_scroll = QScrollArea()
         self.preview_scroll.setWidgetResizable(True)
-        preview_max_height = 100
-        self.preview_scroll.setMaximumHeight(preview_max_height)
+        self.preview_scroll.setMaximumHeight(100)
         self.preview_content = QLabel()
         self.preview_content.setStyleSheet(
             f"font-family: monospace; font-size: 11px; color: {COLORS['text_muted']};"
@@ -244,7 +251,8 @@ class BugReportDialog(QDialog):
         preview_layout.addWidget(self.preview_scroll)
         layout.addWidget(self.preview_group)
 
-        # Buttons Area
+    def _setup_buttons_area(self, layout: QVBoxLayout) -> None:
+        """Configura l'area dei pulsanti di chiusura e invio."""
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
 
@@ -430,10 +438,11 @@ class BugReportDialog(QDialog):
             if Path(final_zip_path).exists():
                 mail.Attachments.Add(final_zip_path)
             mail.Display()
-            return True
         except Exception:
             logger.exception("Errore automazione Outlook")
             return False
+        else:
+            return True
 
     def save_manually(self, source_path: str) -> None:
         """

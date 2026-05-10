@@ -17,7 +17,7 @@ import pandas as pd
 from src.core import config_manager
 
 
-def debug_giornaliere() -> None:
+def debug_giornaliere() -> None:  # noqa: C901, PLR0912, PLR0915
     print("=" * 70)
     print("DEBUG IMPORTAZIONE GIORNALIERE")
     print("=" * 70)
@@ -93,7 +93,7 @@ def debug_giornaliere() -> None:
                 headers_found = sum(1 for h in expected_headers if any(h in c for c in first_cols))
                 print(f"        Header validi trovati: {headers_found}/4 ({expected_headers})")
 
-                if headers_found < 2:
+                if headers_found < 2:  # noqa: PLR2004
                     print("        ATTENZIONE: Header probabilmente in riga diversa!")
                     print("        Prime 3 righe del file:")
                     df_raw = pd.read_excel(file_path, sheet_name="RIASSUNTO", header=None, nrows=5)
@@ -128,7 +128,7 @@ def debug_giornaliere() -> None:
             except Exception as e:
                 print(f"        ERRORE lettura: {e}")
 
-        if len(excel_files) > 3:
+        if len(excel_files) > 3:  # noqa: PLR2004
             print(f"\n    ... e altri {len(excel_files) - 3} file")
 
     print("\n" + "=" * 70)
@@ -171,7 +171,7 @@ def debug_import_simulation() -> None:
 
     # Prova a processare un file 2025
     print("\n[3] Test processamento file 2025...")
-    tasks_2025 = [(y, p, lm) for y, p, lm in tasks if y == 2025]
+    tasks_2025 = [(y, p, lm) for y, p, lm in tasks if y == 2025]  # noqa: PLR2004
 
     if not tasks_2025:
         print("    Nessun file 2025 trovato!")

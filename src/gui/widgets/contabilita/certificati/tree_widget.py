@@ -95,7 +95,7 @@ class AnnotazioniDelegate(QStyledItemDelegate):
 class CertificatiTreeWidget(StandardTreeWidget):
     """Tree Widget specializzato per la gestione dei certificati."""
 
-    itemEditedCustom = Signal(object, str, str)  # (item, col_name, new_value)
+    item_edited_custom = Signal(object, str, str)  # (item, col_name, new_value)
 
     HEADERS: ClassVar[list[str]] = [
         "ID-STRUMENTO",
@@ -246,6 +246,6 @@ class CertificatiTreeWidget(StandardTreeWidget):
     def _on_item_changed(self, item: QTreeWidgetItem, column: int) -> None:
         """Gestisce il cambiamento di valore in una cella."""
         if column == self.IDX_ANNOTAZIONI:
-            self.itemEditedCustom.emit(item, "annotazioni", item.text(column))
+            self.item_edited_custom.emit(item, "annotazioni", item.text(column))
         elif column == self.IDX_UBICAZIONE:
-            self.itemEditedCustom.emit(item, "ubicazione", item.text(column))
+            self.item_edited_custom.emit(item, "ubicazione", item.text(column))

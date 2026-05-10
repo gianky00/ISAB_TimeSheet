@@ -49,11 +49,17 @@ class ProgrammazioneTab(QWidget):
         self._load_persisted_data()
 
     def _setup_ui(self) -> None:
+        """Configura l'interfaccia utente principale."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(15)
 
-        # --- TOOLBAR ---
+        self._setup_toolbar(layout)
+        self._setup_log_area(layout)
+        self._setup_tables_area(layout)
+
+    def _setup_toolbar(self, layout: QVBoxLayout) -> None:
+        """Configura la barra degli strumenti con filtri e controlli."""
         top_bar = QHBoxLayout()
         filter_area = QVBoxLayout()
 
@@ -65,13 +71,14 @@ class ProgrammazioneTab(QWidget):
         controls = QHBoxLayout()
         controls.setSpacing(20)
 
-        # Import Controls
+        # Selettore Settimana
         self.week_selector = FilterComboBox()
         self.week_selector.addItems(["Settimana Corrente", "Settimana Prossima"])
         self.week_selector.setFixedWidth(160)
         self.week_selector.currentIndexChanged.connect(self._on_week_changed)
         controls.addWidget(self.week_selector)
 
+        # Filtro Richiedenti
         self.req_filter = MultiSelectFilter("Richiedenti", "Seleziona Bot...")
         self.req_filter.setFixedWidth(220)
         self.req_filter.changed.connect(
@@ -79,22 +86,23 @@ class ProgrammazioneTab(QWidget):
         )
         controls.addWidget(self.req_filter)
 
-        # View Filters
+        # Filtro Visualizzazione
         self.view_filter = MultiSelectFilter("Mostra", "Filtra Risultati...")
         self.view_filter.setFixedWidth(200)
         self.view_filter.changed.connect(lambda _: self._apply_filters())
         controls.addWidget(self.view_filter)
 
+        # Selettore Giorno
         self.day_selector = FilterComboBox()
         self.day_selector.addItems(
             [
                 "Settimana Intera",
                 "Oggi",
-                "Luned ",
-                "Marted ",
-                "Mercoled ",
-                "Gioved ",
-                "Venerd ",
+                "Lunedì",
+                "Martedì",
+                "Mercoledì",
+                "Giovedì",
+                "Venerdì",
                 "Sabato",
                 "Domenica",
             ]
@@ -103,6 +111,7 @@ class ProgrammazioneTab(QWidget):
         self.day_selector.currentTextChanged.connect(lambda _: self._apply_filters())
         controls.addWidget(self.day_selector)
 
+        # Selettore Raggruppamento
         self.group_selector = FilterComboBox()
         self.group_selector.addItems(["Tabella Unica", "Area", "Richiedente"])
         self.group_selector.setFixedWidth(140)
@@ -113,6 +122,7 @@ class ProgrammazioneTab(QWidget):
         top_bar.addLayout(filter_area)
         top_bar.addStretch()
 
+        # Bottoni Azione
         self.btn_run = ModernButton(
             "Esegui Controllo", variant=ModernButton.Variant.PRIMARY, icon=get_asset_path(Icons.PLAY)
         )
@@ -127,11 +137,15 @@ class ProgrammazioneTab(QWidget):
         top_bar.addWidget(self.btn_run)
         layout.addLayout(top_bar)
 
+    def _setup_log_area(self, layout: QVBoxLayout) -> None:
+        """Configura l'area dei log del bot."""
         self.log_widget = TimelineWidget()
         self.log_widget.setFixedHeight(180)
         self.log_widget.setVisible(False)
         layout.addWidget(self.log_widget)
 
+    def _setup_tables_area(self, layout: QVBoxLayout) -> None:
+        """Configura l'area scrollabile per le tabelle dei risultati."""
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setStyleSheet("QScrollArea { border: none; background: transparent; }")

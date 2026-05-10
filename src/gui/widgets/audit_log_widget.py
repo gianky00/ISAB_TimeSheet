@@ -8,7 +8,7 @@ Refactoring modulare V2.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QModelIndex, QObject, QRunnable, Qt, QThreadPool, QTimer, Signal
 from PySide6.QtWidgets import (
@@ -20,6 +20,9 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+if TYPE_CHECKING:
+    from PySide6.QtGui import QShowEvent
 
 from src.core.audit_manager import AuditManager
 from src.core.constants import Icons
@@ -83,7 +86,7 @@ class AuditLogWidget(QWidget):
         self._load_categories()
         # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
 
-    def showEvent(self, event: Any) -> None:  # type: ignore[override]
+    def showEvent(self, event: QShowEvent) -> None:  # type: ignore[override]
         """Esegue il primo refresh solo quando il widget diventa visibile."""
         super().showEvent(event)
         if not self._first_refresh_done:
@@ -96,7 +99,13 @@ class AuditLogWidget(QWidget):
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(15)
 
-        # --- TOP HEADER ---
+        self._setup_header(layout)
+        self._setup_filter_bar(layout)
+        self._setup_data_grid(layout)
+        self._setup_pagination(layout)
+
+    def _setup_header(self, layout: QVBoxLayout) -> None:
+        """Configura l'intestazione superiore."""
         header_layout = QHBoxLayout()
         header_layout.setContentsMargins(0, 0, 0, 10)
 
@@ -105,7 +114,6 @@ class AuditLogWidget(QWidget):
         title = QLabel("Dashboard Operazioni")
         title.setStyleSheet(f"font-size: 24px; font-weight: 900; color: {COLORS['text_dark']};")
 
-        # Subtitle with Integrity Status
         status_h = QHBoxLayout()
         status_h.setSpacing(8)
         self.integrity_icon = QLabel()
@@ -120,7 +128,6 @@ class AuditLogWidget(QWidget):
         title_v.addWidget(title)
         title_v.addLayout(status_h)
         header_layout.addLayout(title_v)
-
         header_layout.addStretch()
 
         self.live_check = StandardCheckBox("Live Mode")
@@ -131,12 +138,14 @@ class AuditLogWidget(QWidget):
 
         layout.addLayout(header_layout)
 
-        # --- FILTER BAR ---
+    def _setup_filter_bar(self, layout: QVBoxLayout) -> None:
+        """Inizializza la barra dei filtri."""
         self.filter_bar = AuditFilterBar()
         self.filter_bar.filters_applied.connect(lambda: self.refresh(reset_page=True))
         layout.addWidget(self.filter_bar)
 
-        # --- DATA GRID (Wrapped in a ModernCard for elevation) ---
+    def _setup_data_grid(self, layout: QVBoxLayout) -> None:
+        """Inizializza la tabella dei dati."""
         self.table_card = ModernCard(elevation=12)
         table_layout = QVBoxLayout(self.table_card)
         table_layout.setContentsMargins(5, 5, 5, 5)
@@ -149,8 +158,8 @@ class AuditLogWidget(QWidget):
 
         if v_header := self.table_view.verticalHeader():
             v_header.setVisible(False)
-        if header := self.table_view.horizontalHeader():
-            header.setStretchLastSection(True)
+        if h_header := self.table_view.horizontalHeader():
+            h_header.setStretchLastSection(True)
 
         self.model = AuditTableModel([])
         self.table_view.setModel(self.model)
@@ -159,7 +168,8 @@ class AuditLogWidget(QWidget):
         table_layout.addWidget(self.table_view)
         layout.addWidget(self.table_card)
 
-        # --- PAGINATION ---
+    def _setup_pagination(self, layout: QVBoxLayout) -> None:
+        """Inizializza la barra di paginazione."""
         self.pagination_bar = AuditPaginationBar()
         self.pagination_bar.page_changed.connect(self._on_page_changed)
         layout.addWidget(self.pagination_bar)

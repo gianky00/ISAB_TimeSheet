@@ -69,7 +69,11 @@ class ContabilitaKPIPanel(QWidget):
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(20)
 
-        # --- Toolbar (Year Selector) ---
+        self._setup_toolbar(main_layout)
+        self._setup_scroll_area(main_layout)
+
+    def _setup_toolbar(self, layout: QVBoxLayout) -> None:
+        """Configura la barra degli strumenti superiore."""
         toolbar = QHBoxLayout()
         cal_icon = QLabel()
         cal_icon.setPixmap(
@@ -87,9 +91,10 @@ class ContabilitaKPIPanel(QWidget):
         self.year_combo.currentTextChanged.connect(self._load_kpi_data)
         toolbar.addWidget(self.year_combo)
         toolbar.addStretch()
-        main_layout.addLayout(toolbar)
+        layout.addLayout(toolbar)
 
-        # --- Scroll Area ---
+    def _setup_scroll_area(self, layout: QVBoxLayout) -> None:
+        """Configura l'area a scorrimento centrale."""
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
@@ -101,6 +106,15 @@ class ContabilitaKPIPanel(QWidget):
         self.content_layout.setSpacing(30)
         self.content_layout.setContentsMargins(10, 10, 10, 10)
 
+        self._setup_scorecards()
+        self._setup_charts_grid()
+
+        self.content_layout.addStretch()
+        self.scroll_area.setWidget(content)
+        layout.addWidget(self.scroll_area)
+
+    def _setup_scorecards(self) -> None:
+        """Configura le schede riassuntive (Scorecards)."""
         # ROW 1: General Scorecards
         self._add_section_title("METRICHE GENERALI")
         self.row1 = KPICardsRow()
@@ -136,7 +150,8 @@ class ContabilitaKPIPanel(QWidget):
         )
         self.content_layout.addWidget(self.row2)
 
-        # ROW 3: Charts Grid
+    def _setup_charts_grid(self) -> None:
+        """Configura la griglia dei grafici."""
         self._add_section_title("GRAFICI ANALITICI")
         charts_grid = QGridLayout()
         charts_grid.setSpacing(20)
@@ -175,12 +190,8 @@ class ContabilitaKPIPanel(QWidget):
         charts_grid.addWidget(self.container5, 2, 0, 1, 2)
 
         self.content_layout.addLayout(charts_grid)
-        self.content_layout.addStretch()
 
-        self.scroll_area.setWidget(content)
-        main_layout.addWidget(self.scroll_area)
-
-        # Animazione widgets
+        # Registrazione widgets per animazione
         self.all_widgets = (
             self.row1.cards
             + self.row2.cards

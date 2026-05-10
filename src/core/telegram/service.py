@@ -260,11 +260,11 @@ class TelegramService(QObject):
     async def _send_message_async(self, chat_id: str | int, text: str) -> None:
         try:
             if self.app is None:
-                raise BotError("App not initialized")
+                raise BotError("App not initialized")  # noqa: TRY301
             if not self.app.bot:
                 await self.app.initialize()
             if self.app.bot is None:
-                raise BotError("Bot not initialized")
+                raise BotError("Bot not initialized")  # noqa: TRY301
             await self.app.bot.send_message(
                 chat_id=chat_id,
                 text=text,
@@ -279,11 +279,11 @@ class TelegramService(QObject):
     async def _send_photo_async(self, chat_id: str | int, photo_bytes: bytes, caption: str) -> None:
         try:
             if self.app is None:
-                raise BotError("App not initialized")
+                raise BotError("App not initialized")  # noqa: TRY301
             if not self.app.bot:
                 await self.app.initialize()
             if self.app.bot is None:
-                raise BotError("Bot not initialized")
+                raise BotError("Bot not initialized")  # noqa: TRY301
             await self.app.bot.send_photo(
                 chat_id=chat_id,
                 photo=photo_bytes,
@@ -299,11 +299,11 @@ class TelegramService(QObject):
     async def _send_document_async(self, chat_id: str | int, file_path: str, caption: str) -> None:
         try:
             if self.app is None:
-                raise BotError("App not initialized")
+                raise BotError("App not initialized")  # noqa: TRY301
             if not self.app.bot:
                 await self.app.initialize()
             if self.app.bot is None:
-                raise BotError("Bot not initialized")
+                raise BotError("Bot not initialized")  # noqa: TRY301
             with open(file_path, "rb") as f:
                 await self.app.bot.send_document(
                     chat_id=chat_id,

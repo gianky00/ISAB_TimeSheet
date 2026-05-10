@@ -76,13 +76,18 @@ class CaricoTSPanel(BaseBotPanel):
 
     def _setup_content(self) -> None:
         """Inizializza e posiziona i componenti UI del pannello (Tabella e Parametri)."""
-        # Sezione Parametri (Senza QGroupBox per favorire il design Floating Card)
         params_container = QWidget()
-        params_layout = QVBoxLayout(params_container)
-        params_layout.setContentsMargins(0, 0, 0, 0)
-        params_layout.setSpacing(5)
+        self.params_layout = QVBoxLayout(params_container)
+        self.params_layout.setContentsMargins(0, 0, 0, 0)
+        self.params_layout.setSpacing(5)
 
-        # Toolbar per la tabella
+        self._setup_toolbar()
+        self._setup_table()
+
+        self.content_layout.addWidget(params_container)
+
+    def _setup_toolbar(self) -> None:
+        """Configura la toolbar sopra la tabella."""
         table_toolbar = QHBoxLayout()
         table_toolbar.setContentsMargins(10, 0, 10, 0)
         table_toolbar.addStretch()
@@ -96,15 +101,15 @@ class CaricoTSPanel(BaseBotPanel):
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
 
-        params_layout.addLayout(table_toolbar)
+        self.params_layout.addLayout(table_toolbar)
 
+    def _setup_table(self) -> None:
+        """Configura la tabella dati principale."""
         # Tabella con tutte le colonne del database Carico TS
         self.data_table = EditableDataTable(self.get_bot_class().get_columns())
         self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
-        params_layout.addWidget(self.data_table)
-
-        self.content_layout.addWidget(params_container)
+        self.params_layout.addWidget(self.data_table)
 
     def _load_saved_data(self) -> None:
         """Carica l'ultima tabella TS salvata nella configurazione."""

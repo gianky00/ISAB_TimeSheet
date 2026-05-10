@@ -23,8 +23,8 @@ class ExecutionGuard:
           Tuple (esito, messaggio_errore).
         """
         try:
-            from src.core.license_updater import run_update  # noqa: PLC0415
-            from src.core.license_validator import verify_license  # noqa: PLC0415
+            from src.core.license_updater import run_update
+            from src.core.license_validator import verify_license
 
             # 1. Verifica/Esegue aggiornamenti licenza silenti
             run_update()

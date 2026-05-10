@@ -85,17 +85,23 @@ class ScaricaTSPanel(BaseBotPanel):
 
     def _setup_content(self) -> None:
         """Inizializza e posiziona i componenti UI specifici del pannello."""
-        # Sezione Parametri (Senza QGroupBox per favorire il design Floating Card)
         params_container = QWidget()
-        params_layout = QVBoxLayout(params_container)
-        params_layout.setContentsMargins(0, 0, 0, 0)
-        params_layout.setSpacing(5)
+        self.params_layout = QVBoxLayout(params_container)
+        self.params_layout.setContentsMargins(0, 0, 0, 0)
+        self.params_layout.setSpacing(5)
 
+        self._setup_params_section()
+        self._setup_table_section()
+
+        self.content_layout.addWidget(params_container)
+
+    def _setup_params_section(self) -> None:
+        """Configura la sezione dei parametri e la toolbar della tabella."""
         # Usiamo il widget atomico per i parametri comuni
         self.params_widget = BotParametersWidget(show_date_range=False, show_dest_path=True)
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
-        params_layout.addWidget(self.params_widget)
+        self.params_layout.addWidget(self.params_widget)
 
         # Parametri specifici: Flag Elabora TS
         self.elabora_ts_check = StandardCheckBox("Elabora TS")
@@ -114,9 +120,10 @@ class ScaricaTSPanel(BaseBotPanel):
         )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
-        params_layout.addLayout(table_toolbar)
+        self.params_layout.addLayout(table_toolbar)
 
-        # 2. Tabella e Stati
+    def _setup_table_section(self) -> None:
+        """Configura la tabella dati e la lista degli stati."""
         table_h = QHBoxLayout()
         table_h.setSpacing(10)
 
@@ -140,9 +147,7 @@ class ScaricaTSPanel(BaseBotPanel):
 
         table_h.addWidget(self.data_table)
         table_h.addLayout(v_status)
-        params_layout.addLayout(table_h)
-
-        self.content_layout.addWidget(params_container)
+        self.params_layout.addLayout(table_h)
 
     def _update_status_list(self, force: bool = False) -> None:
         """Aggiorna il numero di righe nella lista degli stati."""

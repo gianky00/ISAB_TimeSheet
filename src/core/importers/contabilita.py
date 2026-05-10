@@ -259,7 +259,7 @@ class ContabilitaImporter(BaseImporter):
 
         for i_raw, row in preview_df.iterrows():
             row_vals = [_norm(val) for val in row.values]
-            if sum(1 for k in key_cols_norm if k in row_vals) >= 2:
+            if sum(1 for k in key_cols_norm if k in row_vals) >= 2:  # noqa: PLR2004
                 return int(i_raw)
         return 0
 

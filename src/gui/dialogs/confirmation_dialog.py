@@ -35,7 +35,7 @@ class ConfirmationDialog(QDialog):
         ERROR = "error"
         QUESTION = "question"
 
-    def __init__(
+    def __init__(  # noqa: PLR0915
         self,
         parent: QWidget | None = None,
         title: str = "",

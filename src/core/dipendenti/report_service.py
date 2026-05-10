@@ -88,7 +88,7 @@ class ReportService:
         header_color = COLORS["primary_dark"]
         border_color = COLORS["border_light"]
 
-        urgenti = len([d for d in data["expired_list"] if d["giorni"] > 60])
+        urgenti = len([d for d in data["expired_list"] if d["giorni"] > 60])  # noqa: PLR2004
         tot_attenzione = len(data["warning_list"]) + len(data["expired_list"])
 
         if urgenti > 0:
@@ -184,7 +184,7 @@ class ReportService:
         excel_data = []
         for items, label in ((warning_list, "In Scadenza"), (expired_list, "Scaduto")):
             for dip in items:
-                excel_data.append(
+                excel_data.append(  # noqa: PERF401
                     {
                         "Cognome": dip["cognome"],
                         "Nome": dip["nome"],

@@ -201,7 +201,7 @@ def execute_with_wait(
 # ============================================================================
 
 
-from src.bots.base.file_polling_params import FilePollingParams
+from src.bots.base.file_polling_params import FilePollingParams  # noqa: E402
 
 # ... (rest of imports)
 

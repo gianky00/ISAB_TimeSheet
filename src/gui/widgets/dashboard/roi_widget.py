@@ -6,6 +6,7 @@ V4.0: Storico totale, nuove metriche di successo e affidabilità con barre di pr
 
 import logging
 import threading
+from typing import NamedTuple
 
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
@@ -18,6 +19,17 @@ from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
+
+
+class KPICardConfig(NamedTuple):
+    """Configurazione per la creazione di una card KPI."""
+
+    icon_key: str
+    icon_color: str
+    bg_color: str
+    value_text: str
+    value_color: str
+    tag_text: str
 
 
 class BotSavingsWidget(ModernCard):
@@ -92,7 +104,7 @@ class BotSavingsWidget(ModernCard):
         kpi_h.setSpacing(16)
 
         # KPI 1: Tempo Risparmiato
-        time_card = self._create_kpi_card(
+        time_config = KPICardConfig(
             icon_key=Icons.CLOCK,
             icon_color=COLORS["success_dark"],
             bg_color="#f0fdf4",
@@ -100,12 +112,13 @@ class BotSavingsWidget(ModernCard):
             value_color=COLORS["success_dark"],
             tag_text="RISPARMIO REALE (NET)",
         )
+        time_card = self._create_kpi_card(time_config)
         self.lbl_time = time_card.findChild(QLabel, "kpi_value")
         self.lbl_trend = time_card.findChild(QLabel, "kpi_sub")
         kpi_h.addWidget(time_card)
 
         # KPI 2: Task Automatizzati
-        ops_card = self._create_kpi_card(
+        ops_config = KPICardConfig(
             icon_key=Icons.ROCKET,
             icon_color=COLORS["primary_blue"],
             bg_color="#eff6ff",
@@ -113,6 +126,7 @@ class BotSavingsWidget(ModernCard):
             value_color=COLORS["primary_blue"],
             tag_text="TASK COMPLETATI",
         )
+        ops_card = self._create_kpi_card(ops_config)
         self.lbl_ops = ops_card.findChild(QLabel, "kpi_value")
         self.lbl_top_task = ops_card.findChild(QLabel, "kpi_sub")
         kpi_h.addWidget(ops_card)
@@ -213,29 +227,20 @@ class BotSavingsWidget(ModernCard):
         badge.setPixmap(get_colored_icon(icon_path, icon_color).pixmap(14, 14))
         return badge
 
-    def _create_kpi_card(
-        self,
-        icon_key: str,
-        icon_color: str,
-        bg_color: str,
-        value_text: str,
-        value_color: str,
-        tag_text: str,
-    ) -> QFrame:
-        """Card KPiùcon badge icona, valore grande e sottotitolo."""
+    def _create_kpi_card(self, config: KPICardConfig) -> QFrame:
+        """Card KPI con badge icona, valore grande e sottotitolo."""
         card = QFrame()
         card.setStyleSheet(
-            f"QFrame {{ background-color: {bg_color}; border-radius: 10px;"
+            f"QFrame {{ background-color: {config.bg_color}; border-radius: 10px;"
             f" border: 1px solid {COLORS['border_light']}; }}"
         )
 
         v = QVBoxLayout(card)
         v.setContentsMargins(10, 8, 10, 8)
         v.setSpacing(4)
-
         # Badge row
         badge_h = QHBoxLayout()
-        badge = self._create_icon_badge(icon_key, icon_color, COLORS["bg_white"])
+        badge = self._create_icon_badge(config.icon_key, config.icon_color, COLORS["bg_white"])
         badge_h.addWidget(badge)
         badge_h.addStretch()
         v.addLayout(badge_h)
@@ -246,10 +251,10 @@ class BotSavingsWidget(ModernCard):
         row_h.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         # Value
-        lbl_val = QLabel(value_text)
+        lbl_val = QLabel(config.value_text)
         lbl_val.setObjectName("kpi_value")
         lbl_val.setStyleSheet(
-            f"color: {value_color}; font-size: 24px; font-weight: 900; background: transparent; border: none;"
+            f"color: {config.value_color}; font-size: 24px; font-weight: 900; background: transparent; border: none;"
         )
         row_h.addWidget(lbl_val)
 
@@ -264,7 +269,7 @@ class BotSavingsWidget(ModernCard):
         v.addLayout(row_h)
 
         # Tag
-        lbl_tag = QLabel(tag_text)
+        lbl_tag = QLabel(config.tag_text)
         lbl_tag.setStyleSheet(
             f"color: {COLORS['text_muted']}; font-size: 10px; font-weight: 800;"
             " letter-spacing: 0.5px; background: transparent; border: none;"

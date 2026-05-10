@@ -4,7 +4,6 @@ SyncroJob - Bot Parameters Widget
 Widget riutilizzabile per la configurazione dei parametri comuni a tutti i bot (Fornitore, Date, Percorso).
 """
 
-import os
 from contextlib import suppress
 from pathlib import Path
 from typing import Any
@@ -37,7 +36,7 @@ from src.gui.widgets.core_widgets import (
 )
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.utils.helpers import get_asset_path, get_colored_icon, safe_open
 
 from .calendar_date_edit import CalendarDateEdit
 
@@ -145,27 +144,27 @@ class BotParametersWidget(QWidget):
         self.refresh_fornitori()
 
     def _setup_ui(self) -> None:
-        """Configura il layout orizzontale e i componenti interni con stile Neon & Shadow."""
+        """Configura il layout orizzontale e i componenti interni."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 15)
         main_layout.setSpacing(0)
 
-        # --- CONTAINER PRINCIPALE (La "Card" Modern Design) ---
+        # Container Principale
         self.container = QFrame()
         self.container.setObjectName("filterBar")
-
-        self.container.setStyleSheet(f"""
-      QFrame#filterBar {{
-        background-color: {COLORS["bg_white"]};
-        border: 1px solid {COLORS["border_light"]};
-        border-radius: 12px;
-      }}
-    """)
+        self.container.setStyleSheet(f"QFrame#filterBar {{ background-color: {COLORS['bg_white']}; border: 1px solid {COLORS['border_light']}; border-radius: 12px; }}")
 
         self.main_row_layout = QHBoxLayout(self.container)
         self.main_row_layout.setContentsMargins(15, 10, 15, 10)
         self.main_row_layout.setSpacing(20)
 
+        self._create_ui_sections()
+
+        self.main_row_layout.addStretch()
+        main_layout.addWidget(self.container)
+
+    def _create_ui_sections(self) -> None:
+        """Crea le sezioni della toolbar parametri."""
         self._setup_societa_section()
         self._add_divider()
         self._setup_fornitore_section()
@@ -175,9 +174,6 @@ class BotParametersWidget(QWidget):
         if self.show_dest_path:
             self._add_divider()
             self._setup_dest_path_section()
-
-        self.main_row_layout.addStretch()
-        main_layout.addWidget(self.container)
 
     def _setup_societa_section(self) -> None:
         """Configura la sezione di selezione della società(ISAB/PSER)."""
@@ -348,18 +344,15 @@ class BotParametersWidget(QWidget):
             self.dest_path_edit.setText(path)
 
     def _open_folder(self) -> None:
-        """Apre la cartella di destinazione nell'esplora risorse di sistema."""
-        path_str = self.dest_path_edit.text()
-        if not path_str:
-            path_str = str(Path.home() / "Downloads")
-
+        """Apre la cartella di destinazione nell'esplora risorse di sistema in modo sicuro."""
+        path_str = self.dest_path_edit.text() or str(Path.home() / "Downloads")
         path = Path(path_str).resolve()
-        if not path.exists():
-            path.mkdir(parents=True, exist_ok=True)
 
-        try:
-            os.startfile(str(path))
-        except Exception:
+        if not path.exists():
+            with suppress(Exception):
+                path.mkdir(parents=True, exist_ok=True)
+
+        if not safe_open(path):
             ToastManager.instance().show(f"Impossibile aprire la cartella: {path}", "error")
 
     def refresh_fornitori(self) -> None:

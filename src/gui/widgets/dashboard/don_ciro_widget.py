@@ -286,17 +286,50 @@ class DonCiroWidget(QWidget):
         f = self._walk_phase * 2 * math.pi
         rad = math.radians(self._yaw_angle)
         cos_y, sin_y = math.cos(rad), math.sin(rad)
+
+        # 1. Calcoli Geometria Base
         sq = 1.0 - 0.03 * max(0.0, math.sin(f * 2)) if self.engine.state == DonState.WALKING else 1.0
         by = (
             -68 - (abs(math.sin(f * 2)) * 6 if self.engine.state == DonState.WALKING else 0)
         ) * self.engine.scale
         ln = (0.08 if self.engine.state == DonState.WALKING else 0.0) * cos_y
 
-        hp_c = QPointF(0, by)
         sy = by - 42 * self.engine.scale * sq
         sc = QPointF(ln * 12 * self.engine.scale, sy)
         hd_p = QPointF(sc.x() + ln * 8 * self.engine.scale, sy - 16 * self.engine.scale * sq)
 
+        # 2. Calcoli IK Gambe
+        angles = (cos_y, sin_y)
+        kn_r, kn_l, frx, fry, flx, fly = self._calculate_legs_ik(f, by, angles)
+
+        # 3. Calcoli Braccia
+        ar_p, al_p = self._calculate_arms_pos(f, sy, sc, hd_p, angles)
+
+        # 4. Accodamento e Ordinamento Z
+        wo = 11 * self.engine.scale
+        r_hp, l_hp = QPointF(-wo * sin_y, by), QPointF(wo * sin_y, by)
+        r_sh, l_sh = QPointF(sc.x() - wo * sin_y, sy), QPointF(sc.x() + wo * sin_y, sy)
+
+        rq = [
+            RenderItem(-wo * cos_y, self._draw_leg, ((r_hp, kn_r, QPointF(r_hp.x() + frx, fry)), wo * cos_y, cos_y)),
+            RenderItem(wo * cos_y, self._draw_leg, ((l_hp, kn_l, QPointF(l_hp.x() + flx, fly)), -wo * cos_y, cos_y)),
+            RenderItem(-wo * cos_y, self._draw_arm, (r_sh, ar_p, wo * cos_y, True)),
+            RenderItem(wo * cos_y, self._draw_arm, (l_sh, al_p, -wo * cos_y, False)),
+            RenderItem(0.0, self._draw_torso, (QPointF(0, by), sc, angles)),
+            RenderItem(0.5, self._draw_head, (hd_p, angles)),
+        ]
+        rq.sort(key=lambda x: x.z_depth, reverse=True)
+
+        # 5. Rendering Finale
+        p.save()
+        p.scale(1.0, sq)
+        for i in rq:
+            i.draw_func(p, *i.args)
+        p.restore()
+
+    def _calculate_legs_ik(self, f: float, by: float, angles: tuple[float, float]) -> tuple[Any, ...]:
+        """Calcola la cinematica inversa delle gambe."""
+        cos_y, sin_y = angles
         if self.engine.state == DonState.WALKING:
             sl, sh = 22 * self.engine.scale * abs(cos_y), 12 * self.engine.scale
             pr, pl = math.sin(f), math.sin(f + math.pi)
@@ -307,10 +340,16 @@ class DonCiroWidget(QWidget):
 
         wo = 11 * self.engine.scale
         r_hp, l_hp = QPointF(-wo * sin_y, by), QPointF(wo * sin_y, by)
-        r_sh, l_sh = QPointF(sc.x() - wo * sin_y, sy), QPointF(sc.x() + wo * sin_y, sy)
         kn_r = self.engine.solve_ik(r_hp, QPointF(r_hp.x() + frx, fry))
         kn_l = self.engine.solve_ik(l_hp, QPointF(l_hp.x() + flx, fly))
 
+        return kn_r, kn_l, frx, fry, flx, fly
+
+    def _calculate_arms_pos(self, f: float, sy: float, sc: QPointF, hd_p: QPointF, angles: tuple[float, float]) -> tuple[Any, ...]:
+        """Calcola la posizione delle braccia in base allo stato."""
+        cos_y, sin_y = angles
+        wo = 11 * self.engine.scale
+        r_sh, l_sh = QPointF(sc.x() - wo * sin_y, sy), QPointF(sc.x() + wo * sin_y, sy)
         ar_p = QPointF(r_sh.x(), sy + 24 * self.engine.scale)
         al_p = QPointF(l_sh.x(), sy + 24 * self.engine.scale)
 
@@ -333,27 +372,11 @@ class DonCiroWidget(QWidget):
                 sy + 15 * self.engine.scale - 12 * self.engine.scale * ap,
             )
 
-        rq = [
-            RenderItem(
-                -wo * cos_y, self._draw_leg, (r_hp, kn_r, QPointF(r_hp.x() + frx, fry), wo * cos_y, cos_y)
-            ),
-            RenderItem(
-                wo * cos_y, self._draw_leg, (l_hp, kn_l, QPointF(l_hp.x() + flx, fly), -wo * cos_y, cos_y)
-            ),
-            RenderItem(-wo * cos_y, self._draw_arm, (r_sh, ar_p, wo * cos_y, True)),
-            RenderItem(wo * cos_y, self._draw_arm, (l_sh, al_p, -wo * cos_y, False)),
-            RenderItem(0.0, self._draw_torso, (hp_c, sc, cos_y, sin_y)),
-            RenderItem(0.5, self._draw_head, (hd_p, cos_y, sin_y)),
-        ]
-        rq.sort(key=lambda x: x.z_depth, reverse=True)
-        p.save()
-        p.scale(1.0, sq)
-        for i in rq:
-            i.draw_func(p, *i.args)
-        p.restore()
+        return ar_p, al_p
 
-    def _draw_leg(self, p: QPainter, h: QPointF, k: QPointF, f: QPointF, z: float, cy: float) -> None:
-        """Disegna una gamba."""
+    def _draw_leg(self, p: QPainter, pts: tuple[QPointF, QPointF, QPointF], z: float, cy: float) -> None:
+        """Disegna una gamba raggruppando i punti IK."""
+        h, k, f = pts
         p.setOpacity(0.8 if z < 0 else 1.0)
         c = self.C_SUIT.darker(110 if z < 0 else 100)
         path = QPainterPath()
@@ -424,13 +447,22 @@ class DonCiroWidget(QWidget):
             p.restore()
         p.setOpacity(1.0)
 
-    def _draw_torso(self, p: QPainter, hp: QPointF, sh: QPointF, cy: float, sy: float) -> None:
-        """Disegna il busto con colletto e cravatta."""
+    def _draw_torso(self, p: QPainter, hp: QPointF, sh: QPointF, angles: tuple[float, float]) -> None:
+        """Disegna il busto scomponendo le logiche (SRP)."""
+        cos_y, sy = angles
         s = self.engine.scale
         w = 22 * s * (0.5 + 0.5 * abs(sy))
-        ch = 5 * s * cy
+        ch = 5 * s * cos_y
 
-        # 1. Collo e Colletto
+        self._draw_torso_neck(p, sh, ch, s)
+        self._draw_torso_flap(p, hp, ch, angles, s)
+        self._draw_torso_suit(p, (hp, sh), ch, w, s)
+
+        if sy > 0:
+            self._draw_torso_shirt_tie(p, sh, ch, s)
+
+    def _draw_torso_neck(self, p: QPainter, sh: QPointF, ch: float, s: float) -> None:
+        """Disegna collo e colletto."""
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(QBrush(self.C_SKIN.darker(115)))
         p.drawRect(QRectF(sh.x() + ch - 4 * s, sh.y() - 5 * s, 8 * s, 8 * s))
@@ -442,7 +474,9 @@ class DonCiroWidget(QWidget):
         coll.closeSubpath()
         p.drawPath(coll)
 
-        # 2. Flap Giacca (Dietro)
+    def _draw_torso_flap(self, p: QPainter, hp: QPointF, ch: float, angles: tuple[float, float], s: float) -> None:
+        """Disegna il lembo della giacca se necessario."""
+        cy, sy = angles
         if self.engine.jacket_flap != 0 and sy < 0.3:
             p.setBrush(QBrush(self.C_SUIT.darker(135)))
             j_path = QPainterPath()
@@ -451,7 +485,9 @@ class DonCiroWidget(QWidget):
             j_path.lineTo(hp.x() + ch, hp.y() + 5 * s)
             p.drawPath(j_path)
 
-        # 3. Busto Principale
+    def _draw_torso_suit(self, p: QPainter, points: tuple[QPointF, QPointF], ch: float, w: float, s: float) -> None:
+        """Disegna il corpo della giacca."""
+        hp, sh = points
         path = QPainterPath()
         path.moveTo(sh.x() - w + ch, sh.y())
         path.lineTo(sh.x() + w + ch, sh.y())
@@ -465,30 +501,31 @@ class DonCiroWidget(QWidget):
         p.setPen(QPen(self.C_SUIT.darker(145), 1.2 * s))
         p.drawPath(path)
 
-        # 4. Camicia e Cravatta (Davanti)
-        if sy > 0:
-            p.setBrush(QBrush(self.C_SHIRT))
-            p.setPen(Qt.PenStyle.NoPen)
-            shirt = QPainterPath()
-            shirt.moveTo(sh.x() + ch - 7 * s, sh.y() + 2 * s)
-            shirt.lineTo(sh.x() + ch + 7 * s, sh.y() + 2 * s)
-            shirt.lineTo(sh.x() + ch, sh.y() + 18 * s)
-            p.drawPath(shirt)
+    def _draw_torso_shirt_tie(self, p: QPainter, sh: QPointF, ch: float, s: float) -> None:
+        """Disegna camicia e cravatta."""
+        p.setBrush(QBrush(self.C_SHIRT))
+        p.setPen(Qt.PenStyle.NoPen)
+        shirt = QPainterPath()
+        shirt.moveTo(sh.x() + ch - 7 * s, sh.y() + 2 * s)
+        shirt.lineTo(sh.x() + ch + 7 * s, sh.y() + 2 * s)
+        shirt.lineTo(sh.x() + ch, sh.y() + 18 * s)
+        p.drawPath(shirt)
 
-            p.save()
-            p.translate(sh.x() + ch, sh.y() + 2 * s)
-            p.rotate(self.engine.tie_angle)
-            p.setBrush(QBrush(self.C_TIE))
-            tie = QPainterPath()
-            tie.moveTo(0, 0)
-            tie.lineTo(-3.5 * s, 5 * s)
-            tie.lineTo(0, 32 * s)
-            tie.lineTo(3.5 * s, 5 * s)
-            p.drawPath(tie)
-            p.restore()
+        p.save()
+        p.translate(sh.x() + ch, sh.y() + 2 * s)
+        p.rotate(self.engine.tie_angle)
+        p.setBrush(QBrush(self.C_TIE))
+        tie = QPainterPath()
+        tie.moveTo(0, 0)
+        tie.lineTo(-3.5 * s, 5 * s)
+        tie.lineTo(0, 32 * s)
+        tie.lineTo(3.5 * s, 5 * s)
+        p.drawPath(tie)
+        p.restore()
 
-    def _draw_head(self, p: QPainter, pos: QPointF, cy: float, sy: float) -> None:
+    def _draw_head(self, p: QPainter, pos: QPointF, angles: tuple[float, float]) -> None:
         """Disegna la testa."""
+        cy, sy = angles
         s = self.engine.scale
         ev = max(0.0, min(1.0, abs(sy) * 2.5))
         p.setOpacity(ev)

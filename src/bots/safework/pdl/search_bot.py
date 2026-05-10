@@ -136,7 +136,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             self.log("[CERCA] Clic su Ricerca PdL...")
             self.wait.until(lambda d: d.find_element(*SafeWorkLocators.RICERCA_PDL_BUTTON)).click()
             self._attendi_scomparsa_overlay()
-            return True
+            return True  # noqa: TRY300
         except Exception:
             return False
 

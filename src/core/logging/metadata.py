@@ -72,7 +72,7 @@ class MetadataEnricher:
 
         return metadata
 
-    def _detect_environment(self) -> str:
+    def _detect_environment(self) -> str:  # noqa: PLR0911
         """
         Rileva environment corrente.
 
@@ -178,7 +178,7 @@ _enricher = None
 
 def get_enricher() -> MetadataEnricher:
     """Restituisce istanza singleton del metadata enricher."""
-    global _enricher
+    global _enricher  # noqa: PLW0603
     if _enricher is None:
         _enricher = MetadataEnricher()
     return _enricher

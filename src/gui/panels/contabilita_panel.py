@@ -230,6 +230,16 @@ class ContabilitaPanel(QWidget):
         self.main_tabs = AnimatedTabWidget()
         self.main_tabs.currentChanged.connect(self._on_main_tab_changed)
 
+        self._add_preventivi_tabs()
+        self._add_giornaliere_tabs()
+        self._add_programmate_tabs()
+        self._add_certificati_tabs()
+        self._add_kpi_tabs()
+
+        parent_layout.addWidget(self.main_tabs)
+
+    def _add_preventivi_tabs(self) -> None:
+        """Aggiunge i tab dei preventivi annuali."""
         self.year_tabs_widget = AnimatedTabWidget()
         self.year_tabs_widget.setTabPosition(QTabWidget.TabPosition.North)
         self.year_tabs_widget.currentChanged.connect(self._on_tab_changed)
@@ -239,6 +249,8 @@ class ContabilitaPanel(QWidget):
             "Preventivi",
         )
 
+    def _add_giornaliere_tabs(self) -> None:
+        """Aggiunge i tab delle giornaliere annuali."""
         self.giornaliere_tabs_widget = AnimatedTabWidget()
         self.giornaliere_tabs_widget.setTabPosition(QTabWidget.TabPosition.North)
         self.giornaliere_tabs_widget.currentChanged.connect(self._on_tab_changed)
@@ -248,6 +260,8 @@ class ContabilitaPanel(QWidget):
             "Giornaliere",
         )
 
+    def _add_programmate_tabs(self) -> None:
+        """Aggiunge il tab delle attività programmate."""
         self.attivita_widget = AttivitaProgrammateTab()
         self.main_tabs.addTab(
             self.attivita_widget,
@@ -255,6 +269,8 @@ class ContabilitaPanel(QWidget):
             "Attività Programmate",
         )
 
+    def _add_certificati_tabs(self) -> None:
+        """Aggiunge il tab dei certificati campione."""
         self.certificati_widget = CertificatiCampioneTab()
         self.main_tabs.addTab(
             self.certificati_widget,
@@ -262,14 +278,14 @@ class ContabilitaPanel(QWidget):
             "Certificati Campione",
         )
 
+    def _add_kpi_tabs(self) -> None:
+        """Aggiunge il tab dell'analisi KPI."""
         self.kpi_panel = ContabilitaKPIPanel()
         self.main_tabs.addTab(
             self.kpi_panel,
             get_colored_icon(get_asset_path(Icons.BAR_CHART), COLORS["text_muted"]),
             "Analisi KPI",
         )
-
-        parent_layout.addWidget(self.main_tabs)
 
     def _on_search_changed(self, text: str) -> None:
         """Inoltra la stringa di ricerca al widget o al tab attualmente attivo."""

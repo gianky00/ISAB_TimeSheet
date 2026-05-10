@@ -77,7 +77,7 @@ class BaseImporter:
         match = re.search(r"(\d{4})", sheet_name)
         if match:
             year = int(match.group(1))
-            return year if 2000 <= year <= 2100 else None
+            return year if 2000 <= year <= 2100 else None  # noqa: PLR2004
 
         if sheet_name.lower() in ("dati", "preventivi", "riepilogo"):
             return datetime.now(UTC).year

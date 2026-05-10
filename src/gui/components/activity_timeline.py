@@ -305,7 +305,7 @@ class ActivityTimelineWidget(QWidget):
         for y in range(top, bottom + step, step):
             painter.drawLine(left, int(y + self._grid_offset), right, int(y + self._grid_offset))
 
-    def _draw_connector_v5(
+    def _draw_connector_v5(  # noqa: PLR0913
         self, painter: QPainter, x: float, y1: float, y2: float, n1: TimelineNode, n2: TimelineNode
     ) -> None:
         """

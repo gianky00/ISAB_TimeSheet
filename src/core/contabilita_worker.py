@@ -207,7 +207,7 @@ class ContabilitaWorker(QThread):
 
         self._update_state(state, success, added, removed, "Certificati: OK", f"Err Certificati: {msg}")
 
-    def _update_state(
+    def _update_state(  # noqa: PLR0913
         self, state: Any, success: bool, added: int, removed: int, ok_msg: str, err_msg: str
     ) -> None:
         state["added"] += added

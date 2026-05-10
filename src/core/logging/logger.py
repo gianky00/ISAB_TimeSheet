@@ -133,7 +133,7 @@ class StructuredLogger:
         except UnicodeEncodeError:
             safe_line = console_line.encode("ascii", "replace").decode("ascii")
             print(safe_line)
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         if exception:
@@ -244,7 +244,7 @@ def configure_logging(config: Any = None) -> None:
       Questa funzione dovrebbe essere chiamata una volta all'avvio
       dell'applicazione.
     """
-    global _initialized
+    global _initialized  # noqa: PLW0603
 
     if _initialized:
         return

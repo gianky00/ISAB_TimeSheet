@@ -86,7 +86,7 @@ def save_clients(clients) -> None:
 class LicenseAdminApp:
     """Applicazione GUI per la generazione e gestione delle licenze software SyncroJob."""
 
-    def __init__(self, root: tk.Tk) -> None:
+    def __init__(self, root: tk.Tk) -> None:  # noqa: PLR0915
         """Inizializza l'interfaccia grafica e carica il database clienti locale."""
         self.root = root
         self.root.title("SyncroJob - Gestore Licenze (Admin)")
@@ -399,7 +399,7 @@ class LicenseAdminApp:
                 capture_output=True,
             )
 
-            return True, "Upload completato con successo!"
+            return True, "Upload completato con successo!"  # noqa: TRY300
 
         except subprocess.CalledProcessError as e:
             error_msg = e.stderr.decode() if e.stderr else str(e)
@@ -410,7 +410,7 @@ class LicenseAdminApp:
         except Exception as e:
             return False, f"Errore: {e!s}"
 
-    def generate(self) -> None:
+    def generate(self) -> None:  # noqa: PLR0915
         """Genera i file di licenza."""
         disk_serial = self.ent_disk.get().strip()
         client_name = self.ent_name.get().strip()
@@ -517,7 +517,7 @@ class LicenseAdminApp:
             import os
 
             if os.name == "nt":
-                os.startfile(target_dir)
+                os.startfile(target_dir)  # noqa: S606
 
         except Exception as e:
             messagebox.showerror("Errore", f"Generazione fallita:\n{e!s}")

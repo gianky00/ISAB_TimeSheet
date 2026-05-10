@@ -161,7 +161,7 @@ class ROIEngine:
         }
 
     @classmethod
-    def _finalize_metrics(
+    def _finalize_metrics(  # noqa: PLR0913
         cls,
         total_min_man: float,
         total_bot_min: float,

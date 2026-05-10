@@ -315,7 +315,14 @@ class HealthPanel(QWidget):
         left_panel = QVBoxLayout()
         left_panel.setSpacing(25)
 
-        # 1. Main Gauge Card
+        self._setup_score_card(left_panel)
+        self._setup_stats_grid(left_panel)
+
+        left_panel.addStretch()
+        parent_layout.addLayout(left_panel, stretch=1)
+
+    def _setup_score_card(self, parent_layout: QVBoxLayout) -> None:
+        """Inizializza la card principale dell'Health Score."""
         score_card = ModernCard(elevation=15)
         score_card.setStyleSheet(f"QFrame {{ background-color: {COLORS['bg_white']}; border-radius: 20px; }}")
         score_layout = QVBoxLayout(score_card)
@@ -336,9 +343,10 @@ class HealthPanel(QWidget):
         self._last_update.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._last_update.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px;")
         score_layout.addWidget(self._last_update)
-        left_panel.addWidget(score_card)
+        parent_layout.addWidget(score_card)
 
-        # 2. Mini Stats Grid
+    def _setup_stats_grid(self, parent_layout: QVBoxLayout) -> None:
+        """Inizializza la griglia delle statistiche rapide."""
         stats_grid = QGridLayout()
         stats_grid.setSpacing(15)
         self._stat_runs_ok = StatCard(
@@ -355,9 +363,7 @@ class HealthPanel(QWidget):
         stats_grid.addWidget(self._stat_runs_fail, 0, 1)
         stats_grid.addWidget(self._stat_error_rate, 1, 0)
         stats_grid.addWidget(self._stat_anomalies, 1, 1)
-        left_panel.addLayout(stats_grid)
-        left_panel.addStretch()
-        parent_layout.addLayout(left_panel, stretch=1)
+        parent_layout.addLayout(stats_grid)
 
     def _setup_right_panel(self, parent_layout: QHBoxLayout) -> None:
         """Configura il pannello di destra con la lista anomalie."""

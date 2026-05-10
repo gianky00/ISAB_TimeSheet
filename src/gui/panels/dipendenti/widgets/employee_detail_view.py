@@ -30,11 +30,29 @@ class EmployeeDetailView(QWidget):
         self._setup_ui()
 
     def _setup_ui(self) -> None:
+        """Inizializza il layout principale dei dettagli."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(8)
 
-        # Header Card
+        self._setup_header(layout)
+
+        detail_content = QWidget()
+        detail_content.setStyleSheet("background-color: transparent;")
+        detail_layout = QVBoxLayout(detail_content)
+        detail_layout.setContentsMargins(0, 0, 0, 0)
+        detail_layout.setSpacing(8)
+
+        self._setup_personal_data(detail_layout)
+        self._setup_work_info(detail_layout)
+        self._setup_access_isab(detail_layout)
+        detail_layout.addStretch()
+
+        layout.addWidget(detail_content)
+        layout.addStretch()
+
+    def _setup_header(self, layout: QVBoxLayout) -> None:
+        """Configura l'intestazione della scheda."""
         header_card = QFrame()
         header_card.setFixedHeight(70)
         header_shadow = QGraphicsDropShadowEffect()
@@ -43,12 +61,8 @@ class EmployeeDetailView(QWidget):
         header_shadow.setColor(QColor(0, 0, 0, 60))
         header_card.setGraphicsEffect(header_shadow)
         header_card.setStyleSheet(
-            f"""
-      QFrame {{
-        background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["primary_blue"]}, stop:1 {COLORS["primary_dark"]});
-        border-radius: 12px;
-      }}
-    """
+            f"QFrame {{ background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 "
+            f"{COLORS['primary_blue']}, stop:1 {COLORS['primary_dark']}); border-radius: 12px; }}"
         )
         header_layout = QVBoxLayout(header_card)
         header_layout.setContentsMargins(18, 12, 18, 12)
@@ -63,14 +77,8 @@ class EmployeeDetailView(QWidget):
         header_layout.addWidget(subtitle_label)
         layout.addWidget(header_card)
 
-        # Content Container
-        detail_content = QWidget()
-        detail_content.setStyleSheet("background-color: transparent;")
-        detail_layout = QVBoxLayout(detail_content)
-        detail_layout.setContentsMargins(0, 0, 0, 0)
-        detail_layout.setSpacing(8)
-
-        # 1. Dati Personali
+    def _setup_personal_data(self, layout: QVBoxLayout) -> None:
+        """Configura la sezione dati personali."""
         personal_card, personal_layout = create_info_card("   Dati Personali")
 
         row1 = QHBoxLayout()
@@ -86,9 +94,10 @@ class EmployeeDetailView(QWidget):
         personal_layout.addLayout(row2)
 
         personal_layout.addWidget(self._create_detail_field("Codice Fiscale"))
-        detail_layout.addWidget(personal_card)
+        layout.addWidget(personal_card)
 
-        # 2. Informazioni Lavorative
+    def _setup_work_info(self, layout: QVBoxLayout) -> None:
+        """Configura la sezione informazioni lavorative."""
         work_card, work_layout = create_info_card("   Informazioni Lavorative")
         row3 = QHBoxLayout()
         row3.setSpacing(10)
@@ -96,9 +105,10 @@ class EmployeeDetailView(QWidget):
         row3.addWidget(self._create_detail_field("Data Assunzione"))
         work_layout.addLayout(row3)
         work_layout.addWidget(self._create_detail_field("Importato il"))
-        detail_layout.addWidget(work_card)
+        layout.addWidget(work_card)
 
-        # 3. Accesso ISAB
+    def _setup_access_isab(self, layout: QVBoxLayout) -> None:
+        """Configura la sezione ultimo accesso ISAB."""
         access_card = QFrame()
         access_shadow = QGraphicsDropShadowEffect()
         access_shadow.setBlurRadius(15)
@@ -106,13 +116,8 @@ class EmployeeDetailView(QWidget):
         access_shadow.setColor(QColor(0, 0, 0, 50))
         access_card.setGraphicsEffect(access_shadow)
         access_card.setStyleSheet(
-            f"""
-      QFrame {{
-        background: {COLORS["bg_white"]};
-        border-radius: 10px;
-        border-left: 4px solid {COLORS["primary_blue"]};
-      }}
-    """
+            f"QFrame {{ background: {COLORS['bg_white']}; border-radius: 10px; "
+            f"border-left: 4px solid {COLORS['primary_blue']}; }}"
         )
         access_layout = QVBoxLayout(access_card)
         access_layout.setContentsMargins(15, 12, 15, 12)
@@ -131,11 +136,7 @@ class EmployeeDetailView(QWidget):
         access_layout.addWidget(access_title)
         access_layout.addWidget(self.last_access_label)
 
-        detail_layout.addWidget(access_card)
-        detail_layout.addStretch()
-
-        layout.addWidget(detail_content)
-        layout.addStretch()
+        layout.addWidget(access_card)
 
     def _create_detail_field(self, label: str) -> QWidget:
         container = create_field_row(label)

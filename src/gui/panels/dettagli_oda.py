@@ -83,16 +83,22 @@ class DettagliOdAPanel(BaseBotPanel):
 
     def _setup_content(self) -> None:
         """Costruisce il layout specifico con widget parametri e tabella dati editabile."""
-        # Sezione Parametri (Senza QGroupBox per favorire il design Floating Card)
         params_container = QWidget()
-        params_layout = QVBoxLayout(params_container)
-        params_layout.setContentsMargins(0, 0, 0, 0)
-        params_layout.setSpacing(5)
+        self.params_layout = QVBoxLayout(params_container)
+        self.params_layout.setContentsMargins(0, 0, 0, 0)
+        self.params_layout.setSpacing(5)
 
+        self._setup_params_section()
+        self._setup_table_section()
+
+        self.content_layout.addWidget(params_container)
+
+    def _setup_params_section(self) -> None:
+        """Configura la sezione dei parametri e la toolbar della tabella."""
         self.params_widget = BotParametersWidget(show_date_range=True, show_dest_path=True)
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
-        params_layout.addWidget(self.params_widget)
+        self.params_layout.addWidget(self.params_widget)
 
         # Tabella Toolbar
         table_toolbar = QHBoxLayout()
@@ -106,11 +112,11 @@ class DettagliOdAPanel(BaseBotPanel):
         )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
-        params_layout.addLayout(table_toolbar)
+        self.params_layout.addLayout(table_toolbar)
 
+    def _setup_table_section(self) -> None:
+        """Configura la tabella dati e la lista degli stati."""
         config = config_manager.load_config()
-
-        # 2. Tabella e Stati
         table_h = QHBoxLayout()
         table_h.setSpacing(10)
 
@@ -141,9 +147,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
         table_h.addWidget(self.data_table)
         table_h.addLayout(v_status)
-        params_layout.addLayout(table_h)
-
-        self.content_layout.addWidget(params_container)
+        self.params_layout.addLayout(table_h)
 
     def _update_status_list(self, force: bool = False) -> None:
         """

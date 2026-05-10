@@ -84,7 +84,7 @@ class AuditTableModel(QAbstractTableModel):
             return 0
         return len(self.COLUMNS)
 
-    def data(
+    def data(  # noqa: PLR0911
         self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole
     ) -> Any:
         """
@@ -117,7 +117,7 @@ class AuditTableModel(QAbstractTableModel):
 
         return None
 
-    def _get_display_data(self, log: dict[str, Any], col: int) -> str | None:
+    def _get_display_data(self, log: dict[str, Any], col: int) -> str | None:  # noqa: PLR0911
         """Restituisce il testo da mostrare per ogni colonna."""
         if col == self.COL_STATUS:
             return ""

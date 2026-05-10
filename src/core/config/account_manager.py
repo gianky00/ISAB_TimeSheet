@@ -73,7 +73,7 @@ def switch_default_account_logic(
     key = "accounts" if service_type == "isab" else "safework_accounts"
     accounts = config.get(key, [])
 
-    if len(accounts) < 2:
+    if len(accounts) < 2:  # noqa: PLR2004
         return False, None
 
     current_idx = -1

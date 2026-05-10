@@ -25,7 +25,7 @@ class BotLogSink:
         # Cache file handles aperti (trace_id -> file handle)
         self._open_files: dict[str, Any] = {}
 
-    def write(
+    def write(  # noqa: PLR0913
         self,
         level: str,
         logger_name: str,
@@ -199,7 +199,7 @@ class AggregatedMetricsSink:
 
         try:
             data: dict[str, Any] = json.loads(file_path.read_text(encoding="utf-8"))
-            return data
+            return data  # noqa: TRY300
         except Exception as e:
             print(f"[AGGREGATED SINK ERROR] Failed to read: {e}")
             return None
@@ -213,7 +213,7 @@ _aggregated_sink: AggregatedMetricsSink | None = None
 
 def get_bot_sink() -> BotLogSink:
     """Restituisce istanza singleton del bot sink."""
-    global _bot_sink
+    global _bot_sink  # noqa: PLW0603
     if _bot_sink is None:
         _bot_sink = BotLogSink()
     return _bot_sink
@@ -221,7 +221,7 @@ def get_bot_sink() -> BotLogSink:
 
 def get_metrics_sink() -> MetricsRotatingSink:
     """Restituisce istanza singleton del metrics sink."""
-    global _metrics_sink
+    global _metrics_sink  # noqa: PLW0603
     if _metrics_sink is None:
         _metrics_sink = MetricsRotatingSink()
     return _metrics_sink
@@ -229,7 +229,7 @@ def get_metrics_sink() -> MetricsRotatingSink:
 
 def get_aggregated_sink() -> AggregatedMetricsSink:
     """Restituisce istanza singleton del aggregated sink."""
-    global _aggregated_sink
+    global _aggregated_sink  # noqa: PLW0603
     if _aggregated_sink is None:
         _aggregated_sink = AggregatedMetricsSink()
     return _aggregated_sink

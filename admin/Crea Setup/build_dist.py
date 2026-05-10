@@ -67,7 +67,7 @@ def log_and_print(message, level="INFO") -> None:
         logger.warning(message)
 
 
-def run_command(cmd, cwd=None, shell=False, check=True, input_str=None):
+def run_command(cmd, cwd=None, shell=False, check=True, input_str=None):  # noqa: C901
     """Run command and log output. Supports sending input to stdin."""
     if cwd is None:
         cwd = ROOT_DIR
@@ -117,7 +117,7 @@ def run_command(cmd, cwd=None, shell=False, check=True, input_str=None):
         if check and return_code != 0:
             log_and_print(f"[ERROR] Command failed with return code {return_code}", "ERROR")
             sys.exit(1)
-        return return_code
+        return return_code  # noqa: TRY300
 
     except Exception as e:
         log_and_print(f"[EXCEPTION] {e}", "ERROR")
@@ -166,7 +166,7 @@ def _ensure_selenium_driver(drivers_dir: Path) -> None:
             if potential_exes:
                 driver_path = potential_exes[0]
             else:
-                raise FileNotFoundError(f"Chromedriver.exe not found in {search_path}")
+                raise FileNotFoundError(f"Chromedriver.exe not found in {search_path}")  # noqa: TRY301
         dest_path = drivers_dir / "chromedriver.exe"
         shutil.copy2(driver_path, dest_path)
         log_and_print(f"  [SUCCESS] ChromeDriver aligned: {dest_path}")
@@ -594,12 +594,12 @@ def prepare_and_deploy_netlify(setup_dir: Path, setup_filename: str) -> bool | N
         headers = {"Content-Type": "application/zip", "Authorization": f"Bearer {get_netlify_token()}"}
         response = requests.post(url, headers=headers, data=data, timeout=600)
 
-        if response.status_code == 200:
+        if response.status_code == 200:  # noqa: PLR2004
             log_and_print("DEPLOY SUCCESSFUL!")
             log_and_print(f"Live URL: {response.json().get('url')}")
             return True
         log_and_print(f"Upload Failed: {response.status_code} - {response.text}", "ERROR")
-        return False
+        return False  # noqa: TRY300
     except Exception as e:
         log_and_print(f"Error during upload: {e}", "ERROR")
         return False
@@ -650,13 +650,13 @@ def deploy_to_network_share(setup_dir: Path, setup_filename: str) -> bool | None
         }
         (net_path / "version.json").write_text(json.dumps(version_data, indent=4), encoding="utf-8")
         log_and_print(f"  [SUCCESS] Network deploy complete (v{version_str}).")
-        return True
+        return True  # noqa: TRY300
     except Exception as e:
         log_and_print(f"[ERROR] Network deploy failed: {e}", "ERROR")
         return False
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901, PLR0912
     parser = argparse.ArgumentParser(description="Bot TS Build Script")
     parser.add_argument("--use-nuitka", action="store_true", help="Use Nuitka instead of PyInstaller")
     parser.add_argument("--no-deploy", action="store_true", help="Skip Netlify")

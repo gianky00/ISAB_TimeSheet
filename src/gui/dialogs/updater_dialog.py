@@ -200,7 +200,7 @@ def show_install_prompt(setup_path: str, parent: QWidget | None = None) -> None:
         )
 
 
-def check_for_updates(
+def check_for_updates(  # noqa: C901, PLR0912
     parent: QWidget | None = None,
     silent: bool = True,
     callback: Callable[[dict[str, Any]], None] | None = None,
@@ -285,7 +285,7 @@ def perform_auto_update(download_url: str, parent: QWidget | None = None) -> Non
                 parent = widget
                 break
 
-    global _active_update_worker
+    global _active_update_worker  # noqa: PLW0603
     _active_update_worker = DownloadWorker(download_url)
 
     # Rilevamento banner robusto (MainWindow lo ha in tool_bar_component o come alias)
@@ -300,7 +300,7 @@ def perform_auto_update(download_url: str, parent: QWidget | None = None) -> Non
         if hasattr(parent, "_on_update_error"):
             _active_update_worker.error.connect(cast("Any", parent)._on_update_error)
     else:
-        global _active_update_dialog
+        global _active_update_dialog  # noqa: PLW0603
         _active_update_dialog = UpdateProgressDialog(download_url, parent)
         _active_update_dialog.start()
         return

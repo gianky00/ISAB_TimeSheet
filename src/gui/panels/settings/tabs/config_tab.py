@@ -133,7 +133,11 @@ class ConfigTab(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # --- TOP STATUS BAR (Search) ---
+        self._setup_header(main_layout)
+        self._setup_scroll_area(main_layout)
+
+    def _setup_header(self, layout: QVBoxLayout) -> None:
+        """Configura la barra superiore con la ricerca e lo stato."""
         self.header_bar = QFrame()
         self.header_bar.setFixedHeight(50)
         self.header_bar.setStyleSheet(
@@ -161,9 +165,10 @@ class ConfigTab(QWidget):
         self.status_lbl.setStyleSheet(f"color: {COLORS['success_dark']}; font-weight: 700; font-size: 12px;")
         header_layout.addWidget(self.status_lbl)
 
-        main_layout.addWidget(self.header_bar)
+        layout.addWidget(self.header_bar)
 
-        # --- SCROLL AREA PER LE CARDS ---
+    def _setup_scroll_area(self, layout: QVBoxLayout) -> None:
+        """Configura l'area scrollabile e aggiunge tutte le card."""
         self.scroll_container = QScrollArea()
         self.scroll_container.setWidgetResizable(True)
         self.scroll_container.setStyleSheet("background: transparent; border: none;")
@@ -176,7 +181,17 @@ class ConfigTab(QWidget):
         self.cards_layout.setContentsMargins(30, 30, 30, 30)
         self.cards_layout.setSpacing(30)
 
-        # --- 1. GENERALE ---
+        self._add_general_card()
+        self._add_account_cards()
+        self._add_list_cards()
+        self._add_path_and_diag_cards()
+
+        self.cards_layout.addStretch()
+        self.scroll_container.setWidget(scroll_content)
+        layout.addWidget(self.scroll_container)
+
+    def _add_general_card(self) -> None:
+        """Aggiunge la card delle impostazioni generali."""
         self.general_page = GeneralPage()
         self.general_page.settings_changed.connect(self.settings_changed.emit)
         card_gen = SettingCard(
@@ -189,7 +204,8 @@ class ConfigTab(QWidget):
         self.cards.append(card_gen)
         self.pages.append(self.general_page)
 
-        # --- 2. LISTE & ACCOUNT ---
+    def _add_account_cards(self) -> None:
+        """Aggiunge le card per la gestione degli account."""
         self.lists_page = ListsPage()
         self.lists_page.settings_changed.connect(self.settings_changed.emit)
         self.pages.append(self.lists_page)
@@ -214,7 +230,9 @@ class ConfigTab(QWidget):
         self.cards_layout.addWidget(card_sw)
         self.cards.append(card_sw)
 
-        # Card Anagrafiche Operative (Fornitori e Contratti)
+    def _add_list_cards(self) -> None:
+        """Aggiunge le card per le liste operative e organizzative."""
+        # Card Liste Operative (Fornitori e Contratti)
         ops_container = QWidget()
         ops_layout = QHBoxLayout(ops_container)
         ops_layout.setContentsMargins(0, 0, 0, 0)
@@ -245,7 +263,8 @@ class ConfigTab(QWidget):
         self.cards_layout.addWidget(card_geo)
         self.cards.append(card_geo)
 
-        # --- 3. PERCORSI ---
+    def _add_path_and_diag_cards(self) -> None:
+        """Aggiunge le card per percorsi e diagnostica."""
         self.paths_page = PathsPage()
         self.paths_page.settings_changed.connect(self.settings_changed.emit)
         card_paths = SettingCard(
@@ -258,7 +277,6 @@ class ConfigTab(QWidget):
         self.cards.append(card_paths)
         self.pages.append(self.paths_page)
 
-        # --- 4. DIAGNOSTICA ---
         self.diag_page = DiagPage()
         card_diag = SettingCard(
             "Diagnostica di Sistema",
@@ -269,10 +287,6 @@ class ConfigTab(QWidget):
         self.cards_layout.addWidget(card_diag)
         self.cards.append(card_diag)
         self.pages.append(self.diag_page)
-
-        self.cards_layout.addStretch()
-        self.scroll_container.setWidget(scroll_content)
-        main_layout.addWidget(self.scroll_container)
 
     def _filter_cards(self, text: str) -> None:
         """Filtra le card visualizzate in base al testo di ricerca."""

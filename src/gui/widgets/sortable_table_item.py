@@ -25,7 +25,7 @@ class SortableTableWidgetItem(QTableWidgetItem):
         if alignment:
             self.setTextAlignment(alignment)
 
-    def __lt__(self, other: Any) -> bool:
+    def __lt__(self, other: Any) -> bool:  # noqa: PLR0911
         """Override dell'operatore < per ordinamento personalizzato."""
         if not isinstance(other, QTableWidgetItem):
             return super().__lt__(other)

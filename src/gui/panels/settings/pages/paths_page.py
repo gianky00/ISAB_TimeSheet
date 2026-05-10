@@ -137,32 +137,20 @@ class PathsPage(QWidget):
         return edit
 
     def _open_path(self, path_str: str) -> None:
-        """Apre il percorso specificato nell'esplora risorse."""
+        """Apre il percorso specificato in modo sicuro."""
         if not path_str:
             return
 
-        import os
-        from pathlib import Path
-
         from src.gui.widgets.toast import ToastManager
+        from src.utils.helpers import safe_open
 
         path = Path(path_str).resolve()
         if not path.exists():
             ToastManager.instance().show(f"Percorso non trovato: {path_str}", "warning")
             return
 
-        try:
-            if path.is_file():
-                # Su Windows, apre la cartella e seleziona il file
-                import subprocess
-
-                subprocess.run(["explorer", "/select,", str(path)], check=False)
-            else:
-                import os
-
-                os.startfile(str(path))
-        except Exception as e:
-            ToastManager.instance().show(f"Errore apertura: {e}", "error")
+        if not safe_open(path):
+            ToastManager.instance().show(f"Impossibile aprire: {path_str}", "error")
 
     def _validate_path(self, widget: QLineEdit) -> None:
         """Valida visivamente il percorso inserito."""

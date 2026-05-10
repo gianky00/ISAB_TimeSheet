@@ -126,18 +126,23 @@ def is_windows() -> bool:
     return sys.platform.startswith("win")
 
 
-def open_folder(path: str) -> bool:
+def safe_open(path: str | Path) -> bool:
     """
-    Apre una cartella nel file manager del sistema operativo.
+    Apre un file o una cartella nel programma predefinito in modo sicuro.
+    Previene l'esecuzione di binari pericolosi tramite blacklist.
 
     Args:
-      path: Percorso della cartella da aprire.
+      path: Percorso del file o della cartella.
 
     Returns:
-      bool: True se la cartella  stata aperta correttamente, False altrimenti.
+      bool: True se aperto correttamente.
     """
-    path_obj = Path(path)
+    path_obj = Path(path).resolve()
     if not path_obj.exists():
+        return False
+
+    # Prevenzione esecuzione binari
+    if path_obj.suffix.lower() in (".exe", ".bat", ".cmd", ".msi", ".ps1", ".vbs"):
         return False
 
     try:
@@ -151,6 +156,11 @@ def open_folder(path: str) -> bool:
         return False
     else:
         return True
+
+
+def open_folder(path: str) -> bool:
+    """Legacy wrapper for safe_open."""
+    return safe_open(path)
 
 
 def safe_str(value: object, default: str = "") -> str:

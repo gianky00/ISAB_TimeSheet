@@ -108,7 +108,7 @@ class InteractiveStatusCard(QFrame):
 
     clicked = Signal(str)
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         label: str,
         color: str,

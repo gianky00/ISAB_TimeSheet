@@ -189,8 +189,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     def _sanitizza_pdl_number(self, pdl_raw: Any) -> str:
         """Formatta il numero PDL aggiungendo i suffissi /S o /C se necessario."""
         num = str(pdl_raw).strip().upper().replace(" ", "")
-        if num.isdigit() and len(num) == 6:
-            suffix = "/S" if int(num) < 400000 else "/C"
+        if num.isdigit() and len(num) == 6:  # noqa: PLR2004
+            suffix = "/S" if int(num) < 400000 else "/C"  # noqa: PLR2004
             return f"{num}{suffix}"
         return num
 
@@ -417,7 +417,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         """Rimuove la pagina 2 (istruzioni) dal PDF della parte prima."""
         try:
             doc = fitz.open(path)
-            if doc.page_count >= 2:
+            if doc.page_count >= 2:  # noqa: PLR2004
                 doc.delete_page(1)
                 doc.save(path + ".tmp")
                 doc.close()

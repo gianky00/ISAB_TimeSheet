@@ -15,7 +15,7 @@ class SmartSyncEngine(BaseSyncEngine):
     """Motore di sync intelligente per tabelle con chiavi primarie (Certificati, ODA)."""
 
     @classmethod
-    def sync_upsert_smart(
+    def sync_upsert_smart(  # noqa: PLR0913
         cls,
         db_path: Path,
         table_name: str,
@@ -44,7 +44,7 @@ class SmartSyncEngine(BaseSyncEngine):
             return added_or_updated, deleted_count
 
     @classmethod
-    def sync_full_replace_with_metadata(
+    def sync_full_replace_with_metadata(  # noqa: PLR0913
         cls,
         db_path: Path,
         table_name: str,

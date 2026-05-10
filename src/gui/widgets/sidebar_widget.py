@@ -51,64 +51,68 @@ class SidebarWidget(QFrame):
           parent: Widget genitore opzionale.
         """
         super().__init__(parent)
+        self._initialize_constants()
+        self._initialize_ui_elements()
+        self._setup_ui()
+        self._finalize_init()
+
+    def _initialize_constants(self) -> None:
+        """Inizializza le costanti di configurazione."""
         self.setObjectName("sidebarContainer")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-
-        # OTTIMIZZAZIONE: Carichiamo il logo una sola volta
         self._is_collapsed = True
         self._drag_in_progress = False
         self.expanded_width = 245
         self.collapsed_width = 75
-
         self.anim_manager = SidebarAnimationManager(self)
-
         self.setMinimumWidth(self.collapsed_width)
         self.setMaximumWidth(self.collapsed_width)
         self.setMinimumHeight(100)
         self.setMaximumHeight(100)
         self.setMouseTracking(True)
 
+    def _initialize_ui_elements(self) -> None:
+        """Dichiara tutti i membri UI per evitare violazioni di tipo."""
         # UI Elements
-        self.bg_frame: QFrame
-        self.content_layout: QVBoxLayout
-        self.h_container: QWidget
-        self.h_lay: QHBoxLayout
-        self.logo_badge: QLabel
-        self.logo_label: QLabel
-        self.logo_opacity: QGraphicsOpacityEffect
-        self.scroll_area: QScrollArea
-        self.scroll_content: QWidget
-        self.menu_layout: QVBoxLayout
-        self.active_track: QWidget
-        self.footer: QWidget
+        self.bg_frame = QFrame()
+        self.content_layout = QVBoxLayout()
+        self.h_container = QWidget()
+        self.h_lay = QHBoxLayout()
+        self.logo_badge = QLabel()
+        self.logo_label = QLabel()
+        self.logo_opacity = QGraphicsOpacityEffect()
+        self.scroll_area = QScrollArea()
+        self.scroll_content = QWidget()
+        self.menu_layout = QVBoxLayout()
+        self.active_track = QWidget()
+        self.footer = QWidget()
 
         # Menu Elements
-        self.btn_palette: SidebarButton
-        self.btn_home: SidebarButton
-        self.group_automazioni: SidebarGroup
-        self.group_db: SidebarGroup
-        self.group_contabilita: SidebarGroup
-        self.group_notifiche: SidebarGroup
-        self.btn_timbrature: SidebarChildButton
-        self.btn_dataease: SidebarChildButton
-        self.btn_pdl: SidebarChildButton
-        self.btn_storico_oda: SidebarChildButton
-        self.sub_dipendenti: SidebarSubGroup
-        self.sub_strumentale: SidebarSubGroup
-        self.sub_consuntivo: SidebarSubGroup
-        self.sub_fornitori: SidebarSubGroup
-        self.sub_safework: SidebarSubGroup
-        self.btn_help: SidebarButton
-        self.btn_settings: SidebarButton
-        self.main_btns: tuple[QWidget, ...]
-        self.footer_btns: tuple[QWidget, ...]
-        self.notif_child_btns: list[SidebarChildButton]
+        self.btn_palette = SidebarButton("", "")
+        self.btn_home = SidebarButton("", "")
+        self.group_automazioni = SidebarGroup("", "")
+        self.group_db = SidebarGroup("", "")
+        self.group_contabilita = SidebarGroup("", "")
+        self.group_notifiche = SidebarGroup("", "")
+        self.btn_timbrature = SidebarChildButton("", "")
+        self.btn_dataease = SidebarChildButton("", "")
+        self.btn_pdl = SidebarChildButton("", "")
+        self.btn_storico_oda = SidebarChildButton("", "")
+        self.sub_dipendenti = SidebarSubGroup("")
+        self.sub_strumentale = SidebarSubGroup("")
+        self.sub_consuntivo = SidebarSubGroup("")
+        self.sub_fornitori = SidebarSubGroup("")
+        self.sub_safework = SidebarSubGroup("")
+        self.btn_help = SidebarButton("", "")
+        self.btn_settings = SidebarButton("", "")
+        self.main_btns: tuple[QWidget, ...] = ()
+        self.footer_btns: tuple[QWidget, ...] = ()
+        self.notif_child_btns: list[SidebarChildButton] = []
 
-        self._setup_ui()
-        # Inizializziamo lo stile base
+    def _finalize_init(self) -> None:
+        """Operazioni finali dopo il setup UI."""
         self.bg_frame.setStyleSheet(self._get_glass_style())
         self.bg_frame.setProperty("state", "collapsed")
-
         self._update_ui_state()
         QTimer.singleShot(500, self._update_track)
 
@@ -362,7 +366,19 @@ class SidebarWidget(QFrame):
             self.active_track.hide()
             return
 
-        targets = []
+        targets = self._get_all_nav_buttons()
+
+        for t in targets:
+            if t.isChecked() and t.isVisible():
+                self.anim_manager.move_track(self.active_track, t)
+                return
+        self.active_track.hide()
+
+    def _get_all_nav_buttons(self) -> list[SidebarButton | SidebarChildButton]:
+        """Raccoglie tutti i pulsanti di navigazione per il track."""
+        targets: list[SidebarButton | SidebarChildButton] = []
+
+        # Pulsanti dei gruppi
         for g in (self.group_automazioni, self.group_db, self.group_contabilita, self.group_notifiche):
             for e in g.children_elements:
                 if isinstance(e, SidebarButton):
@@ -370,17 +386,15 @@ class SidebarWidget(QFrame):
                 elif isinstance(e, SidebarSubGroup):
                     targets.append(e.header_btn)
                     targets.extend(e.children_btns)
+
+        # Pulsanti principali e footer
         for b in (*self.main_btns, *self.footer_btns):
             if isinstance(b, SidebarButton):
                 targets.append(b)
             elif isinstance(b, SidebarGroup):
                 targets.append(b.header_btn)
 
-        for t in targets:
-            if t.isChecked() and t.isVisible():
-                self.anim_manager.move_track(self.active_track, t)
-                return
-        self.active_track.hide()
+        return targets
 
     def set_active_button(self, index: int, sub: int | None = None, bot: int | None = None) -> None:
         """Evidenzia il pulsante attivo."""
@@ -422,28 +436,49 @@ class SidebarWidget(QFrame):
         """Gestisce l'evidenziazione dei pulsanti di terzo livello."""
         from src.gui.main_window.page_index import PageIndex
 
-        if index == PageIndex.AUTOMAZIONI:
-            self.sub_fornitori.header_btn.setChecked(sub == 0)
-            self.sub_safework.header_btn.setChecked(sub == 1)
-            for i, b in enumerate(self.sub_fornitori.children_btns):
-                b.setChecked(sub == 0 and i == bot)
-            for i, b in enumerate(self.sub_safework.children_btns):
-                b.setChecked(sub == 1 and i == bot)
-        elif index == PageIndex.DIPENDENTI:
-            self.sub_dipendenti.header_btn.setChecked(True)
-            for i, b in enumerate(self.sub_dipendenti.children_btns):
-                b.setChecked(i == sub)
-        elif index == PageIndex.STRUMENTALE:
-            self.sub_strumentale.header_btn.setChecked(True)
-            for i, b in enumerate(self.sub_strumentale.children_btns):
-                b.setChecked(i == sub)
-        elif index == PageIndex.CONSUNTIVO:
-            self.sub_consuntivo.header_btn.setChecked(True)
-            for i, b in enumerate(self.sub_consuntivo.children_btns):
-                b.setChecked(i == sub)
-        elif index == PageIndex.NOTIFICATIONS:
-            for i, b in enumerate(self.notif_child_btns):
-                b.setChecked(i == sub)
+        # Mappatura dei gruppi con i relativi pulsanti
+        mapping = {
+            PageIndex.AUTOMAZIONI: self._handle_active_automazioni,
+            PageIndex.DIPENDENTI: self._handle_active_dipendenti,
+            PageIndex.STRUMENTALE: self._handle_active_strumentale,
+            PageIndex.CONSUNTIVO: self._handle_active_consuntivo,
+            PageIndex.NOTIFICATIONS: self._handle_active_notifications,
+        }
+
+        if handler := mapping.get(index):
+            handler(sub, bot)
+
+    def _handle_active_automazioni(self, sub: int | None, bot: int | None) -> None:
+        """Evidenzia sottomenu automazioni."""
+        self.sub_fornitori.header_btn.setChecked(sub == 0)
+        self.sub_safework.header_btn.setChecked(sub == 1)
+        for i, b in enumerate(self.sub_fornitori.children_btns):
+            b.setChecked(sub == 0 and i == bot)
+        for i, b in enumerate(self.sub_safework.children_btns):
+            b.setChecked(sub == 1 and i == bot)
+
+    def _handle_active_dipendenti(self, sub: int | None, _: int | None) -> None:
+        """Evidenzia sottomenu dipendenti."""
+        self.sub_dipendenti.header_btn.setChecked(True)
+        for i, b in enumerate(self.sub_dipendenti.children_btns):
+            b.setChecked(i == sub)
+
+    def _handle_active_strumentale(self, sub: int | None, _: int | None) -> None:
+        """Evidenzia sottomenu strumentale."""
+        self.sub_strumentale.header_btn.setChecked(True)
+        for i, b in enumerate(self.sub_strumentale.children_btns):
+            b.setChecked(i == sub)
+
+    def _handle_active_consuntivo(self, sub: int | None, _: int | None) -> None:
+        """Evidenzia sottomenu consuntivo."""
+        self.sub_consuntivo.header_btn.setChecked(True)
+        for i, b in enumerate(self.sub_consuntivo.children_btns):
+            b.setChecked(i == sub)
+
+    def _handle_active_notifications(self, sub: int | None, _: int | None) -> None:
+        """Evidenzia sottomenu notifiche."""
+        for i, b in enumerate(self.notif_child_btns):
+            b.setChecked(i == sub)
 
     def enterEvent(self, event: QEnterEvent | None) -> None:
         """Gestisce l'evento di entrata del mouse (espansione)."""

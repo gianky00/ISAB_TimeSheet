@@ -191,9 +191,9 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
                 if has_prog:
                     pdl = str(row.iloc[0]).strip() if len(row) > 0 else "N/D"
                     desc = str(row.iloc[1]).strip() if len(row) > 1 else ""
-                    richiedente = str(row.iloc[17]).strip() if len(row) > 17 else "N/D"
-                    unita = str(row.iloc[23]).strip() if len(row) > 23 else ""
-                    area = str(row.iloc[24]).strip() if len(row) > 24 else ""
+                    richiedente = str(row.iloc[17]).strip() if len(row) > 17 else "N/D"  # noqa: PLR2004
+                    unita = str(row.iloc[23]).strip() if len(row) > 23 else ""  # noqa: PLR2004
+                    area = str(row.iloc[24]).strip() if len(row) > 24 else ""  # noqa: PLR2004
 
                     self.results.append(
                         {

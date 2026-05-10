@@ -187,7 +187,7 @@ class GiornaliereImporter(BaseImporter):
                 "nome_file",
             ]
             rows = list(df[target_cols].itertuples(index=False, name=None))
-            return (year, rows, None)
+            return (year, rows, None)  # noqa: TRY300
 
         except Exception as e:
             return (year, [], str(e))

@@ -5,7 +5,6 @@ Modularizzato per una migliore manutenibilità.
 """
 
 import logging
-import os
 from pathlib import Path
 from typing import Any
 
@@ -34,7 +33,7 @@ from src.gui.widgets.core_widgets import (
 )
 from src.gui.widgets.safework.status_list import StatusListWidget
 from src.gui.widgets.toast import ToastManager
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.utils.helpers import get_asset_path, get_colored_icon, safe_open
 from src.utils.printing import get_installed_printers
 
 logger = logging.getLogger(__name__)
@@ -237,7 +236,7 @@ class ScaricoPDLPanel(BaseBotPanel):
                 return
 
         try:
-            os.startfile(str(path))
+            safe_open(path)
         except Exception:
             ToastManager.instance().show(f"Impossibile aprire la cartella: {path}", "error")
 

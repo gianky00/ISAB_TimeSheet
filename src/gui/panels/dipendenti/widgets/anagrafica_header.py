@@ -43,37 +43,49 @@ class AnagraficaHeaderWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(15)
 
-        # 1. Filtri e Azioni
+        self._setup_filter_bar(layout)
+        self._setup_stats_cards(layout)
+
+    def _setup_filter_bar(self, layout: QVBoxLayout) -> None:
+        """Configura la barra superiore con ricerca e azioni."""
         self.filter_card = QFrame()
         self.filter_card.setObjectName("filterBar")
         self.filter_card.setStyleSheet(f"""
-      QFrame#filterBar {{
-        background-color: {COLORS["bg_white"]};
-        border: 1px solid {COLORS["border_light"]};
-        border-radius: 12px;
-      }}
-    """)
+            QFrame#filterBar {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
+                border-radius: 12px;
+            }}
+        """)
         filter_layout = QHBoxLayout(self.filter_card)
         filter_layout.setContentsMargins(15, 10, 15, 10)
         filter_layout.setSpacing(15)
 
-        # Sezione Ricerca
+        self._setup_search_section(filter_layout)
+        filter_layout.addStretch()
+        self._setup_actions_section(filter_layout)
+
+        layout.addWidget(self.filter_card)
+
+    def _setup_search_section(self, layout: QHBoxLayout) -> None:
+        """Configura la sezione di ricerca nell'header."""
         search_v = QVBoxLayout()
         search_v.setSpacing(4)
         search_label = QLabel("CERCA DIPENDENTE")
         search_label.setStyleSheet(LABEL_MUTED)
+
         self.search_input = SearchInput()
         self.search_input.setPlaceholderText("Nome, Cognome, CF o Badge...")
         self.search_input.setMinimumWidth(300)
         self.search_input.setStyleSheet(LINEEDIT_STYLE)
         self.search_input.textChanged.connect(lambda text: self.search_changed.emit(text))
+
         search_v.addWidget(search_label)
         search_v.addWidget(self.search_input)
-        filter_layout.addLayout(search_v)
+        layout.addLayout(search_v)
 
-        filter_layout.addStretch()
-
-        # Info & Actions
+    def _setup_actions_section(self, layout: QHBoxLayout) -> None:
+        """Configura i pulsanti di azione nell'header."""
         info_v = QVBoxLayout()
         info_v.setSpacing(4)
         info_v.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -111,11 +123,12 @@ class AnagraficaHeaderWidget(QWidget):
 
         for b in (import_btn, email_report_btn, self.btn_bot_update):
             actions_h.addWidget(b)
-        info_v.addLayout(actions_h)
-        filter_layout.addLayout(info_v)
-        layout.addWidget(self.filter_card)
 
-        # 2. Cards Container
+        info_v.addLayout(actions_h)
+        layout.addLayout(info_v)
+
+    def _setup_stats_cards(self, layout: QVBoxLayout) -> None:
+        """Configura le card statistiche interattive."""
         self.cards_container = QWidget()
         cards_layout = QHBoxLayout(self.cards_container)
         cards_layout.setContentsMargins(0, 5, 0, 5)

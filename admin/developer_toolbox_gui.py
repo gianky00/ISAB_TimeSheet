@@ -148,7 +148,7 @@ class DeveloperToolboxGUI(QMainWindow):
         self.current_runner: CommandRunner | None = None
         self.init_ui()
 
-    def init_ui(self) -> None:
+    def init_ui(self) -> None:  # noqa: PLR0915
         """Inizializza l'interfaccia utente"""
         self.setWindowTitle("SyncroJob - Developer Toolbox (Apex Edition)")
         self.setGeometry(100, 100, 1400, 900)
@@ -382,7 +382,7 @@ class DeveloperToolboxGUI(QMainWindow):
 
     def _handle_cli_args(self) -> None:
         """Gestisce eventuali argomenti passati da riga di comando"""
-        if len(sys.argv) < 2:
+        if len(sys.argv) < 2:  # noqa: PLR2004
             return
 
         arg = " ".join(sys.argv[1:]).lower().replace("-", " ")

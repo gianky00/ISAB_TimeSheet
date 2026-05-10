@@ -81,7 +81,7 @@ class PDLQueries:
                     row.extend([day["tcl"], day["tgo"]])
 
                 # Riempimento se mancano giorni (safety)
-                while len(row) < 19:
+                while len(row) < 19:  # noqa: PLR2004
                     row.append(False)
 
                 # Aggiungi date

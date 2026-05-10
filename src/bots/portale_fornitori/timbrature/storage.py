@@ -99,7 +99,7 @@ class TimbratureStorage:
         Returns: Lista di dizionari con info dipendente.
         """
         query = query.strip().lower()
-        if len(query) < 2:
+        if len(query) < 2:  # noqa: PLR2004
             return []
 
         results: list[dict[str, str]] = []
@@ -251,18 +251,18 @@ class TimbratureStorage:
                 parts = clean_term.split("-")
 
                 # Caso DD-MM (es. 05/12 -> cerca 12 Dicembre)
-                if len(parts) == 2:
+                if len(parts) == 2:  # noqa: PLR2004
                     d, m = parts
                     # Ignoriamo se contengono testo
                     if d.isdigit() and m.isdigit():
                         return f"-{m.zfill(2)}-{d.zfill(2)}"
 
                 # Caso DD-MM-YYYY
-                if len(parts) == 3:
+                if len(parts) == 3:  # noqa: PLR2004
                     d, m, y = parts
                     if len(y) not in (2, 4):
                         return term
-                    if len(y) == 2:
+                    if len(y) == 2:  # noqa: PLR2004
                         y = "20" + y
                     return f"{y}-{m.zfill(2)}-{d.zfill(2)}"
 

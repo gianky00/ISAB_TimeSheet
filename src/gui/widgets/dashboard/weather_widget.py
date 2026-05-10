@@ -497,22 +497,20 @@ class WeatherWidget(ModernCard):
             if child and (w := child.widget()):
                 w.deleteLater()
 
-        t_max = daily.get("temperature_2m_max", [])
-        t_min = daily.get("temperature_2m_min", [])
-        codes = daily.get("weather_code", [])
-        pops = daily.get("precipitation_probability_max", [])
         dates = daily.get("time", [])
 
         forecast_days = 5
         for i in range(1, forecast_days):
             if i >= len(dates):
                 break
-            self._add_forecast_item(i, dates[i], codes, pops, t_max, t_min)
+            self._add_forecast_item(i, dates[i], daily)
 
-    def _add_forecast_item(
-        self, i: int, date_str: str, codes: list, pops: list, t_max: list, t_min: list
-    ) -> None:
+    def _add_forecast_item(self, i: int, date_str: str, daily: dict[str, Any]) -> None:
         """Crea e aggiunge un singolo elemento giornaliero alla riga delle previsioni."""
+        t_max: list[float] = daily.get("temperature_2m_max", [])
+        t_min: list[float] = daily.get("temperature_2m_min", [])
+        codes: list[int] = daily.get("weather_code", [])
+        pops: list[int] = daily.get("precipitation_probability_max", [])
         item = QWidget()
         item.setObjectName(f"forecast_item_{i}")
         item.setStyleSheet(f"#forecast_item_{i} {{ background: transparent; border: none; }}")

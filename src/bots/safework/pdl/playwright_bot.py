@@ -36,7 +36,7 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
         ("session", "Chiusura Sessione"),
     ]
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         username: str,
         password: str,

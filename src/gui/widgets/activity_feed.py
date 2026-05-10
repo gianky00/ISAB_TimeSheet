@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import suppress
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
@@ -45,130 +46,100 @@ class ActivityItem(QFrame):
         super().__init__(parent)
         self.log_entry = log_entry
         self.setFrameShape(QFrame.Shape.NoFrame)
+        self.setFixedWidth(300)
 
-        # Determina il colore in base allo status
-        status = log_entry.get("status", "success").lower()
+        self._setup_style()
+        self._setup_ui()
+        self._setup_animations(animate)
+
+    def _setup_style(self) -> None:
+        """Configura lo stile e i gradienti in base allo stato."""
+        status = self.log_entry.get("status", "success").lower()
         if status == "error":
             self.border_color = COLORS["error_red"]
-            self.bg_gradient = f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_white']})"
         elif status == "warning":
             self.border_color = COLORS["warning_yellow"]
-            self.bg_gradient = f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_white']})"
         else:
             self.border_color = COLORS["success_dark"]
-            self.bg_gradient = f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_white']})"
 
+        self.bg_gradient = f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_white']})"
         self.setStyleSheet(
             f"""
-      {TOOLTIP_CSS}
-      ActivityItem {{
-        background: {self.bg_gradient};
-        border-radius: 12px;
-        border-left: 4px solid {self.border_color};
-        border-top: 1px solid {COLORS["border_light"]};
-        border-right: 1px solid {COLORS["border_light"]};
-        border-bottom: 1px solid {COLORS["border_light"]};
-      }}
-      ActivityItem:hover {{
-        background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["bg_hover"]}, stop:1 {COLORS["bg_white"]});
-        border-left: 4px solid {self.border_color};
-        border-top: 1 solid {COLORS["border_medium"]};
-        border-right: 1px solid {COLORS["border_medium"]};
-        border-bottom: 1px solid {COLORS["border_medium"]};
-      }}
-    """
+            {TOOLTIP_CSS}
+            ActivityItem {{
+                background: {self.bg_gradient};
+                border-radius: 12px;
+                border-left: 4px solid {self.border_color};
+                border-top: 1px solid {COLORS["border_light"]};
+                border-right: 1px solid {COLORS["border_light"]};
+                border-bottom: 1px solid {COLORS["border_light"]};
+            }}
+            ActivityItem:hover {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["bg_hover"]}, stop:1 {COLORS["bg_white"]});
+                border-top: 1px solid {COLORS["border_medium"]};
+                border-right: 1px solid {COLORS["border_medium"]};
+                border-bottom: 1px solid {COLORS["border_medium"]};
+            }}
+        """
         )
-        self.setFixedWidth(300)  # Leggermente più largo
 
+    def _setup_ui(self) -> None:
+        """Costruisce l'interfaccia dell'item."""
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 10, 12, 10)
         layout.setSpacing(12)
 
-        # 1. Badge Stato con Icona (Stile Moderno)
-        status = log_entry.get("status", "success").lower()
-        if status == "error":
-            icon_color = "white"
-            badge_bg = COLORS["error_red"]
-            icon_path = Icons.ALERT_CIRCLE
-        elif status == "warning":
-            icon_color = "black"
-            badge_bg = COLORS["warning_yellow"]
-            icon_path = Icons.ALERT_TRIANGLE
-        else:
-            icon_color = "white"
-            badge_bg = COLORS["success_dark"]
-            icon_path = Icons.CHECK_CIRCLE
+        self._add_status_badge(layout)
+        self._add_text_content(layout)
 
-        # Badge container
+    def _add_status_badge(self, layout: QHBoxLayout) -> None:
+        """Aggiunge l'icona circolare di stato."""
+        status = self.log_entry.get("status", "success").lower()
+        if status == "error":
+            icon_color, badge_bg, icon_path = "white", COLORS["error_red"], Icons.ALERT_CIRCLE
+        elif status == "warning":
+            icon_color, badge_bg, icon_path = "black", COLORS["warning_yellow"], Icons.ALERT_TRIANGLE
+        else:
+            icon_color, badge_bg, icon_path = "white", COLORS["success_dark"], Icons.CHECK_CIRCLE
+
         badge = QLabel()
         badge.setFixedSize(32, 32)
         badge.setPixmap(get_colored_icon(get_asset_path(icon_path), icon_color).pixmap(20, 20))
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        badge.setStyleSheet(
-            f"""
-      QLabel {{
-        background-color: {badge_bg};
-        border-radius: 16px;
-        border: none;
-        padding: 6px;
-      }}
-    """
-        )
+        badge.setStyleSheet(f"QLabel {{ background-color: {badge_bg}; border-radius: 16px; border: none; padding: 6px; }}")
         layout.addWidget(badge)
 
-        # 2. Contenuto Testuale (Action + Time)
+    def _add_text_content(self, layout: QHBoxLayout) -> None:
+        """Aggiunge le informazioni testuali (azione e tempo)."""
         text_layout = QVBoxLayout()
         text_layout.setSpacing(0)
 
-        # Action (Full Specific Text)
-        action_text = log_entry.get("action", "Azione")
-        entity = log_entry.get("entity", "")
-
+        action_text = self.log_entry.get("action", "Azione")
+        entity = self.log_entry.get("entity", "")
         full_text = f"{action_text} - {entity}" if entity and entity != "-" else action_text
+        self.setToolTip(full_text)
 
         action_lbl = QLabel(full_text)
-        action_lbl.setStyleSheet(
-            f"""
-      QLabel {{
-        font-weight: 600;
-        font-size: 14px;
-        color: {COLORS["text_dark"]};
-        border: none;
-        background: transparent;
-      }}
-    """
-        )
+        action_lbl.setStyleSheet(f"QLabel {{ font-weight: 600; font-size: 14px; color: {COLORS['text_dark']}; border: none; background: transparent; }}")
         action_lbl.setWordWrap(True)
         text_layout.addWidget(action_lbl)
 
-        # Tooltip sull'intero widget per coerenza
-        self.setToolTip(full_text)
-
-        # Time con icona
-        ts_str = log_entry.get("timestamp", "")
-        try:
-            ts = datetime.fromisoformat(ts_str)
-            time_str = f"   {friendly_time_delta(ts)}"
-        except ValueError:
-            time_str = "   --"
+        # Time
+        ts_str = self.log_entry.get("timestamp", "")
+        time_str = "   --"
+        with suppress(ValueError):
+            if ts_str:
+                ts = datetime.fromisoformat(ts_str)
+                time_str = f"   {friendly_time_delta(ts)}"
 
         time_lbl = QLabel(time_str)
-        time_lbl.setStyleSheet(
-            f"""
-      QLabel {{
-        font-size: 12px;
-        color: {COLORS["text_muted"]};
-        border: none;
-        background: transparent;
-        font-weight: 500;
-      }}
-    """
-        )
+        time_lbl.setStyleSheet(f"QLabel {{ font-size: 12px; color: {COLORS['text_muted']}; border: none; background: transparent; font-weight: 500; }}")
         text_layout.addWidget(time_lbl)
 
         layout.addLayout(text_layout)
 
-        # Animazione fade-in (solo se richiesta)
+    def _setup_animations(self, animate: bool) -> None:
+        """Configura l'animazione di fade-in."""
         self.opacity_effect: QGraphicsOpacityEffect | None = None
         self.fade_in_animation: QPropertyAnimation | None = None
 
@@ -180,12 +151,7 @@ class ActivityItem(QFrame):
             self.fade_in_animation.setStartValue(0.0)
             self.fade_in_animation.setEndValue(1.0)
             self.fade_in_animation.setEasingCurve(QEasingCurve.Type.OutCubic)
-
-            # Rimuovi l'effect dopo l'animazione per evitare problemi con hover
             self.fade_in_animation.finished.connect(self._remove_opacity_effect)
-        else:
-            self.opacity_effect = None
-            self.fade_in_animation = None
 
     def _remove_opacity_effect(self) -> None:
         """Rimuove l'effetto opacity dopo l'animazione per evitare interferenze."""

@@ -148,7 +148,7 @@ async def _handle_db_actions(
         )
 
 
-async def _handle_bot_actions(
+async def _handle_bot_actions(  # noqa: PLR0913
     service: "TelegramService",
     data: str,
     query: "CallbackQuery",
@@ -167,7 +167,7 @@ async def _handle_bot_actions(
         _handle_direct_bot_commands(service, data, chat_id)
 
 
-async def _handle_menu_and_input_dispatch(
+async def _handle_menu_and_input_dispatch(  # noqa: C901, PLR0913
     service: "TelegramService",
     data: str,
     query: "CallbackQuery",
@@ -334,7 +334,7 @@ def _handle_direct_bot_commands(service: "TelegramService", data: str, chat_id: 
         service.command_received.emit(cmd[0], cmd[1])
 
 
-async def _handle_utility_actions(
+async def _handle_utility_actions(  # noqa: C901
     service: "TelegramService", data: str, query: "CallbackQuery", chat_id: int
 ) -> None:
     if data == "status":

@@ -37,12 +37,12 @@ def run_command(cmd: Sequence[str], label: str) -> tuple[str, str, int]:
             encoding="utf-8",
             errors="replace",
         )
-        return result.stdout, result.stderr, result.returncode
+        return result.stdout, result.stderr, result.returncode  # noqa: TRY300
     except Exception as e:
         return "", f"Error running {label}: {e}", 1
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901, PLR0912, PLR0915
     """Aggregatore principale del contesto CI."""
     start_time = datetime.now()
 

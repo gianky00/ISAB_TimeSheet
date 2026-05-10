@@ -119,7 +119,11 @@ class BackupTab(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # --- TOP STATUS BAR (Search) ---
+        self._setup_header(main_layout)
+        self._setup_scroll_area(main_layout)
+
+    def _setup_header(self, layout: QVBoxLayout) -> None:
+        """Configura la barra superiore con la ricerca."""
         self.header_bar = QFrame()
         self.header_bar.setFixedHeight(50)
         self.header_bar.setStyleSheet(
@@ -143,9 +147,10 @@ class BackupTab(QWidget):
         header_layout.addWidget(self.search_bar)
         header_layout.addStretch()
 
-        main_layout.addWidget(self.header_bar)
+        layout.addWidget(self.header_bar)
 
-        # Scroll Area
+    def _setup_scroll_area(self, layout: QVBoxLayout) -> None:
+        """Configura l'area scrollabile contenente le card."""
         self.scroll_container = QScrollArea()
         self.scroll_container.setWidgetResizable(True)
         self.scroll_container.setStyleSheet("background: transparent; border: none;")
@@ -156,7 +161,15 @@ class BackupTab(QWidget):
         self.cards_layout.setContentsMargins(30, 30, 30, 30)
         self.cards_layout.setSpacing(25)
 
-        # 1. Database Backup
+        self._add_backup_card()
+        self._add_logs_card()
+
+        self.cards_layout.addStretch()
+        self.scroll_container.setWidget(scroll_content)
+        layout.addWidget(self.scroll_container)
+
+    def _add_backup_card(self) -> None:
+        """Aggiunge la card per la gestione dei backup."""
         backup_widget = QWidget()
         backup_layout = QVBoxLayout(backup_widget)
         backup_layout.setContentsMargins(0, 10, 0, 0)
@@ -185,7 +198,8 @@ class BackupTab(QWidget):
         self.cards_layout.addWidget(card_backup)
         self.cards.append(card_backup)
 
-        # 2. Logs Management
+    def _add_logs_card(self) -> None:
+        """Aggiunge la card per la gestione dei log."""
         logs_widget = QWidget()
         logs_layout = QVBoxLayout(logs_widget)
         logs_layout.setContentsMargins(0, 10, 0, 0)
@@ -210,10 +224,6 @@ class BackupTab(QWidget):
         )
         self.cards_layout.addWidget(card_logs)
         self.cards.append(card_logs)
-
-        self.cards_layout.addStretch()
-        self.scroll_container.setWidget(scroll_content)
-        main_layout.addWidget(self.scroll_container)
 
     def _filter_cards(self, text: str) -> None:
         search_term = text.lower().strip()

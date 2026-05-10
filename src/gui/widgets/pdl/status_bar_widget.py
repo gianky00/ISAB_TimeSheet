@@ -85,6 +85,7 @@ class ProgrammingStatusWidget(QWidget):
         x, y = (w - bar_w) / 2.0, (h - bar_h) / 2.0
         radius = 5.0
 
+        bar_rect = QRectF(x, y, bar_w, bar_h)
         path = self._create_bar_path(x, y, bar_w, bar_h, radius)
 
         # Disegna lo sfondo (vuoto/default)
@@ -93,7 +94,7 @@ class ProgrammingStatusWidget(QWidget):
         painter.drawPath(path)
 
         # Disegna gli indicatori attivi
-        self._draw_status_indicators(painter, path, x, y, bar_w, bar_h, radius)
+        self._draw_status_indicators(painter, path, bar_rect, radius)
 
     def _draw_today_highlight(self, painter: QPainter) -> None:
         """Disegna un'evidenziazione se la cella rappresenta il giorno corrente."""
@@ -138,11 +139,12 @@ class ProgrammingStatusWidget(QWidget):
         return path
 
     def _draw_status_indicators(
-        self, painter: QPainter, path: QPainterPath, x: float, y: float, w: float, h: float, r: float
+        self, painter: QPainter, path: QPainterPath, rect: QRectF, r: float
     ) -> None:
         """Disegna i colori verde o arancione in base allo stato TCL/TGO."""
         green_color = QColor(COLORS["success_dark"])
         orange_color = QColor(COLORS["warning_orange"])
+        x, y, w, h = rect.x(), rect.y(), rect.width(), rect.height()
 
         if self.tcl and self.tgo:
             painter.setBrush(green_color)

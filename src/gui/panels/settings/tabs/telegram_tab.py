@@ -128,7 +128,11 @@ class TelegramTab(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # --- TOP STATUS BAR (Search) ---
+        self._setup_header(main_layout)
+        self._setup_scroll_area(main_layout)
+
+    def _setup_header(self, layout: QVBoxLayout) -> None:
+        """Configura la barra superiore con la ricerca."""
         self.header_bar = QFrame()
         self.header_bar.setFixedHeight(50)
         self.header_bar.setStyleSheet(
@@ -152,9 +156,10 @@ class TelegramTab(QWidget):
         header_layout.addWidget(self.search_bar)
         header_layout.addStretch()
 
-        main_layout.addWidget(self.header_bar)
+        layout.addWidget(self.header_bar)
 
-        # Scroll Area
+    def _setup_scroll_area(self, layout: QVBoxLayout) -> None:
+        """Configura l'area scrollabile e aggiunge le card Telegram."""
         self.scroll_container = QScrollArea()
         self.scroll_container.setWidgetResizable(True)
         self.scroll_container.setStyleSheet("background: transparent; border: none;")
@@ -165,7 +170,15 @@ class TelegramTab(QWidget):
         self.cards_layout.setContentsMargins(30, 30, 30, 30)
         self.cards_layout.setSpacing(25)
 
-        # 1. Credentials Card
+        self._add_credentials_card()
+        self._add_connectivity_card()
+
+        self.cards_layout.addStretch()
+        self.scroll_container.setWidget(scroll_content)
+        layout.addWidget(self.scroll_container)
+
+    def _add_credentials_card(self) -> None:
+        """Aggiunge la card per le credenziali APiùTelegram."""
         creds_widget = QWidget()
         creds_layout = QVBoxLayout(creds_widget)
         creds_layout.setContentsMargins(0, 10, 0, 0)
@@ -194,7 +207,8 @@ class TelegramTab(QWidget):
         self.cards_layout.addWidget(card_creds)
         self.cards.append(card_creds)
 
-        # 2. Connectivity Card
+    def _add_connectivity_card(self) -> None:
+        """Aggiunge la card per il test di connettività."""
         conn_widget = QWidget()
         conn_layout = QVBoxLayout(conn_widget)
         conn_layout.setContentsMargins(0, 10, 0, 0)
@@ -219,10 +233,6 @@ class TelegramTab(QWidget):
         )
         self.cards_layout.addWidget(card_conn)
         self.cards.append(card_conn)
-
-        self.cards_layout.addStretch()
-        self.scroll_container.setWidget(scroll_content)
-        main_layout.addWidget(self.scroll_container)
 
     def _filter_cards(self, text: str) -> None:
         search_term = text.lower().strip()

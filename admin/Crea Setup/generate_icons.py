@@ -46,7 +46,7 @@ def draw_hexagon_points(center_x, center_y, size, rotation=0):
     return points
 
 
-def create_complex_app_icon(target_size):
+def create_complex_app_icon(target_size):  # noqa: C901, PLR0912, PLR0915
     """
     Icona principale dell'applicazione.
     Design: Esagono tecnologico con nucleo AI centrale e elementi orbitali.
@@ -209,7 +209,7 @@ def create_complex_app_icon(target_size):
     return img.resize((target_size, target_size), Image.Resampling.LANCZOS)
 
 
-def create_complex_setup_icon(target_size):
+def create_complex_setup_icon(target_size):  # noqa: C901, PLR0912, PLR0915
     """
     Icona del setup/installer.
     Design: Esagoni in assemblaggio con arco di progresso e particelle.
@@ -263,7 +263,7 @@ def create_complex_setup_icon(target_size):
             draw.polygon(points, fill=(brightness, g_val, 255, 255))
 
         # Centro luminoso
-        if completeness > 0.6:
+        if completeness > 0.6:  # noqa: PLR2004
             center_size = hex_size * 0.35
             points = draw_hexagon_points(hx, hy, center_size, 30)
             draw.polygon(points, fill=(*ULTRA_BRIGHT, int(255 * completeness)))

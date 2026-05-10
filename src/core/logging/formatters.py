@@ -30,7 +30,7 @@ class JSONFormatter:
         """
         self.mask_sensitive = mask_sensitive
 
-    def format(
+    def format(  # noqa: PLR0913
         self,
         level: str,
         logger_name: str,
@@ -165,7 +165,7 @@ class HumanFormatter:
 
         return "ANSICON" in os.environ or "WT_SESSION" in os.environ
 
-    def format(
+    def format(  # noqa: PLR0913
         self,
         level: str,
         logger_name: str,

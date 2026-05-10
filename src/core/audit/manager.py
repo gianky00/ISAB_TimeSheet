@@ -209,7 +209,7 @@ class AuditManager:
         else:
             return audit_id
 
-    def _log_structured_audit(
+    def _log_structured_audit(  # noqa: PLR0913
         self,
         action: str,
         audit_id: Any,

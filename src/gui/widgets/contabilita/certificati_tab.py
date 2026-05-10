@@ -33,7 +33,7 @@ from src.gui.dialogs.certificati_analysis_dialog import ScadenzeAnalysisDialog
 from src.gui.styles import COLORS
 from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
 from src.gui.widgets.core_widgets import PrimaryButton
-from src.utils.helpers import get_asset_path
+from src.utils.helpers import get_asset_path, safe_open
 
 from .certificati.tree_widget import CertificatiTreeWidget
 
@@ -76,7 +76,7 @@ class CertificatiCampioneTab(QWidget):
         self.tree.customContextMenuRequested.connect(self._show_context_menu)
         self.tree.itemExpanded.connect(self._on_item_expanded)
         self.tree.itemCollapsed.connect(self._on_item_collapsed)
-        self.tree.itemEditedCustom.connect(self._on_item_edited)
+        self.tree.item_edited_custom.connect(self._on_item_edited)
         layout.addWidget(self.tree)
 
     def _setup_toolbar(self) -> QHBoxLayout:
@@ -227,27 +227,28 @@ class CertificatiCampioneTab(QWidget):
         query = self.search_input.text().lower().strip()
 
         for i in range(self.tree.topLevelItemCount()):
-            parent = self.tree.topLevelItem(i)
-            if not parent:
-                continue
-
-            # 1. Recuperòstati base
-            is_any_ex = self._is_any_excluded(parent)
-            is_absent = self._is_instrument_absent(parent)
-
-            # 2. Calcolo Visibilità Primaria (Padre)
-            visible = self._calculate_parent_visibility(parent, is_any_ex, is_absent)
-
-            # 3. Gestione Figli (Storico) e Ricerca
-            found_in_child = self._filter_child_items(parent, query)
-
-            # 4. Verifica Finale con Ricerca
-            if visible and query:
-                visible = (query in parent.text(0).lower()) or found_in_child
-
-            parent.setHidden(not visible)
+            if parent := self.tree.topLevelItem(i):
+                self._filter_parent_item(parent, query)
 
         self._update_excluded_count_label()
+
+    def _filter_parent_item(self, parent: QTreeWidgetItem, query: str) -> None:
+        """Determina e applica la visibilità per un singolo elemento padre."""
+        # 1. Recupero stati base
+        is_any_ex = self._is_any_excluded(parent)
+        is_absent = self._is_instrument_absent(parent)
+
+        # 2. Calcolo Visibilità Primaria (Padre)
+        visible = self._calculate_parent_visibility(parent, is_any_ex, is_absent)
+
+        # 3. Gestione Figli (Storico) e Ricerca
+        found_in_child = self._filter_child_items(parent, query)
+
+        # 4. Verifica Finale con Ricerca
+        if visible and query:
+            visible = (query in parent.text(0).lower()) or found_in_child
+
+        parent.setHidden(not visible)
 
     def _is_any_excluded(self, parent: QTreeWidgetItem) -> bool:
         """Verifica se lo strumento è escluso (monitoraggio o stampa)."""
@@ -324,21 +325,23 @@ class CertificatiCampioneTab(QWidget):
         self.tree.clear()
         self.tree.setSortingEnabled(False)
 
-        # 1. Raggruppamento dati
-        id_strumento_groups = self._group_data_by_id_strumento(data)
+        # Raggruppamento e prioritizzazione
+        id_groups = self._group_data_by_id_strumento(data)
+        prioritized_groups = self._prepare_groups_with_priority(id_groups)
+        prioritized_groups.sort(key=operator.itemgetter("priority"))
 
-        # 2. Preparazione gruppi con metadati e priorità
-        groups_with_priority = self._prepare_groups_with_priority(id_strumento_groups)
-        groups_with_priority.sort(key=operator.itemgetter("priority"))
-
-        # 3. Popolamento Tree
-        for g in groups_with_priority:
-            parent_item = self._create_parent_item(g)
-            self._add_child_items(parent_item, g)
+        # Popolamento Tree
+        self._populate_tree(prioritized_groups)
 
         self.tree.collapseAll()
         self._apply_filters()
         self._update_excluded_count_label()
+
+    def _populate_tree(self, groups: list[dict[str, Any]]) -> None:
+        """Crea gli elementi nell'albero per ogni gruppo di certificati."""
+        for g in groups:
+            parent_item = self._create_parent_item(g)
+            self._add_child_items(parent_item, g)
 
     def _group_data_by_id_strumento(self, data: list[tuple[Any, ...]]) -> dict[str, list[tuple[Any, ...]]]:
         """Raggruppa le righe del DB per ID-STRUMENTO o fallback (Matricola/Certificato)."""
@@ -530,60 +533,64 @@ class CertificatiCampioneTab(QWidget):
         item = self.tree.itemAt(pos)
         if not item:
             return
+
         menu = QMenu(self)
-        is_parent = item.parent() is None
-
-        if is_parent:
-            matricola = self.engine.parse_parent_label(item.text(0))["matricola"]
-
-            # Monitoraggio
-            is_excluded = matricola in self.engine._exclusions
-            mon_text = "Includi nel monitoraggio" if is_excluded else "Escludi dal monitoraggio"
-            mon_act = QAction(mon_text, self)
-            mon_act.setIcon(QIcon(get_asset_path(Icons.CHECK_CIRCLE if is_excluded else Icons.X_CIRCLE)))
-            mon_act.triggered.connect(lambda: self._toggle_exclusion(matricola))
-            menu.addAction(mon_act)
-
-            # Stampa
-            is_print_excluded = matricola in self.engine._print_exclusions
-            print_text = "Includi nella stampa" if is_print_excluded else "Escludi dalla stampa"
-            print_act = QAction(print_text, self)
-            print_act.setIcon(QIcon(get_asset_path(Icons.FILE_TEXT if is_print_excluded else Icons.ALERT)))
-            print_act.triggered.connect(lambda: self._toggle_print_exclusion(matricola))
-            menu.addAction(print_act)
-
-            menu.addSeparator()
-            toggle_expand = QAction("Comprimi" if item.isExpanded() else "Espandi", self)
-            toggle_expand.setIcon(
-                QIcon(get_asset_path(Icons.MINIMIZE if item.isExpanded() else Icons.MAXIMIZE))
-            )
-            toggle_expand.triggered.connect(
-                lambda: self.tree.collapseItem(item) if item.isExpanded() else self.tree.expandItem(item)
-            )
-            menu.addAction(toggle_expand)
+        if item.parent() is None:
+            self._add_parent_context_actions(menu, item)
         else:
-            # Opzioni per il singolo certificato (Figlio)
-            cert_number = item.text(self.tree.IDX_CERTIFICATO)
-            if cert_number:
-                open_act = QAction("Apri Certificato", self)
-                open_act.setIcon(QIcon(get_asset_path(Icons.FILE_TEXT)))
-                open_act.triggered.connect(lambda: self._open_certificate(cert_number))
-                menu.addAction(open_act)
-
-            menu.addSeparator()
-
-            edit_anno_act = QAction("Modifica Annotazioni", self)
-            edit_anno_act.setIcon(QIcon(get_asset_path(Icons.LIST)))
-            edit_anno_act.triggered.connect(lambda: self.tree.editItem(item, self.tree.IDX_ANNOTAZIONI))
-            menu.addAction(edit_anno_act)
-
-            edit_ubic_act = QAction("Modifica Ubicazione", self)
-            edit_ubic_act.setIcon(QIcon(get_asset_path(Icons.PDL)))  # Building/Location
-            edit_ubic_act.triggered.connect(lambda: self.tree.editItem(item, self.tree.IDX_UBICAZIONE))
-            menu.addAction(edit_ubic_act)
+            self._add_child_context_actions(menu, item)
 
         if viewport := self.tree.viewport():
             menu.exec(viewport.mapToGlobal(pos))
+
+    def _add_parent_context_actions(self, menu: QMenu, item: QTreeWidgetItem) -> None:
+        """Aggiunge le azioni specifiche per l'item padre (strumento)."""
+        matricola = self.engine.parse_parent_label(item.text(0))["matricola"]
+
+        # Monitoraggio
+        is_ex = matricola in self.engine._exclusions
+        mon_act = QAction("Includi nel monitoraggio" if is_ex else "Escludi dal monitoraggio", self)
+        mon_act.setIcon(QIcon(get_asset_path(Icons.CHECK_CIRCLE if is_ex else Icons.X_CIRCLE)))
+        mon_act.triggered.connect(lambda: self._toggle_exclusion(matricola))
+        menu.addAction(mon_act)
+
+        # Stampa
+        is_pr_ex = matricola in self.engine._print_exclusions
+        print_act = QAction("Includi nella stampa" if is_pr_ex else "Escludi dalla stampa", self)
+        print_act.setIcon(QIcon(get_asset_path(Icons.FILE_TEXT if is_pr_ex else Icons.ALERT)))
+        print_act.triggered.connect(lambda: self._toggle_print_exclusion(matricola))
+        menu.addAction(print_act)
+
+        menu.addSeparator()
+        self._add_expansion_action(menu, item)
+
+    def _add_child_context_actions(self, menu: QMenu, item: QTreeWidgetItem) -> None:
+        """Aggiunge le azioni per il singolo certificato (figlio)."""
+        if cert_num := item.text(self.tree.IDX_CERTIFICATO):
+            open_act = QAction("Apri Certificato", self)
+            open_act.setIcon(QIcon(get_asset_path(Icons.FILE_TEXT)))
+            open_act.triggered.connect(lambda: self._open_certificate(cert_num))
+            menu.addAction(open_act)
+
+        menu.addSeparator()
+        edit_anno = QAction("Modifica Annotazioni", self)
+        edit_anno.setIcon(QIcon(get_asset_path(Icons.LIST)))
+        edit_anno.triggered.connect(lambda: self.tree.editItem(item, self.tree.IDX_ANNOTAZIONI))
+        menu.addAction(edit_anno)
+
+        edit_ubic = QAction("Modifica Ubicazione", self)
+        edit_ubic.setIcon(QIcon(get_asset_path(Icons.PDL)))
+        edit_ubic.triggered.connect(lambda: self.tree.editItem(item, self.tree.IDX_UBICAZIONE))
+        menu.addAction(edit_ubic)
+
+    def _add_expansion_action(self, menu: QMenu, item: QTreeWidgetItem) -> None:
+        """Aggiunge azione espandi/comprimi al menu."""
+        toggle_expand = QAction("Comprimi" if item.isExpanded() else "Espandi", self)
+        toggle_expand.setIcon(QIcon(get_asset_path(Icons.MINIMIZE if item.isExpanded() else Icons.MAXIMIZE)))
+        toggle_expand.triggered.connect(
+            lambda: self.tree.collapseItem(item) if item.isExpanded() else self.tree.expandItem(item)
+        )
+        menu.addAction(toggle_expand)
 
     def _toggle_exclusion(self, matricola: str) -> None:
         """Inverte lo stato di esclusione di una matricola."""
@@ -604,10 +611,9 @@ class CertificatiCampioneTab(QWidget):
         self._load_data()
 
     def _open_certificate(self, cert_number: str) -> None:
-        """Tenta di aprire il file PDF del certificato specificato."""
-        path = self.engine.find_certificate_path(cert_number)
-        if path:
-            os.startfile(path)
+        """Tenta di aprire il file PDF del certificato specificato in modo sicuro."""
+        if path := self.engine.find_certificate_path(cert_number):
+            safe_open(path)
         else:
             QMessageBox.warning(self, "Non trovato", f"Impossibile trovare il certificato '{cert_number}'")
 

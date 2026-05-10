@@ -176,7 +176,7 @@ _sampler = None
 
 def get_sampler() -> ContextAwareSampler:
     """Restituisce istanza singleton del sampler."""
-    global _sampler
+    global _sampler  # noqa: PLW0603
     if _sampler is None:
         _sampler = ContextAwareSampler()
     return _sampler

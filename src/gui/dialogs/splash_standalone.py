@@ -25,7 +25,7 @@ logging.basicConfig(
 logger = logging.getLogger("StandaloneSplash")
 
 # Aggiungi la root del progetto al path per gli import tramite ResourceManager
-from src.utils.resource_manager import ResourceManager
+from src.utils.resource_manager import ResourceManager  # noqa: E402
 
 project_root = str(ResourceManager.PROJECT_ROOT)
 if project_root not in sys.path:
@@ -36,10 +36,10 @@ src_path = str(ResourceManager.PROJECT_ROOT / "src")
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
 
-from PySide6.QtCore import QObject, QTimer, Signal
-from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QObject, QTimer, Signal  # noqa: E402
+from PySide6.QtWidgets import QApplication  # noqa: E402
 
-from src.gui.dialogs.startup_dialog import StartupDialog
+from src.gui.dialogs.startup_dialog import StartupDialog  # noqa: E402
 
 
 class SplashCommunicator(QObject):
@@ -120,7 +120,7 @@ def run_standalone() -> None:
                 if command == "update":
                     msg = data.get("msg", "")
                     prog = int(data.get("prog", 0))
-                    # logger.info(f"Signal emitted: {msg} ({prog}%)") # Troppo rumoroso
+                    # logger.info(f"Signal emitted: {msg} ({prog}%)") # Troppo rumoroso  # noqa: ERA001
                     comm.update_signal.emit(msg, prog)
                 elif command == "close":
                     logger.info("Close signal emitted")

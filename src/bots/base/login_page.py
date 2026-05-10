@@ -125,7 +125,7 @@ class LoginPage:
             return True
         return False
 
-    def login(self, username: str, password: str, company: str = "ISAB") -> bool:
+    def login(self, username: str, password: str, company: str = "ISAB") -> bool:  # noqa: PLR0911
         """
         Esegue il login al portale ISAB.
         Ritorna False se viene rilevato un Proxy Error.

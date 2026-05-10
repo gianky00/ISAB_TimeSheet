@@ -31,7 +31,6 @@ class WorkflowStepButton(QFrame):
         step_number: int,
         title: str,
         description: str,
-        is_action: bool = False,
         parent: QWidget | None = None,
     ) -> None:
         """
@@ -42,7 +41,6 @@ class WorkflowStepButton(QFrame):
           step_number: Numero d'ordine visualizzato.
           title: Titolo breve dello step.
           description: Descrizione estesa.
-          is_action: Se True, applica uno stile pulsante d'azione (gradiente).
           parent: Widget genitore opzionale.
         """
         super().__init__(parent)
@@ -50,17 +48,20 @@ class WorkflowStepButton(QFrame):
         self._step_number = step_number
         self._state = self.State.IDLE
         self._glow_opacity = 0.0
-        self._is_action = is_action
+        self._is_action = False
 
-        if is_action:
-            self.setFixedSize(200, 110)
-        else:
-            self.setFixedSize(165, 130)
+        self.setFixedSize(165, 130)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setToolTip(f"Step {step_number}: {description}")
 
         self._setup_ui(step_number, title, description)
         self._setup_glow_animation()
+        self._apply_style()
+
+    def set_as_action(self, fixed_size: tuple[int, int] = (200, 110)) -> None:
+        """Configura il pulsante come azione (stile gradiente)."""
+        self._is_action = True
+        self.setFixedSize(*fixed_size)
         self._apply_style()
 
     def _setup_ui(self, number: int, title: str, description: str) -> None:
@@ -279,33 +280,46 @@ class WorkflowMapWidget(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        container = QFrame()
-        container.setObjectName("workflowContainer")
-        container.setStyleSheet("""
-      QFrame#workflowContainer {
-        background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-          stop:0 #f8fffe, stop:0.3 #e8f5e9, stop:0.7 #e0f7fa, stop:1 #f3e5f5);
-        border: 1px solid rgba(0, 150, 136, 0.15);
-        border-radius: 20px;
-      }
-    """)
-        shadow = QGraphicsDropShadowEffect(container)
-        shadow.setBlurRadius(30)
-        shadow.setOffset(0, 8)
-        shadow.setColor(QColor(0, 0, 0, 20))
-        container.setGraphicsEffect(shadow)
+        container = self._create_container()
+        main_layout.addWidget(container)
 
         container_layout = QVBoxLayout(container)
         container_layout.setContentsMargins(24, 20, 24, 20)
         container_layout.setSpacing(16)
 
+        self._setup_header(container_layout)
+        self._setup_main_row(container_layout)
+        self._setup_action_row(container_layout)
+
+    def _create_container(self) -> QFrame:
+        """Crea il frame contenitore principale con stile e ombra."""
+        container = QFrame()
+        container.setObjectName("workflowContainer")
+        container.setStyleSheet("""
+            QFrame#workflowContainer {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #f8fffe, stop:0.3 #e8f5e9, stop:0.7 #e0f7fa, stop:1 #f3e5f5);
+                border: 1px solid rgba(0, 150, 136, 0.15);
+                border-radius: 20px;
+            }
+        """)
+        shadow = QGraphicsDropShadowEffect(container)
+        shadow.setBlurRadius(30)
+        shadow.setOffset(0, 8)
+        shadow.setColor(QColor(0, 0, 0, 20))
+        container.setGraphicsEffect(shadow)
+        return container
+
+    def _setup_header(self, layout: QVBoxLayout) -> None:
+        """Aggiunge il titolo all'header."""
         title = QLabel("  WORKFLOW PIPELINE")
         title.setFont(QFont("Segoe UI", 13, QFont.Weight.Bold))
         title.setStyleSheet(f"color: {COLORS['text_dark']}; background: transparent; letter-spacing: 2px;")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        container_layout.addWidget(title)
+        layout.addWidget(title)
 
-        # Riga principale: 5 step
+    def _setup_main_row(self, layout: QVBoxLayout) -> None:
+        """Crea la riga principale con i 5 step sequenziali."""
         main_row = QHBoxLayout()
         main_row.setSpacing(0)
         main_row.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -316,45 +330,45 @@ class WorkflowMapWidget(QWidget):
             self._step_buttons[sid] = btn
             main_row.addWidget(btn)
             if i < len(self.STEPS) - 1:
-                arrow = self._create_arrow_label()
-                main_row.addWidget(arrow)
+                main_row.addWidget(self._create_arrow_label())
 
-        container_layout.addLayout(main_row)
+        layout.addLayout(main_row)
 
-        # Riga azioni complesse
+    def _setup_action_row(self, layout: QVBoxLayout) -> None:
+        """Crea la riga inferiore con azioni massive e macro extra."""
         action_row = QHBoxLayout()
         action_row.setSpacing(16)
         action_row.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        for sid, num, label, desc in self.ACTIONS:
-            btn = WorkflowStepButton(sid, num, label, desc, is_action=True)
-            btn.setFixedSize(190, 100)
+        # Azioni massive
+        for (sid, num, label, desc) in self.ACTIONS:
+            btn = WorkflowStepButton(sid, num, label, desc)
+            btn.set_as_action((190, 100))
             btn.clicked.connect(lambda text: self.step_clicked.emit(text))
             self._step_buttons[sid] = btn
             action_row.addWidget(btn)
 
-        # Separatore verticale
+        # Separatore
         sep = QFrame()
         sep.setFrameShape(QFrame.Shape.VLine)
         sep.setFixedHeight(70)
         sep.setStyleSheet("background: rgba(0,0,0,0.12); max-width: 2px; min-width: 2px;")
         action_row.addWidget(sep)
 
-        # Extra macro buttons con label complete
+        # Extra macro
         extras = [
             ("email_gen", 8, "   Email\nGenerica", "InviaEmailGenerico"),
             ("email_chiamata", 9, "   Email\nChiamata", "InviaEmailConsuntivoChiamata"),
             ("relazione", 10, "   Relazione\nTecnica", "CreaEConvertiRelazioneTecnica"),
         ]
         for sid, num, label, desc in extras:
-            btn = WorkflowStepButton(sid, num, label, desc, is_action=True)
-            btn.setFixedSize(140, 80)
+            btn = WorkflowStepButton(sid, num, label, desc)
+            btn.set_as_action((140, 80))
             btn.clicked.connect(lambda text: self.step_clicked.emit(text))
             self._step_buttons[sid] = btn
             action_row.addWidget(btn)
 
-        container_layout.addLayout(action_row)
-        main_layout.addWidget(container)
+        layout.addLayout(action_row)
 
     def _create_arrow_label(self, color: str = "#009688") -> QLabel:
         """Crea una label visuale per la freccia di connessione."""

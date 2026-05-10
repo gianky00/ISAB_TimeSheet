@@ -93,7 +93,7 @@ class CertificatiImporter(BaseImporter):
 
         # Se non rilevato o incerto, impostiamo riga 5 (che corrisponde alla riga 6 di Excel)
         # In questo modo i dati iniziano dalla riga 7.
-        if header_row_idx == -1 or max_matches < 2:
+        if header_row_idx == -1 or max_matches < 2:  # noqa: PLR2004
             header_row_idx = 5
 
         return header_row_idx

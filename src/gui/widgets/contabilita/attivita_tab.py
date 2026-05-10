@@ -85,6 +85,11 @@ class AttivitaProgrammateTab(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 10, 0, 0)
 
+        self._setup_filters(layout)
+        self._setup_table(layout)
+
+    def _setup_filters(self, layout: QVBoxLayout) -> None:
+        """Configura la sezione dei filtri."""
         filter_layout = QHBoxLayout()
         filter_layout.setContentsMargins(5, 0, 5, 5)
 
@@ -118,6 +123,8 @@ class AttivitaProgrammateTab(QWidget):
         filter_layout.addStretch()
         layout.addLayout(filter_layout)
 
+    def _setup_table(self, layout: QVBoxLayout) -> None:
+        """Configura la tabella dei dati."""
         self.table = ExcelTableWidget()
         self.table.setColumnCount(len(self.COLUMNS))
         self.table.setHorizontalHeaderLabels(self.COLUMNS)
@@ -136,6 +143,17 @@ class AttivitaProgrammateTab(QWidget):
         self.table.setColumnHidden(0, True)
         self.table.setColumnHidden(14, True)
 
+        self._set_column_widths()
+
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        v_header = self.table.verticalHeader()
+        if v_header is None:
+            raise RuntimeError("Table vertical header is None")
+        v_header.setVisible(False)
+        layout.addWidget(self.table)
+
+    def _set_column_widths(self) -> None:
+        """Imposta le larghezze iniziali delle colonne."""
         self.table.setColumnWidth(1, 80)
         self.table.setColumnWidth(2, 80)
         self.table.setColumnWidth(3, 60)
@@ -147,13 +165,6 @@ class AttivitaProgrammateTab(QWidget):
         self.table.setColumnWidth(12, 100)
         self.table.setColumnWidth(13, 150)
         self.table.setColumnWidth(15, 250)
-
-        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        v_header = self.table.verticalHeader()
-        if v_header is None:
-            raise RuntimeError("Table vertical header is None")
-        v_header.setVisible(False)
-        layout.addWidget(self.table)
 
     def refresh_data(self) -> None:
         """Ricarica i dati dal database e aggiorna la tabella."""

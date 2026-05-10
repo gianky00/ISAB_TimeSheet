@@ -36,8 +36,8 @@ from src.gui.widgets.core_widgets import (
 )
 from src.utils.helpers import get_asset_path, get_colored_icon
 
-from .config_cards import AutopilotConfigCard, AutopilotConfigCardWithInterval
-from .event_card import AutopilotEventCard
+from .config_cards import AutopilotConfigCard, AutopilotConfigCardWithInterval, BotVisualInfo
+from .event_card import AutopilotEventCard, EventInfo
 
 
 class AutopilotWidget(QWidget):
@@ -87,6 +87,14 @@ class AutopilotWidget(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(8)
 
+        self._setup_header(main_layout)
+        self._setup_containers(main_layout)
+
+        self.refresh_events()
+        self._refresh_config()
+
+    def _setup_header(self, layout: QVBoxLayout) -> None:
+        """Configura l'header con titolo e indicatore live."""
         header_layout = QHBoxLayout()
         header_layout.setSpacing(10)
 
@@ -94,7 +102,14 @@ class AutopilotWidget(QWidget):
         title.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {COLORS['text_dark']};")
         header_layout.addWidget(title)
 
-        # --- LIVE INDICATOR ---
+        self._setup_live_indicator(header_layout)
+        self._setup_config_button(header_layout)
+
+        header_layout.addStretch()
+        layout.addLayout(header_layout)
+
+    def _setup_live_indicator(self, layout: QHBoxLayout) -> None:
+        """Crea e anima l'indicatore LIVE."""
         self.live_container = QWidget()
         live_layout = QHBoxLayout(self.live_container)
         live_layout.setContentsMargins(5, 0, 5, 0)
@@ -102,19 +117,19 @@ class AutopilotWidget(QWidget):
 
         self.live_dot = QLabel()
         self.live_dot.setFixedSize(8, 8)
-        self.live_dot.setStyleSheet(
-            f"background-color: {COLORS['success_green']}; border-radius: 4px; border: 1px solid {COLORS['success_dark']};"
-        )
+        self.live_dot.setStyleSheet(f"background-color: {COLORS['success_green']}; border-radius: 4px; border: 1px solid {COLORS['success_dark']};")
 
         self.live_text = QLabel("LIVE")
-        self.live_text.setStyleSheet(
-            f"color: {COLORS['success_green']}; font-size: 10px; font-weight: 800; letter-spacing: 1px;"
-        )
+        self.live_text.setStyleSheet(f"color: {COLORS['success_green']}; font-size: 10px; font-weight: 800; letter-spacing: 1px;")
 
         live_layout.addWidget(self.live_dot)
         live_layout.addWidget(self.live_text)
-        header_layout.addWidget(self.live_container)
+        layout.addWidget(self.live_container)
 
+        self._start_live_animation()
+
+    def _start_live_animation(self) -> None:
+        """Avvia l'animazione di pulsazione dell'indicatore LIVE."""
         self.dot_opacity = QGraphicsOpacityEffect(self.live_container)
         self.live_container.setGraphicsEffect(self.dot_opacity)
         self.dot_anim = QPropertyAnimation(self.dot_opacity, b"opacity")
@@ -125,25 +140,23 @@ class AutopilotWidget(QWidget):
         self.dot_anim.setLoopCount(-1)
         self.dot_anim.start()
 
-        # Pulsante configurazione
+    def _setup_config_button(self, layout: QHBoxLayout) -> None:
+        """Configura il pulsante di accesso alle impostazioni."""
         self.config_btn = IconButton()
         self.config_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS), COLORS["text_muted"]))
         self.config_btn.setIconSize(QSize(20, 20))
         self.config_btn.setFixedSize(32, 32)
         self.config_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.config_btn.setStyleSheet(
-            f"""
-      QPushButton {{ background-color: {COLORS["bg_light"]}; border: 1px solid {COLORS["border_light"]}; border-radius: 16px; }}
-      QPushButton:hover {{ background-color: {COLORS["bg_hover"]}; border-color: {COLORS["border_medium"]}; }}
-      QPushButton:pressed {{ background-color: {COLORS["bg_alt"]}; }}
-    """
+            f"QPushButton {{ background-color: {COLORS['bg_light']}; border: 1px solid {COLORS['border_light']}; border-radius: 16px; }} "
+            f"QPushButton:hover {{ background-color: {COLORS['bg_hover']}; border-color: {COLORS['border_medium']}; }} "
+            f"QPushButton:pressed {{ background-color: {COLORS['bg_alt']}; }}"
         )
         self.config_btn.clicked.connect(self._toggle_mode)
-        header_layout.addWidget(self.config_btn)
-        header_layout.addStretch()
-        main_layout.addLayout(header_layout)
+        layout.addWidget(self.config_btn)
 
-        # Container View e Config
+    def _setup_containers(self, layout: QVBoxLayout) -> None:
+        """Crea i container per la vista live e quella di configurazione."""
         self.view_widget = QWidget()
         self.view_layout = QGridLayout(self.view_widget)
         self.view_layout.setContentsMargins(0, 4, 0, 0)
@@ -158,13 +171,10 @@ class AutopilotWidget(QWidget):
         self.config_layout.setColumnStretch(0, 1)
         self.config_layout.setColumnStretch(1, 1)
 
-        main_layout.addWidget(self.view_widget)
-        main_layout.addWidget(self.config_widget)
+        layout.addWidget(self.view_widget)
+        layout.addWidget(self.config_widget)
         self.config_widget.setVisible(False)
-        main_layout.addStretch()
-
-        self.refresh_events()
-        self._refresh_config()
+        layout.addStretch()
 
     def _toggle_mode(self) -> None:
         """Passa dalla modalità visualizzazione alla modalità configurazione con animazione."""
@@ -260,132 +270,99 @@ class AutopilotWidget(QWidget):
 
     def refresh_events(self) -> None:
         """Ricarica la lista degli eventi programmati leggendo la configurazione corrente."""
-        while self.view_layout.count() > 0:
-            item = self.view_layout.takeAt(0)
-            if item is not None:
-                widget = item.widget()
-                if widget is not None:
-                    if hasattr(widget, "cleanup"):
-                        widget.cleanup()
-                    widget.deleteLater()
+        self._clear_layout(self.view_layout)
 
         config = config_manager.load_config()
-        events: list[dict[str, Any]] = []
-        if config.get("timbrature_autopilot_enabled", False):
-            events.append(
-                {
-                    "id": "timbrature",
-                    "module_id": "timbrature",
-                    "name": "Timbrature Automatiche",
-                    "time": config.get("timbrature_autopilot_time", "09:00"),
-                    "icon": Icons.CLOCK,
-                    "color": COLORS["warning_orange"],
-                }
-            )
-        if config.get("scarico_oda_generale_autopilot_enabled", False):
-            events.append(
-                {
-                    "id": "scarico_oda_generale",
-                    "module_id": "oda",
-                    "name": "Scarico OdA Generale",
-                    "time": config.get("scarico_oda_generale_autopilot_time", "09:00"),
-                    "icon": Icons.DOWNLOAD,
-                    "color": COLORS["primary_dark"],
-                }
-            )
-        if config.get("ricerca_pdl_autopilot_enabled", False):
-            events.append(
-                {
-                    "id": "ricerca_pdl",
-                    "module_id": "pdl",
-                    "name": "Ricerca PDL",
-                    "time": config.get("ricerca_pdl_autopilot_time", "09:00"),
-                    "icon": Icons.SEARCH,
-                    "color": COLORS["success_dark"],
-                }
-            )
-        if config.get("report_email_autopilot_enabled", False):
-            events.append(
-                {
-                    "id": "report_email",
-                    "module_id": "none",
-                    "name": f"Report Email (ogni {config.get('report_email_autopilot_interval_days', 7)}gg)",
-                    "time": config.get("report_email_autopilot_time", "08:00"),
-                    "icon": Icons.SEND,
-                    "color": COLORS["purple"],
-                }
-            )
+        events: list[EventInfo] = self._get_enabled_events(config)
 
         if not events:
-            empty = QLabel("    Nessun bot programmato")
-            empty.setStyleSheet(
-                f"color: {COLORS['text_muted']}; font-size: 13px; font-style: italic; padding: 20px; background-color: {COLORS['bg_light']}; border-radius: 8px; border: 1px dashed {COLORS['border_light']};"
-            )
-            empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.view_layout.addWidget(empty, 0, 0, 1, 2)
+            self._show_empty_message()
             return
 
         for idx, event in enumerate(events):
-            card = AutopilotEventCard(
-                event["id"],
-                event["name"],
-                event["time"],
-                event["icon"],
-                event["color"],
-                event.get("module_id"),
-                self,
-            )
+            card = AutopilotEventCard(event, self)
             card.sync_requested.connect(self.bot_sync_requested.emit)
             self.view_layout.addWidget(card, idx // 2, idx % 2)
 
-    def _refresh_config(self) -> None:
-        """Ricarica i widget di configurazione per ogni bot supportato dall'autopilot."""
-        while self.config_layout.count() > 0:
-            item = self.config_layout.takeAt(0)
-            if item is not None:
-                widget = item.widget()
-                if widget is not None:
-                    if hasattr(widget, "cleanup"):
-                        widget.cleanup()
-                    widget.deleteLater()
+    def _clear_layout(self, layout: QGridLayout) -> None:
+        """Rimuove tutti i widget da un layout in modo sicuro."""
+        while layout.count() > 0:
+            item = layout.takeAt(0)
+            if item and (widget := item.widget()):
+                if hasattr(widget, "cleanup"):
+                    widget.cleanup()
+                widget.deleteLater()
 
-        bots = [
-            {
+    def _get_enabled_events(self, config: dict[str, Any]) -> list[EventInfo]:
+        """Ritorna la lista degli eventi abilitati dalla configurazione."""
+        events: list[EventInfo] = []
+        if config.get("timbrature_autopilot_enabled", False):
+            events.append({
                 "id": "timbrature",
+                "module_id": "timbrature",
                 "name": "Timbrature Automatiche",
+                "time": config.get("timbrature_autopilot_time", "09:00"),
                 "icon": Icons.CLOCK,
                 "color": COLORS["warning_orange"],
-            },
-            {
+            })
+        if config.get("scarico_oda_generale_autopilot_enabled", False):
+            events.append({
                 "id": "scarico_oda_generale",
+                "module_id": "oda",
                 "name": "Scarico OdA Generale",
+                "time": config.get("scarico_oda_generale_autopilot_time", "09:00"),
                 "icon": Icons.DOWNLOAD,
                 "color": COLORS["primary_dark"],
-            },
-            {
+            })
+        if config.get("ricerca_pdl_autopilot_enabled", False):
+            events.append({
                 "id": "ricerca_pdl",
+                "module_id": "pdl",
                 "name": "Ricerca PDL",
+                "time": config.get("ricerca_pdl_autopilot_time", "09:00"),
                 "icon": Icons.SEARCH,
                 "color": COLORS["success_dark"],
-            },
-        ]
-        interval_tasks = [
-            {
+            })
+        if config.get("report_email_autopilot_enabled", False):
+            events.append({
                 "id": "report_email",
-                "name": "Report Email ISAB",
+                "module_id": "none",
+                "name": f"Report Email (ogni {config.get('report_email_autopilot_interval_days', 7)}gg)",
+                "time": config.get("report_email_autopilot_time", "08:00"),
                 "icon": Icons.SEND,
                 "color": COLORS["purple"],
-            },
+            })
+        return events
+
+    def _show_empty_message(self) -> None:
+        """Mostra un messaggio quando non ci sono eventi programmati."""
+        empty = QLabel("    Nessun bot programmato")
+        empty.setStyleSheet(
+            f"color: {COLORS['text_muted']}; font-size: 13px; font-style: italic; padding: 20px; "
+            f"background-color: {COLORS['bg_light']}; border-radius: 8px; border: 1px dashed {COLORS['border_light']};"
+        )
+        empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.view_layout.addWidget(empty, 0, 0, 1, 2)
+
+    def _refresh_config(self) -> None:
+        """Ricarica i widget di configurazione per ogni bot supportato dall'autopilot."""
+        self._clear_layout(self.config_layout)
+
+        bots: list[BotVisualInfo] = [
+            {"id": "timbrature", "name": "Timbrature Automatiche", "icon": Icons.CLOCK, "color": COLORS["warning_orange"]},
+            {"id": "scarico_oda_generale", "name": "Scarico OdA Generale", "icon": Icons.DOWNLOAD, "color": COLORS["primary_dark"]},
+            {"id": "ricerca_pdl", "name": "Ricerca PDL", "icon": Icons.SEARCH, "color": COLORS["success_dark"]},
+        ]
+        interval_tasks: list[BotVisualInfo] = [
+            {"id": "report_email", "name": "Report Email ISAB", "icon": Icons.SEND, "color": COLORS["purple"]},
         ]
 
         idx = 0
         for bot in bots:
-            card = AutopilotConfigCard(bot["id"], bot["name"], bot["icon"], bot["color"], self)
+            card = AutopilotConfigCard(bot, self)
             self.config_layout.addWidget(card, idx // 2, idx % 2)
             idx += 1
         for task in interval_tasks:
-            card_with_interval = AutopilotConfigCardWithInterval(
-                task["id"], task["name"], task["icon"], task["color"], self
-            )
+            card_with_interval = AutopilotConfigCardWithInterval(task, self)
             self.config_layout.addWidget(card_with_interval, idx // 2, idx % 2)
             idx += 1

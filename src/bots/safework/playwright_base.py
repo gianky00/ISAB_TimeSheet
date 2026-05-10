@@ -22,7 +22,7 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
     SAFEWORK_URL = URLs.SAFEWORK_URL
     ISAB_URL = SAFEWORK_URL
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         username: str,
         password: str,

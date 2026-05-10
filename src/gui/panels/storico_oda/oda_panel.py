@@ -6,13 +6,12 @@ Utilizza ODAController per la logica di business e ODATreeView per la gerarchia.
 Refactored V9.4: Bold on selection and context menu for details.
 """
 
-import os
 from contextlib import suppress
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import QPoint, Qt, QTimer
-from PySide6.QtGui import QStandardItemModel
+from PySide6.QtGui import QShowEvent, QStandardItemModel
 from PySide6.QtWidgets import (
     QFileDialog,
     QMenu,
@@ -28,6 +27,7 @@ from src.core.sync_tracker import SyncTracker
 from src.gui.widgets import EmptyStateWidget
 from src.gui.widgets.toast import ToastManager
 from src.gui.workers.oda_io_worker import OdaIOWorker
+from src.utils.helpers import safe_open
 
 from .oda_detail_view import OdaDetailView
 from .oda_filter_widget import OdaFilterWidget
@@ -112,7 +112,7 @@ class StoricoOdaPanel(QWidget):
         self._setup_ui()
         # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
 
-    def showEvent(self, event) -> None:
+    def showEvent(self, event: QShowEvent) -> None:
         """Esegue il primo refresh solo quando il pannello diventa visibile."""
         super().showEvent(event)
         if not self._first_refresh_done:
@@ -304,6 +304,6 @@ class StoricoOdaPanel(QWidget):
             else:
                 ToastManager.instance().show(message, "success")
                 if "path" in stats:
-                    os.startfile(stats["path"])
+                    safe_open(stats["path"])
         else:
             QMessageBox.warning(self, "Operazione Fallita", message)

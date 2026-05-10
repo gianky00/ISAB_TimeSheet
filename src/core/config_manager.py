@@ -36,7 +36,7 @@ _config_lock = threading.RLock()
 
 def _reset_configuration_for_testing() -> None:
     """Resetta la cache della configurazione (solo per unitàtest)."""
-    global _config_cache
+    global _config_cache  # noqa: PLW0603
     with _config_lock:
         _config_cache = None
 
@@ -53,7 +53,7 @@ def ensure_config_dir() -> None:
 
 def load_config() -> dict[str, Any]:
     """Carica la configurazione dal file, la decripta e la mette in cache."""
-    global _config_cache
+    global _config_cache  # noqa: PLW0603
     with _config_lock:
         if _config_cache is not None:
             return copy.deepcopy(_config_cache)
@@ -103,7 +103,7 @@ def _load_base_config() -> dict[str, Any]:
 
 def save_config(config: dict[str, Any]) -> bool:
     """Salva la configurazione su file, criptando le credenziali prima del write."""
-    global _config_cache
+    global _config_cache  # noqa: PLW0603
     try:
         config_to_save = copy.deepcopy(config)
 
@@ -124,7 +124,7 @@ def save_config(config: dict[str, Any]) -> bool:
 
 def invalidate_config_cache() -> None:
     """Invalida forzatamente la cache della configurazione in memoria."""
-    global _config_cache
+    global _config_cache  # noqa: PLW0603
     with _config_lock:
         _config_cache = None
 

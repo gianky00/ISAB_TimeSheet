@@ -149,7 +149,7 @@ class DettagliOdAPage:
                 self.driver.execute_script("arguments[0].click();", expand_btn)
                 self.log(" Menu espanso.")
 
-    def process_oda(
+    def process_oda(  # noqa: PLR0913, PLR0915
         self,
         oda: str,
         contract: str,

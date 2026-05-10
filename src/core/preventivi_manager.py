@@ -299,7 +299,7 @@ class PreventiviGeneratorManager:
                 vba_ref.Range("A6").Value = data.get("data", "")
 
             self.wb.Save()
-            return True, "OK"
+            return True, "OK"  # noqa: TRY300
         except Exception as e:
             return False, str(e)
         finally:

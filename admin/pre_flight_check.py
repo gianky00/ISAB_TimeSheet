@@ -142,7 +142,7 @@ def run_tool(name: str, cmd: list[str], label: str, cwd: Path = PROJECT_ROOT) ->
             f"CMD: {' '.join(cmd)}\nEXIT: {result.returncode}\n{'=' * 40}\n{result.stdout}\n{'=' * 40}\n{result.stderr}",
             encoding="utf-8",
         )
-        return (
+        return (  # noqa: TRY300
             (result.returncode == 0),
             result.stdout if result.returncode != 0 else "",
             duration,
@@ -223,7 +223,7 @@ def _run_tests_ai(reset: bool = True) -> tuple[bool, str, float]:
             f" -> {f.get('error_type', '?')}: {f.get('error_message', '')[:100]}"
             for f in failures[:10]
         )
-        if len(failures) > 10:
+        if len(failures) > 10:  # noqa: PLR2004
             msg_lines.append(f"  ... e altri {len(failures) - 10} errori")
 
         return False, "\n".join(msg_lines), duration
@@ -264,7 +264,7 @@ def find_git_executable():
 class ApexAudit:
     """Motore di audit principale che esegue una suite completa di test e controlli statici."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         fix=False,
         fast=False,
@@ -293,7 +293,7 @@ class ApexAudit:
         except Exception:
             return []
 
-    def _check_environment(self) -> tuple[bool, str, float]:
+    def _check_environment(self) -> tuple[bool, str, float]:  # noqa: C901
         start_t = time.time()
         c_ver = "N/A"
         d_ver = "N/A"
@@ -408,7 +408,7 @@ class ApexAudit:
                     console.print(f"[[dim]{ts}[/dim]] [dim] -> Avvio {label}...[/dim]")
                     futures[executor.submit(func)] = (label, name, always_show)
 
-                for future in futures:
+                for future in futures:  # noqa: PLC0206
                     label, name, always_show = futures[future]
                     success, msg, dur = future.result()
                     self._add_res(label, success, msg, dur, name, always_show)
@@ -441,7 +441,7 @@ class ApexAudit:
                         self._add_res(label, success, msg, dur, name, always_show)
                         prog.update(tasks[label], completed=100, description=f"[green][OK] {label}")
 
-    def run_all(self) -> None:
+    def run_all(self) -> None:  # noqa: C901, PLR0912
         console.print(
             Panel.fit(
                 "[bold cyan]SYNCROJOB APEX AUDIT ENGINE[/bold cyan]",
@@ -673,7 +673,7 @@ class ApexAudit:
         if not self.target:  # Only show summary score if running full/default audit
             self.summary()
 
-    def _add_res(self, label, success, msg, dur, name, always_show) -> None:
+    def _add_res(self, label, success, msg, dur, name, always_show) -> None:  # noqa: PLR0913
         res = CheckResult(label, success, msg, dur, name)
         self.results.append(res)
         if not success:
@@ -713,7 +713,7 @@ class ApexAudit:
             )
 
         self._export_html(score)
-        if score < 80 and not self.force:
+        if score < 80 and not self.force:  # noqa: PLR2004
             sys.exit(1)
 
     def _get_score(self) -> int:

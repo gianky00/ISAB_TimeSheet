@@ -24,7 +24,7 @@ class TimesheetProcessor:
     """Classe per elaborare i file timesheet sostituendo la macro VBA."""
 
     @staticmethod
-    def process_and_move(file_path: Path, dest_dir: Path) -> tuple[bool, str]:
+    def process_and_move(file_path: Path, dest_dir: Path) -> tuple[bool, str]:  # noqa: PLR0911
         """
         Elabora il file Excel secondo la logica VBA e lo salva nella cartella di destinazione.
         """

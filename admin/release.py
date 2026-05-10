@@ -95,7 +95,7 @@ def run_command(cmd, description, exit_on_fail=True, capture=False):
             print(f"        Exit code: {returncode}")
             sys.stdout.flush()
             sys.exit(1)
-        return returncode == 0
+        return returncode == 0  # noqa: TRY300
     except Exception as e:
         print(f"[ERROR] Errore durante: {description}")
         print(f"        Dettaglio: {e}")
@@ -195,12 +195,12 @@ def detect_bump_type() -> str | None:
             return "minor"
 
         # Default PATCH (fix, refactor, chore, docs, ecc.)
-        return "patch"
+        return "patch"  # noqa: TRY300
     except Exception:
         return "patch"
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901
     """Entry point for the release process, handling arguments and workflow execution."""
     # Fix encoding for Windows console to support emoji
     if sys.platform == "win32":

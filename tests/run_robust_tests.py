@@ -199,7 +199,7 @@ def _extract_failures(output: str, target: str) -> list[FailureDetail]:
     while i < len(lines):
         line = lines[i]
 
-        # Pattern: "FAILED tests/unit/test_foo.py::test_bar - ErrorType: msg"  # noqa: ERA001
+        # Esempio pattern: `FAILED tests/unit/test_foo.py::test_bar - ErrorType: msg`
         failed_match = re.match(r"FAILED\s+([\S]+::\S+)\s*-?\s*(.*)", line)
         if failed_match:
             node_id = failed_match.group(1)
@@ -346,19 +346,20 @@ def _collect_tests_inprocess(mark: str | None = None) -> list[str]:
             encoding="utf-8",
             errors="replace",
         )
-        node_ids = []
-        for line in res.stdout.splitlines():
-            stripped = line.strip()
-            if not stripped:
-                continue
-            if stripped.startswith(("=", "no tests", "ERROR")):
-                break
-            if "::" in stripped:
-                node_ids.append(stripped)
-        return node_ids
     except subprocess.TimeoutExpired:
         Console.error("[!] Timeout nella discovery dei test (60s)")
         return []
+
+    node_ids = []
+    for line in res.stdout.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith(("=", "no tests", "ERROR")):
+            break
+        if "::" in stripped:
+            node_ids.append(stripped)
+    return node_ids
 
 
 # ─── Worker (SHOTGUN) ────────────────────────────────────────────────────────

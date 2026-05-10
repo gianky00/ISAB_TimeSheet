@@ -109,7 +109,7 @@ class NotificationManager(QObject):
         except Exception as e:
             print(f"Errore salvataggio notifiche: {e}")
 
-    def add_notification(
+    def add_notification(  # noqa: PLR0913
         self,
         title: str,
         message: str,

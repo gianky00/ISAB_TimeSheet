@@ -4,8 +4,8 @@ SyncroJob - ODA Tree Widget
 Widget specializzato per la visualizzazione gerarchica degli Ordini di Acquisto.
 """
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QTreeView
+from PySide6.QtCore import QAbstractItemModel, QModelIndex, Qt, Signal
+from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QTreeView, QWidget
 
 from src.gui.panels.storico_oda.oda_delegate import ChildDescriptionDelegate
 from src.gui.styles import COLORS
@@ -18,7 +18,7 @@ class ODATreeView(QTreeView):
     row_double_clicked = Signal()
     context_menu_requested = Signal(object)  # pos
 
-    def __init__(self, model, parent=None) -> None:
+    def __init__(self, model: QAbstractItemModel, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setModel(model)
         self._setup_ui()
@@ -48,7 +48,7 @@ class ODATreeView(QTreeView):
         if sel_model := self.selectionModel():
             sel_model.selectionChanged.connect(lambda _1, _2: self.selection_changed_custom.emit())
 
-    def _on_double_clicked(self, index) -> None:
+    def _on_double_clicked(self, index: QModelIndex) -> None:
         """Espande o comprime la riga al doppio click su qualsiasi colonna."""
         if not index.isValid():
             return
@@ -62,7 +62,7 @@ class ODATreeView(QTreeView):
 
         self.row_double_clicked.emit()
 
-    def _on_expanded(self, index) -> None:
+    def _on_expanded(self, index: QModelIndex) -> None:
         """Scrolla in modo fluido per mostrare i figli appena espansi."""
         self.scrollTo(index, QAbstractItemView.ScrollHint.PositionAtTop)
 

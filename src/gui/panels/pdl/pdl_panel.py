@@ -5,7 +5,6 @@ Utilizza PDLController per la logica di business e PDLTableView per la griglia.
 """
 
 import logging
-import os
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
@@ -26,6 +25,7 @@ from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.formatters import FastTableModel
 from src.gui.widgets import EmptyStateWidget
 from src.gui.workers.pdl_io_worker import PdlIOWorker
+from src.utils.helpers import safe_open
 
 from .pdl_detail_view import PDLDetailView
 from .pdl_filter_widget import PDLFilterWidget
@@ -386,7 +386,7 @@ class PDLDBPanel(QWidget):
         if success:
             ToastManager.instance().show(message, "success")
             if file_path:
-                os.startfile(file_path)
+                safe_open(file_path)
         else:
             from PySide6.QtWidgets import QMessageBox
 

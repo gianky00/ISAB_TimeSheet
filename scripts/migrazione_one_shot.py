@@ -5,8 +5,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from src.core.database import db_manager
-from src.core.employees import employee_manager
+from src.core.database import db_manager  # noqa: E402
+from src.core.employees import employee_manager  # noqa: E402
 
 
 def run_migration() -> None:
