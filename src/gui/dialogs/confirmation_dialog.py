@@ -35,7 +35,7 @@ class ConfirmationDialog(QDialog):
         ERROR = "error"
         QUESTION = "question"
 
-    def __init__(  # noqa: PLR0915
+    def __init__(
         self,
         parent: QWidget | None = None,
         title: str = "",
@@ -55,33 +55,35 @@ class ConfirmationDialog(QDialog):
         """
         super().__init__(parent)
         self.setWindowTitle(title)
-        min_width = 380
-        self.setMinimumWidth(min_width)
+        self.setMinimumWidth(380)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
 
-        # Forza stile Light a livello di Dialog
-        self.setStyleSheet(f"""
-      QDialog {{
-        background-color: {COLORS["bg_white"]};
-        border: 1px solid {COLORS["border_medium"]};
-      }}
-    """)
-
+        self._apply_style()
         layout = QVBoxLayout(self)
-        layout_spacing = 20
-        layout.setSpacing(layout_spacing)
-        margin_size = 25
-        layout.setContentsMargins(margin_size, margin_size, margin_size, margin_size)
+        layout.setSpacing(20)
+        layout.setContentsMargins(25, 25, 25, 25)
 
-        # Header con icona e messaggio
+        self._setup_header(layout, message, variant, is_rich_text)
+        self._setup_buttons(layout, variant)
+
+    def _apply_style(self) -> None:
+        """Applica lo stile base al dialogo."""
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_medium"]};
+            }}
+        """)
+
+    def _setup_header(self, layout: QVBoxLayout, message: str, variant: str, is_rich_text: bool) -> None:
+        """Configura l'intestazione con icona e messaggio."""
         header_layout = QHBoxLayout()
-        header_spacing = 15
-        header_layout.setSpacing(header_spacing)
+        header_layout.setSpacing(15)
 
-        icon_label = QLabel()
         icon_path = self._get_icon_path(variant)
-        icon_color = self._get_icon_color(variant)
         if icon_path:
+            icon_label = QLabel()
+            icon_color = self._get_icon_color(variant)
             icon_size = 32
             icon_label.setPixmap(get_colored_icon(icon_path, icon_color).pixmap(icon_size, icon_size))
             icon_label.setFixedSize(icon_size, icon_size)
@@ -89,39 +91,35 @@ class ConfirmationDialog(QDialog):
 
         msg_label = QLabel()
         msg_label.setWordWrap(True)
-
         if is_rich_text:
-            # Sanificazione minima per prevenire UI Injection/XSS
-            safe_msg = self._sanitize_html(message)
             msg_label.setTextFormat(Qt.TextFormat.RichText)
-            msg_label.setText(safe_msg)
+            msg_label.setText(self._sanitize_html(message))
         else:
             msg_label.setTextFormat(Qt.TextFormat.PlainText)
             msg_label.setText(message)
 
         msg_label.setStyleSheet(f"font-size: 14px; color: {COLORS['text_dark']};")
         header_layout.addWidget(msg_label, 1)
-
         layout.addLayout(header_layout)
 
-        # Pulsanti
+    def _setup_buttons(self, layout: QVBoxLayout, variant: str) -> None:
+        """Configura l'area dei pulsanti di azione."""
         btn_layout = QHBoxLayout()
-        btn_spacing = 10
-        btn_layout.setSpacing(btn_spacing)
+        btn_layout.setSpacing(10)
         btn_layout.addStretch()
 
         if variant == self.Variant.QUESTION:
-            self.btn_cancel = ModernButton("Annulla", variant=ModernButton.Variant.GHOST)
-            self.btn_cancel.clicked.connect(self.reject)
-            btn_layout.addWidget(self.btn_cancel)
+            btn_cancel = ModernButton("Annulla", variant=ModernButton.Variant.GHOST)
+            btn_cancel.clicked.connect(self.reject)
+            btn_layout.addWidget(btn_cancel)
 
-            self.btn_ok = ModernButton("Conferma", variant=ModernButton.Variant.PRIMARY)
-            self.btn_ok.clicked.connect(self.accept)
-            btn_layout.addWidget(self.btn_ok)
+            btn_ok = ModernButton("Conferma", variant=ModernButton.Variant.PRIMARY)
+            btn_ok.clicked.connect(self.accept)
+            btn_layout.addWidget(btn_ok)
         else:
-            self.btn_ok = ModernButton("OK", variant=ModernButton.Variant.PRIMARY)
-            self.btn_ok.clicked.connect(self.accept)
-            btn_layout.addWidget(self.btn_ok)
+            btn_ok = ModernButton("OK", variant=ModernButton.Variant.PRIMARY)
+            btn_ok.clicked.connect(self.accept)
+            btn_layout.addWidget(btn_ok)
 
         layout.addLayout(btn_layout)
 

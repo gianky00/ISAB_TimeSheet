@@ -445,7 +445,7 @@ class SidebarWidget(QFrame):
             PageIndex.NOTIFICATIONS: self._handle_active_notifications,
         }
 
-        if handler := mapping.get(index):
+        if handler := mapping.get(PageIndex(index)):
             handler(sub, bot)
 
     def _handle_active_automazioni(self, sub: int | None, bot: int | None) -> None:

@@ -349,12 +349,12 @@ class AutopilotWidget(QWidget):
         self._clear_layout(self.config_layout)
 
         bots: list[BotVisualInfo] = [
-            {"id": "timbrature", "name": "Timbrature Automatiche", "icon": Icons.CLOCK, "color": COLORS["warning_orange"]},
-            {"id": "scarico_oda_generale", "name": "Scarico OdA Generale", "icon": Icons.DOWNLOAD, "color": COLORS["primary_dark"]},
-            {"id": "ricerca_pdl", "name": "Ricerca PDL", "icon": Icons.SEARCH, "color": COLORS["success_dark"]},
+            {"bot_id": "timbrature", "bot_name": "Timbrature Automatiche", "icon_path": Icons.CLOCK, "color": COLORS["warning_orange"]},
+            {"bot_id": "scarico_oda_generale", "bot_name": "Scarico OdA Generale", "icon_path": Icons.DOWNLOAD, "color": COLORS["primary_dark"]},
+            {"bot_id": "ricerca_pdl", "bot_name": "Ricerca PDL", "icon_path": Icons.SEARCH, "color": COLORS["success_dark"]},
         ]
         interval_tasks: list[BotVisualInfo] = [
-            {"id": "report_email", "name": "Report Email ISAB", "icon": Icons.SEND, "color": COLORS["purple"]},
+            {"bot_id": "report_email", "bot_name": "Report Email ISAB", "icon_path": Icons.SEND, "color": COLORS["purple"]},
         ]
 
         idx = 0

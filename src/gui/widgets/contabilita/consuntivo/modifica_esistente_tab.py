@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - Consuntivo Modifica Esistente Tab
 Tab intelligente per la scansione, auto-fill e manipolazione di file esistenti.
@@ -316,10 +315,11 @@ class ModificaEsistenteTab(QWidget):
         """Cerca il foglio di inserimento dati nel workbook."""
         # @obj: openpyxl.workbook.Workbook
         sheet_names = getattr(wb, "sheetnames", [])
+        wb_any = cast("Any", wb)
         for name in ("inserimento dati", "Inserimento Dati", "inserimento_dati"):
             if name in sheet_names:
-                return wb[name]
-        return wb[sheet_names[0]] if sheet_names else None
+                return wb_any[name]
+        return wb_any[sheet_names[0]] if sheet_names else None
 
     def _get_cell_value(self, sheet: Any, addr: str) -> str:
         """Legge e formatta il valore di una cella."""
@@ -426,7 +426,7 @@ class ModificaEsistenteTab(QWidget):
         self._status_label.setText("Modifiche salvate nel file Excel")
         self._status_label.setStyleSheet("color: #2E7D32; font-size: 12px; font-weight: 600; border: none;")
         ConfirmationDialog.show_info(
-            self, "Salvato", f"Le modifiche sono state salvate in:\n{os.path.basename(self.loaded_file)}"
+            self, "Salvato", f"Le modifiche sono state salvate in:\n{os.path.basename(self.loaded_file or '')}"
         )
         self._last_scan_time = 0  # Forza refresh scansione
 
@@ -439,7 +439,7 @@ class ModificaEsistenteTab(QWidget):
             return
         self.workflow_map.set_step_state(step_id, WorkflowStepButton.State.ACTIVE)
         self.log_widget.append_log(
-            f"Esecuzione: {', '.join(macros)} su {os.path.basename(self.loaded_file)}",
+            f"Esecuzione: {', '.join(macros)} su {os.path.basename(self.loaded_file or '')}",
             "step",
         )
         self.setEnabled(False)

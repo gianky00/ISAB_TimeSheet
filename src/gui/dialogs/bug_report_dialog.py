@@ -369,72 +369,19 @@ class BugReportDialog(QDialog):
             try:
                 outlook = win32.Dispatch("Outlook.Application")
             except Exception:
+                logger.warning("Outlook application not found or accessible via COM.")
                 return False
 
-            now = datetime.now(UTC).astimezone()
-            date_display = now.strftime("%d/%m/%Y %H:%M")
-            date_file = now.strftime("%d-%m-%Y_%H-%M")
-            rand_max = 0x10000
-            rand_hex = f"{secrets.randbelow(rand_max):04X}"
-            ticket_id_suffix = f"TKT-{rand_hex}"
-            email_subject_suffix = f"{date_display} {ticket_id_suffix}"
-            full_ticket_file = f"{date_file}_{ticket_id_suffix}"
+            metadata = self._prepare_ticket_metadata()
+            final_zip_path = self._rename_zip_with_ticket(attachment_path, metadata["full_ticket_file"])
+            cliente_info = self._get_client_info()
 
-            current_ver = get_version()
-            current_user = getpass.getuser().upper()
+            from src.core.constants import Emails
+            mail = outlook.CreateItem(0)
+            mail.To = Emails.SUPPORT
+            mail.Subject = f"[Segnalazione Bug] SyncroJob v{metadata['version']} - {metadata['subject_suffix']}"
+            mail.HTMLBody = self._generate_html_body(description, metadata, cliente_info)
 
-            cliente_info = "ISAB S.R.L."
-            with suppress(Exception):
-                from src.core.constants import Emails
-                from src.core.license_validator import get_license_info
-
-                lic_data = get_license_info()
-                if lic_data and "Cliente" in lic_data:
-                    cliente_info = lic_data["Cliente"]
-
-                mail = outlook.CreateItem(0)
-                mail.To = Emails.SUPPORT
-                mail.Subject = f"[Segnalazione Bug] SyncroJob v{current_ver} - {email_subject_suffix}"
-
-            # Rinomina ZIP per includere Ticket ID
-            final_zip_path = attachment_path
-            with suppress(Exception):
-                dir_name = os.path.dirname(attachment_path)
-                new_path = os.path.join(dir_name, f"{full_ticket_file}.zip")
-                if Path(new_path).exists():
-                    Path(new_path).unlink()
-                os.rename(attachment_path, new_path)
-                final_zip_path = new_path
-
-            palette = get_palette()
-            css_cell = (
-                f"padding: 8px 12px; border-bottom: 1px solid {palette.border}; color: {palette.on_surface};"
-            )
-            css_header = f"padding: 8px 12px; border-bottom: 2px solid {palette.primary}; font-weight: 600; color: {palette.primary};"
-
-            html_body = f"""
-      <div style="font-family: 'Segoe UI', sans-serif; color: {palette.on_surface}; max-width: 900px;">
-        <h2 style="color: {palette.primary};">Segnalazione Bug SyncroJob</h2>
-        <table style="width: 100%; border-collapse: separate; margin-top: 20px;">
-          <tr>
-            <td style="width: 320px; vertical-align: top;">
-              <table style="width: 100%; font-size: 13px;">
-                <tr><th style="{css_header}" colspan="2">DETTAGLI SISTEMA</th></tr>
-                <tr><td style="{css_cell} font-weight:600;">Ticket ID</td><td style="{css_cell}">{ticket_id_suffix}</td></tr>
-                <tr><td style="{css_cell} font-weight:600;">Versione</td><td style="{css_cell}">{current_ver}</td></tr>
-                <tr><td style="{css_cell} font-weight:600;">Utente</td><td style="{css_cell}">{current_user}</td></tr>
-                <tr><td style="{css_cell} font-weight:600;">Cliente</td><td style="{css_cell}">{cliente_info}</td></tr>
-              </table>
-            </td>
-            <td style="vertical-align: top; padding-left: 20px;">
-              <h3 style="border-bottom: 2px solid {palette.border};">Descrizione Problema</h3>
-              <div style="line-height: 1.6;">{description.replace(chr(10), "<br>")}</div>
-            </td>
-          </tr>
-        </table>
-      </div>
-      """
-            mail.HTMLBody = html_body
             if Path(final_zip_path).exists():
                 mail.Attachments.Add(final_zip_path)
             mail.Display()
@@ -443,6 +390,73 @@ class BugReportDialog(QDialog):
             return False
         else:
             return True
+
+    def _prepare_ticket_metadata(self) -> dict[str, Any]:
+        """Prepara i metadati del ticket per la mail e il file."""
+        now = datetime.now(UTC).astimezone()
+        rand_max = 0x10000
+        rand_hex = f"{secrets.randbelow(rand_max):04X}"
+        ticket_id = f"TKT-{rand_hex}"
+
+        return {
+            "ticket_id": ticket_id,
+            "version": get_version(),
+            "user": getpass.getuser().upper(),
+            "date_display": now.strftime("%d/%m/%Y %H:%M"),
+            "date_file": now.strftime("%d-%m-%Y_%H-%M"),
+            "subject_suffix": f"{now.strftime('%d/%m/%Y %H:%M')} {ticket_id}",
+            "full_ticket_file": f"{now.strftime('%d-%m-%Y_%H-%M')}_{ticket_id}"
+        }
+
+    def _get_client_info(self) -> str:
+        """Recupera le informazioni sul cliente dalla licenza."""
+        cliente_info = "ISAB S.R.L."
+        with suppress(Exception):
+            from src.core.license_validator import get_license_info
+            lic_data = get_license_info()
+            if lic_data and "Cliente" in lic_data:
+                cliente_info = lic_data["Cliente"]
+        return cliente_info
+
+    def _rename_zip_with_ticket(self, attachment_path: str, full_ticket_file: str) -> str:
+        """Rinomina lo ZIP temporaneo per includere l'ID del ticket."""
+        with suppress(Exception):
+            dir_name = os.path.dirname(attachment_path)
+            new_path = os.path.join(dir_name, f"{full_ticket_file}.zip")
+            if Path(new_path).exists():
+                Path(new_path).unlink()
+            os.rename(attachment_path, new_path)
+            return new_path
+        return attachment_path
+
+    def _generate_html_body(self, description: str, meta: dict[str, Any], cliente: str) -> str:
+        """Genera il corpo HTML professionale per la mail di Outlook."""
+        palette = get_palette()
+        css_cell = f"padding: 8px 12px; border-bottom: 1px solid {palette.border}; color: {palette.on_surface};"
+        css_header = f"padding: 8px 12px; border-bottom: 2px solid {palette.primary}; font-weight: 600; color: {palette.primary};"
+
+        return f"""
+        <div style="font-family: 'Segoe UI', sans-serif; color: {palette.on_surface}; max-width: 900px;">
+          <h2 style="color: {palette.primary};">Segnalazione Bug SyncroJob</h2>
+          <table style="width: 100%; border-collapse: separate; margin-top: 20px;">
+            <tr>
+              <td style="width: 320px; vertical-align: top;">
+                <table style="width: 100%; font-size: 13px;">
+                  <tr><th style="{css_header}" colspan="2">DETTAGLI SISTEMA</th></tr>
+                  <tr><td style="{css_cell} font-weight:600;">Ticket ID</td><td style="{css_cell}">{meta['ticket_id']}</td></tr>
+                  <tr><td style="{css_cell} font-weight:600;">Versione</td><td style="{css_cell}">{meta['version']}</td></tr>
+                  <tr><td style="{css_cell} font-weight:600;">Utente</td><td style="{css_cell}">{meta['user']}</td></tr>
+                  <tr><td style="{css_cell} font-weight:600;">Cliente</td><td style="{css_cell}">{cliente}</td></tr>
+                </table>
+              </td>
+              <td style="vertical-align: top; padding-left: 20px;">
+                <h3 style="border-bottom: 2px solid {palette.border};">Descrizione Problema</h3>
+                <div style="line-height: 1.6;">{description.replace(chr(10), '<br>')}</div>
+              </td>
+            </tr>
+          </table>
+        </div>
+        """
 
     def save_manually(self, source_path: str) -> None:
         """

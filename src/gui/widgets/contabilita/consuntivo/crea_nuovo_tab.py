@@ -7,6 +7,7 @@ import os
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
@@ -104,7 +105,7 @@ class CreaNuovoTab(QWidget):
         card1_lay.addLayout(config_row)
         layout.addWidget(card1)
 
-    def _setup_card_intervention(self, layout: QVBoxLayout, opts: dict) -> None:
+    def _setup_card_intervention(self, layout: QVBoxLayout, opts: dict[str, Any]) -> None:
         """Card 2: DATI IDENTIFICATIVI."""
         card2, id_layout = self._create_card("DETTAGLI INTERVENTO E CLASSIFICAZIONE")
 

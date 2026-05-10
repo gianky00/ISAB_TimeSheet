@@ -56,7 +56,7 @@ def build_timbrature_maps(
 
 
 def compute_employee_status(
-    r: tuple[Any, ...],
+    r: Sequence[Any],
     last_by_cf: dict[str, int],
     last_by_name: dict[tuple[str, str], int],
     normalize: Callable[[Any], str],

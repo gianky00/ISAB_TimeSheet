@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - KPI Charts
 Gestione dei grafici KPI per la contabilità tramite Matplotlib.
@@ -9,10 +8,13 @@ import os
 os.environ["QT_API"] = "PySide6"
 
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from matplotlib.figure import Figure
+
+if TYPE_CHECKING:
+    from matplotlib.text import Annotation
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
@@ -59,7 +61,7 @@ class ChartContainer(QWidget):
         canvas: QWidget,
         title: str = "",
         height: int = 450,
-        info_callback: Callable[[], None] | None = None,
+        info_callback: Callable[[], str] | None = None,
         parent: QWidget | None = None,
     ) -> None:
         """
@@ -128,7 +130,7 @@ class KPIChartsManager:
           HOURLY_COST_STD: Costo orario standard per il calcolo dei margini.
         """
         self.HOURLY_COST_STD = HOURLY_COST_STD
-        self.annot = None
+        self.annot: Annotation | None = None
 
         # Inizializzazione Figure e Canvas
         self.fig1, self.canvas1 = self._init_figure()
@@ -171,7 +173,7 @@ class KPIChartsManager:
             COLORS["purple"],
             COLORS["cyan_info"],
         ]
-        wedges, _texts = ax.pie(
+        wedges, _texts, *_ = ax.pie(
             values,
             labels=None,
             startangle=90,
@@ -341,7 +343,7 @@ class KPIChartsManager:
     def _plot_completamento(self, data: dict[str, Any]) -> None:
         """Genera il grafico a barre segmentato per lo stato di completamento."""
         self.fig5.clear()
-        ax = self.fig5.add_axes([0.05, 0.4, 0.9, 0.3])
+        ax = self.fig5.add_axes((0.05, 0.4, 0.9, 0.3))
         if not data:
             self.canvas5.draw()
             return

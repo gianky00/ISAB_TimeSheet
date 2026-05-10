@@ -249,12 +249,12 @@ def _init_splash() -> tuple[Callable[[str, int], None], Callable[[], None]]:
 
     def upd(m: str, p: int) -> None:
         if sp.poll() is None and sp.stdin:
-            sp.stdin.write(json.dumps({"cmd": "update", "msg": m.replace("\n", " "), "prog": p}) + "\n")  # noqa: F821
+            sp.stdin.write(json.dumps({"cmd": "update", "msg": m.replace("\n", " "), "prog": p}) + "\n")
             sp.stdin.flush()
 
     def cls() -> None:
         if sp.poll() is None and sp.stdin:
-            sp.stdin.write(json.dumps({"cmd": "close"}) + "\n")  # noqa: F821
+            sp.stdin.write(json.dumps({"cmd": "close"}) + "\n")
             sp.stdin.flush()
             sp.stdin.close()
             try:
