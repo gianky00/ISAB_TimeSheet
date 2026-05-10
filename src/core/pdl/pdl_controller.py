@@ -33,8 +33,8 @@ class PDLController:
             dtos = [PdlRowDTO.from_db_row(r) for r in results]
             self._cache[cache_key] = dtos
             return dtos
-        except Exception as e:
-            logger.exception("Errore caricamento PDL", exc=e)
+        except Exception:
+            logger.exception("Errore caricamento PDL")
             return []
 
     def clear_cache(self) -> None:

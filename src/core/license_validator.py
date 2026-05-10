@@ -8,11 +8,8 @@ e la verifica delle scadenze temporali tramite Trusted Time (Network Time).
 import hashlib
 import json
 import os
-import platform
 import shutil
-import subprocess
 import sys
-import uuid
 from contextlib import suppress
 from datetime import date
 from enum import Enum
@@ -22,8 +19,10 @@ from typing import Any
 from cryptography.fernet import Fernet
 
 from src.core.audit_manager import AuditManager
+from src.core.license_hwid import get_hardware_id
 from src.core.logging import get_logger
 from src.core.paths import CONFIG_DIR as PATHS_CONFIG_DIR, get_data_path
+from src.core.secrets_manager import SecretsManager
 from src.core.time_manager import get_trusted_time
 
 logger = get_logger(__name__)
@@ -47,86 +46,6 @@ def _calculate_sha256(filepath: str | Path) -> str:
         for byte_block in iter(lambda: f.read(4096), b""):
             sha256_hash.update(byte_block)
     return sha256_hash.hexdigest()
-
-
-def get_hardware_id() -> str:
-    """
-    Genera o recupera un identificativo univoco (HWID) per la macchina corrente.
-    Utilizza seriali dei dischi o UUID di sistema a seconda della piattaforma.
-
-    Returns:
-      str: Identificativo hardware normalizzato.
-    """
-    raw_id = ""
-    if platform.system() == "Windows":
-        raw_id = _get_windows_hardware_id() or "ERROR_GETTING_ID"
-    elif platform.system() == "Linux":
-        raw_id = _get_linux_hardware_id() or "ERROR_GETTING_ID"
-    else:
-        try:
-            raw_id = str(uuid.getnode())
-        except Exception:
-            raw_id = "ERROR_GETTING_ID"
-
-    return raw_id.strip().rstrip(".")
-
-
-def _get_windows_hardware_id() -> str | None:
-    """Recupera l'HWID su sistemi Windows tramite WMIC o PowerShell."""
-    create_no_window = 0x08000000
-    with suppress(Exception):
-        cmd = ["wmic", "diskdrive", "get", "serialnumber"]
-        output = subprocess.check_output(
-            cmd, shell=False, stderr=subprocess.DEVNULL, creationflags=create_no_window
-        ).decode()
-        parts = output.strip().split("\n")
-        if len(parts) > 1 and parts[1].strip():
-            return parts[1].strip()
-
-    with suppress(Exception):
-        cmd = [
-            "powershell",
-            "-NoProfile",
-            "-Command",
-            "Get-CimInstance -Class Win32_DiskDrive | Select-Object -ExpandProperty SerialNumber",
-        ]
-        output = (
-            subprocess.check_output(cmd, stderr=subprocess.DEVNULL, creationflags=create_no_window)
-            .decode()
-            .strip()
-        )
-        if output:
-            return output.splitlines()[0].strip()
-
-    with suppress(Exception):
-        cmd = [
-            "powershell",
-            "-NoProfile",
-            "-Command",
-            "Get-CimInstance -Class Win32_ComputerSystemProduct | Select-Object -ExpandProperty UUID",
-        ]
-        output = (
-            subprocess.check_output(cmd, stderr=subprocess.DEVNULL, creationflags=create_no_window)
-            .decode()
-            .strip()
-        )
-        if output:
-            return output
-    return None
-
-
-def _get_linux_hardware_id() -> str | None:
-    """Recupera l'HWID su sistemi Linux tramite lsblk o machine-id."""
-    with suppress(Exception):
-        cmd = ["lsblk", "--nodeps", "-o", "serial", "-n"]
-        output = subprocess.check_output(cmd, shell=False, stderr=subprocess.DEVNULL).decode().strip()
-        if output:
-            return output.split("\n")[0].strip()
-    machine_id = Path("/etc/machine-id")
-    if machine_id.exists():
-        with suppress(Exception):
-            return machine_id.read_text().strip()
-    return None
 
 
 def _get_license_paths() -> dict[str, Path]:
@@ -191,8 +110,6 @@ def get_license_info() -> dict[str, Any] | None:
         return None
 
     try:
-        from src.core.secrets_manager import SecretsManager
-
         encrypted_data = paths["config"].read_bytes()
         key_raw = SecretsManager.get_license_key()
         if not key_raw:
@@ -206,8 +123,8 @@ def get_license_info() -> dict[str, Any] | None:
         except Exception as de:
             logger.exception("Errore decifratura config.dat", exc=de)
             return None
-    except Exception as e:
-        logger.exception("Errore caricamento licenza", exc=e)
+    except Exception:
+        logger.exception("Errore caricamento licenza")
         return None
 
 

@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 from PySide6.QtCore import QObject
 
 from src.core.notification_manager import NotificationManager
+from src.gui.main_window.telegram_bridge import TelegramGUIBridge
 
 # Modular Bridge Components
 from .telegram.bridge.data_processor import TelegramDataProcessor
@@ -36,8 +37,6 @@ class TelegramUIBridge(QObject):
         self.telegram = main_window.telegram
 
         # Bridge GUI per isolare PyQt dal CORE
-        from src.gui.main_window.telegram_bridge import TelegramGUIBridge
-
         self.gui_bridge = TelegramGUIBridge(self.mw)
 
         # Inizializza gli handler modulari

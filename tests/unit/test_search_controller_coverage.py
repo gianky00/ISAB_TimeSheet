@@ -21,8 +21,8 @@ class TestSearchControllerCoverage(unittest.TestCase):
         self.assertEqual(self.controller._last_query, "")
 
     @patch("src.gui.controllers.search_controller.QMenu")
-    def test_perform_search_no_results(self, MockMenu):
-        mock_menu_instance = MockMenu.return_value
+    def test_perform_search_no_results(self, mock_menu):
+        mock_menu_instance = mock_menu.return_value
 
         # Mock all sub-searches to return 0
         self.controller._add_oda_matches = MagicMock(return_value=0)
@@ -72,8 +72,8 @@ class TestSearchControllerCoverage(unittest.TestCase):
         menu.addAction.assert_any_call("AUDIT LOG:")
 
     @patch("src.gui.controllers.search_controller.QMenu")
-    def test_perform_search_integration(self, MockMenu):
-        mock_menu = MockMenu.return_value
+    def test_perform_search_integration(self, mock_menu):
+        mock_menu_obj = mock_menu.return_value
 
         # Use simple return values for sub-methods to verify orchestration
         self.controller._add_oda_matches = MagicMock(return_value=1)

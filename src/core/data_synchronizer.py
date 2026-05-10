@@ -7,6 +7,12 @@ Gestisce la sincronizzazione dei dati importati delegando agli engine specializz
 from pathlib import Path
 from typing import Any
 
+from src.core.importers.attivita import AttivitaImporter
+from src.core.importers.certificati import CertificatiImporter
+from src.core.importers.contabilita import ContabilitaImporter
+from src.core.importers.giornaliere import GiornaliereImporter
+from src.core.importers.scarico_ore import ScaricoOreImporter
+from src.core.importers.storico_oda import StoricoOdaImporter
 from src.core.sync.contabilita_sync import ContabilitaSyncEngine
 from src.core.sync.smart_sync import SmartSyncEngine
 
@@ -20,8 +26,6 @@ class DataSynchronizer:
     @classmethod
     def sync_contabilita(cls, db_path: Path, import_data: list[Any], years: list[int]) -> tuple[int, int]:
         """Sincronizza i dati della contabilità."""
-        from src.core.importers.contabilita import ContabilitaImporter
-
         all_new_data = []
         for r in import_data:
             if hasattr(r, "values"):
@@ -37,8 +41,6 @@ class DataSynchronizer:
     @classmethod
     def sync_giornaliere(cls, db_path: Path, import_data: list[Any], years: list[int]) -> tuple[int, int]:
         """Sincronizza i dati delle giornaliere."""
-        from src.core.importers.giornaliere import GiornaliereImporter
-
         all_new_data = []
         for r in import_data:
             if hasattr(r, "values"):
@@ -54,8 +56,6 @@ class DataSynchronizer:
     @classmethod
     def sync_storico_oda(cls, db_path: Path, rows_to_insert: list[tuple[Any, ...]]) -> tuple[int, int]:
         """Sincronizza lo storico ODA via Upsert intelligente."""
-        from src.core.importers.storico_oda import StoricoOdaImporter
-
         res = SmartSyncEngine.sync_upsert_smart(
             db_path,
             "storico_oda",
@@ -73,8 +73,6 @@ class DataSynchronizer:
     @classmethod
     def sync_attivita_programmate(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
         """Sincronizza le attivitàprogrammate."""
-        from src.core.importers.attivita import AttivitaImporter
-
         res = SmartSyncEngine.sync_upsert_smart(
             db_path,
             "attivita_programmate",
@@ -87,8 +85,6 @@ class DataSynchronizer:
     @classmethod
     def sync_scarico_ore(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
         """Sincronizza lo scarico ore."""
-        from src.core.importers.scarico_ore import ScaricoOreImporter
-
         res = SmartSyncEngine.sync_upsert_smart(
             db_path,
             "scarico_ore",
@@ -101,8 +97,6 @@ class DataSynchronizer:
     @classmethod
     def sync_certificati_campione(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
         """Sincronizza i certificati campione."""
-        from src.core.importers.certificati import CertificatiImporter
-
         res = SmartSyncEngine.sync_upsert_smart(
             db_path,
             "certificati_campione",

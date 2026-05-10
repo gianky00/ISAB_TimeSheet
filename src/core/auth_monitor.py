@@ -4,6 +4,7 @@ Monitoraggio proattivo delle abilitazioni ISAB basato sulle timbrature.
 """
 
 import re
+from collections.abc import Sequence
 from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any
@@ -31,7 +32,7 @@ def _parse_date(last_date_str: Any) -> datetime | None:
 
 
 def _build_access_maps(
-    accessi_raw: list[tuple[Any, ...]],
+    accessi_raw: Sequence[Sequence[Any]],
 ) -> tuple[dict[str, tuple[int, str]], dict[tuple[str, str], tuple[int, str]]]:
     """Costruisce le mappe di ultimo accesso: per CF e per (Cognome, Nome)."""
     last_by_cf: dict[str, tuple[int, str]] = {}

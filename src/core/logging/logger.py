@@ -4,8 +4,11 @@ Main logger implementation con multi-sink support.
 
 import inspect
 import sys
+import traceback
 from contextlib import suppress
 from typing import Any
+
+from src.core.logging.sinks import get_bot_sink
 
 from .config import get_config
 from .context import get_context
@@ -134,8 +137,6 @@ class StructuredLogger:
             pass
 
         if exception:
-            import traceback
-
             with suppress(Exception):
                 print(traceback.format_exc())
 
@@ -161,8 +162,6 @@ class StructuredLogger:
         """Invia i log al sink specifico del bot se il contesto lo richiede."""
         ctx = get_context().to_dict()
         if ctx.get("trace_id") and ctx.get("bot_type"):
-            from src.core.logging.sinks import get_bot_sink
-
             get_bot_sink().write(level, self.name, message, ctx, extra, exception, source)
 
     def _safe_append_file(self, path: Any, line: str, exception: Any = None) -> None:
@@ -171,8 +170,6 @@ class StructuredLogger:
             with path.open("a", encoding="utf-8") as f:
                 f.write(line + "\n")
                 if exception:
-                    import traceback
-
                     f.write(traceback.format_exc() + "\n")
         except Exception as e:
             print(f"[LOGGER ERROR] Failed to write to {path}: {e}", file=sys.stderr)

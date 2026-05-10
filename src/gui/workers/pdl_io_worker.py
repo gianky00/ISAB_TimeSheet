@@ -55,5 +55,5 @@ class PdlIOWorker(QThread):
             self.finished_signal.emit(True, "Esportazione completata con successo", self.file_path)
 
         except Exception as e:
-            logger.exception("PdlIOWorker Error", exc=e)
+            logger.exception("PdlIOWorker Error")
             self.finished_signal.emit(False, str(e), "")

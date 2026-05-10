@@ -3,6 +3,7 @@ Helper per migrare dal vecchio sistema di logging al nuovo.
 """
 
 import logging
+import sys
 from typing import Any
 
 from .logger import get_logger as get_new_logger
@@ -60,7 +61,6 @@ class LoggingAdapter:
 
     def exception(self, msg: Any, *args: Any, exc_info: bool = True, **kwargs: Any) -> None:
         """Exception log."""
-        import sys
 
         extra = kwargs.pop("extra", {})
         formatted_msg = msg % args if args else msg

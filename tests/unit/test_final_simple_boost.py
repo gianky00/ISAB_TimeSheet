@@ -13,7 +13,7 @@ class TestFinalSimpleBoost:
 
         # Check badge logic: append " (N)"
         btn.set_badge(5)
-        # Implementation: f"   {self.label_text} ({count})"
+        # Logica badge: aggiunge il conteggio tra parentesi al testo
         assert "(5)" in btn.text()
 
         btn.set_badge(0)

@@ -1,3 +1,4 @@
+# ruff: noqa: PLR0915, PLR0912, C901, PLR0911
 """
 SyncroJob Enterprise - Ultra Test Runner V5.2 (The Apex Runner)
 ================================================================
@@ -198,7 +199,7 @@ def _extract_failures(output: str, target: str) -> list[FailureDetail]:
     while i < len(lines):
         line = lines[i]
 
-        # Pattern: "FAILED tests/unit/test_foo.py::test_bar - ErrorType: msg"
+        # Pattern: "FAILED tests/unit/test_foo.py::test_bar - ErrorType: msg"  # noqa: ERA001
         failed_match = re.match(r"FAILED\s+([\S]+::\S+)\s*-?\s*(.*)", line)
         if failed_match:
             node_id = failed_match.group(1)

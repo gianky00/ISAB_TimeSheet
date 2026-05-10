@@ -180,7 +180,8 @@ class KPIChartsManager:
             fontsize=10,
             arrowprops={"arrowstyle": "-", "color": "black"},
         )
-        self.annot.set_visible(False)
+        if self.annot:
+            self.annot.set_visible(False)
 
         total_sum = sum(values)
 

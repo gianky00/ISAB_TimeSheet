@@ -11,10 +11,13 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
+
 from src.core.constants import REPORT_COLORS as COLORS, THRESHOLD_DAYS
 from src.core.database import db_manager
 from src.core.dipendenti.data_helpers import build_timbrature_maps
 from src.core.report_history import ReportHistory
+from src.core.version import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +82,6 @@ class ReportService:
     @staticmethod
     def build_report_html(data: dict[str, Any]) -> str:
         """Costruisce il template HTML per l'email."""
-        from src.core.version import __version__
 
         current_date = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
         font_family = "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif"
@@ -195,8 +197,6 @@ class ReportService:
 
         if not excel_data:
             return None
-
-        import pandas as pd
 
         df_report = pd.DataFrame(excel_data)
         path = (

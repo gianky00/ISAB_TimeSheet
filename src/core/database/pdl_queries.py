@@ -8,6 +8,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+from src.core import config_manager
 from src.core.database import db_manager
 
 logger = logging.getLogger(__name__)
@@ -141,10 +142,8 @@ class PDLQueries:
     @classmethod
     def get_pdl_interventions(cls, n_pdl: str) -> list[dict[str, Any]]:
         """
-        Recupera la cronologiàdegli interventi per un determinato PDL
         dal database dei Report Attività.
         """
-        from src.core import config_manager
 
         config = config_manager.load_config()
         # Path di default storico (Cerca in folder parallela se non configurato)

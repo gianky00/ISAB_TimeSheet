@@ -439,8 +439,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 if DocumentProcessor.merge_pdfs(all_paths, str(path_merge)):
                     self.log(f"✅ PDF Unico Sessione creato: {path_merge.name}")
                     self.downloaded_files.append(str(path_merge))
-            except Exception as e:
-                logger.exception("Errore unione sessione", exc=e)
+            except Exception:
+                logger.exception("Errore unione sessione")
 
     def _unisci_e_stampa(
         self, pdl_num: str, p1: str, p2: str, item: dict[str, Any], all_paths: list[str]

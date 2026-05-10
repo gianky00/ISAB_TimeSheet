@@ -76,7 +76,7 @@ class AppInitializer:
             if any(x in str(e) for x in ("REVOCATA", "Licenza non valida", "Errore Database")):
                 raise
             logger.critical(f"Unexpected startup error: {e}", exc_info=True)
-            raise StartupError(f"Startup error: {e}") from e  # noqa: TRY003
+            raise StartupError(f"Startup error: {e}") from e
         else:
             return True
 
@@ -118,7 +118,7 @@ class AppInitializer:
         step("Validazione Certificati di Licenza (Cache Locale)...", 31)
         status, msg = get_detailed_license_status()
         if status != LicenseStatus.VALID:
-            raise LicenseError(f"Licenza non valida: {msg}")  # noqa: TRY003
+            raise LicenseError(f"Licenza non valida: {msg}")
 
     @staticmethod
     def _init_databases(step: Callable[[str, int], None]) -> None:
@@ -126,8 +126,8 @@ class AppInitializer:
         step("Inizializzazione Engine SQLite3...", 34)
         try:
             db_manager.init_db()
-        except Exception as e:
-            logger.exception("Errore inizializzazione database", exc=e)
+        except Exception:
+            logger.exception("Errore inizializzazione database")
             raise
 
     @staticmethod

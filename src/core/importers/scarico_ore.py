@@ -22,6 +22,7 @@ except ImportError:
     openpyxl_mod = None
     HAS_OPENPYXL = False
 
+from src.core.constants import Business
 from src.core.importers.base import BaseImporter
 from src.core.logging import get_logger
 
@@ -85,8 +86,6 @@ class ScaricoOreImporter(BaseImporter):
         except (zipfile.BadZipFile, Exception) as e:
             logger.debug(f"Scan excel rows error: {e}")
 
-        from src.core.constants import Business
-
         if msoffcrypto:
             with suppress(Exception):
                 decrypted = io.BytesIO()
@@ -138,8 +137,6 @@ class ScaricoOreImporter(BaseImporter):
 
     @classmethod
     def _load_scarico_workbook(cls, path: Path) -> Any:
-        from src.core.constants import Business
-
         wb_file = io.BytesIO()
         is_encrypted = False
 
@@ -209,11 +206,9 @@ class ScaricoOreImporter(BaseImporter):
         """Formatta in modo intelligente i valori provenienti da openpyxl."""
         if val is None:
             return ""
-        # Se  un numero intero rappresentato come float (comune in Excel), converti in int
         if isinstance(val, (float, int)) and float(val).is_integer():
             val = int(val)
         s = str(val)
-        # Sostituisce newline e sequence di spazi con un singolo spazio
         return re.sub(r"\s+", " ", s).strip()
 
     @staticmethod
@@ -246,12 +241,10 @@ class ScaricoOreImporter(BaseImporter):
         if c_odc.value is None and c_pos.value is None:
             return None
 
-        # Estrazione Campi
         s_data = cls._fmt_excel_date(c_data.value)
         s_p1 = cls._fmt_excel_val(c_p1.value)
         s_p2 = cls._fmt_excel_val(c_p2.value)
 
-        # Gestione OdC / Posizione (esclude zeri fittizi)
         def _clean_zero(v: Any) -> str:
             s = cls._fmt_excel_val(v)
             return "" if s in ("0", "0.0") else s
@@ -259,7 +252,6 @@ class ScaricoOreImporter(BaseImporter):
         s_odc = _clean_zero(c_odc.value)
         s_pos = _clean_zero(c_pos.value)
 
-        # Altri Campi
         s_dalle = cls._fmt_excel_val(c_dalle.value)
         s_alle = cls._fmt_excel_val(c_alle.value)
         s_tot = cls._fmt_excel_val(c_tot.value)

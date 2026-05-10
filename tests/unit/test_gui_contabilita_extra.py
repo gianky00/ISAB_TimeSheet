@@ -45,7 +45,6 @@ class TestContabilitaExtra:
 
             # Instantiate Panel without qtbot.addWidget (to avoid strict integration)
             panel = ContabilitaPanel()
-            # panel.show() # Not strictly needed for logic test if we trigger methods manually
 
             try:
                 # Manually trigger deferred loading (simulating the QTimer callback)
@@ -87,7 +86,6 @@ class TestContabilitaExtra:
             mock_manager.get_available_years.return_value = [2024]  # Single year for simplicity
 
             panel = ContabilitaPanel()
-            # panel.show()
 
             try:
                 panel._safe_refresh_tabs()

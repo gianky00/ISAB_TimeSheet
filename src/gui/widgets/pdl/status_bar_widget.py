@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class ProgrammingStatusWidget(QWidget):
     """Widget elegante che mostra una barra di stato verde/arancione per TCL e TGO."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         tcl: bool,
         tgo: bool,
@@ -53,8 +53,8 @@ class ProgrammingStatusWidget(QWidget):
             if path.exists():
                 encoded = base64.b64encode(path.read_bytes()).decode("utf-8")
                 return f"data:image/svg+xml;base64,{encoded}"
-        except Exception as e:
-            logger.exception("Errore caricamento icona base64", exc=e)
+        except Exception:
+            logger.exception("Errore caricamento icona base64")
         return ""
 
     def _setup_tooltip(self) -> None:
@@ -99,8 +99,8 @@ class ProgrammingStatusWidget(QWidget):
         """Disegna un'evidenziazione se la cella rappresenta il giorno corrente."""
         if self.is_today:
             c = QColor(COLORS["primary_dark"])
-            HIGHLIGHT_OPACITY = 40
-            painter.fillRect(self.rect(), QColor(c.red(), c.green(), c.blue(), HIGHLIGHT_OPACITY))
+            highlight_opacity = 40
+            painter.fillRect(self.rect(), QColor(c.red(), c.green(), c.blue(), highlight_opacity))
 
     def _create_bar_path(self, x: float, y: float, w: float, h: float, r: float) -> QPainterPath:
         """Crea il tracciato della barra gestendo le connessioni laterali."""
@@ -108,16 +108,13 @@ class ProgrammingStatusWidget(QWidget):
         tl = 0.0 if self.connect_left else r
         bl = 0.0 if self.connect_left else r
         tr = 0.0 if self.connect_right else r
-        br = 0.0 if self.connect_right else r
-
-        # Top-right
-        path.moveTo(x + w - tr, y)
         if tr > 0:
             path.arcTo(x + w - 2 * tr, y, 2 * tr, 2 * tr, 90, -90)
         else:
             path.lineTo(x + w, y)
 
         # Bottom-right
+        br = 0.0 if self.connect_right else r
         path.lineTo(x + w, y + h - br)
         if br > 0:
             path.arcTo(x + w - 2 * br, y + h - 2 * br, 2 * br, 2 * br, 0, -90)
@@ -151,17 +148,15 @@ class ProgrammingStatusWidget(QWidget):
             painter.setBrush(green_color)
             painter.drawPath(path)
         elif self.tcl:
-            # Metà sinistra (approssimata con un piccolo overlap centrale)
-            OVERLAP = 2.0
-            tcl_rect = QRectF(x, y, w / 2.0 + OVERLAP, h)
+            overlap = 2.0
+            tcl_rect = QRectF(x, y, w / 2.0 + overlap, h)
             tcl_path = QPainterPath()
             tcl_path.addRoundedRect(tcl_rect, r, r)
             painter.setBrush(orange_color)
             painter.drawPath(tcl_path)
         elif self.tgo:
-            # Metà destra
-            OVERLAP = 2.0
-            tgo_rect = QRectF(x + w / 2.0 - OVERLAP, y, w / 2.0 + OVERLAP, h)
+            overlap = 2.0
+            tgo_rect = QRectF(x + w / 2.0 - overlap, y, w / 2.0 + overlap, h)
             tgo_path = QPainterPath()
             tgo_path.addRoundedRect(tgo_rect, r, r)
             painter.setBrush(orange_color)

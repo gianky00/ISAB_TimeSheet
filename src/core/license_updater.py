@@ -1,4 +1,4 @@
-# ruff: noqa: PLR2004, TRY003, TRY300, TRY301, C901, PLR0911, PLR0912, PLR0915, PLC0415
+# ruff: noqa: PLR2004, TRY300, TRY301, C901, PLR0911, PLR0912, PLR0915, PLC0415
 """
 SyncroJob - License Updater
 Modulo dedicato all'aggiornamento e alla sincronizzazione dei file di licenza dal repository GitHub.
@@ -298,7 +298,7 @@ def run_update() -> bool:
         # Se  l'eccezione di revoca la facciamo passare
         if "REVOCATA" in str(e):
             raise
-        logger.exception("Errore inatteso durante update licenza", exc=e)
+        logger.exception("Errore inatteso durante update licenza")
         return False
 
 
@@ -309,8 +309,8 @@ def _ensure_license_dir(path: str | Path) -> bool:
         try:
             path_obj.mkdir(parents=True)
             logger.info("Cartella licenza creata")
-        except OSError as e:
-            logger.exception("Errore creazione cartella licenza", exc=e)
+        except OSError:
+            logger.exception("Errore creazione cartella licenza")
             return False
     return True
 
@@ -324,6 +324,6 @@ def _save_license_files(license_dir: str | Path, files: dict[str, bytes]) -> boo
         logger.info("  Aggiornamento completato")
         update_grace_timestamp()
         return True
-    except OSError as e:
-        logger.exception("Errore scrittura file licenza", exc=e)
+    except OSError:
+        logger.exception("Errore scrittura file licenza")
         return False

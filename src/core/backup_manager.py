@@ -178,7 +178,7 @@ class BackupManager:
             success, msg = False, "Nessun file da backuppare trovato."
 
         except Exception as e:
-            logger.exception("Backup Error", exc=e)
+            logger.exception("Backup Error")
             AuditManager.instance().log_action(
                 "Errore Backup",
                 category="sistema",
@@ -221,8 +221,8 @@ class BackupManager:
                 key=lambda p: p.stat().st_mtime,
                 reverse=True,
             )
-        except Exception as e:
-            logger.exception("Error listing backups", exc=e)
+        except Exception:
+            logger.exception("Error listing backups")
             return []
 
     @staticmethod

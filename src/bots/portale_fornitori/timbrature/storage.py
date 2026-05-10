@@ -90,8 +90,8 @@ class TimbratureStorage:
                 if added:
                     conn.commit()
 
-        except Exception as e:
-            logger.exception("Errore durante ensure_columns in TimbratureStorage", exc=e)
+        except Exception:
+            logger.exception("Errore durante ensure_columns in TimbratureStorage")
 
     def search_employees(self, query: str) -> list[dict[str, str]]:
         """

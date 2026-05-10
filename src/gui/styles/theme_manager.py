@@ -103,8 +103,8 @@ class ThemeManager:
             try:
                 qss_content = qss_path.read_text(encoding="utf-8")
                 qss_content = self._process_qss(qss_content)
-            except Exception as e:
-                logger.exception("Errore lettura QSS", qss_path=qss_path, exc=e)
+            except Exception:
+                logger.exception("Errore lettura QSS", qss_path=qss_path)
 
         if not qss_content:
             qss_content = f"QMainWindow {{ background-color: {self.palette.background}; }}"
@@ -116,8 +116,8 @@ class ThemeManager:
             try:
                 overrides_content = overrides_path.read_text(encoding="utf-8")
                 overrides_content = self._process_qss(overrides_content)
-            except Exception as e:
-                logger.exception("Errore lettura Overrides QSS", exc=e)
+            except Exception:
+                logger.exception("Errore lettura Overrides QSS")
 
         # 3. Applica la combinazione degli stili
         app.setStyleSheet(qss_content + overrides_content)

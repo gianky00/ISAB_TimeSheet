@@ -14,6 +14,8 @@ import keyring  # Per integrazione con credential manager OS
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+from src.core.license_hwid import get_hardware_id
+
 logger = logging.getLogger(__name__)
 
 
@@ -82,7 +84,6 @@ class SecretsManager:
         Genera una chiave di cifratura deterministica basata sull'Hardware ID.
         Questo evita di cablare chiavi statiche nel codice per i periodi di grazia.
         """
-        from src.core.license_validator import get_hardware_id
 
         hwid = get_hardware_id()
         # Usa l'HWID normalizzato per derivare una chiave Fernet valida

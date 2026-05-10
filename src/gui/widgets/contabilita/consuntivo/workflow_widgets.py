@@ -110,7 +110,7 @@ class WorkflowStepButton(QFrame):
         self._glow_opacity = value
         self.update()
 
-    glowOpacity = Property(float, fget=get_glow_opacity, fset=set_glow_opacity)
+    glowOpacity = Property(float, fget=get_glow_opacity, fset=set_glow_opacity)  # noqa: N815
 
     def set_state(self, state: str) -> None:
         """

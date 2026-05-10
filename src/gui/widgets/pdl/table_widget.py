@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QHeaderView,
     QTableWidget,
     QTableWidgetItem,
+    QWidget,
 )
 
 from src.core.database.pdl_queries import PDLQueries
@@ -28,7 +29,7 @@ class ProgrammazioneTableWidget(StandardTable):
     row_expanded = Signal(int, bool)  # row, is_expanded
     selection_changed_custom = Signal()
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(0, 0, parent)
         self._setup_ui()
 
@@ -59,7 +60,7 @@ class ProgrammazioneTableWidget(StandardTable):
                 self.setColumnWidth(i, 85)
 
         self.cellDoubleClicked.connect(self._handle_double_click)
-        self.cellClicked.connect(self.selection_changed_custom.emit)
+        self.cellClicked.connect(lambda _r, _c: self.selection_changed_custom.emit())
 
     def _handle_double_click(self, row: int, column: int) -> None:
         from src.gui.widgets.pdl_timeline import PDLTimelineWidget
@@ -82,8 +83,8 @@ class ProgrammazioneTableWidget(StandardTable):
         self.insertRow(next_row)
         try:
             interventions = PDLQueries.get_pdl_interventions(pdl_code)
-        except Exception as e:
-            logger.exception(f"Errore timeline PDL {pdl_code}", exc=e)
+        except Exception:
+            logger.exception(f"Errore timeline PDL {pdl_code}")
             interventions = []
 
         timeline = PDLTimelineWidget(interventions)

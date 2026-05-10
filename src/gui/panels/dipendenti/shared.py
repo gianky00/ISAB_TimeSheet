@@ -93,8 +93,8 @@ class ColoredDotDelegate(QStyledItemDelegate):
                 painter.setFont(font)
                 text_rect = option.rect.adjusted(10, 0, 0, 0)
                 painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, str(days))
-        except Exception as e:
-            logger.exception("Errore rendering pallino", exc=e)
+        except Exception:
+            logger.exception("Errore rendering pallino")
             super().paint(painter, option, index)
 
         painter.restore()

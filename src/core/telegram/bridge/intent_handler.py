@@ -11,6 +11,7 @@ from PySide6.QtCore import QObject
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from src.core.telegram.bridge.data_processor import TelegramDataProcessor
+from src.core.telegram.bridge.ui_commands import TelegramUICommands
 from src.utils.printing import get_installed_printers
 from src.utils.validators import InputValidator
 
@@ -101,8 +102,6 @@ class TelegramIntentHandler(QObject):
         self._run_coroutine(coro)
 
     def _handle_generic_download(self, obj: str) -> None:
-        from .ui_commands import TelegramUICommands
-
         cmds = TelegramUICommands(self.mw, self.telegram)
         if obj == "oda":
             cmds.run_ts_bot()

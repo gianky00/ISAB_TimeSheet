@@ -5,6 +5,7 @@ Garantisce la fluidit  della GUI delegando le query al SearchWorker.
 """
 
 import logging
+import warnings
 from typing import Any
 
 from PySide6.QtCore import QObject, QPoint, QTimer
@@ -58,7 +59,9 @@ class SearchController(QObject):
         # Interrompe in modo sicuro eventuali ricerche precedenti ancora in corso
         if self.worker and self.worker.isRunning():
             self.worker.cancel()
-            self.worker.results_ready.disconnect()  # Previene update da vecchi thread
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                self.worker.results_ready.disconnect()  # Previene update da vecchi thread
 
         self.worker = SearchWorker(self._last_query, parent=self)
         self.worker.results_ready.connect(self._show_results_menu)

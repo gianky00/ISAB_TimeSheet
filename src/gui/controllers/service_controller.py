@@ -10,6 +10,7 @@ import logging
 import operator
 import os
 import re
+from collections.abc import Sequence
 from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from typing import Any, Final
@@ -209,7 +210,7 @@ class ServiceController(QObject):
         return w_list, e_list
 
     def _build_access_maps(
-        self, accessi: list[tuple[Any, ...]]
+        self, accessi: Sequence[Sequence[Any]]
     ) -> tuple[dict[str, int], dict[tuple[str, str], int]]:
         """Costruisce mappe di accesso per ricerca rapida per CF o Nome/Cognome."""
         today = datetime.now(UTC)

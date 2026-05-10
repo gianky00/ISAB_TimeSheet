@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from typing import Final
 
 from src.core.database.manager import db_manager
+from src.core.sync_tracker import SyncTracker
 
 logger = logging.getLogger(__name__)
 
@@ -68,8 +69,6 @@ class PDLStatsEngine:
                 weekly_trend = cls._calculate_percentage_change(last_7d, prev_7d)
 
                 areas_stats_list = cls._get_area_stats(stats_map)
-
-                from src.core.sync_tracker import SyncTracker
 
                 last_sync = SyncTracker.get_formatted_status("pdl")
 

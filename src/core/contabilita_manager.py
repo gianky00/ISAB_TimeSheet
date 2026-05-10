@@ -207,8 +207,8 @@ class ContabilitaManager:
         try:
             query = f"UPDATE certificati_campione SET {field} = ? WHERE id = ?"  # nosec B608
             db_manager.execute_query(db_manager.DB_CONTABILITA, query, (value, record_id))
-        except Exception as e:
-            logger.exception("Errore aggiornamento certificato", field=field, exc=e)
+        except Exception:
+            logger.exception("Errore aggiornamento certificato", field=field)
             return False
         else:
             return True

@@ -29,8 +29,8 @@ class ConsuntivoController:
         try:
             manager = PreventiviGeneratorManager("")
             return manager.get_next_progressive(path)
-        except Exception as e:
-            logger.exception("Errore calcolo progressivo", exc=e)
+        except Exception:
+            logger.exception("Errore calcolo progressivo")
             return "001"
 
     def get_config_options(self) -> dict[str, list[str]]:

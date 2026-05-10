@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import threading
+import traceback
 from datetime import UTC, datetime
 from typing import Any
 
@@ -85,8 +86,6 @@ class JSONFormatter:
 
         # Exception info
         if exception:
-            import traceback
-
             entry["exception"] = {
                 "type": type(exception).__name__,
                 "message": str(exception),

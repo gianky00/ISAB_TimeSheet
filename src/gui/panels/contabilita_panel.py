@@ -9,10 +9,14 @@ Include un motore di ricerca unificato e l'accesso al pannello di analisi KPI.
 from __future__ import annotations
 
 import logging
+import warnings
 from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
+
+if TYPE_CHECKING:
+    from PySide6.QtGui import QShowEvent
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
@@ -91,7 +95,7 @@ class ContabilitaPanel(QWidget):
         self._setup_ui()
         # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
 
-    def showEvent(self, event) -> None:
+    def showEvent(self, event: QShowEvent) -> None:
         """Esegue il primo refresh solo quando il pannello diventa visibile."""
         super().showEvent(event)
         if not self._first_refresh_done:
@@ -362,17 +366,20 @@ class ContabilitaPanel(QWidget):
         target = curr.currentWidget() if isinstance(curr, (QTabWidget, AnimatedTabWidget)) else curr
 
         if target:
-            if hasattr(target, "table"):
-                table: Any = target.table
-                if model := table.selectionModel():
+            # Silenziamo il RuntimeWarning se il segnale non è connesso
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                if hasattr(target, "table"):
+                    table: Any = target.table
+                    if model := table.selectionModel():
+                        with suppress(TypeError, RuntimeError):
+                            model.selectionChanged.disconnect()
+                        model.selectionChanged.connect(lambda s, d: self._update_selection_total(table))
+                elif hasattr(target, "tree"):
+                    tree: Any = target.tree
                     with suppress(TypeError, RuntimeError):
-                        model.selectionChanged.disconnect()
-                    model.selectionChanged.connect(lambda s, d: self._update_selection_total(table))
-            elif hasattr(target, "tree"):
-                tree: Any = target.tree
-                with suppress(TypeError, RuntimeError):
-                    tree.itemSelectionChanged.disconnect()
-                tree.itemSelectionChanged.connect(lambda: self._update_selection_total(tree))
+                        tree.itemSelectionChanged.disconnect()
+                    tree.itemSelectionChanged.connect(lambda: self._update_selection_total(tree))
 
     def _update_selection_total(self, widget: QWidget) -> None:
         """Esegue il calcolo granulare delle ore selezionate filtrando le righe nascoste."""

@@ -76,8 +76,8 @@ class ContabilitaSearch:
                             "odc": row[2],
                         }
                     )
-        except Exception as e:
-            logger.exception("Search Error", exc=e)
+        except Exception:
+            logger.exception("Search Error")
 
         return results
 
@@ -107,8 +107,8 @@ class ContabilitaSearch:
                 # 3. Certificati
                 out["CERTIFICATI"] = cls._search_certificati(cursor, query, limit)
 
-        except Exception as e:
-            logger.exception("Extended Search Error", exc=e)
+        except Exception:
+            logger.exception("Extended Search Error")
 
         return out
 

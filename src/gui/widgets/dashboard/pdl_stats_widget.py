@@ -194,8 +194,8 @@ class PDLStatsWidget(ModernCard):
             try:
                 metrics = PDLStatsEngine.get_metrics()
                 self.stats_updated.emit(metrics)
-            except Exception as e:
-                logger.exception("PDL Refresh Error", exc=e)
+            except Exception:
+                logger.exception("PDL Refresh Error")
 
         threading.Thread(target=run, daemon=True).start()
 

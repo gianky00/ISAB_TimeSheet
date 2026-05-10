@@ -159,7 +159,7 @@ class QuickActionsConfigDialog(QDialog):
             if not path_tuple:
                 root = self.tree.invisibleRootItem()
                 if root is None:
-                    raise RuntimeError("Missing tree root")  # noqa: TRY003
+                    raise RuntimeError("Missing tree root")
                 return root
 
             parent_path = path_tuple[:-1]

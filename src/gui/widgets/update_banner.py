@@ -7,7 +7,12 @@ from PySide6.QtCore import (  # type: ignore
     Signal,
     Slot,
 )
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QWidget,
+)
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
@@ -32,7 +37,7 @@ class UpdateBanner(QFrame):
 
     download_requested = Signal(str)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setObjectName("updateBanner")
         # Forza Light Mode per il banner

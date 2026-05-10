@@ -250,9 +250,9 @@ class ProgrammazioneTab(QWidget):
                     h += table.rowHeight(r)
             box = table.parentWidget()
             if isinstance(box, StandardGroupBox):
-                box.setVisible(h > 25)  # noqa: PLR2004
-            table.setMinimumHeight(h + 20 if h > 25 else 0)  # noqa: PLR2004
-            table.setMaximumHeight(h + 20 if h > 25 else 0)  # noqa: PLR2004
+                box.setVisible(h > 25)
+            table.setMinimumHeight(h + 20 if h > 25 else 0)
+            table.setMaximumHeight(h + 20 if h > 25 else 0)
 
     def _on_run_clicked(self) -> None:
         """Avvia il controllo programmazione tramite bot SafeWork."""

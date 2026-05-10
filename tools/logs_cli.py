@@ -13,6 +13,7 @@ Usage:
 """
 
 import argparse
+import csv
 import json
 import sys
 from datetime import UTC, datetime, timedelta
@@ -23,7 +24,7 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.core.logging import health_report, query_logs, view_trace
+from src.core.logging import health_report, query_logs, view_trace  # noqa: E402
 
 
 def format_timestamp(ts: str) -> str:
@@ -250,26 +251,23 @@ def cmd_export(args: argparse.Namespace) -> None:
         with output_path.open("w", encoding="utf-8") as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
 
-    elif args.format == "csv":
-        import csv
-
+    elif args.format == "csv" and results:
         # Estrai colonne da primo record
-        if results:
-            fieldnames = ["timestamp", "level", "message", "trace_id", "bot_type"]
+        fieldnames = ["timestamp", "level", "message", "trace_id", "bot_type"]
 
-            with output_path.open("w", newline="", encoding="utf-8") as f:
-                writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
-                writer.writeheader()
+        with output_path.open("w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
+            writer.writeheader()
 
-                for entry in results:
-                    row = {
-                        "timestamp": entry.get("timestamp", ""),
-                        "level": entry.get("level", ""),
-                        "message": entry.get("message", ""),
-                        "trace_id": entry.get("context", {}).get("trace_id", ""),
-                        "bot_type": entry.get("context", {}).get("bot_type", ""),
-                    }
-                    writer.writerow(row)
+            for entry in results:
+                row = {
+                    "timestamp": entry.get("timestamp", ""),
+                    "level": entry.get("level", ""),
+                    "message": entry.get("message", ""),
+                    "trace_id": entry.get("context", {}).get("trace_id", ""),
+                    "bot_type": entry.get("context", {}).get("bot_type", ""),
+                }
+                writer.writerow(row)
 
     print(f"✅ Esportati {len(results)} log entries in: {output_path}")
 

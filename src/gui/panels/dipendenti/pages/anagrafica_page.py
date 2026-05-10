@@ -46,7 +46,7 @@ class AnagraficaPage(QWidget):
         super().__init__(parent)
         self.controller = controller
         self.worker: BotWorker | None = None
-        self.current_filter = None
+        self.current_filter: str | None = None
 
         self.headers = [
             "SCAD.\nISAB",
@@ -121,9 +121,10 @@ class AnagraficaPage(QWidget):
             return ""
         try:
             days = max(0, int(value))
-            return f"\u25cf {days}"
         except (ValueError, TypeError):
             return str(value)
+        else:
+            return f"\u25cf {days}"
 
     def _on_card_filter(self, filter_type: str | None) -> None:
         if self.current_filter == filter_type:
@@ -174,7 +175,7 @@ class AnagraficaPage(QWidget):
             details[h] = val
 
         access_info = AnagraficaController.get_last_isab_access(
-            str(row_data[COL_COGNOME]), str(row_data[COL_NOME])
+            str(row_data[col_cognome]), str(row_data[col_nome])
         )
         self.detail_view.update_data(details, access_info)
 

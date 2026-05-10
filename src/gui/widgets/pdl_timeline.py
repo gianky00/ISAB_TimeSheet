@@ -37,24 +37,24 @@ class PDLTimelineWidget(QWidget):
 
     def _setup_ui(self) -> None:
         """Configura il layout principale a scorrimento."""
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(20, 20, 20, 20)
-        self.layout.setSpacing(0)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(0)
 
         if not self.data:
             empty_lbl = QLabel("Nessuna attività registrata per questa PDL.")
             empty_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-style: italic;")
             empty_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.layout.addWidget(empty_lbl)
+            main_layout.addWidget(empty_lbl)
             return
 
         # Popola la timeline
         for i, item in enumerate(self.data):
             is_last = i == len(self.data) - 1
             card = self._create_event_card(item, is_last)
-            self.layout.addWidget(card)
+            main_layout.addWidget(card)
 
-        self.layout.addStretch()
+        main_layout.addStretch()
 
     def _create_event_card(self, data: dict[str, Any], is_last: bool) -> QWidget:
         """

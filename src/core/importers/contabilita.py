@@ -101,7 +101,7 @@ class ContabilitaImporter(BaseImporter):
             )
 
         except Exception as e:
-            logger.exception("Errore importazione Excel", exc=e)
+            logger.exception("Errore importazione Excel")
             return False, f"Errore critico importazione: {e}", [], []
 
     @classmethod

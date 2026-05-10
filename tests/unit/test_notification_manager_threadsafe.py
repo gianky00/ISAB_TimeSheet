@@ -82,7 +82,7 @@ class TestNotificationManagerThreadSafe:
         with qtbot.waitSignal(manager.request_toast, timeout=1000) as blocker:
             manager.add_notification("Toast", "Message", level="warning", show_toast=True)
 
-        # args: (messaggio, tipo, durata)
+        # Parametri ricevuti dal segnale: messaggio, tipo, durata
         assert "Toast" in blocker.args[0]
         assert blocker.args[1] == "warning"
         assert blocker.args[2] == 10000  # Duration for warning

@@ -66,8 +66,8 @@ class AuditManager:
 
                 self._execute_log_internal(**task)
                 self._log_queue.task_done()
-            except Exception as e:
-                logger.exception("Audit Worker Error", exc=e)
+            except Exception:
+                logger.exception("Audit Worker Error")
                 time.sleep(1)  # Evita busy loop in caso di errore persistente
 
     @property
@@ -249,8 +249,8 @@ class AuditManager:
                 msg = params["error_details"]
 
             NotificationManager.instance().add_notification(f"{action}: {entity}", msg, level=level)
-        except Exception as e:
-            logger.exception("Notification error in Audit", exc=e)
+        except Exception:
+            logger.exception("Notification error in Audit")
 
     def _map_status_to_notif_level(self, status: str, severity: str) -> str:
         """Mappa stato e severità al livello di notifica."""
@@ -282,8 +282,8 @@ class AuditManager:
                     return False
 
                 prev_hash = row["row_hash"]
-        except Exception as e:
-            logger.exception("Integrity verification crash", exc=e)
+        except Exception:
+            logger.exception("Integrity verification crash")
             return False
         else:
             return True
@@ -370,6 +370,6 @@ class AuditManager:
                         if s_key not in stats[day]:
                             stats[day][s_key] = 0
                         stats[day][s_key] += count
-        except Exception as e:
-            logger.exception("Stats Error", exc=e)
+        except Exception:
+            logger.exception("Stats Error")
         return dict(sorted(stats.items()))

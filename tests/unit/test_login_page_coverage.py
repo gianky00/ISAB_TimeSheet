@@ -22,15 +22,15 @@ class TestLoginPageCoverage(unittest.TestCase):
 
     def test_attendi_scomparsa_overlay_success(self):
         # Setup mock for WebDriverWait inside the method
-        with patch("src.bots.base.login_page.WebDriverWait") as MockWait:
-            mock_wait_instance = MockWait.return_value
+        with patch("src.bots.base.login_page.WebDriverWait") as mock_wait:
+            mock_wait_instance = mock_wait.return_value
             self.page._attendi_scomparsa_overlay(5)
             mock_wait_instance.until.assert_called()
             self.logger_mock.assert_any_call(" -> Overlay di caricamento scomparso.")
 
     def test_attendi_scomparsa_overlay_timeout(self):
-        with patch("src.bots.base.login_page.WebDriverWait") as MockWait:
-            mock_wait_instance = MockWait.return_value
+        with patch("src.bots.base.login_page.WebDriverWait") as mock_wait:
+            mock_wait_instance = mock_wait.return_value
             mock_wait_instance.until.side_effect = TimeoutException()
             res = self.page._attendi_scomparsa_overlay(5)
             self.assertFalse(res)
@@ -75,8 +75,8 @@ class TestLoginPageCoverage(unittest.TestCase):
         self.mock_driver.execute_script.assert_called_with("arguments[0].click();", "fallback_element")
 
     def test_check_and_handle_session_popup_found(self):
-        with patch("src.bots.base.login_page.WebDriverWait") as MockWait:
-            mock_wait_instance = MockWait.return_value
+        with patch("src.bots.base.login_page.WebDriverWait") as mock_wait:
+            mock_wait_instance = mock_wait.return_value
             mock_yes = MagicMock()
             mock_wait_instance.until.return_value = mock_yes
 
@@ -88,8 +88,8 @@ class TestLoginPageCoverage(unittest.TestCase):
                 )
 
     def test_verify_logged_in_via_ui_false(self):
-        with patch("src.bots.base.login_page.WebDriverWait") as MockWait:
-            MockWait.return_value.until.side_effect = Exception("Not found")
+        with patch("src.bots.base.login_page.WebDriverWait") as mock_wait:
+            mock_wait.return_value.until.side_effect = Exception("Not found")
             self.assertFalse(self.page._verify_logged_in_via_ui())
 
     def test_login_proxy_error(self):
@@ -103,8 +103,8 @@ class TestLoginPageCoverage(unittest.TestCase):
         self.page._verify_logged_in_via_ui = MagicMock(return_value=True)
 
         # First wait raises Timeout (username field not found), triggering already logged check
-        with patch("src.bots.base.login_page.WebDriverWait") as MockWait:
-            MockWait.return_value.until.side_effect = TimeoutException()
+        with patch("src.bots.base.login_page.WebDriverWait") as mock_wait:
+            mock_wait.return_value.until.side_effect = TimeoutException()
 
             res = self.page.login("u", "p", "ISAB")
             self.assertTrue(res)
@@ -116,8 +116,8 @@ class TestLoginPageCoverage(unittest.TestCase):
         self.page._perform_login_form_action = MagicMock()
 
         # First wait raises Timeout
-        with patch("src.bots.base.login_page.WebDriverWait") as MockWait:
-            MockWait.return_value.until.side_effect = TimeoutException()
+        with patch("src.bots.base.login_page.WebDriverWait") as mock_wait:
+            mock_wait.return_value.until.side_effect = TimeoutException()
 
             res = self.page.login("u", "p", "ISAB")
 
@@ -129,8 +129,8 @@ class TestLoginPageCoverage(unittest.TestCase):
         self.page._attendi_scomparsa_overlay = MagicMock()
 
         # First wait raises Timeout
-        with patch("src.bots.base.login_page.WebDriverWait") as MockWait:
-            MockWait.return_value.until.side_effect = TimeoutException()
+        with patch("src.bots.base.login_page.WebDriverWait") as mock_wait:
+            mock_wait.return_value.until.side_effect = TimeoutException()
             self.page._verify_logged_in_via_ui = MagicMock(return_value=False)
             self.page._perform_login_form_action = MagicMock(side_effect=Exception("Refresh failed"))
 

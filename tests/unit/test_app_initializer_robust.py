@@ -86,9 +86,9 @@ class TestAppInitializerRobust:
         mock_nav = mock_mw.navigation_controller
 
         # Setup PageIndex mocks to match integers used in code
-        with patch("src.gui.main_window.page_index.PageIndex") as MockPageIndex:
+        with patch("src.gui.main_window.page_index.PageIndex") as mock_page_index:
             # Configura gli attributi come interi (Real values from PageIndex)
-            MockPageIndex.DASHBOARD = 0
+            mock_page_index.DASHBOARD = 0
             MockPageIndex.AUTOMAZIONI = 1
             MockPageIndex.TIMBRATURE = 3
             MockPageIndex.STRUMENTALE = 4
@@ -124,8 +124,8 @@ class TestAppInitializerRobust:
         # Simula errore su caricamento pannello
         mock_nav.get_panel.side_effect = Exception("Panel Load Error")
 
-        with patch("src.gui.main_window.page_index.PageIndex") as MockPageIndex:
-            MockPageIndex.DASHBOARD = 0
+        with patch("src.gui.main_window.page_index.PageIndex") as mock_page_index:
+            mock_page_index.DASHBOARD = 0
             # ... altri ...
 
             gen = AppInitializer.init_generator(mock_mw)

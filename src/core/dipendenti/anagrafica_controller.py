@@ -4,10 +4,11 @@ Logica di business per il caricamento, filtraggio e processing dei dati dipenden
 """
 
 import logging
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from typing import Any, Final
 
-from src.core.constants import THRESHOLD_DAYS
+from src.core.constants import REPORT_COLORS as COLORS, THRESHOLD_DAYS
 from src.core.database import db_manager
 from src.core.dipendenti.data_helpers import (
     build_timbrature_maps,
@@ -25,7 +26,7 @@ class AnagraficaController:
     MONITORING_COLUMN_INDEX: Final[int] = 8
 
     @staticmethod
-    def get_employees(search_text: str = "") -> list[tuple[Any, ...]]:
+    def get_employees(search_text: str = "") -> Sequence[Sequence[Any]]:
         """Recupera la lista dei dipendenti dal database filtrando per testo."""
         query = """
       SELECT id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at, codice_fiscale, monitoraggio_attivo
@@ -44,7 +45,7 @@ class AnagraficaController:
 
     @staticmethod
     def process_rows(
-        full_rows: list[tuple[Any, ...]], current_filter: str | None = None
+        full_rows: Sequence[Sequence[Any]], current_filter: str | None = None
     ) -> tuple[list[EmployeeDTO], dict[str, int]]:
         """Processa le righe del DB restituendo una lista di DTO tipizzati."""
         last_by_cf, last_by_name, normalize = AnagraficaController._get_timbrature_maps()
@@ -80,7 +81,7 @@ class AnagraficaController:
         return build_timbrature_maps(accessi)
 
     @staticmethod
-    def _is_employee_monitored(row: tuple[Any, ...]) -> bool:
+    def _is_employee_monitored(row: Sequence[Any]) -> bool:
         """Verifica se il monitoraggio  attivo per la riga data."""
         idx = AnagraficaController.MONITORING_COLUMN_INDEX
         return bool(row[idx]) if len(row) > idx and row[idx] is not None else True
@@ -127,7 +128,7 @@ class AnagraficaController:
 
     @staticmethod
     def _create_employee_dto(
-        row: tuple[Any, ...], is_monitored: bool, diff_days: int | None, cf_warning: bool
+        row: Sequence[Any], is_monitored: bool, diff_days: int | None, cf_warning: bool
     ) -> EmployeeDTO:
         """Crea un oggetto EmployeeDTO dalla riga del DB."""
         inactivation_val = THRESHOLD_DAYS["expired"] - diff_days if diff_days is not None else None
@@ -147,7 +148,6 @@ class AnagraficaController:
     @staticmethod
     def get_last_isab_access(cognome: str, nome: str) -> tuple[str, int, str]:
         """Recupera l'ultimo accesso ISAB per un dipendente."""
-        from src.core.constants import REPORT_COLORS as COLORS
 
         norm_cognome, norm_nome = normalize_name(cognome), normalize_name(nome)
         query = """

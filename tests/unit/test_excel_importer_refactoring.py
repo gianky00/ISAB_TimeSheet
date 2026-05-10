@@ -149,8 +149,10 @@ def test_import_giornaliere_success(tmp_path):
     # Mocking extraction logic to return valid tuples directly
     with (
         patch("src.core.importers.giornaliere.GiornaliereImporter._process_single_giornaliera") as mock_proc,
+        patch("src.gui.main_window.page_index.PageIndex") as mock_page_index,
         patch("src.core.importers.giornaliere.ProcessPoolExecutor") as mock_pool,
     ):
+        mock_page_index.DASHBOARD = 0
         mock_proc.return_value = (
             2025,
             [
@@ -317,7 +319,7 @@ def test_import_scarico_ore_success(tmp_path):
     assert len(rows) == 1
 
     # Verify row and styles
-    # row: (data, pers1, pers2, odc, pos, dalle, alle, totale_ore, descrizione, finito, commessa, styles_json)
+    # Struttura dati: (data, pers1, pers2, odc, pos, dalle, alle, totale_ore, descrizione, finito, commessa, styles_json)
     row = rows[0]
     assert row[3] == "54001"
 
@@ -443,7 +445,7 @@ def test_import_attivita_programmate_success(tmp_path):
     success, _msg, rows = ExcelImporter.import_attivita_programmate(str(path))
     assert success is True
     assert len(rows) == 1
-    # row: (ps, area, pdl, imp, descrizione, lun, mar, mer, gio, ven, stato_pdl, stato_attivita, data_controllo, personale, po, avviso, styles)
+    # Struttura dati: (ps, area, pdl, imp, descrizione, lun, mar, mer, gio, ven, stato_pdl, stato_attivita, data_controllo, personale, po, avviso, styles)
     assert rows[0][0] == "PS1"
     assert rows[0][4] == "Pulizia"
     assert rows[0][16] == ""  # styles default
@@ -496,7 +498,7 @@ def test_import_certificati_campione_success(tmp_path):
     success, _msg, rows = ExcelImporter.import_certificati_campione(str(path))
     assert success is True
     assert len(rows) == 1
-    # row: (id_coemi(0), certificato(1), modello(2), costruttore(3), matricola(4), range(5), errore(6), emissione(7), scadenza(8), stato(9))
+    # Struttura dati: (id_coemi(0), certificato(1), modello(2), costruttore(3), matricola(4), range(5), errore(6), emissione(7), scadenza(8), stato(9))
     assert rows[0][2] == "M1"
     assert "31/12/2026" in rows[0][8]
     assert "Scade tra 30 giorni" in rows[0][9]

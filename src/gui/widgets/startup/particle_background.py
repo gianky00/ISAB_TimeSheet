@@ -1,4 +1,3 @@
-# ruff: noqa: PLR2004
 """
 SyncroJob - Particle Background
 Sfondo animato con particelle, connessioni neurali, circuiti e convergenza finale.

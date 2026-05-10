@@ -294,8 +294,8 @@ class BotSavingsWidget(ModernCard):
             try:
                 metrics = ROIEngine.calculate_savings()
                 self.stats_updated.emit(metrics)
-            except Exception as e:
-                logger.exception("Efficiency Update Error", exc=e)
+            except Exception:
+                logger.exception("Efficiency Update Error")
 
         threading.Thread(target=run, daemon=True).start()
 

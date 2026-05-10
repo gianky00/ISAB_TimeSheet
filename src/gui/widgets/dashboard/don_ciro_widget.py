@@ -1,5 +1,6 @@
 """
-SyncroJob - Don Ciro Widget
+SyncroJob - # ruff: noqa: PLR0913, PLR0915, C901
+Don Ciro - Widget Dashboard
 Interfaccia Premium per la mascotte Don Ciro.
 Refactored V9.0: SRP Compliance - Logica delegata a DonCiroEngine.
 Integrazione con WeatherService per reattività climatica reale.

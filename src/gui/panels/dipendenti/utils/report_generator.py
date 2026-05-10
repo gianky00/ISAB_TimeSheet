@@ -86,6 +86,6 @@ class ReportGenerator:
             ReportHistory.save_report(data["warning_list"], data["expired_list"])
 
             ToastManager.instance().show(message, "warning", duration=4000)
-        except Exception as e:
-            logger.exception("Errore fallback report browser", exc=e)
+        except Exception:
+            logger.exception("Errore fallback report browser")
             ToastManager.instance().show("Impossibile aprire il report nel browser", "error")

@@ -4,6 +4,7 @@ Advanced sinks per output specializzati.
 
 import json
 from contextlib import suppress
+from datetime import UTC, datetime
 from typing import Any
 
 from .config import get_config
@@ -145,8 +146,6 @@ class MetricsRotatingSink:
 
         if size > self.max_size_bytes:
             # Ruota: rinomina file corrente con timestamp
-            from datetime import UTC, datetime
-
             timestamp = datetime.now(UTC).astimezone().strftime("%Y%m%d_%H%M%S")
             rotated_file = self.metrics_file.with_suffix(f".{timestamp}.jsonl")
 

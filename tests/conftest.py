@@ -1,3 +1,4 @@
+# ruff: noqa: N802
 """
 Bot TS - Test Configuration
 Shared fixtures and configuration.
@@ -75,7 +76,7 @@ with contextlib.suppress(Exception):
 
 # --- GLOBAL PySide6 MOCK FOR HEADLESS ENVIRONMENTS ---
 try:
-    import PySide6
+    import PySide6  # noqa: F401
 except (ImportError, RuntimeError):
 
     class MockQObject:

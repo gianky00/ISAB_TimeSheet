@@ -161,7 +161,7 @@ class DatabaseManager:
         logger.error(f"Failed to execute query after {retry_count} retries: {last_error}")
         if last_error:
             raise last_error
-        raise sqlite3.OperationalError(f"Failed to execute query after {retry_count} retries")  # noqa: TRY003
+        raise sqlite3.OperationalError(f"Failed to execute query after {retry_count} retries")
 
     def init_db(self) -> None:
         """Initializes schema for all databases using the migration system."""

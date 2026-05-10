@@ -5,6 +5,7 @@ Enhanced metadata enrichment per log entries.
 import os
 import platform
 import socket
+import sys
 from pathlib import Path
 from typing import Any, Optional
 
@@ -88,8 +89,6 @@ class MetadataEnricher:
             return "test"
 
         # Euristica: se eseguito da pytest o unittest,  test
-        import sys
-
         if "pytest" in sys.modules or "unittest" in sys.modules:
             return "test"
 

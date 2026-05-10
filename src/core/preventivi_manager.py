@@ -55,7 +55,7 @@ class GeneratoreWorker(QThread):
             success, result = manager.generate_preventivo(self.data, self.dest_path)
             self.finished_signal.emit(success, result)
         except Exception as e:
-            logger.exception("Errore critico thread generatore", exc=e)
+            logger.exception("Errore critico thread generatore")
             self.finished_signal.emit(False, f"Errore critico thread: {e}")
 
 
@@ -82,7 +82,6 @@ class MacroWorker(QThread):
         """Esegue le macro VBA sequenzialmente tramite Win32COM."""
         try:
             pythoncom.CoInitialize()
-            import win32com.client
 
             excel_app = win32com.client.Dispatch("Excel.Application")
             excel_app.Visible = True
@@ -107,7 +106,7 @@ class MacroWorker(QThread):
             wb.Save()
             self.finished_signal.emit(True, "Operazioni macro completate.")
         except Exception as e:
-            logger.exception("Errore thread macro", exc=e)
+            logger.exception("Errore thread macro")
             self.finished_signal.emit(False, f"Errore macro: {e}")
         finally:
             pythoncom.CoUninitialize()
@@ -199,8 +198,8 @@ class PreventiviGeneratorManager:
                 wb.Close(False)
                 app.Quit()
                 pythoncom.CoUninitialize()
-        except Exception as e:
-            logger.exception("Errore lettura dati esistenti", exc=e)
+        except Exception:
+            logger.exception("Errore lettura dati esistenti")
         return data
 
     def _sanitize_excel_file(self, filepath: str) -> None:
@@ -236,8 +235,8 @@ class PreventiviGeneratorManager:
                         zip_out.write(file_path, arcname)
 
             shutil.move(temp_zip, filepath)
-        except Exception as e:
-            logger.exception("Errore sanitizzazione", exc=e)
+        except Exception:
+            logger.exception("Errore sanitizzazione")
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
 

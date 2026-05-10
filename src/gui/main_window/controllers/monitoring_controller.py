@@ -66,5 +66,5 @@ class MonitoringController(QObject):
             ToastManager.instance().show(
                 msg, "warning" if in_scadenza or scaduti else "info", toast_timeout_ms, is_rich_text=True
             )
-        except Exception as e:
-            logger.exception("Errore monitoraggio autorizzazioni", exc=e)
+        except Exception:
+            logger.exception("Errore monitoraggio autorizzazioni")

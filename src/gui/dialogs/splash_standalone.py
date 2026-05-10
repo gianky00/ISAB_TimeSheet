@@ -126,8 +126,8 @@ def run_standalone() -> None:
                     logger.info("Close signal emitted")
                     comm.close_signal.emit()
                     break
-            except Exception as e:
-                logger.exception("Error in stdin reader", exc=e)
+            except Exception:
+                logger.exception("Error in stdin reader")
                 continue
 
     input_thread = threading.Thread(target=read_stdin, daemon=True)

@@ -85,61 +85,61 @@ class PanelFactory:
     # --- CREATOR HELPERS (Lazy Imports) ---
 
     def _create_dashboard(self) -> QWidget:
-        from src.gui.panels.dashboard_panel import DashboardPanel  # noqa: PLC0415
+        from src.gui.panels.dashboard_panel import DashboardPanel
 
         return DashboardPanel()
 
     def _create_automazioni(self) -> QWidget:
-        from src.gui.widgets.automazioni_widget import AutomazioniWidget  # noqa: PLC0415
+        from src.gui.widgets.automazioni_widget import AutomazioniWidget
 
         return AutomazioniWidget(main_window=self.mw)
 
     def _create_timbrature(self) -> QWidget:
-        from src.gui.panels.timbrature_db import TimbratureDBPanel  # noqa: PLC0415
+        from src.gui.panels.timbrature_db import TimbratureDBPanel
 
         return TimbratureDBPanel()
 
     def _create_contabilita(self) -> QWidget:
-        from src.gui.panels.contabilita_panel import ContabilitaPanel  # noqa: PLC0415
+        from src.gui.panels.contabilita_panel import ContabilitaPanel
 
         return ContabilitaPanel()
 
     def _create_scarico_ore(self) -> QWidget:
-        from src.gui.panels.scarico_ore_panel import ScaricoOrePanel  # noqa: PLC0415
+        from src.gui.panels.scarico_ore_panel import ScaricoOrePanel
 
         return ScaricoOrePanel(controller=self.nav.scarico_ore_controller)
 
     def _create_pdl_db(self) -> QWidget:
-        from src.gui.panels.pdl.pdl_panel import PDLDBPanel  # noqa: PLC0415
+        from src.gui.panels.pdl.pdl_panel import PDLDBPanel
 
         return PDLDBPanel(controller=self.nav.pdl_controller)
 
     def _create_settings(self) -> QWidget:
-        from src.gui.panels.settings.main_panel import SettingsPanel  # noqa: PLC0415
+        from src.gui.panels.settings.main_panel import SettingsPanel
 
         return SettingsPanel()
 
     def _create_help(self) -> QWidget:
-        from src.gui.panels.help_panel import HelpPanel  # noqa: PLC0415
+        from src.gui.panels.help_panel import HelpPanel
 
         return HelpPanel()
 
     def _create_notifications(self) -> QWidget:
-        from src.gui.panels.notifications_panel import NotificationsPanel  # noqa: PLC0415
+        from src.gui.panels.notifications_panel import NotificationsPanel
 
         return NotificationsPanel()
 
     def _create_oda(self) -> QWidget:
-        from src.gui.panels.storico_oda import StoricoOdaPanel  # noqa: PLC0415
+        from src.gui.panels.storico_oda import StoricoOdaPanel
 
         return StoricoOdaPanel(controller=self.nav.oda_controller)
 
     def _create_dipendenti(self) -> QWidget:
-        from src.gui.panels.dipendenti.main_panel import DipendentiPanel  # noqa: PLC0415
+        from src.gui.panels.dipendenti.main_panel import DipendentiPanel
 
         return DipendentiPanel(controller=self.nav.anagrafica_controller)
 
     def _create_consuntivo(self) -> QWidget:
-        from src.gui.panels.consuntivo_panel import ConsuntivoPanel  # noqa: PLC0415
+        from src.gui.panels.consuntivo_panel import ConsuntivoPanel
 
         return ConsuntivoPanel(controller=self.nav.consuntivo_controller)

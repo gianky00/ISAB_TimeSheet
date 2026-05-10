@@ -4,6 +4,7 @@ Oggetti di trasporto dati per il modulo PDL.
 Garantisce l'incapsulamento e previene la data leakage verso la GUI.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -38,7 +39,7 @@ class PdlRowDTO:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_db_row(cls, r: tuple[Any, ...]) -> "PdlRowDTO":
+    def from_db_row(cls, r: Sequence[Any]) -> "PdlRowDTO":
         """Factory method per creare un DTO da una riga grezza del DB."""
         return cls(
             id=int(r[0]),

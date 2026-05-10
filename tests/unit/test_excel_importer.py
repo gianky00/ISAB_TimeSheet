@@ -76,9 +76,9 @@ class TestExcelImporter:
     @patch("src.core.importers.giornaliere.ProcessPoolExecutor")
     def test_import_giornaliere(self, mock_executor_cls, mock_read_sheet, mock_decrypt):
         # Mock file system
-        with patch("src.core.importers.giornaliere.Path") as MockPath:
+        with patch("src.core.importers.giornaliere.Path") as mock_path:
             root = MagicMock()
-            MockPath.return_value = root
+            mock_path.return_value = root
             root.exists.return_value = True
 
             # Mock folder

@@ -6,8 +6,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-# Lazy import placeholder
-_pd = None
+import pandas as pd
+
+from src.core import config_manager
+from src.core.constants import Business
 
 # Tentativo di importare msoffcrypto
 try:
@@ -31,20 +33,14 @@ class BaseImporter:
 
     @staticmethod
     def _get_pd() -> Any:
-        """Lazy load di pandas"""
-        global _pd
-        if _pd is None:
-            import pandas as _pd
-        return _pd
+        """Restituisce pandas"""
+        return pd
 
     @staticmethod
     def _decrypt_if_encrypted(file_path: Path) -> tuple[Any, bool]:
         """Tenta di decifrare un file Excel se protetto da password."""
         if msoffcrypto:
             with suppress(Exception):
-                from src.core import config_manager
-                from src.core.constants import Business
-
                 config = config_manager.load_config()
                 # Recupera password da config, default centralizzato
                 pwd = config.get("excel_decryption_password", Business.DEFAULT_EXCEL_PASSWORD)
@@ -61,19 +57,19 @@ class BaseImporter:
     @classmethod
     def _get_excel_file(cls, file_obj: Any) -> Any:
         """Tenta di aprire il file Excel con motore ottimizzato (calamine > default > openpyxl)."""
-        pd = cls._get_pd()
+        _pd = cls._get_pd()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # 1. Tentativo con Calamine (Rust-based, ultra veloce)
             with suppress(ImportError, ValueError, Exception):
-                return pd.ExcelFile(file_obj, engine="calamine")
+                return _pd.ExcelFile(file_obj, engine="calamine")
 
             # 2. Tentativo Standard (Pandas auto-detect)
             with suppress(Exception):
-                return pd.ExcelFile(file_obj)
+                return _pd.ExcelFile(file_obj)
 
             # 3. Fallback esplicito OpenPyXL
-            return pd.ExcelFile(file_obj, engine="openpyxl")
+            return _pd.ExcelFile(file_obj, engine="openpyxl")
 
     @classmethod
     def _identify_sheet_year(cls, sheet_name: str) -> int | None:

@@ -36,8 +36,7 @@ class TestSystemTelemetry:
 
     @patch("src.utils.system_telemetry.ctypes")
     def test_get_current_process_ram_mb_no_windll(self, mock_ctypes):
-        # hasattr(ctypes, "windll")
-        # We need to make it return False.
-        # For a MagicMock, we can use spec or just delete the attribute
+        # Simula assenza di windll in ctypes per testare il fallback RAM su piattaforme non-Windows
+        # Eliminiamo l'attributo dal mock per forzare il ramo condizionale
         with patch("src.utils.system_telemetry.ctypes", spec=[]):
             assert get_current_process_ram_mb() == 0.0

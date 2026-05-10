@@ -1,10 +1,12 @@
 import csv
 import sqlite3
+import time
 from pathlib import Path
 from typing import Any
 
 from src.core.database import db_manager
 from src.core.logging import get_logger
+from src.core.sync_tracker import SyncTracker
 
 logger = get_logger(__name__)
 
@@ -57,8 +59,8 @@ class EmployeeManager:
                 }
                 employees.append(emp)
 
-        except Exception as e:
-            logger.exception("Errore recupero dipendenti", exc=e)
+        except Exception:
+            logger.exception("Errore recupero dipendenti")
             return []
         else:
             return employees
@@ -94,8 +96,8 @@ class EmployeeManager:
         try:
             self.db.execute_query(self.db.DB_DIPENDENTI, query, params)
             logger.info(f"Dipendente {employee_data['cognome']} aggiunto con successo.")
-        except sqlite3.IntegrityError as e:
-            logger.exception("Errore inserimento dipendente", exc=e)
+        except sqlite3.IntegrityError:
+            logger.exception("Errore inserimento dipendente")
             return False
         else:
             return True
@@ -116,8 +118,8 @@ class EmployeeManager:
         try:
             self.db.execute_query(self.db.DB_DIPENDENTI, query, tuple(values))
             logger.info(f"Dipendente ID {id_risorsa} aggiornato.")
-        except Exception as e:
-            logger.exception("Errore aggiornamento dipendente", exc=e)
+        except Exception:
+            logger.exception("Errore aggiornamento dipendente")
             return False
         else:
             return True
@@ -131,10 +133,6 @@ class EmployeeManager:
         if not path.exists():
             logger.error(f"File CSV non trovato: {csv_path}")
             return 0
-
-        import time
-
-        from src.core.sync_tracker import SyncTracker
 
         start_time = time.time()
         added_count = 0

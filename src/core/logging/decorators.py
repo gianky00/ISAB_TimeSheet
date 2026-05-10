@@ -190,8 +190,8 @@ def log_entry_exit[F: Callable[..., Any]](
                     logger.debug(exit_msg)
                 return result
 
-            except Exception as e:
-                logger.exception(f"Exception in {f.__name__}", exc=e)
+            except Exception:
+                logger.exception(f"Exception in {f.__name__}")
                 raise
 
         return cast("F", wrapper)

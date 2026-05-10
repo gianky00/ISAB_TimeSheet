@@ -57,8 +57,8 @@ class ProgrammingSyncManager:
             self.excel_app.DisplayAlerts = False
             self.wb_master = self.excel_app.Workbooks.Open(self.master_path, UpdateLinks=0)
             return True
-        except Exception as e:
-            logger.exception("Errore apertura Master Excel", exc=e)
+        except Exception:
+            logger.exception("Errore apertura Master Excel")
             return False
 
     def run_sync_macros(self) -> None:

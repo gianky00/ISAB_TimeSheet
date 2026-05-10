@@ -7,7 +7,6 @@ Animazioni fluide a 60fps garantite tramite thread separato per il caricamento.
 """
 
 import ctypes
-import json
 import os
 import subprocess
 import sys
@@ -268,8 +267,8 @@ def _init_splash() -> tuple[Callable[[str, int], None], Callable[[], None]]:
 def main() -> None:
     """Application entry point with three-phase startup architecture."""
     if getattr(sys, "frozen", False) and getattr(sys, "stderr", None) is None:
-        sys.stdout = open(os.devnull, "w")
-        sys.stderr = open(os.devnull, "w")
+        sys.stdout = open(os.devnull, "w")  # noqa: SIM115
+        sys.stderr = open(os.devnull, "w")  # noqa: SIM115
 
     from PySide6.QtWidgets import QApplication
 
