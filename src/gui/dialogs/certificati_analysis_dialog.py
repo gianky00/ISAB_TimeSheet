@@ -365,19 +365,30 @@ class ScadenzeAnalysisDialog(QDialog):
         return layout
 
     def _send_email(self) -> None:
-        """Genera e invia il report via Outlook."""
+        """Genera e invia il report via Outlook usando l'engine condiviso."""
         try:
-            image_paths = self._capture_widgets_as_images()
-            if not image_paths:
-                self._raise_no_images()
+            from src.core.contabilita.certificati_engine import CertificatiEngine
+            engine = CertificatiEngine()
+            
+            # Prepariamo i dati nel formato atteso dall'engine
+            report_data = []
+            for item in self.certificates_data:
+                report_data.append({
+                    "id": item.get("id_strumento", "N/D"),
+                    "modello": item.get("modello", "N/D"),
+                    "matricola": item.get("matricola", "N/D"),
+                    "scadenza": item.get("scadenza", "N/D"),
+                    "giorni": item.get("days", 0)
+                })
 
-            self._execute_outlook_powershell(image_paths)
-
-            QMessageBox.information(
-                self,
-                "Email in preparazione",
-                "Il report  stato suddiviso in sezioni ed inserito in una nuova email Outlook.",
-            )
+            if engine.generate_outlook_draft(report_data):
+                QMessageBox.information(
+                    self,
+                    "Email in preparazione",
+                    "La bozza Outlook è stata generata correttamente.",
+                )
+            else:
+                raise ValueError("Errore durante la generazione della bozza.")
 
         except Exception as e:
             QMessageBox.critical(self, "Errore invio email", f"Impossibile generare il report:\n{e}")

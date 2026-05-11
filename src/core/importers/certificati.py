@@ -11,20 +11,48 @@ from src.core.importers.base import BaseImporter
 class CertificatiImporter(BaseImporter):
     """Importer per i Certificati Campione."""
 
+    # Mapping esteso per supportare sia nomi lunghi che brevi (comuni nei file Excel)
+    # Rinominiamo id_strumento -> id_coemi internamente
     CERTIFICATI_CAMPIONE_MAPPING: ClassVar[dict[str, str]] = {
-        "ID-STRUMENTO": "id_strumento",
+        "ID-COEMI": "id_coemi",
+        "ID COEMI": "id_coemi",
+        "ID-STRUMENTO": "id_coemi",
+        "ID STRUMENTO": "id_coemi",
         "Certificato Taratura": "certificato",
+        "CERTIFICATO": "certificato",
         "Modello / Tipo": "modello",
+        "MODELLO": "modello",
+        "TIPO": "modello",
         "Costruttore": "costruttore",
+        "COSTRUTTORE": "costruttore",
         "Matricola": "matricola",
+        "MATRICOLA": "matricola",
         "Range Strumento": "range_strumento",
+        "RANGE": "range_strumento",
         "Errore max %": "errore_max",
+        "ERR %": "errore_max",
+        "ERROR %": "errore_max",
         "Emissione Certificato": "emissione",
+        "EMISSIONE": "emissione",
         "Scadenza Certificato": "scadenza",
+        "SCADENZA": "scadenza",
         "Stato Certificato": "stato",
+        "STATO": "stato",
     }
 
-    CERTIFICATI_CAMPIONE_COLS: ClassVar[list[str]] = list(CERTIFICATI_CAMPIONE_MAPPING.values())
+    # Colonne effettive del DB (senza duplicati di mapping)
+    CERTIFICATI_CAMPIONE_COLS: ClassVar[list[str]] = [
+        "id_coemi",
+        "certificato",
+        "modello",
+        "costruttore",
+        "matricola",
+        "range_strumento",
+        "errore_max",
+        "emissione",
+        "scadenza",
+        "stato",
+    ]
 
     @classmethod
     def import_certificati_campione(
@@ -38,19 +66,29 @@ class CertificatiImporter(BaseImporter):
             return False, f"File non trovato: {file_path}", []
 
         try:
+            import logging
+            importer_logger = logging.getLogger(__name__)
+            importer_logger.info(f"Avvio lettura Excel certificati: {file_path}")
+            
             pd_obj = cls._get_pd()
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 xls = pd_obj.ExcelFile(path)
                 sheet_name = cls._find_certificati_sheet(xls)
+                importer_logger.info(f"Foglio rilevato: {sheet_name}")
+                
                 if not sheet_name:
                     return False, "Nessun foglio trovato.", []
 
                 df, header_idx = cls._read_certificati_data(path, sheet_name)
+                importer_logger.info(f"Dati letti. Header rilevato a riga: {header_idx}, Righe trovate: {len(df)}")
+                
                 if df.empty:
                     return False, "Foglio vuoto.", []
 
-                return cls._process_certificati_df(df, sheet_name, header_idx)
+                res_success, res_msg, rows = cls._process_certificati_df(df, sheet_name, header_idx)
+                importer_logger.info(f"Processamento completato. Success: {res_success}, Messaggio: {res_msg}, Tuple generate: {len(rows)}")
+                return res_success, res_msg, rows
         except Exception as e:
             return False, f"Errore importazione Certificati: {e}", []
 
@@ -59,7 +97,7 @@ class CertificatiImporter(BaseImporter):
         """Trova il foglio corretto per i certificati."""
         for name in xls.sheet_names:
             n_low = str(name).lower()
-            if "strumenti campione" in n_low or "isab sud" in n_low:
+            if "strumenti campione" in n_low or "isab sud" in n_low or "registro" in n_low:
                 return str(name)
         return str(xls.sheet_names[0]) if xls.sheet_names else None
 
@@ -67,32 +105,30 @@ class CertificatiImporter(BaseImporter):
     def _read_certificati_data(cls, path: Path, sheet_name: str) -> tuple[pd.DataFrame, int]:
         """Legge i dati individuando l'intestazione."""
         pd_obj = cls._get_pd()
-        df_preview = pd_obj.read_excel(path, sheet_name=sheet_name, header=None, nrows=20)
+        df_preview = pd_obj.read_excel(path, sheet_name=sheet_name, header=None, nrows=30)
         header_idx = cls._detect_certificati_header(df_preview)
+        # Leggiamo con l'header rilevato
         df = pd_obj.read_excel(path, sheet_name=sheet_name, header=header_idx)
         return df, header_idx
 
     @classmethod
     def _detect_certificati_header(cls, df_preview: pd.DataFrame) -> int:
-        """Detects the header row index for Certificati Campione, prioritizing ID-STRUMENTO."""
+        """Rileva l'indice della riga di intestazione basandosi sulle parole chiave."""
         header_row_idx = -1
         max_matches = 0
-        target_columns = set(cls.CERTIFICATI_CAMPIONE_MAPPING.keys())
+        
+        # Parole chiave critiche per l'intestazione
+        keywords = {"ID-COEMI", "ID COEMI", "ID-STRUMENTO", "ID STRUMENTO", "MATRICOLA", "CERTIFICATO", "SCADENZA"}
 
         for i, row in df_preview.iterrows():
-            row_values = [str(val).strip() for val in row.values]
-            matches = sum(
-                2 if col == "ID-STRUMENTO" and col in row_values else 1
-                for col in target_columns
-                if col in row_values
-            )
+            row_values = [str(val).strip().upper() for val in row.values]
+            matches = sum(1 for kw in keywords if any(kw in str(rv) for rv in row_values))
 
             if matches > max_matches:
                 max_matches = matches
                 header_row_idx = int(str(i))
 
-        # Se non rilevato o incerto, impostiamo riga 5 (che corrisponde alla riga 6 di Excel)
-        # In questo modo i dati iniziano dalla riga 7.
+        # Se non rilevato o incerto, proviamo riga 5 o 6 come fallback comune
         if header_row_idx == -1 or max_matches < 2:  # noqa: PLR2004
             header_row_idx = 5
 
@@ -102,30 +138,37 @@ class CertificatiImporter(BaseImporter):
     def _process_certificati_df(
         cls, df: pd.DataFrame, sheet_name: str, header_row_idx: int
     ) -> tuple[bool, str, list[tuple[Any, ...]]]:
-        """Processes the Certificati DataFrame and returns formatted rows."""
+        """Processa il DataFrame dei Certificati e restituisce le righe formattate."""
         df.columns = df.columns.astype(str).str.strip()
 
         # 1. Mapping e Validazione Colonne
         rename_map = cls._build_certificati_rename_map(df.columns.tolist())
-        if not rename_map:
-            found_cols = ", ".join(list(df.columns)[:5]) + "..."
+        if not rename_map or len(rename_map) < 3: # Almeno ID, Matricola e Scadenza
+            found_cols = ", ".join(list(df.columns)[:8]) + "..."
             return (
                 False,
-                f"Nessuna colonna valida trovata. Sheet: {sheet_name}, Row: {header_row_idx}. Trovate: {found_cols}",
+                f"Nessuna colonna valida trovata (Trovate: {len(rename_map)}/10). Sheet: {sheet_name}, Row: {header_row_idx}. Colonne Excel: {found_cols}",
                 [],
             )
 
         df.rename(columns=rename_map, inplace=True)
 
         # 2. Schema, 3. Formatting, 4. Cleanup
-        df = (
-            cls._apply_certificati_formatting(cls._normalize_certificati_schema(df))
-            .fillna("")
-            .astype(str)
-            .apply(lambda x: x.str.strip())
-        )
+        df = cls._normalize_certificati_schema(df)
+        df = cls._apply_certificati_formatting(df)
+        
+        # Riempimento e normalizzazione testo
+        df = df.fillna("").astype(str).apply(lambda x: x.str.strip())
 
-        # 5. Professionalize: Remove debug tags like [ROSSO], [ERRORE], [GIALLO]
+        # 5. Rimuovi righe vuote in modo robusto (gestione eventuale duplicazione colonne)
+        def get_col_safe(name: str) -> pd.Series:
+            col = df[name]
+            return col.iloc[:, 0] if isinstance(col, pd.DataFrame) else col
+
+        mask_empty = (get_col_safe('id_coemi') == "") & (get_col_safe('matricola') == "")
+        df = df[~mask_empty]
+
+        # 6. Professionalize: Remove debug tags
         for col in df.columns:
             df[col] = df[col].str.replace(r"\[ROSSO\]", "", regex=True)
             df[col] = df[col].str.replace(r"\[ERRORE\]", "", regex=True)
@@ -143,22 +186,37 @@ class CertificatiImporter(BaseImporter):
     def _build_certificati_rename_map(cls, columns: list[str]) -> dict[str, str]:
         """Costruisce la mappa di rinomina colonne basata sul mapping definito."""
         rename_map = {}
+        used_db_cols = set()
+        
+        # Priorità al matching ID-COEMI
         for col in columns:
-            col_clean = col.strip()
-            # Cerca match esatto o parziale nel mapping
+            col_clean = col.strip().upper()
             for schema_col, db_col in cls.CERTIFICATI_CAMPIONE_MAPPING.items():
-                if schema_col.lower() == col_clean.lower():
+                if db_col in used_db_cols:
+                    continue
+                s_up = schema_col.upper()
+                if s_up == col_clean:
                     rename_map[col] = db_col
+                    used_db_cols.add(db_col)
                     break
-                # Fallback: se la colonna contiene la stringa schema (es. "Data\nScadenza")
-                if schema_col in col_clean:
+                    
+        # Secondo giro per matching parziale (fallback)
+        for col in columns:
+            if col in rename_map: continue
+            col_clean = col.strip().upper()
+            for schema_col, db_col in cls.CERTIFICATI_CAMPIONE_MAPPING.items():
+                if db_col in used_db_cols: continue
+                s_up = schema_col.upper()
+                if s_up in col_clean and len(s_up) > 3:
                     rename_map[col] = db_col
+                    used_db_cols.add(db_col)
+                    break
         return rename_map
 
     @classmethod
     def _normalize_certificati_schema(cls, df: pd.DataFrame) -> pd.DataFrame:
         """Assicura l'ordine e l'esistenza delle colonne richieste."""
-        target_cols = list(cls.CERTIFICATI_CAMPIONE_MAPPING.values())
+        target_cols = cls.CERTIFICATI_CAMPIONE_COLS
         for c in target_cols:
             if c not in df.columns:
                 df[c] = ""
@@ -169,13 +227,15 @@ class CertificatiImporter(BaseImporter):
     @staticmethod
     def _format_date_it(val: Any) -> str:
         """Helper per formattare date in stile IT."""
-        if pd.isna(val) or val == "":
+        if pd.isna(val) or val == "" or str(val).strip() == "nan":
             return ""
         try:
             dt = pd.to_datetime(val)
             return str(dt.strftime("%d/%m/%Y"))
         except Exception:
-            return str(val)
+            # Rimuoviamo eventuale timestamp 00:00:00
+            s = str(val).split(" ")[0]
+            return s
 
     @staticmethod
     def _format_stato(val: Any) -> str:
@@ -198,11 +258,16 @@ class CertificatiImporter(BaseImporter):
     @staticmethod
     def _format_errore_max(val: Any) -> str:
         """Helper per formattare l'errore massimo in percentuale."""
-        if pd.isna(val) or val == "":
+        if pd.isna(val) or val == "" or str(val).strip() == "nan":
             return ""
         try:
+            # Se è già una stringa con %, la lasciamo così
+            if "%" in str(val):
+                return str(val)
             num = float(val)
-            return f"{num * 100:g}%".replace(".", ",")
+            if num < 1: # Probabile decimale 0.01 -> 1%
+                return f"{num * 100:g}%".replace(".", ",")
+            return f"{num:g}%".replace(".", ",")
         except (ValueError, TypeError):
             return str(val).replace(".", ",")
 

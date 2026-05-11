@@ -3,13 +3,19 @@ SyncroJob - Playwright Safework Base Bot
 Classe base specifica per SafeWork usando Playwright.
 """
 
+from __future__ import annotations
+
 from contextlib import suppress
+from typing import TYPE_CHECKING
 
 from playwright.sync_api import TimeoutError
 
 from src.bots.base.playwright_base_bot import PlaywrightBaseBot
 from src.bots.safework.pages.playwright_login_page import PlaywrightSafeWorkLoginPage
 from src.core.constants import URLs
+
+if TYPE_CHECKING:
+    from src.bots.base.selenium_bot_config import SeleniumBotConfig
 
 
 class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
@@ -21,19 +27,12 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
     SAFEWORK_URL = URLs.SAFEWORK_URL
     ISAB_URL = SAFEWORK_URL
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = 30,
-        download_path: str = "",
+        config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
-        from src.bots.base.base_bot import BotConfig
-
-        config = BotConfig(headless=headless, timeout=timeout, download_path=download_path)
-        super().__init__(username, password, config)
+        super().__init__(config)
         self.account_type = account_type
         self.safework_login_page: PlaywrightSafeWorkLoginPage | None = None
 

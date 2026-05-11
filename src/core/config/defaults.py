@@ -56,5 +56,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "Sincronizzazione": 1.0,
         "Export Excel": 5.0,
     },
+    "certificati_autopilot_enabled": False,
+    "certificati_autopilot_time": "08:30",
+    "certificati_autopilot_interval_days": 1,
+    "certificati_autopilot_last_sent": None,
     "statistics": {},
 }

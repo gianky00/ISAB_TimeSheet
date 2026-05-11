@@ -3,10 +3,12 @@ SyncroJob - Playwright SafeWork PDL Download Bot
 Versione Playwright del bot per lo scarico e la stampa dei PDL.
 """
 
+from __future__ import annotations
+
 import time
 from contextlib import suppress
 from pathlib import Path
-from typing import Any, ClassVar, Final
+from typing import TYPE_CHECKING, Any, ClassVar, Final
 
 import fitz
 from playwright.sync_api import TimeoutError
@@ -16,6 +18,9 @@ from src.bots.safework.common.locators import SafeWorkLocators
 from src.bots.safework.playwright_base import PlaywrightSafeworkBaseBot
 from src.utils.document_processor import DocumentProcessor
 from src.utils.printing import print_pdf
+
+if TYPE_CHECKING:
+    from src.bots.base.selenium_bot_config import SeleniumBotConfig
 
 # Costanti per soglie e limiti
 MAX_PDL_DIGITS: Final[int] = 6
@@ -35,16 +40,12 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
         ("session", "Chiusura Sessione"),
     ]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = 30,
-        download_path: str = "",
+        config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
-        super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
+        super().__init__(config, account_type=account_type)
         self.downloaded_files: list[str] = []
 
     @property

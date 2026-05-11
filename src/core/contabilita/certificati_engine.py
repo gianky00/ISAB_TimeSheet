@@ -42,12 +42,16 @@ class CertificatiEngine:
     EXPIRING_THRESHOLD: Final[int] = 30
     FAULTY_MARKER: Final[int] = -9999
 
-    # Indici colonne dati certificati
+    # Indici colonne dati certificati (Allineati a ContabilitaQueries)
+    IDX_ID_COEMI: Final[int] = 0
     IDX_CERTIFICATO: Final[int] = 1
+    IDX_MODELLO: Final[int] = 2
+    IDX_COSTRUTTORE: Final[int] = 3
     IDX_MATRICOLA: Final[int] = 4
+    IDX_RANGE: Final[int] = 5
     IDX_EMISSIONE: Final[int] = 7
     IDX_SCADENZA: Final[int] = 8
-    IDX_UBICAZIONE: Final[int] = 10
+    IDX_UBICAZIONE: Final[int] = 11
 
     @property
     def exclusions_file(self) -> Path:
@@ -265,6 +269,76 @@ class CertificatiEngine:
                 "fine": best_window[1].strftime("%d/%m/%Y"),
             }
 
+    def generate_outlook_draft(self, certificates_to_report: list[dict[str, Any]]) -> bool:
+        """
+        Genera una bozza Outlook professionale con la tabella delle scadenze.
+        
+        Args:
+            certificates_to_report: Lista di dizionari con i dati dei certificati (id, modello, matricola, scadenza, giorni).
+        """
+        if not certificates_to_report:
+            return False
+
+        from datetime import datetime
+        from src.core.version import __version__
+        
+        # Ordinamento per urgenza (scaduti prima)
+        certificates_to_report.sort(key=lambda x: x["giorni"])
+        
+        rows = ""
+        for c in certificates_to_report:
+            # Soglie colori coerenti con CertificatiEngine
+            color = "#C62828" if c["giorni"] < 0 else "#EF6C00" if c["giorni"] <= self.WARNING_THRESHOLD else "#FBC02D"
+            status = f"SCADUTO ({abs(c['giorni'])} gg)" if c["giorni"] < 0 else f"Scade tra {c['giorni']} gg"
+            rows += f"""
+                <tr>
+                    <td style='border: 1px solid #ddd; padding: 8px;'>{c['id']}</td>
+                    <td style='border: 1px solid #ddd; padding: 8px;'>{c['modello']}</td>
+                    <td style='border: 1px solid #ddd; padding: 8px;'>{c['matricola']}</td>
+                    <td style='border: 1px solid #ddd; padding: 8px;'>{c['scadenza']}</td>
+                    <td style='border: 1px solid #ddd; padding: 8px; color: {color}; font-weight: bold;'>{status}</td>
+                </tr>
+            """
+
+        html_body = f"""
+            <html>
+            <body style='font-family: Segoe UI, Arial, sans-serif;'>
+                <h2 style='color: #2c3e50;'>Report Scadenze Certificati Campione</h2>
+                <p>Generato automaticamente da SyncroJob il {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
+                <p>Di seguito l'elenco degli strumenti scaduti o in scadenza entro i {self.EXPIRING_THRESHOLD} giorni.</p>
+                <table style='border-collapse: collapse; width: 100%;'>
+                    <thead>
+                        <tr style='background-color: #f2f2f2;'>
+                            <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>ID COEMI</th>
+                            <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Modello</th>
+                            <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Matricola</th>
+                            <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Scadenza</th>
+                            <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Stato</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows}
+                    </tbody>
+                </table>
+                <p style='font-size: 11px; color: #7f8c8d; margin-top: 20px;'>
+                    Nota: Questa è una bozza generata automaticamente. Verificare i dati prima dell'invio.
+                    <br>SyncroJob v{__version__}
+                </p>
+            </body>
+            </html>
+        """
+
+        try:
+            import win32com.client
+            outlook = win32com.client.Dispatch("Outlook.Application")
+            mail = outlook.CreateItem(0)
+            mail.Subject = f"REPORT SCADENZE CERTIFICATI CAMPIONE - {datetime.now().strftime('%d/%m/%Y')}"
+            mail.HTMLBody = html_body
+            mail.Display()
+            return True
+        except Exception:
+            return False
+
     @staticmethod
     def format_errore_max(val: float | str | None) -> str:
         """Formatta il valore decimale di errore in percentuale localizzata."""
@@ -304,11 +378,22 @@ class CertificatiEngine:
     @staticmethod
     def parse_parent_label(text: str) -> dict[str, str]:
         """Estrae i metadati dalla stringa del nodo padre del TreeWidget."""
-        parts = text.split("    ")
-        idx_mat, idx_cos, idx_mod, idx_range = 0, 1, 2, 3
+        parts = text.split("  •  ")
+        # Formato: ID  •  Costruttore  •  Modello  •  Matricola  •  Stato
+        return {
+            "id_coemi": parts[0].strip() if len(parts) > 0 else "",
+            "costruttore": parts[1].strip() if len(parts) > 1 else "N/D",
+            "modello": parts[2].strip() if len(parts) > 2 else "N/D",
+            "matricola": parts[3].strip() if len(parts) > 3 else "",
+        }
+
+    def _parse_filename(self, filename: str) -> dict[str, str]:
+        """Estrae dati dal nome file del certificato."""
+        parts = filename.replace(".pdf", "").replace(".PDF", "").split("_")
+        idx_mat, idx_cert, idx_mod, idx_range = 0, 1, 2, 3
         return {
             "matricola": parts[idx_mat].strip() if len(parts) > idx_mat else "",
-            "costruttore": parts[idx_cos].strip() if len(parts) > idx_cos else "N/D",
+            "certificato": parts[idx_cert].strip() if len(parts) > idx_cert else "",
             "modello": parts[idx_mod].strip() if len(parts) > idx_mod else "N/D",
             "range": parts[idx_range].strip()
             if len(parts) > idx_range and "Digital" in parts[idx_mod]

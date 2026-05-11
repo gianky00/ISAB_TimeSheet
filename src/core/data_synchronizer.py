@@ -71,35 +71,44 @@ class DataSynchronizer:
 
     @classmethod
     def sync_attivita_programmate(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
-        """Sincronizza le attivitàprogrammate."""
-        target = SyncTarget(db_path, "attivita_programmate", getattr(AttivitaImporter, "ATTIVITA_COLS", []))
-        res = SmartSyncEngine.sync_upsert_smart(
+        """Sincronizza le attivitàprogrammate preservando gli stili."""
+        target = SyncTarget(db_path, "attivita_programmate", getattr(AttivitaImporter, "ATTIVITA_PROGRAMMATE_COLS", []))
+        # Usiamo full_replace_with_metadata perché non abbiamo vincoli UNIQUE 
+        # e vogliamo mantenere gli stili calcolati.
+        res = SmartSyncEngine.sync_full_replace_with_metadata(
             target,
             rows,
-            conflict_cols=["oda"],
+            key_cols=["ps", "area", "descrizione"], # Chiave euristica
+            metadata_cols=["styles"],
         )
         return int(res[0]), int(res[1])
 
     @classmethod
     def sync_scarico_ore(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
-        """Sincronizza lo scarico ore."""
+        """Sincronizza lo scarico ore preservando gli stili."""
         target = SyncTarget(db_path, "scarico_ore", getattr(ScaricoOreImporter, "SCARICO_ORE_COLS", []))
-        res = SmartSyncEngine.sync_upsert_smart(
+        # Usiamo full_replace_with_metadata per mantenere la formattazione colori.
+        res = SmartSyncEngine.sync_full_replace_with_metadata(
             target,
             rows,
-            conflict_cols=["oda"],
+            key_cols=["data", "pers1", "odc", "pos"], # Chiave euristica
+            metadata_cols=["styles"],
         )
         return int(res[0]), int(res[1])
 
     @classmethod
     def sync_certificati_campione(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
-        """Sincronizza i certificati campione."""
+        """Sincronizza i certificati campione preservando annotazioni e ubicazione."""
         target = SyncTarget(
-            db_path, "certificati_campione", getattr(CertificatiImporter, "CERTIFICATI_COLS", [])
+            db_path, "certificati_campione", getattr(CertificatiImporter, "CERTIFICATI_CAMPIONE_COLS", [])
         )
-        res = SmartSyncEngine.sync_upsert_smart(
+        # Usiamo full_replace_with_metadata perché non abbiamo vincoli UNIQUE nel DB (v6)
+        # ma vogliamo mantenere le annotazioni manuali degli utenti.
+        # Usiamo 'id_coemi' come chiave primaria per il matching dei metadati.
+        res = SmartSyncEngine.sync_full_replace_with_metadata(
             target,
             rows,
-            conflict_cols=["id_strumento", "certificato"],
+            key_cols=["id_coemi", "certificato"],
+            metadata_cols=["annotazioni", "ubicazione"],
         )
         return int(res[0]), int(res[1])

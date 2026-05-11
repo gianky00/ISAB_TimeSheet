@@ -3,6 +3,8 @@ SyncroJob - Playwright Base Bot
 Implementazione della classe base per i bot Playwright.
 """
 
+from __future__ import annotations
+
 import os
 import re
 import sys
@@ -10,11 +12,11 @@ from abc import ABC
 from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from playwright.sync_api import Browser, BrowserContext, Page, Playwright, sync_playwright
 
-from src.bots.base.base_bot import BaseBot, BotConfig
+from src.bots.base.base_bot import BaseBot
 from src.bots.base.playwright_login_page import PlaywrightLoginPage
 from src.bots.portale_fornitori.common.locators import CommonLocators
 from src.core import config_manager
@@ -27,6 +29,9 @@ from src.utils.helpers import cleanup_bot_processes
 
 from .playwright_utils import get_playwright_selector
 
+if TYPE_CHECKING:
+    from src.bots.base.selenium_bot_config import SeleniumBotConfig
+
 
 class PlaywrightBaseBot(BaseBot, ABC):
     """
@@ -36,19 +41,15 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
     def __init__(
         self,
-        username: str,
-        password: str,
-        config: BotConfig | None = None,
+        config: SeleniumBotConfig,
     ) -> None:
         """
         Inizializza le proprietà fondamentali del bot Playwright.
 
         Args:
-          username: Nome utente per il login.
-          password: Password per il login.
-          config: Istanza di BotConfig con le impostazioni del bot.
+          config: Istanza di SeleniumBotConfig con le impostazioni del bot.
         """
-        super().__init__(username, password, config)
+        super().__init__(config.username, config.password, config)
         self.playwright: Playwright | None = None
         self.browser: Browser | None = None
         self.context: BrowserContext | None = None

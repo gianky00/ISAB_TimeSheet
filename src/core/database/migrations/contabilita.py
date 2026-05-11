@@ -161,11 +161,16 @@ def mig_contabilita_v6(conn: sqlite3.Connection) -> None:
 
 
 def mig_contabilita_v7(conn: sqlite3.Connection) -> None:
-    """Ridenominazione id_coemi in id_strumento (v7)"""
+    """Ridenominazione id_strumento in id_coemi (v7)"""
     cursor = conn.cursor()
-    # Verifica se la colonna id_coemi esiste prima di rinominare
     cursor.execute("PRAGMA table_info(certificati_campione)")
     cols = [row[1] for row in cursor.fetchall()]
-    if "id_coemi" in cols and "id_strumento" not in cols:
+    
+    # Se esiste id_strumento e non esiste id_coemi, rinominiamo
+    if "id_strumento" in cols and "id_coemi" not in cols:
         with contextlib.suppress(sqlite3.OperationalError):
-            cursor.execute("ALTER TABLE certificati_campione RENAME COLUMN id_coemi TO id_strumento")
+            cursor.execute("ALTER TABLE certificati_campione RENAME COLUMN id_strumento TO id_coemi")
+    
+    # Se non esiste nessuna delle due (tabella nuova), la mig_v1 creerà id_strumento, 
+    # quindi questa migrazione deve comunque assicurare id_coemi.
+    # In caso di nuova installazione, mig_v1 viene eseguita prima.

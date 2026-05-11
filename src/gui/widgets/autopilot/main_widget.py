@@ -332,6 +332,15 @@ class AutopilotWidget(QWidget):
                 "icon": Icons.SEND,
                 "color": COLORS["purple"],
             })
+        if config.get("certificati_autopilot_enabled", False):
+            events.append({
+                "id": "certificati",
+                "module_id": "contabilita",
+                "name": f"Certificati Campione (ogni {config.get('certificati_autopilot_interval_days', 1)}gg)",
+                "time": config.get("certificati_autopilot_time", "08:30"),
+                "icon": Icons.FILE_TEXT,
+                "color": COLORS["teal_accent"],
+            })
         return events
 
     def _show_empty_message(self) -> None:
@@ -355,6 +364,7 @@ class AutopilotWidget(QWidget):
         ]
         interval_tasks: list[BotVisualInfo] = [
             {"bot_id": "report_email", "bot_name": "Report Email ISAB", "icon_path": Icons.SEND, "color": COLORS["purple"]},
+            {"bot_id": "certificati", "bot_name": "Certificati Campione", "icon_path": Icons.FILE_TEXT, "color": COLORS["teal_accent"]},
         ]
 
         idx = 0

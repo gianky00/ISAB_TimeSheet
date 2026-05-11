@@ -51,6 +51,10 @@ class SmartSyncEngine(BaseSyncEngine):
         metadata_cols: list[str],
     ) -> tuple[int, int]:
         """Sostituisce i dati preservando i metadati esistenti (es. annotazioni)."""
+        import logging
+        sync_logger = logging.getLogger(__name__)
+        sync_logger.info(f"Inizio sync_full_replace per {target.table_name}. Nuovi dati: {len(new_data)}")
+        
         if not new_data:
             return 0, 0
 
@@ -59,22 +63,26 @@ class SmartSyncEngine(BaseSyncEngine):
 
             # 1. Recupera metadati
             current_metadata = cls._fetch_current_metadata(cursor, target.table_name, key_cols, metadata_cols)
+            sync_logger.info(f"Metadati recuperati: {len(current_metadata)} record")
 
             # 2. Svuota tabella
             safe_table = cls._validate_identifier(target.table_name)
             cursor.execute(f"DELETE FROM {safe_table}")  # nosec B608
+            sync_logger.info(f"Tabella {target.table_name} svuotata.")
 
             # 3. Prepara righe finali
             final_rows = cls._merge_data_with_metadata(
                 new_data, target.columns, key_cols, metadata_cols, current_metadata
             )
+            sync_logger.info(f"Righe preparate per inserimento: {len(final_rows)}")
 
             # 4. Inserimento massivo
             cls._bulk_insert_with_metadata(
                 cursor, target.table_name, target.columns, metadata_cols, final_rows
             )
-
+            
             conn.commit()
+            sync_logger.info(f"Sync completato con successo per {target.table_name}")
             return len(final_rows), 0
 
     # -------------------------------------------------------------------------

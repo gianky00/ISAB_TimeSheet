@@ -3,9 +3,11 @@ SyncroJob - Playwright SafeWork Programmazione Bot
 Versione Playwright del bot per il monitoraggio della programmazione settimanale.
 """
 
+from __future__ import annotations
+
 from contextlib import suppress
 from pathlib import Path
-from typing import Any, ClassVar, Final
+from typing import TYPE_CHECKING, Any, ClassVar, Final
 
 import pandas as pd
 
@@ -13,6 +15,9 @@ from src.bots.base.base_bot import StepStatus
 from src.bots.safework.common.locators import SafeWorkLocators
 from src.bots.safework.pages.playwright_visualizza_attivita_page import PlaywrightVisualizzaAttivitaPage
 from src.bots.safework.playwright_base import PlaywrightSafeworkBaseBot
+
+if TYPE_CHECKING:
+    from src.bots.base.selenium_bot_config import SeleniumBotConfig
 
 # Costanti per parsing Excel
 IDX_RICHIEDENTE: Final[int] = 17
@@ -33,16 +38,12 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
         ("parse", "Analisi Risultati"),
     ]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = 30,
-        download_path: str = "",
+        config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
-        super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
+        super().__init__(config, account_type=account_type)
         self.results: list[dict[str, Any]] = []
         self.attivita_page: PlaywrightVisualizzaAttivitaPage | None = None
 

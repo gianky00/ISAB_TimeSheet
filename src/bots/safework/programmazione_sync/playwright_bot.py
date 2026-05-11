@@ -3,17 +3,24 @@ SyncroJob - Playwright SafeWork Programmazione Sync Bot
 Versione Playwright del bot per il download massivo del report di programmazione Excel.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.bots.base.base_bot import StepStatus
-from src.bots.safework.pages.playwright_visualizza_attivita_page import PlaywrightVisualizzaAttivitaPage
+from src.bots.safework.pages.playwright_visualizza_attivita_page import (
+    PlaywrightVisualizzaAttivitaPage,
+)
 from src.bots.safework.playwright_base import PlaywrightSafeworkBaseBot
+
+if TYPE_CHECKING:
+    from src.bots.base.selenium_bot_config import SeleniumBotConfig
 
 
 class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
     """
-    Bot per scaricare il report Excel delle attivitàda SafeWork usando Playwright.
+    Bot per il download massivo delle attività SafeWork (Syncro) usando Playwright.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
@@ -23,16 +30,12 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
         ("search", "Ricerca ed Esportazione"),
     ]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = 30,
-        download_path: str = "",
+        config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
-        super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
+        super().__init__(config, account_type=account_type)
         self.downloaded_file: str | None = None
         self.attivita_page: PlaywrightVisualizzaAttivitaPage | None = None
 
@@ -42,7 +45,7 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
 
     @property
     def description(self) -> str:
-        return "Download massivo report attivitàSafeWork (Playwright)"
+        return "Download massivo report attività SafeWork (Playwright)"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:

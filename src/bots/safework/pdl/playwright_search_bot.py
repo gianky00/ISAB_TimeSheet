@@ -3,10 +3,12 @@ SyncroJob - Playwright SafeWork PDL Search Bot
 Versione Playwright del bot per la ricerca massiva ed esportazione Excel dei PDL.
 """
 
+from __future__ import annotations
+
 import time
 from contextlib import suppress
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
 
@@ -16,6 +18,9 @@ from src.bots.safework.pages.playwright_ricerca_pdl_page import PlaywrightRicerc
 from src.bots.safework.playwright_base import PlaywrightSafeworkBaseBot
 from src.core.database import db_manager
 from src.core.sync_tracker import SyncTracker
+
+if TYPE_CHECKING:
+    from src.bots.base.selenium_bot_config import SeleniumBotConfig
 
 
 class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
@@ -31,16 +36,12 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
         ("db", "Importazione Database"),
     ]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = 30,
-        download_path: str = "",
+        config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
-        super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
+        super().__init__(config, account_type=account_type)
         self.sites = ["IGCC", "ISAB Nord", "ISAB Sud"]
         self.ricerca_pdl_page: PlaywrightRicercaPDLPage | None = None
 

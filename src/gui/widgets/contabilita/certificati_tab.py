@@ -92,7 +92,7 @@ class CertificatiCampioneTab(QWidget):
         # Campo di Ricerca Moderno
         from src.gui.widgets.core_widgets import SearchInput
 
-        self.search_input = SearchInput("Cerca per Matricola, Modello o ID...")
+        self.search_input = SearchInput("Cerca per ID COEMI, Matricola, Modello...")
         self.search_input.setFixedWidth(350)
         self.search_input.textChanged.connect(self._apply_filters)
         toolbar.addWidget(self.search_input)
@@ -246,6 +246,7 @@ class CertificatiCampioneTab(QWidget):
 
         # 4. Verifica Finale con Ricerca
         if visible and query:
+            # Match su label padre o su qualsiasi dato nei figli
             visible = (query in parent.text(0).lower()) or found_in_child
 
         parent.setHidden(not visible)
@@ -299,34 +300,35 @@ class CertificatiCampioneTab(QWidget):
         self.engine.load_exclusions()
 
         # Salva stato espansione
-        expanded_matricole = []
+        expanded_ids = []
         for i in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(i)
             if item and item.isExpanded():
                 with suppress(Exception):
-                    matricola = self.engine.parse_parent_label(item.text(0))["matricola"]
-                    expanded_matricole.append(matricola)
+                    # Usiamo l'ID COEMI per ripristinare l'espansione
+                    meta = self.engine.parse_parent_label(item.text(0))
+                    expanded_ids.append(meta.get("id_coemi", ""))
 
         self._load_data()
 
         # Ripristina stato espansione
-        if expanded_matricole:
+        if expanded_ids:
             for i in range(self.tree.topLevelItemCount()):
                 item = self.tree.topLevelItem(i)
                 if item:
                     with suppress(Exception):
-                        matricola = self.engine.parse_parent_label(item.text(0))["matricola"]
-                        if matricola in expanded_matricole:
+                        meta = self.engine.parse_parent_label(item.text(0))
+                        if meta.get("id_coemi") in expanded_ids:
                             item.setExpanded(True)
 
     def _load_data(self) -> None:
-        """Popola l'albero raggruppando i certificati per ID-STRUMENTO."""
+        """Popola l'albero raggruppando i certificati per ID COEMI."""
         data = ContabilitaManager.get_certificati_campione_data()
         self.tree.clear()
         self.tree.setSortingEnabled(False)
 
         # Raggruppamento e prioritizzazione
-        id_groups = self._group_data_by_id_strumento(data)
+        id_groups = self._group_data_by_id_coemi(data)
         prioritized_groups = self._prepare_groups_with_priority(id_groups)
         prioritized_groups.sort(key=operator.itemgetter("priority"))
 
@@ -343,20 +345,18 @@ class CertificatiCampioneTab(QWidget):
             parent_item = self._create_parent_item(g)
             self._add_child_items(parent_item, g)
 
-    def _group_data_by_id_strumento(self, data: list[tuple[Any, ...]]) -> dict[str, list[tuple[Any, ...]]]:
-        """Raggruppa le righe del DB per ID-STRUMENTO o fallback (Matricola/Certificato)."""
+    def _group_data_by_id_coemi(self, data: list[tuple[Any, ...]]) -> dict[str, list[tuple[Any, ...]]]:
+        """Raggruppa le righe del DB per ID COEMI o fallback (Matricola)."""
         from src.core.contabilita_queries import ContabilitaQueries
 
-        idx_id_strumento = ContabilitaQueries.CERT_IDX_ID_STRUMENTO
+        idx_id_coemi = ContabilitaQueries.CERT_IDX_ID_STRUMENTO # Ora è ID COEMI
         idx_matricola = ContabilitaQueries.CERT_IDX_MATRICOLA
-        idx_certificato = ContabilitaQueries.CERT_IDX_CERTIFICATO
 
         groups = defaultdict(list)
         for r in data:
             key = (
-                str(r[idx_id_strumento]).strip()
+                str(r[idx_id_coemi]).strip()
                 or str(r[idx_matricola]).strip()
-                or str(r[idx_certificato]).strip()
                 or "Sconosciuto"
             )
             groups[key].append(r)
@@ -381,7 +381,7 @@ class CertificatiCampioneTab(QWidget):
             processed_groups.append(
                 {
                     "group_key": group_key,
-                    "id_strumento": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_ID_STRUMENTO),
+                    "id_coemi": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_ID_STRUMENTO),
                     "matricola": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_MATRICOLA) or "N/D",
                     "costruttore": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_COSTRUTTORE)
                     or "N/D",
@@ -429,7 +429,7 @@ class CertificatiCampioneTab(QWidget):
         ex_marker = "  [ESCLUSO]" if is_excluded else ""
         pr_marker = "  [NON STAMPARE]" if is_print_excluded else ""
 
-        id_part = f"{g['id_strumento']}  •  " if g["id_strumento"] else ""
+        id_part = f"{g['id_coemi']}  •  " if g["id_coemi"] else ""
         label = f"{id_part}{g['costruttore']}  •  {g['modello']}{range_part}  •  {g['matricola']}  •  {days_text}{ex_marker}{pr_marker}"
 
         parent_item = SortableTreeWidgetItem(self.tree, [label])
@@ -585,7 +585,7 @@ class CertificatiCampioneTab(QWidget):
 
     def _add_expansion_action(self, menu: QMenu, item: QTreeWidgetItem) -> None:
         """Aggiunge azione espandi/comprimi al menu."""
-        toggle_expand = QAction("Comprimi" if item.isExpanded() else "Espandi", self)
+        toggle_expand = QAction("Comprimi" if item.isExpanded() else "Expand", self)
         toggle_expand.setIcon(QIcon(get_asset_path(Icons.MINIMIZE if item.isExpanded() else Icons.MAXIMIZE)))
         toggle_expand.triggered.connect(
             lambda: self.tree.collapseItem(item) if item.isExpanded() else self.tree.expandItem(item)
@@ -634,7 +634,7 @@ class CertificatiCampioneTab(QWidget):
             user_data = parent.data(0, Qt.ItemDataRole.UserRole)
 
             # Recuperiamo i dati reali dalle colonne del primo figlio
-            id_strumento = ""
+            id_coemi = ""
             matricola = ""
             costruttore = meta["costruttore"]
             modello = meta["modello"]
@@ -643,7 +643,7 @@ class CertificatiCampioneTab(QWidget):
             if parent.childCount() > 0:
                 child = parent.child(0)
                 if child:
-                    id_strumento = child.text(self.tree.IDX_ID_STRUMENTO)
+                    id_coemi = child.text(self.tree.IDX_ID_STRUMENTO)
                     matricola = child.text(self.tree.IDX_MATRICOLA)
                     costruttore = child.text(self.tree.IDX_COSTRUTTORE)
                     modello = child.text(self.tree.IDX_MODELLO)
@@ -655,7 +655,7 @@ class CertificatiCampioneTab(QWidget):
                     "costruttore": costruttore,
                     "modello": modello,
                     "range": range_val,
-                    "id_strumento": id_strumento,
+                    "id_strumento": id_coemi, # Manteniamo id_strumento nel dizionario per compatibilità con il dialogo
                     "days": user_data.get("days") if user_data else None,
                 }
             )
@@ -665,7 +665,6 @@ class CertificatiCampioneTab(QWidget):
 
     def _export_pdf(self) -> None:
         """Esporta la lista dei certificati in un PDF formattato professionalmente."""
-        # Creiamo un modulo separato o usiamo una classe dedicata all'esportazione per mantenere SRP
         from src.gui.widgets.contabilita.certificati.pdf_exporter import (
             CertificatiPdfExporter,
         )
@@ -680,7 +679,6 @@ class CertificatiCampioneTab(QWidget):
         if not file_path:
             return
 
-        # Estrae i dati dal widget tree per l'esportazione
         certs_data = []
         for i in range(self.tree.topLevelItemCount()):
             parent = self.tree.topLevelItem(i)
@@ -689,17 +687,16 @@ class CertificatiCampioneTab(QWidget):
             meta = self.engine.parse_parent_label(parent.text(0))
             user_data = parent.data(0, Qt.ItemDataRole.UserRole)
 
-            # Dati dal primo figlio (stato attuale)
-            id_strumento = ""
+            id_coemi = ""
             if parent.childCount() > 0 and (child := parent.child(0)):
-                id_strumento = child.text(self.tree.IDX_ID_STRUMENTO)
+                id_coemi = child.text(self.tree.IDX_ID_STRUMENTO)
 
             certs_data.append(
                 {
                     "matricola": meta["matricola"],
                     "costruttore": meta["costruttore"],
                     "modello": meta["modello"],
-                    "id_strumento": id_strumento,
+                    "id_strumento": id_coemi,
                     "days": user_data.get("days") if user_data else None,
                 }
             )
