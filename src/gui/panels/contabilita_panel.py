@@ -22,9 +22,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
-    QTableWidget,
     QTabWidget,
-    QTreeWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -40,6 +38,7 @@ from src.gui.styles import COLORS, LABEL_MUTED, LINEEDIT_STYLE
 from src.gui.widgets.contabilita.attivita_tab import AttivitaProgrammateTab
 from src.gui.widgets.contabilita.certificati_tab import CertificatiCampioneTab
 from src.gui.widgets.contabilita.giornaliere_tab import GiornaliereYearTab
+from src.gui.widgets.contabilita.stats_helper import ContabilitaStatsHelper
 from src.gui.widgets.contabilita.year_tab import ContabilitaYearTab
 from src.gui.widgets.core_widgets import (
     SearchInput,
@@ -402,81 +401,10 @@ class ContabilitaPanel(QWidget):
                     tree.itemSelectionChanged.connect(lambda: self._update_selection_total(tree))
 
     def _update_selection_total(self, widget: QWidget) -> None:
-        """Esegue il calcolo granulare delle ore selezionate filtrando le righe nascoste."""
-        with suppress(Exception):
-            if isinstance(widget, QTreeWidget):
-                self._update_tree_selection(widget)
-                return
-
-            if not isinstance(widget, QTableWidget):
-                return
-
-            self._update_table_selection(widget)
-
-    def _update_tree_selection(self, tree: QTreeWidget) -> None:
-        """Aggiorna i conteggi per un QTreeWidget."""
-        self.selection_count_label.setText(str(len(tree.selectedItems())))
-        self.selection_sum_label.setText("")
-
-    def _update_table_selection(self, table: QTableWidget) -> None:
-        """Aggiorna i conteggi e il totale ore per un QTableWidget."""
-        model = table.selectionModel()
-        if not model:
-            return
-
-        indexes = model.selectedIndexes()
-        if not indexes:
-            self.selection_count_label.setText("0")
-            self.selection_sum_label.setText("0")
-            return
-
-        target_col = self._find_ore_column(table)
-        selected_rows = self._get_unique_visible_rows(table, indexes)
-        total_ore = self._calculate_total_hours(table, selected_rows, target_col)
-
-        fmt_ore = self._format_hours(total_ore)
-
-        self.selection_count_label.setText(str(len(selected_rows)))
-        self.selection_sum_label.setText(fmt_ore)
-
-    def _get_unique_visible_rows(self, table: QTableWidget, indexes: list[Any]) -> set[int]:
-        """Filtra gli indici per ottenere righe uniche, visibili e non di totale."""
-        selected_rows = set()
-        for idx in indexes:
-            row = idx.row()
-            item_0 = table.item(row, 0)
-            is_total_row = item_0 and item_0.text() == "TOTALI"
-            if not table.isRowHidden(row) and not is_total_row:
-                selected_rows.add(row)
-        return selected_rows
-
-    def _calculate_total_hours(self, table: QTableWidget, rows: set[int], col: int) -> float:
-        """Somma le ore nelle righe e colonna specificate."""
-        total = 0.0
-        if col == -1:
-            return total
-
-        for row in rows:
-            if it := table.item(row, col):
-                with suppress(Exception):
-                    clean = str(it.text()).replace(".", "").replace(",", ".").strip()
-                    if clean:
-                        total += float(clean)
-        return total
-
-    def _format_hours(self, total: float) -> str:
-        """Formatta il totale ore per la visualizzazione IT."""
-        if total % 1 != 0:
-            return f"{total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-        return str(int(total))
-
-    def _find_ore_column(self, table: QTableWidget) -> int:
-        """Individua l'indice della colonna contenente le ore in base all'header."""
-        for c in range(table.columnCount()):
-            h = table.horizontalHeaderItem(c)
-            if h and ("ORE SP" in h.text().upper() or h.text().upper() == "ORE"):
-                return c
-        return -1
+        """Aggiorna le label statistiche basandosi sulla selezione corrente."""
+        count, hours = ContabilitaStatsHelper.calculate_selection_stats(widget)
+        self.selection_count_label.setText(str(count))
+        self.selection_sum_label.setText(hours)
 
     def start_import_process(self) -> None:
         """Avvia il worker asincrono per l'importazione dei file Excel definiti nei path configurati."""

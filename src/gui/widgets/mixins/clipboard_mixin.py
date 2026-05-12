@@ -4,18 +4,24 @@ Aggiunge funzionalit  di copia/incolla standard Excel alle tabelle.
 """
 
 from collections.abc import Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QComboBox as QtQComboBox
 
-from src.gui.widgets.core_widgets import SortableTableWidgetItem
+from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
+
+if TYPE_CHECKING:
+    from PySide6.QtWidgets import QTableWidget
+    Base = QTableWidget
+else:
+    Base = object
 
 
-class ClipboardMixin:
+class ClipboardMixin(Base):
     """Mixin per aggiungere supporto copia/incolla (TSV) compatibile con Excel."""
 
-    def copy_selection(self) -> None:
+    def copy_selection(self: Any) -> None:
         """Copia la selezione corrente negli appunti in formato TSV."""
         selection = self.selectedIndexes()
         if not selection:
@@ -31,7 +37,7 @@ class ClipboardMixin:
         if clipboard:
             clipboard.setText("\n".join(tsv_parts))
 
-    def paste_selection(self) -> None:
+    def paste_selection(self: Any) -> None:
         """Incolla i dati dagli appunti partendo dalla cella corrente."""
         clipboard = QGuiApplication.clipboard()
         text = clipboard.text() if clipboard else ""
@@ -56,34 +62,34 @@ class ClipboardMixin:
                     continue
                 self._paste_cell_data(target_r, target_c, cell_text.strip())
 
-    def _get_selected_rows_cols(self, selection: Sequence[Any]) -> tuple[list[int], list[int]]:
+    def _get_selected_rows_cols(self: Any, selection: Sequence[Any]) -> tuple[list[int], list[int]]:
         rows, cols = set(), set()
         for idx in selection:
             rows.add(idx.row())
             cols.add(idx.column())
         return sorted(rows), sorted(cols)
 
-    def _build_header_tsv(self, cols: list[int]) -> str:
+    def _build_header_tsv(self: Any, cols: list[int]) -> str:
         headers = []
         for c in cols:
             it = self.horizontalHeaderItem(c)
             headers.append(it.text() if it else f"Col {c}")
         return "\t".join(headers)
 
-    def _get_row_as_tsv(self, row: int, cols: list[int]) -> str:
+    def _get_row_as_tsv(self: Any, row: int, cols: list[int]) -> str:
         data = []
         for c in cols:
             val = self._get_cell_value(row, c)
             data.append(val.replace("\t", " ").replace("\n", " "))
         return "\t".join(data)
 
-    def _get_cell_value(self, row: int, col: int) -> str:
+    def _get_cell_value(self: Any, row: int, col: int) -> str:
         widget = self.cellWidget(row, col)
         if widget:
-            # Se  direttamente una QComboBox
+            # Se è direttamente una QComboBox
             if isinstance(widget, QtQComboBox):
                 return str(widget.currentText())
-            # Se  un container che ospita una QComboBox
+            # Se è un container che ospita una QComboBox
             cb = widget.findChild(QtQComboBox)
             if cb:
                 return str(cb.currentText())
@@ -91,10 +97,10 @@ class ClipboardMixin:
         it = self.item(row, col)
         return it.text() if it else ""
 
-    def _get_paste_start_pos(self) -> tuple[int, int]:
+    def _get_paste_start_pos(self: Any) -> tuple[int, int]:
         return (max(0, self.currentRow()), max(0, self.currentColumn()))
 
-    def _paste_cell_data(self, row: int, col: int, text: str) -> None:
+    def _paste_cell_data(self: Any, row: int, col: int, text: str) -> None:
         widget = self.cellWidget(row, col)
         if isinstance(widget, QtQComboBox):
             idx = widget.findText(text)

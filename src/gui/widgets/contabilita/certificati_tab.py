@@ -6,9 +6,8 @@ Coordina l'uso del CertificatiEngine e del CertificatiTreeWidget.
 
 import operator
 import os
-from collections import defaultdict
 from contextlib import suppress
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
 
 from PySide6.QtCore import QPoint, Qt
@@ -327,9 +326,9 @@ class CertificatiCampioneTab(QWidget):
         self.tree.clear()
         self.tree.setSortingEnabled(False)
 
-        # Raggruppamento e prioritizzazione
-        id_groups = self._group_data_by_id_coemi(data)
-        prioritized_groups = self._prepare_groups_with_priority(id_groups)
+        # Raggruppamento e prioritizzazione delegata all'engine (SRP)
+        id_groups = self.engine.group_data_by_id_coemi(data)
+        prioritized_groups = self.engine.prepare_groups_with_priority(id_groups)
         prioritized_groups.sort(key=operator.itemgetter("priority"))
 
         # Popolamento Tree
@@ -344,78 +343,6 @@ class CertificatiCampioneTab(QWidget):
         for g in groups:
             parent_item = self._create_parent_item(g)
             self._add_child_items(parent_item, g)
-
-    def _group_data_by_id_coemi(self, data: list[tuple[Any, ...]]) -> dict[str, list[tuple[Any, ...]]]:
-        """Raggruppa le righe del DB per ID COEMI o fallback (Matricola)."""
-        from src.core.contabilita_queries import ContabilitaQueries
-
-        idx_id_coemi = ContabilitaQueries.CERT_IDX_ID_STRUMENTO # Ora è ID COEMI
-        idx_matricola = ContabilitaQueries.CERT_IDX_MATRICOLA
-
-        groups = defaultdict(list)
-        for r in data:
-            key = (
-                str(r[idx_id_coemi]).strip()
-                or str(r[idx_matricola]).strip()
-                or "Sconosciuto"
-            )
-            groups[key].append(r)
-        return groups
-
-    def _prepare_groups_with_priority(self, groups: dict[str, list[tuple[Any, ...]]]) -> list[dict[str, Any]]:
-        """Calcola stati e priorità per ogni gruppo di certificati."""
-        from src.core.contabilita_queries import ContabilitaQueries
-
-        processed_groups = []
-        for group_key, certificates in groups.items():
-            certs_sorted = sorted(certificates, key=self._parse_emission_date, reverse=True)
-            latest = certs_sorted[0]
-
-            scadenza = (
-                latest[ContabilitaQueries.CERT_IDX_SCADENZA]
-                if len(latest) > ContabilitaQueries.CERT_IDX_SCADENZA
-                else ""
-            )
-            days, icon = self.engine.calculate_days_and_status(scadenza)
-
-            processed_groups.append(
-                {
-                    "group_key": group_key,
-                    "id_coemi": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_ID_STRUMENTO),
-                    "matricola": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_MATRICOLA) or "N/D",
-                    "costruttore": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_COSTRUTTORE)
-                    or "N/D",
-                    "modello": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_MODELLO) or "N/D",
-                    "range_strumento": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_RANGE),
-                    "certificates": certs_sorted,
-                    "days": days,
-                    "icon": icon,
-                    "priority": days if days is not None else 9999,
-                }
-            )
-        return processed_groups
-
-    def _parse_emission_date(self, row: tuple[Any, ...]) -> datetime:
-        """Helper per il parsing sicuro della data di emissione per l'ordinamento."""
-        from src.core.contabilita_queries import ContabilitaQueries
-
-        idx = ContabilitaQueries.CERT_IDX_EMISSIONE
-        if len(row) <= idx:
-            return datetime.min.replace(tzinfo=UTC)
-
-        d = row[idx] or ""
-        try:
-            return (
-                datetime.strptime(d, "%d/%m/%Y").replace(tzinfo=UTC)
-                if "/" in d
-                else datetime.min.replace(tzinfo=UTC)
-            )
-        except Exception:
-            return datetime.min.replace(tzinfo=UTC)
-
-    def _get_col_safe(self, row: tuple[Any, ...], idx: int) -> str:
-        """Ritorna il valore della colonna in modo sicuro."""
-        return str(row[idx]).strip() if len(row) > idx and row[idx] is not None else ""
 
     def _create_parent_item(self, g: dict[str, Any]) -> SortableTreeWidgetItem:
         """Crea e configura l'elemento padre nell'albero."""
@@ -460,18 +387,18 @@ class CertificatiCampioneTab(QWidget):
             err_formatted = self.engine.format_errore_max(err_val) if err_val is not None else ""
 
             row_data = [
-                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_ID_STRUMENTO),
-                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_CERTIFICATO),
-                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_MODELLO),
-                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_COSTRUTTORE),
-                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_MATRICOLA),
-                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_RANGE),
+                self.engine.get_col_safe(cert, ContabilitaQueries.CERT_IDX_ID_STRUMENTO),
+                self.engine.get_col_safe(cert, ContabilitaQueries.CERT_IDX_CERTIFICATO),
+                self.engine.get_col_safe(cert, ContabilitaQueries.CERT_IDX_MODELLO),
+                self.engine.get_col_safe(cert, ContabilitaQueries.CERT_IDX_COSTRUTTORE),
+                self.engine.get_col_safe(cert, ContabilitaQueries.CERT_IDX_MATRICOLA),
+                self.engine.get_col_safe(cert, ContabilitaQueries.CERT_IDX_RANGE),
                 err_formatted,
-                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_EMISSIONE),
-                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_SCADENZA),
-                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_STATO),
+                self.engine.get_col_safe(cert, ContabilitaQueries.CERT_IDX_EMISSIONE),
+                self.engine.get_col_safe(cert, ContabilitaQueries.CERT_IDX_SCADENZA),
+                self.engine.get_col_safe(cert, ContabilitaQueries.CERT_IDX_STATO),
                 self._get_ubicazione_safe(cert),
-                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_ANNOTAZIONI),
+                self.engine.get_col_safe(cert, ContabilitaQueries.CERT_IDX_ANNOTAZIONI),
             ]
 
             row = SortableTreeWidgetItem(parent, row_data)
