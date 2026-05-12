@@ -47,7 +47,7 @@ class FileNames:
 class Timeouts:
     """Global timeout settings (in seconds)."""
 
-    DEFAULT = 30
+    DEFAULT = 300
     SHORT = 5
     MEDIUM = 15
     LONG = 60

@@ -307,7 +307,7 @@ class ContabilitaPanel(QWidget):
                 self._on_search_changed(text)
             self.search_input.setFocus()
 
-    def refresh_tabs(self) -> None:
+    def refresh_tabs(self, auto_email: bool = False) -> None:
         """
         Interroga il database per gli anni disponibili e aggiorna i tab degli anni.
         Sincronizza inoltre i dati per le attività e i certificati.
@@ -333,6 +333,11 @@ class ContabilitaPanel(QWidget):
             self.certificati_widget.refresh_data
         ):
             self.certificati_widget.refresh_data()
+
+            # Se richiesto e siamo nel tab certificati, lancia email
+            if auto_email and self.main_tabs.currentIndex() == 3:
+                from PySide6.QtCore import QTimer
+                QTimer.singleShot(1000, self.certificati_widget._run_analysis_and_send_email)
 
         # Riapplica il filtro di ricerca se presente
         search_text = self.search_input.text()
@@ -511,7 +516,7 @@ class ContabilitaPanel(QWidget):
             final_status = f"{timestamp} {added_str} {removed_str} (Tempo: {time_str})"
             self._last_status_html = final_status
             self.status_lbl.setText(final_status)
-            self.refresh_tabs()
+            self.refresh_tabs(auto_email=True)
         else:
             self.status_lbl.setText("Errore")
             ConfirmationDialog.show_error(self, "Errore", msg)

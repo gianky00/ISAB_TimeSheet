@@ -65,6 +65,7 @@ class ServiceController(QObject):
             "safework": [],
         }
         self.scheduler_timer: QTimer | None = None
+        self._cert_worker: Any = None
 
     def start_all(self) -> None:
         """Avvia la sequenza di attivazione dei servizi di background con ritardi differiti per non saturare lo startup."""
@@ -342,7 +343,7 @@ class ServiceController(QObject):
             f"Autopilot Certificati: Aggiornamento terminato. Success: {success}, Added: {added}, Removed: {removed}"
         )
 
-        # Procediamo sempre all'analisi se non ci sono errori critici bloccanti, 
+        # Procediamo sempre all'analisi se non ci sono errori critici bloccanti,
         # perché potremmo avere già dati nel DB da analizzare.
         if not success and "Errore critico" in msg:
             logger.error(f"Autopilot Certificati: Aggiornamento fallito per errore critico: {msg}")
@@ -355,15 +356,15 @@ class ServiceController(QObject):
             try:
                 logger.info("Autopilot Certificati: Avvio analisi scadenze e generazione bozza...")
                 self._generate_certificati_outlook_draft()
-                
+
                 config_manager.set_config_value(
                     "certificati_autopilot_last_sent", datetime.now(UTC).astimezone().isoformat()
                 )
-                
+
                 status_msg = "Aggiornamento e Analisi completati."
                 if not success:
                     status_msg = "Analisi completata (Aggiornamento DB saltato o nessun nuovo dato)."
-                
+
                 NotificationManager.instance().add_notification(
                     title="Autopilot Certificati",
                     message=f"{status_msg} Bozza Outlook creata.",
@@ -379,7 +380,20 @@ class ServiceController(QObject):
         self._cert_worker = None
 
     def _generate_certificati_outlook_draft(self) -> None:
-        """Esegue l'analisi delle scadenze e crea una bozza Outlook tramite l'engine condiviso."""
+        """Esegue l'analisi delle scadenze e crea una bozza Outlook tramite l'interfaccia UI (per uniformità)."""
+        from src.gui.main_window.page_index import PageIndex
+
+        # Tentiamo di recuperare il widget dei certificati dalla MainWindow per usare la logica ricca (screenshot + PDF)
+        panel = self.mw.navigation_controller.get_panel(PageIndex.STRUMENTALE)
+        if panel and hasattr(panel, "certificati_widget"):
+            logger.info("Autopilot Certificati: Utilizzo logica UI per generazione email audit...")
+            # Assicuriamoci che i dati nel widget siano rinfrescati prima dell'analisi
+            panel.certificati_widget.refresh_data()
+            # Invio email identica alla versione manuale del tab
+            panel.certificati_widget._run_analysis_and_send_email()
+            return
+
+        # Logica di Fallback (Solo se la UI non fosse accessibile)
         from src.core.contabilita.certificati_engine import CertificatiEngine
         from src.core.contabilita_manager import ContabilitaManager
 
@@ -392,24 +406,24 @@ class ServiceController(QObject):
             return
 
         from src.core.contabilita_queries import ContabilitaQueries
-        groups = {}
+        groups: dict[str, list[tuple[Any, ...]]] = {}
         for r in data:
             key = str(r[ContabilitaQueries.CERT_IDX_ID_STRUMENTO]).strip() or str(r[ContabilitaQueries.CERT_IDX_MATRICOLA]).strip()
             if key not in groups:
                 groups[key] = []
             groups[key].append(r)
-            
+
         certs_to_report = []
-        for _key, certs in groups.items():
+        for certs in groups.values():
             latest = sorted(certs, key=lambda x: str(x[ContabilitaQueries.CERT_IDX_EMISSIONE]), reverse=True)[0]
             matricola = str(latest[ContabilitaQueries.CERT_IDX_MATRICOLA]).strip()
-            
+
             if matricola in engine._exclusions:
                 continue
 
             scadenza = latest[ContabilitaQueries.CERT_IDX_SCADENZA]
             days, _ = engine.calculate_days_and_status(scadenza)
-            
+
             if days is not None and days <= engine.EXPIRING_THRESHOLD:
                 certs_to_report.append({
                     "id": latest[ContabilitaQueries.CERT_IDX_ID_STRUMENTO],
@@ -418,7 +432,7 @@ class ServiceController(QObject):
                     "scadenza": scadenza,
                     "giorni": days
                 })
-        
+
         if certs_to_report:
             engine.generate_outlook_draft(certs_to_report)
         else:

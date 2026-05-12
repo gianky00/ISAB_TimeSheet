@@ -4,7 +4,6 @@ Modulo specializzato per la visualizzazione e l'esportazione delle scadenze cert
 """
 
 import os
-import subprocess
 import tempfile
 from datetime import UTC, datetime
 from typing import Any
@@ -22,6 +21,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.core.constants import UbicazioneStrumenti
 from src.core.version import __app_name__, __version__
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
@@ -36,11 +36,24 @@ class ScadenzeAnalysisDialog(QDialog):
     """Finestra di analisi scadenze certificati - Design professionale."""
 
     def __init__(
-        self, certificates_data: list[Any], show_excluded: bool = False, parent: QWidget | None = None
+        self,
+        certificates_data: list[Any],
+        show_excluded: bool = False,
+        parent: QWidget | None = None,
+        tree_widget: Any | None = None,
+        engine: Any | None = None,
     ) -> None:
         super().__init__(parent)
-        self.certificates_data = certificates_data
+
+        # Filtriamo gli strumenti ASSENTI immediatamente (Richiesta Utente)
+        self.certificates_data = [
+            c for c in certificates_data
+            if UbicazioneStrumenti.ASSENTE.value not in str(c.get("ubicazione", "")).upper()
+        ]
+
         self.show_excluded = show_excluded
+        self.tree_widget = tree_widget
+        self.engine = engine
 
         # Widget members
         self.header: QFrame
@@ -314,7 +327,7 @@ class ScadenzeAnalysisDialog(QDialog):
                 lbl.setAlignment(align)
             layout.addWidget(lbl)
 
-        add_h("ID-STRUMENTO", 80)
+        add_h("ID COEMI", 80)
         add_h("COSTRUTTORE", 100)
         add_h("MODELLO / TIPO", policy=QSizePolicy.Policy.Expanding)
         add_h("MATRICOLA", 110)
@@ -365,33 +378,214 @@ class ScadenzeAnalysisDialog(QDialog):
         return layout
 
     def _send_email(self) -> None:
-        """Genera e invia il report via Outlook usando l'engine condiviso."""
+        """Genera e invia il report via Outlook con screenshot degli stati critici e PDF allegato."""
         try:
-            from src.core.contabilita.certificati_engine import CertificatiEngine
-            engine = CertificatiEngine()
-            
-            # Prepariamo i dati nel formato atteso dall'engine
-            report_data = []
-            for item in self.certificates_data:
-                report_data.append({
-                    "id": item.get("id_strumento", "N/D"),
-                    "modello": item.get("modello", "N/D"),
-                    "matricola": item.get("matricola", "N/D"),
-                    "scadenza": item.get("scadenza", "N/D"),
-                    "giorni": item.get("days", 0)
-                })
+            # 1. Importazione win32com
+            try:
+                import win32com.client
+            except ImportError as err:
+                raise ImportError("Libreria 'pywin32' non trovata. Contattare l'amministratore.") from err
 
-            if engine.generate_outlook_draft(report_data):
-                QMessageBox.information(
-                    self,
-                    "Email in preparazione",
-                    "La bozza Outlook è stata generata correttamente.",
+            # 2. Cattura immagini dei widget (Scaduti, In Scadenza, N/D)
+            image_paths = self._capture_widgets_as_images()
+            if not image_paths:
+                self._raise_no_images()
+
+            # 3. Inizializzazione Outlook
+            try:
+                outlook = win32com.client.Dispatch("Outlook.Application")
+            except Exception as err:
+                raise RuntimeError("Impossibile connettersi a Outlook. Assicurarsi che sia installato e configurato.") from err
+
+            # Calcolo urgenza per oggetto e CTA
+            scaduti_count = self._count_by_condition(lambda d: d is not None and d < 0)
+            nd_count = self._count_by_condition(lambda d: d is None)
+
+            prefix = "[URGENTE] " if scaduti_count > 0 else ""
+
+            # Costruzione dettagli oggetto
+            details = []
+            if scaduti_count > 0:
+                details.append(f"{scaduti_count} Scaduti")
+            if nd_count > 0:
+                details.append(f"{nd_count} N/D")
+
+            details_str = f" ({', '.join(details)})" if details else ""
+
+            mail = outlook.CreateItem(0)
+            mail.To = "andrea.litrico@coemi.it"
+            mail.CC = "ciro.scaravelli@coemi.it"
+            mail.Subject = f"{prefix}AUDIT CERTIFICATI STRUMENTALI ISAB SUD - {datetime.now().strftime('%d/%m/%Y')}{details_str}"
+
+            # Imposta priorità alta se urgente (Importance: 2 = High, 1 = Normal, 0 = Low)
+            if scaduti_count > 0:
+                mail.Importance = 2
+
+            # 4. Generazione PDF da allegare (Sempre Storico, No ASSENTI)
+            pdf_path = self._generate_audit_pdf()
+
+            # 5. Costruzione HTML Body con immagini embedded
+            cta_html = ""
+            if scaduti_count > 0:
+                cta_html = f"<p style='color: #b91c1c; font-weight: bold; font-size: 16px; margin-top: 20px;'>⚠️ Si prega di provvedere alla programmazione delle tarature per gli strumenti scaduti ({scaduti_count}).</p>"
+
+            last_update = datetime.now().strftime("%d/%m/%Y alle %H:%M")
+            disclaimer_html = f"""
+                <div style='margin-top: 40px; padding: 15px; background-color: #f8fafc; border-left: 4px solid #cbd5e1; color: #64748b; font-size: 12px;'>
+                    <p style='margin: 0;'><b>Disclaimer Sistema</b></p>
+                    <p style='margin: 5px 0 0 0;'>Questa è un'email generata dal sistema Autopilot di SyncroJob v{__version__}. L'ultimo aggiornamento del database è avvenuto il {last_update}.</p>
+                </div>
+            """
+            html_body = f"""
+                <html>
+                <body style='font-family: Segoe UI, Arial, sans-serif;'>
+                    <h2 style='color: #1e3a8a;'>Monitoraggio Scadenze Certificati - Stabilimento ISAB SUD</h2>
+                    <p>Per un’analisi approfondita, consultare il PDF allegato contenente il tracciato storico delle verifiche periodiche.</p>
+                    <p>Vengono evidenziate di seguito le principali anomalie e le scadenze che richiedono attenzione immediata:</p>
+                    {cta_html}
+            """
+
+            # Alleghiamo le immagini e creiamo i tag IMG con CID
+            for i, path in enumerate(image_paths):
+                attachment = mail.Attachments.Add(path)
+                cid = f"img_part_{i}"
+                attachment.PropertyAccessor.SetProperty(
+                    "http://schemas.microsoft.com/mapi/proptag/0x3712001E", cid
                 )
-            else:
-                raise ValueError("Errore durante la generazione della bozza.")
+                html_body += f"<div style='margin-bottom:15px; border: 1px solid #eee;'><img src='cid:{cid}' style='max-width:100%;'></div>"
+
+            # Alleghiamo il PDF se generato correttamente
+            if pdf_path and os.path.exists(pdf_path):
+                mail.Attachments.Add(pdf_path)
+
+            # Aggiungiamo il disclaimer e chiudiamo l'HTML
+            html_body += f"""
+                    {disclaimer_html}
+                </body>
+                </html>
+            """
+
+            mail.HTMLBody = html_body
+            mail.Display()
+
+            QMessageBox.information(
+                self,
+                "Email generata",
+                "La bozza Outlook è stata creata con successo includendo il report PDF.",
+            )
 
         except Exception as e:
             QMessageBox.critical(self, "Errore invio email", f"Impossibile generare il report:\n{e}")
+
+    def _generate_audit_pdf(self) -> str | None:
+        """Genera un file PDF temporaneo con lo storico ed escludendo gli ASSENTI e gli ATTIVI."""
+        if not self.tree_widget or not self.engine:
+            return None
+
+        from src.gui.widgets.contabilita.certificati.pdf_exporter import CertificatiPdfExporter
+
+        # 1. Nascondi temporaneamente gli ASSENTI e gli ATTIVI nel TreeWidget
+        # Salviamo lo stato di visibilità corrente per ripristinarlo
+        visibility_map = {}
+        for i in range(self.tree_widget.topLevelItemCount()):
+            item = self.tree_widget.topLevelItem(i)
+            if not item:
+                continue
+
+            visibility_map[i] = not item.isHidden()
+
+            # Verifica se è ASSENTE o ATTIVO (> 30gg)
+            is_absent = False
+            is_active = False
+            if item.childCount() > 0:
+                child = item.child(0)
+                if child:
+                    child_loc = child.text(self.tree_widget.IDX_UBICAZIONE).upper()
+                    is_absent = UbicazioneStrumenti.ASSENTE.value in child_loc
+
+                    # Verifica se è ATTIVO (oltre THRESHOLD_ATTENTION)
+                    scadenza_str = child.text(self.tree_widget.IDX_SCADENZA)
+                    days, _ = self.engine.calculate_days_and_status(scadenza_str)
+                    if days is not None and days > THRESHOLD_ATTENTION:
+                        is_active = True
+
+            if is_absent or is_active:
+                item.setHidden(True)
+
+        # 2. Genera PDF
+        temp_pdf = os.path.join(
+            tempfile.gettempdir(),
+            f"Audit Certificati Strumentali ISAB SUD del {datetime.now().strftime('%d_%m_%Y')}.pdf"
+        )
+
+        exporter = CertificatiPdfExporter(
+            self.tree_widget,
+            show_excluded=self.show_excluded,
+            include_history=True, # Richiesto sempre lo storico
+            print_exclusions=self.engine._print_exclusions
+        )
+
+        success, _ = exporter.export(temp_pdf)
+
+        # 3. Ripristina visibilità originale
+        for i, was_visible in visibility_map.items():
+            t_item = self.tree_widget.topLevelItem(i)
+            if t_item:
+                t_item.setHidden(not was_visible)
+
+        return temp_pdf if success else None
+
+    def _generate_email_table_html(self) -> str:
+        """Genera la tabella HTML per il corpo dell'email."""
+        rows = ""
+        # Ordiniamo per urgenza per l'email
+        sorted_data = sorted(
+            self.certificates_data, key=lambda x: x["days"] if x["days"] is not None else 9999
+        )
+
+        for item in sorted_data:
+            days = item["days"]
+            # Includiamo solo Scaduti, In Scadenza e N/D
+            if days is not None and days > THRESHOLD_ATTENTION:
+                continue
+
+            if days is None:
+                status_color = COLORS["text_light"]
+                status_text = "N/D"
+            elif days < 0:
+                status_color = COLORS["error_red"]
+                status_text = f"SCADUTO ({abs(days)}gg fa)"
+            elif days <= THRESHOLD_URGENT:
+                status_color = COLORS["warning_orange"]
+                status_text = f"SCADENZA ({days}gg)"
+            else:
+                status_color = COLORS["warning_yellow"]
+                status_text = f"ATTENZIONE ({days}gg)"
+
+            rows += f"""
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 6px;">{item.get('id_strumento', 'N/D')}</td>
+                    <td style="border: 1px solid #ddd; padding: 6px;">{item.get('modello', 'N/D')}</td>
+                    <td style="border: 1px solid #ddd; padding: 6px;">{item.get('matricola', 'N/D')}</td>
+                    <td style="border: 1px solid #ddd; padding: 6px; color: {status_color}; font-weight: bold;">{status_text}</td>
+                </tr>
+            """
+
+        return f"""
+            <table style="border-collapse: collapse; width: 100%; font-family: Segoe UI, Arial, sans-serif; font-size: 12px; margin-top: 20px;">
+                <thead>
+                    <tr style="background-color: #f2f2f2;">
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">ID COEMI</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">MODELLO</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">MATRICOLA</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">STATO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows}
+                </tbody>
+            </table>
+        """
 
     def _raise_no_images(self) -> None:
         """Lancia eccezione per mancanza immagini."""
@@ -399,17 +593,23 @@ class ScadenzeAnalysisDialog(QDialog):
         raise ValueError(msg)
 
     def _capture_widgets_as_images(self) -> list[str]:
-        """Cattura tutti i componenti visuali come immagini PNG temporanee."""
-        widgets: list[QWidget] = [self.header, self.stats_frame]
+        """Cattura solo gli screenshot delle sezioni critiche (Scaduti, In Scadenza, N/D)."""
+        widgets: list[QWidget] = []
 
         layout = self.content_widget.layout()
         if layout:
             for i in range(layout.count()):
                 item = layout.itemAt(i)
                 if item and (w := item.widget()):
-                    widgets.append(w)
+                    # Cerchiamo i widget che contengono i titoli richiesti
+                    # Nota: In _create_section il titolo viene impostato in un QLabel
+                    text = ""
+                    title_label = w.findChild(QLabel)
+                    if title_label:
+                        text = title_label.text().upper()
 
-        widgets.append(self.footer)
+                    if "SCADUTI" in text or "IN SCADENZA" in text or "DATA NON DISPONIBILE" in text:
+                        widgets.append(w)
 
         paths = []
         temp_dir = tempfile.gettempdir()
@@ -417,39 +617,7 @@ class ScadenzeAnalysisDialog(QDialog):
             w.adjustSize()
             px = w.grab()
             if not px.isNull():
-                p = os.path.join(temp_dir, f"syncro_report_part_{i}.png")
+                p = os.path.join(temp_dir, f"syncro_audit_part_{i}.png")
                 if px.save(p, "PNG"):
                     paths.append(p)
         return paths
-
-    def _execute_outlook_powershell(self, images: list[str]) -> None:
-        """Esegue lo script PowerShell per generare l'email con immagini embedded."""
-        img_list = "@('" + "','".join(p.replace("\\", "\\\\") for p in images) + "')"
-
-        ps = f"""
-    $images = {img_list}
-    try {{
-      $o = New-Object -ComObject Outlook.Application
-      $m = $o.CreateItem(0)
-      $m.Subject = "Report Analisi Scadenze Certificati - $(Get-Date -Format 'dd/MM/yyyy')"
-      $html = "<html><body><h3>Report Scadenze Certificati Campione</h3>"
-      $idx = 0
-      foreach ($img in $images) {{
-        $att = $m.Attachments.Add($img)
-        $att.PropertyAccessor.SetProperty("http://schemas.microsoft.com/mapi/proptag/0x3712001E", "img_$idx")
-        $html += "<div style='margin-bottom:10px;'><img src='cid:img_$idx' style='max-width:100%;'></div>"
-        $idx++
-      }}
-      $html += "<p style='font-size:10px;color:#666;'>Generato da SyncroJob v{__version__}</p></body></html>"
-      $m.HTMLBody = $html
-      $m.Display()
-    }} catch {{ Start-Process "explorer.exe" (Split-Path $images[0]) }}
-    """
-
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ps1", delete=False, encoding="utf-8") as f:
-            f.write(ps)
-            ps_path = f.name
-
-        subprocess.Popen(
-            ["powershell", "-ExecutionPolicy", "Bypass", "-File", ps_path], creationflags=0x08000000
-        )

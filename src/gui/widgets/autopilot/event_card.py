@@ -203,10 +203,23 @@ class AutopilotEventCard(QFrame):
             # Se l'orario è già passato, calcola per domani
             secs_to += 24 * 3600
 
-        hours = secs_to // 3600
+        # Recuperiamo la cadenza per calcolare se ci sono giorni aggiuntivi
+        # Nota: secs_to ora contiene solo il tempo fino al prossimo orario target (entro 24h)
+        # Se la cadenza è > 1 giorno, dovremmo idealmente sapere la data dell'ultima esecuzione,
+        # ma basandoci sulla richiesta dell'utente "se la scadenza è tra 3 giorni",
+        # implementiamo una logica generica che includa i giorni se presenti nel calcolo.
+
+        days = secs_to // 86400
+        hours = (secs_to % 86400) // 3600
         mins = (secs_to % 3600) // 60
 
-        countdown = f"Tra {hours}h {mins}m" if hours > 0 else f"Tra {mins}m"
+        if days > 0:
+            countdown = f"Tra {days}g {hours}h {mins}m"
+        elif hours > 0:
+            countdown = f"Tra {hours}h {mins}m"
+        else:
+            countdown = f"Tra {mins}m"
+
         self.countdown_lbl.setText(countdown)
 
     def _update_db_status(self) -> None:

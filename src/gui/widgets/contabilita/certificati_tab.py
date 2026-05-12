@@ -617,8 +617,8 @@ class CertificatiCampioneTab(QWidget):
         else:
             QMessageBox.warning(self, "Non trovato", f"Impossibile trovare il certificato '{cert_number}'")
 
-    def _run_analysis(self) -> None:
-        """Avvia l'algoritmo di analisi predittiva delle scadenze."""
+    def _collect_analysis_data(self) -> list[dict[str, Any]]:
+        """Raccoglie i dati degli strumenti per l'analisi, escludendo gli item non validi."""
         certs_data = []
         for i in range(self.tree.topLevelItemCount()):
             parent = self.tree.topLevelItem(i)
@@ -627,18 +627,17 @@ class CertificatiCampioneTab(QWidget):
             meta = self.engine.parse_parent_label(parent.text(0))
 
             # Se il filtro "Mostra esclusi" è disattivato, saltiamo gli esclusi
-            is_excluded = meta["matricola"] in self.engine._exclusions
+            is_excluded = meta.get("matricola", "") in self.engine._exclusions
             if is_excluded and not self._show_excluded:
                 continue
 
             user_data = parent.data(0, Qt.ItemDataRole.UserRole)
-
-            # Recuperiamo i dati reali dalle colonne del primo figlio
-            id_coemi = ""
-            matricola = ""
-            costruttore = meta["costruttore"]
-            modello = meta["modello"]
-            range_val = meta["range"]
+            id_coemi = meta.get("id_coemi", "")
+            matricola = meta.get("matricola", "")
+            costruttore = meta.get("costruttore", "N/D")
+            modello = meta.get("modello", "N/D")
+            range_val = meta.get("range", "")
+            ubicazione = "ASSENTE"
 
             if parent.childCount() > 0:
                 child = parent.child(0)
@@ -648,6 +647,7 @@ class CertificatiCampioneTab(QWidget):
                     costruttore = child.text(self.tree.IDX_COSTRUTTORE)
                     modello = child.text(self.tree.IDX_MODELLO)
                     range_val = child.text(self.tree.IDX_RANGE)
+                    ubicazione = child.text(self.tree.IDX_UBICAZIONE)
 
             certs_data.append(
                 {
@@ -655,14 +655,27 @@ class CertificatiCampioneTab(QWidget):
                     "costruttore": costruttore,
                     "modello": modello,
                     "range": range_val,
-                    "id_strumento": id_coemi, # Manteniamo id_strumento nel dizionario per compatibilità con il dialogo
+                    "id_strumento": id_coemi,
+                    "ubicazione": ubicazione,
                     "days": user_data.get("days") if user_data else None,
                 }
             )
+        return certs_data
 
+    def _run_analysis(self) -> None:
+        """Avvia l'algoritmo di analisi predittiva delle scadenze."""
+        certs_data = self._collect_analysis_data()
         certs_data.sort(key=lambda x: x["days"] if x["days"] is not None else 9999)
-        ScadenzeAnalysisDialog(certs_data, self._show_excluded, self).exec()
+        ScadenzeAnalysisDialog(certs_data, self._show_excluded, self, self.tree, self.engine).exec()
 
+    def _run_analysis_and_send_email(self) -> None:
+        """Esegue l'analisi e invia direttamente l'email (utilizzato dopo aggiornamento DB)."""
+        certs_data = self._collect_analysis_data()
+        certs_data.sort(key=lambda x: x["days"] if x["days"] is not None else 9999)
+
+        # Creiamo il dialogo ma invece di mostrarlo invochiamo direttamente l'email
+        dialog = ScadenzeAnalysisDialog(certs_data, self._show_excluded, self, self.tree, self.engine)
+        dialog._send_email()
     def _export_pdf(self) -> None:
         """Esporta la lista dei certificati in un PDF formattato professionalmente."""
         from src.gui.widgets.contabilita.certificati.pdf_exporter import (
@@ -679,30 +692,9 @@ class CertificatiCampioneTab(QWidget):
         if not file_path:
             return
 
-        certs_data = []
-        for i in range(self.tree.topLevelItemCount()):
-            parent = self.tree.topLevelItem(i)
-            if not parent:
-                continue
-            meta = self.engine.parse_parent_label(parent.text(0))
-            user_data = parent.data(0, Qt.ItemDataRole.UserRole)
-
-            id_coemi = ""
-            if parent.childCount() > 0 and (child := parent.child(0)):
-                id_coemi = child.text(self.tree.IDX_ID_STRUMENTO)
-
-            certs_data.append(
-                {
-                    "matricola": meta["matricola"],
-                    "costruttore": meta["costruttore"],
-                    "modello": meta["modello"],
-                    "id_strumento": id_coemi,
-                    "days": user_data.get("days") if user_data else None,
-                }
-            )
-
         exporter = CertificatiPdfExporter(
-            certs_data,
+            self.tree,
+            show_excluded=self._show_excluded,
             include_history=self._include_history,
             print_exclusions=self.engine._print_exclusions,
         )
@@ -719,3 +711,4 @@ class CertificatiCampioneTab(QWidget):
             NotificationManager.instance().add_notification(
                 title="Errore esportazione", message=message, level="error", show_toast=True
             )
+

@@ -13,6 +13,7 @@ from typing import Any, Final, TypedDict
 from src.core import config_manager
 from src.core.constants import Icons, StatoCertificatoLabel, UbicazioneStrumenti
 from src.core.paths import DB_DIR
+from src.core.version import __version__
 
 
 class CertificatiStats(TypedDict):
@@ -42,7 +43,7 @@ class CertificatiEngine:
     EXPIRING_THRESHOLD: Final[int] = 30
     FAULTY_MARKER: Final[int] = -9999
 
-    # Indici colonne dati certificati (Allineati a ContabilitaQueries)
+    # Indici colonne dati certificati (Allineati al TreeWidget della UI per le statistiche PDF)
     IDX_ID_COEMI: Final[int] = 0
     IDX_CERTIFICATO: Final[int] = 1
     IDX_MODELLO: Final[int] = 2
@@ -51,7 +52,7 @@ class CertificatiEngine:
     IDX_RANGE: Final[int] = 5
     IDX_EMISSIONE: Final[int] = 7
     IDX_SCADENZA: Final[int] = 8
-    IDX_UBICAZIONE: Final[int] = 11
+    IDX_UBICAZIONE: Final[int] = 10
 
     @property
     def exclusions_file(self) -> Path:
@@ -188,7 +189,7 @@ class CertificatiEngine:
     def _process_status_stats(
         cls, stats: dict[str, Any], days: int | None, scadenza_str: str, expiration_map: dict[datetime, int]
     ) -> None:
-        """Aggiorna i conteggiàdi stato e mappa le scadenze temporali."""
+        """Aggiorna i conteggi di stato e mappa le scadenze temporali."""
         if days == cls.FAULTY_MARKER:
             stats["guasti"] += 1
         elif days is None:
@@ -223,7 +224,7 @@ class CertificatiEngine:
 
     @classmethod
     def _process_location_stats(cls, stats: dict[str, Any], record: Any) -> None:
-        """Aggiorna i conteggiàbasati sull'ubicazione fisica degli strumenti."""
+        """Aggiorna i conteggi basati sull'ubicazione fisica degli strumenti."""
         ubicazione = str(record[cls.IDX_UBICAZIONE]).upper() if len(record) > cls.IDX_UBICAZIONE else ""
         if UbicazioneStrumenti.UFFICIO_STRU.value in ubicazione:
             stats["ufficio_stru"] += 1
@@ -270,26 +271,31 @@ class CertificatiEngine:
             }
 
     def generate_outlook_draft(self, certificates_to_report: list[dict[str, Any]]) -> bool:
-        """
-        Genera una bozza Outlook professionale con la tabella delle scadenze.
-        
-        Args:
-            certificates_to_report: Lista di dizionari con i dati dei certificati (id, modello, matricola, scadenza, giorni).
-        """
+        """Genera una bozza Outlook professionale con la tabella delle scadenze."""
         if not certificates_to_report:
             return False
 
-        from datetime import datetime
-        from src.core.version import __version__
-        
         # Ordinamento per urgenza (scaduti prima)
-        certificates_to_report.sort(key=lambda x: x["giorni"])
-        
+        # Gestiamo i valori None mettendoli in fondo (priorità bassa)
+        certificates_to_report.sort(key=lambda x: x["giorni"] if x["giorni"] is not None else 9999)
+
         rows = ""
         for c in certificates_to_report:
+            days = c.get("giorni")
             # Soglie colori coerenti con CertificatiEngine
-            color = "#C62828" if c["giorni"] < 0 else "#EF6C00" if c["giorni"] <= self.WARNING_THRESHOLD else "#FBC02D"
-            status = f"SCADUTO ({abs(c['giorni'])} gg)" if c["giorni"] < 0 else f"Scade tra {c['giorni']} gg"
+            if days is None:
+                color = "#757575" # Grigio per N/D
+                status = "DATA NON DISPONIBILE"
+            elif days < 0:
+                color = "#C62828"
+                status = f"SCADUTO ({abs(days)} gg)"
+            elif days <= self.WARNING_THRESHOLD:
+                color = "#EF6C00"
+                status = f"Scade tra {days} gg"
+            else:
+                color = "#FBC02D"
+                status = f"Scade tra {days} gg"
+
             rows += f"""
                 <tr>
                     <td style='border: 1px solid #ddd; padding: 8px;'>{c['id']}</td>
@@ -335,9 +341,10 @@ class CertificatiEngine:
             mail.Subject = f"REPORT SCADENZE CERTIFICATI CAMPIONE - {datetime.now().strftime('%d/%m/%Y')}"
             mail.HTMLBody = html_body
             mail.Display()
-            return True
         except Exception:
             return False
+        else:
+            return True
 
     @staticmethod
     def format_errore_max(val: float | str | None) -> str:
@@ -379,13 +386,46 @@ class CertificatiEngine:
     def parse_parent_label(text: str) -> dict[str, str]:
         """Estrae i metadati dalla stringa del nodo padre del TreeWidget."""
         parts = text.split("  •  ")
-        # Formato: ID  •  Costruttore  •  Modello  •  Matricola  •  Stato
-        return {
-            "id_coemi": parts[0].strip() if len(parts) > 0 else "",
-            "costruttore": parts[1].strip() if len(parts) > 1 else "N/D",
-            "modello": parts[2].strip() if len(parts) > 2 else "N/D",
-            "matricola": parts[3].strip() if len(parts) > 3 else "",
+        # Formato base previsto: ID  •  Costruttore  •  Modello  •  Matricola  •  Stato
+        # Se è un manometro digitale, potrebbe esserci un range: ID  •  Costruttore  •  Modello  •  Range  •  Matricola  •  Stato
+
+        res = {
+            "id_coemi": "",
+            "costruttore": "N/D",
+            "modello": "N/D",
+            "range": "",
+            "matricola": "",
         }
+
+        if not parts:
+            return res
+
+        # Rimuoviamo eventuali marker [ESCLUSO] o [NON STAMPARE] dall'ultima parte
+        parts = [p.split("  [")[0].strip() for p in parts]
+
+        min_standard_parts = 5
+        min_extended_parts = 6
+        min_reduced_parts = 4
+
+        if len(parts) >= min_standard_parts:
+            # Caso standard o con range
+            res["id_coemi"] = parts[0]
+            res["costruttore"] = parts[1]
+            res["modello"] = parts[2]
+
+            # Se abbiamo 6 parti, la quarta (indice 3) è il range
+            if len(parts) >= min_extended_parts:
+                res["range"] = parts[3]
+                res["matricola"] = parts[4]
+            else:
+                res["matricola"] = parts[3]
+        elif len(parts) == min_reduced_parts:
+            # ID mancante? Costruttore • Modello • Matricola • Stato
+            res["costruttore"] = parts[0]
+            res["modello"] = parts[1]
+            res["matricola"] = parts[2]
+
+        return res
 
     def _parse_filename(self, filename: str) -> dict[str, str]:
         """Estrae dati dal nome file del certificato."""
