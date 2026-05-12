@@ -123,9 +123,11 @@ class ScaricoPDLPanel(BaseBotPanel):
         h_p = QHBoxLayout()
         h_p.setSpacing(10)
         self.check_stampa = StandardCheckBox("Attiva Stampa")
+        self.check_stampa.stateChanged.connect(self._save_data)
         self.combo_stampanti = FilterComboBox()
         self.combo_stampanti.addItems(get_installed_printers())
         self.combo_stampanti.setStyleSheet(COMBOBOX_STYLE)
+        self.combo_stampanti.currentTextChanged.connect(self._save_data)
         h_p.addWidget(self.check_stampa)
         h_p.addWidget(self.combo_stampanti)
         v_print.addLayout(h_p)
@@ -143,6 +145,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.edit_dest = StandardInput()
         self.edit_dest.setPlaceholderText("Seleziona cartella...")
         self.edit_dest.setStyleSheet(LINEEDIT_STYLE)
+        self.edit_dest.textChanged.connect(self._save_data)
 
         self.btn_browse = IconButton()
         self.btn_browse.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_dark"]))
@@ -197,6 +200,7 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         self.data_table = EditableDataTable(cols)
         self.data_table.data_changed.connect(self._update_status_list)
+        self.data_table.data_changed.connect(self._save_data)
 
         v_status = QVBoxLayout()
         v_status.setContentsMargins(0, 56, 0, 0)
@@ -208,6 +212,23 @@ class ScaricoPDLPanel(BaseBotPanel):
         content_lay.addWidget(self.data_table)
         content_lay.addLayout(v_status)
         self.content_layout.addLayout(content_lay)
+
+    def _save_data(self) -> None:
+        """Salva i dati e i parametri correnti nella configurazione persistente."""
+        if getattr(self, "_is_loading", False):
+            return
+        if not hasattr(self, "data_table") or not hasattr(self, "check_stampa"):
+            return
+
+        config_manager.set_config_value("last_pdl_data", self.data_table.get_data())
+        config_manager.set_config_value(
+            "last_pdl_params",
+            {
+                "stampa": self.check_stampa.isChecked(),
+                "stampante": self.combo_stampanti.currentText(),
+                "destinazione": self.edit_dest.text(),
+            },
+        )
 
     def _update_status_list(self, force: bool = False) -> None:
         """Sincronizza il contatore visivo dello stato con il numero di righe della tabella."""
@@ -247,20 +268,24 @@ class ScaricoPDLPanel(BaseBotPanel):
             logger.debug("Salto caricamento dati salvati: tabella già popolata.")
             return
 
-        config = config_manager.load_config()
-        data = config.get("last_pdl_data", [])
-        if data:
-            self.data_table.set_data(data)
+        self._is_loading = True
+        try:
+            config = config_manager.load_config()
+            data = config.get("last_pdl_data", [])
+            if data:
+                self.data_table.set_data(data)
 
-        p_cfg = config.get("last_pdl_params", {})
-        self.check_stampa.setChecked(p_cfg.get("stampa", False))
-        if p_cfg.get("stampante"):
-            self.combo_stampanti.setCurrentText(p_cfg["stampante"])
-        dest_path = p_cfg.get("destinazione")
-        if not dest_path or not Path(dest_path).exists():
-            dest_path = str(Path.home() / "Downloads")
-        self.edit_dest.setText(dest_path)
-        self._update_status_list()
+            p_cfg = config.get("last_pdl_params", {})
+            self.check_stampa.setChecked(p_cfg.get("stampa", False))
+            if p_cfg.get("stampante"):
+                self.combo_stampanti.setCurrentText(p_cfg["stampante"])
+            dest_path = p_cfg.get("destinazione")
+            if not dest_path or not Path(dest_path).exists():
+                dest_path = str(Path.home() / "Downloads")
+            self.edit_dest.setText(dest_path)
+            self._update_status_list()
+        finally:
+            self._is_loading = False
 
     def _get_bot_data(self) -> list[dict[str, Any]] | None:
         """Prepara e salva i dati da passare al bot per l'esecuzione."""

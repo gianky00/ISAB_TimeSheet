@@ -218,12 +218,15 @@ def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:
 
     # Estrazione parametri per configurazione standardizzata
     from src.bots.base.selenium_bot_config import SeleniumBotConfig
+    from src.core.constants import Timeouts
+
+    config_raw = load_config()
 
     config = SeleniumBotConfig(
         username=kwargs.get("username", ""),
         password=kwargs.get("password", ""),
-        headless=kwargs.get("headless", False),
-        timeout=kwargs.get("timeout", 30),
+        headless=kwargs.get("headless", config_raw.get("browser_headless", False)),
+        timeout=kwargs.get("timeout", config_raw.get("browser_timeout", Timeouts.DEFAULT)),
         download_path=kwargs.get("download_path", ""),
         company=kwargs.get("company", "ISAB"),
     )

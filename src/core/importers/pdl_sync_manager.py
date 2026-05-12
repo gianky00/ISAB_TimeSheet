@@ -42,7 +42,8 @@ class ProgrammingSyncManager:
 
         file_name = os.path.basename(self.master_path)
         try:
-            self.excel_app = win32com.client.GetActiveObject("Excel.Application")  # type: ignore
+            self.excel_app = win32com.client.GetActiveObject("Excel.Application")
+
             for wb in self.excel_app.Workbooks:
                 if wb.Name.lower() == file_name.lower():
                     self.wb_master = wb

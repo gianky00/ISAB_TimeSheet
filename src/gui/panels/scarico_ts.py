@@ -183,22 +183,26 @@ class ScaricaTSPanel(BaseBotPanel):
 
     def _load_saved_data(self) -> None:
         """Carica i dati salvati."""
-        config = config_manager.load_config()
-        self.refresh_fornitori()
-        self.params_widget.set_societa(config.get("last_scarico_ts_societa", "ISAB"))
-        self.params_widget.set_fornitore(config.get("last_scarico_ts_fornitore", ""))
-        self.params_widget.set_dest_path(config.get("path_scarico_ts", ""))
-        self.elabora_ts_check.setChecked(config.get("last_scarico_ts_elabora", True))
+        self._is_loading = True
+        try:
+            config = config_manager.load_config()
+            self.refresh_fornitori()
+            self.params_widget.set_societa(config.get("last_scarico_ts_societa", "ISAB"))
+            self.params_widget.set_fornitore(config.get("last_scarico_ts_fornitore", ""))
+            self.params_widget.set_dest_path(config.get("path_scarico_ts", ""))
+            self.elabora_ts_check.setChecked(config.get("last_scarico_ts_elabora", True))
 
-        saved_data = config.get("last_scarico_ts_data", [])
-        if saved_data:
-            self.data_table.set_data(saved_data)
+            saved_data = config.get("last_scarico_ts_data", [])
+            if saved_data:
+                self.data_table.set_data(saved_data)
 
-        self._update_status_list()
+            self._update_status_list()
+        finally:
+            self._is_loading = False
 
     def _save_data(self) -> None:
         """Salva i dati correnti."""
-        if not hasattr(self, "params_widget"):
+        if getattr(self, "_is_loading", False) or not hasattr(self, "params_widget"):
             return
         config_manager.set_config_value("last_scarico_ts_data", self.data_table.get_data())
         config_manager.set_config_value("last_scarico_ts_societa", self.params_widget.get_societa())

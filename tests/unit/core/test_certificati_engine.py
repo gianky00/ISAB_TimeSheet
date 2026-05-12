@@ -1,6 +1,8 @@
 
 import pytest
+
 from src.core.contabilita.certificati_engine import CertificatiEngine
+
 
 class TestCertificatiEngine:
     @pytest.fixture
@@ -29,7 +31,7 @@ class TestCertificatiEngine:
         label = "ID789  •  C  •  M  •  MatricolaK  •  Attivo  [ESCLUSO]"
         res = engine.parse_parent_label(label)
         assert res["matricola"] == "MatricolaK"
-        
+
         label_print = "ID789  •  C  •  M  •  MatricolaK  •  Attivo  [NON STAMPARE]"
         res_print = engine.parse_parent_label(label_print)
         assert res_print["matricola"] == "MatricolaK"

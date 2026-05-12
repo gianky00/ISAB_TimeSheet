@@ -205,12 +205,13 @@ class AutopilotWidget(QWidget):
             item = layout.itemAt(i)
             if item is not None and item.widget():
                 w = item.widget()
-                if hasattr(w, "pulse_anim") and w.pulse_anim:  # type: ignore
-                    with suppress(RuntimeError):
-                        w.pulse_anim.stop()  # type: ignore
-                if hasattr(w, "timer") and w.timer:  # type: ignore
-                    with suppress(RuntimeError):
-                        w.timer.stop()  # type: ignore
+                if w:
+                    if hasattr(w, "pulse_anim") and w.pulse_anim:
+                        with suppress(Exception):
+                            w.pulse_anim.stop()
+                    if hasattr(w, "timer") and w.timer:
+                        with suppress(Exception):
+                            w.timer.stop()
 
     def _animate_gear_button(self) -> None:
         """Esegue un'animazione di scuotimento e scala sull'icona delle impostazioni."""

@@ -99,7 +99,9 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
 
         self.log("   Esportazione Excel...")
         try:
-            with self.page.expect_download(timeout=600000) as download_info:
+            # Usa il doppio del timeout globale per l'esportazione pesante
+            download_timeout_ms = self.config.timeout * 2 * 1000
+            with self.page.expect_download(timeout=download_timeout_ms) as download_info:
                 if self.attivita_page.esporta_excel():
                     download = download_info.value
                     dest = Path(self.download_path) / download.suggested_filename

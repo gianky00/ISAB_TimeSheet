@@ -1,5 +1,37 @@
 ## Unreleased
 
+### Feat
+
+- **autopilot**: automazione certificati campione e unificazione logica Outlook
+
+### Fix
+
+- **certificati**: bugfix autopilot e ottimizzazione workflow email audit
+- **gui**: correct type hints for resizeEvent and paintEvent in ActivityTimeline
+- resolve startup hang due to QObject access violation in background threads
+- **core**: resolve syntax error and ruff warnings in bug_reporter.py
+- **license**: resolve circular import and satisfy ruff
+- **core**: resolve critical circular dependency
+- **deps**: resolve circular import in DettagliOdABot and stabilize bot initialization
+- **startup**: final repairs and structural hardening
+
+### Refactor
+
+- risolte violazioni MyPy e Ruff (standardizzazione tipi DB, logging e UI) e applicati fix automatici Ruff
+- global synchronization, structural hardening, and UI standardization -- [NO-HOOKS]
+- massive structural hardening and UI standardization
+- **quality**: 100% Ruff/MyPy compliance and UI hardening
+- **quality**: project-wide Rank B compliance and final hardening V9.2
+- **quality**: achieve 100% PASS on all quality tools (Ruff, MyPy, Xenon, Bandit) V9.0 Final Compliance
+- **quality**: resolve Ruff/MyPy issues and synchronize codebase standards V9.0
+- **quality**: project-wide hardening and PlaywrightBaseBot decomposition
+
+### Perf
+
+- implement industrial-grade PySide6 optimizations
+
+## v1.45.4 (2026-05-06)
+
 ## v1.45.3 (2026-05-06)
 
 ## v1.45.2 (2026-05-06)

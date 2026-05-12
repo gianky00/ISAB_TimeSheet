@@ -18,6 +18,7 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 
 from src.bots import get_available_bots
 from src.core.database import db_manager
+from src.core.database.backup_manager import DatabaseBackupManager
 from src.core.exceptions import LicenseError, StartupError
 from src.core.license_updater import run_update
 from src.core.license_validator import (
@@ -126,6 +127,11 @@ class AppInitializer:
         step("Inizializzazione Engine SQLite3...", 34)
         try:
             db_manager.init_db()
+
+            # Backup automatico post-inizializzazione (Prevenzione Corruzione)
+            step("Creazione Backup di Sicurezza Database...", 37)
+            DatabaseBackupManager.execute_backup()
+
         except Exception:
             logger.exception("Errore inizializzazione database")
             raise

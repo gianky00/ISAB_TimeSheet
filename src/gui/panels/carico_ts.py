@@ -113,12 +113,18 @@ class CaricoTSPanel(BaseBotPanel):
 
     def _load_saved_data(self) -> None:
         """Carica l'ultima tabella TS salvata nella configurazione."""
-        saved_data = config_manager.load_config().get("last_carico_ts_data", [])
-        if saved_data:
-            self.data_table.set_data(saved_data)
+        self._is_loading = True
+        try:
+            saved_data = config_manager.load_config().get("last_carico_ts_data", [])
+            if saved_data:
+                self.data_table.set_data(saved_data)
+        finally:
+            self._is_loading = False
 
     def _save_data(self) -> None:
         """Salva i dati della tabella nella configurazione globale."""
+        if getattr(self, "_is_loading", False):
+            return
         config_manager.set_config_value("last_carico_ts_data", self.data_table.get_data())
 
     def _clear_table(self) -> None:

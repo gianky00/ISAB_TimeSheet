@@ -71,8 +71,8 @@ class GeneralPage(QWidget):
         timeout_layout.addWidget(timeout_label)
 
         self.timeout_spin = StandardSpinBox()
-        self.timeout_spin.setRange(10, 120)
-        self.timeout_spin.setValue(30)
+        self.timeout_spin.setRange(10, 600)
+        self.timeout_spin.setValue(300)
         self.timeout_spin.setMinimumHeight(40)
         self.timeout_spin.setMinimumWidth(100)
         style_input(self.timeout_spin)
@@ -92,7 +92,7 @@ class GeneralPage(QWidget):
         self.engine_combo.setCurrentIndex(index)
 
         self.headless_check.setChecked(bool(config.get("browser_headless", False)))
-        self.timeout_spin.setValue(int(config.get("browser_timeout", 30)))
+        self.timeout_spin.setValue(int(config.get("browser_timeout", 300)))
 
     def save_to_config(self, config: dict[str, Any]) -> None:
         """Salva i valori nel dizionario di configurazione."""

@@ -61,6 +61,7 @@ class LoggingConfig:
     def get_bot_log_path(self, bot_name: str, trace_id: str | None = None) -> Path:
         """
         Restituisce path per log specifico bot.
+        Organizza i log in sottocartelle per bot_name.
 
         Args:
           bot_name: Nome del bot (es: "scarico_ts")
@@ -69,9 +70,10 @@ class LoggingConfig:
         Returns:
           Path al file log del bot
         """
-        filename = f"{bot_name}_{trace_id}.json" if trace_id else f"{bot_name}.json"
+        bot_subdir = self.bots_dir / bot_name
+        filename = f"{trace_id}.json" if trace_id else f"{bot_name}.json"
 
-        return self.bots_dir / filename
+        return bot_subdir / filename
 
 
 # Istanza singleton

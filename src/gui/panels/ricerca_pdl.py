@@ -139,13 +139,19 @@ class RicercaPDLPanel(BaseBotPanel):
 
     def _load_saved_data(self) -> None:
         """Carica le ultime impostazioni di ricerca salvate."""
-        config = config_manager.load_config()
-        self.exclude_closed_check.setChecked(config.get("pdl_search_exclude_closed", True))
-        saved_site = config.get("pdl_search_site", "Seleziona tutto")
-        self.site_combo.setCurrentText(saved_site)
+        self._is_loading = True
+        try:
+            config = config_manager.load_config()
+            self.exclude_closed_check.setChecked(config.get("pdl_search_exclude_closed", True))
+            saved_site = config.get("pdl_search_site", "Seleziona tutto")
+            self.site_combo.setCurrentText(saved_site)
+        finally:
+            self._is_loading = False
 
     def _save_data(self) -> None:
         """Salva i filtri di ricerca correnti nella configurazione."""
+        if getattr(self, "_is_loading", False):
+            return
         config_manager.set_config_value("pdl_search_exclude_closed", self.exclude_closed_check.isChecked())
         config_manager.set_config_value("pdl_search_site", self.site_combo.currentText())
 

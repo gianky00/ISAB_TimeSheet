@@ -335,7 +335,7 @@ class CertificatiEngine:
         """
 
         try:
-            import win32com.client
+            import win32com.client  # noqa: PLC0415
             outlook = win32com.client.Dispatch("Outlook.Application")
             mail = outlook.CreateItem(0)
             mail.Subject = f"REPORT SCADENZE CERTIFICATI CAMPIONE - {datetime.now().strftime('%d/%m/%Y')}"

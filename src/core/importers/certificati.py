@@ -1,3 +1,4 @@
+import logging
 import warnings
 from collections.abc import Callable
 from pathlib import Path
@@ -66,23 +67,22 @@ class CertificatiImporter(BaseImporter):
             return False, f"File non trovato: {file_path}", []
 
         try:
-            import logging
             importer_logger = logging.getLogger(__name__)
             importer_logger.info(f"Avvio lettura Excel certificati: {file_path}")
-            
+
             pd_obj = cls._get_pd()
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 xls = pd_obj.ExcelFile(path)
                 sheet_name = cls._find_certificati_sheet(xls)
                 importer_logger.info(f"Foglio rilevato: {sheet_name}")
-                
+
                 if not sheet_name:
                     return False, "Nessun foglio trovato.", []
 
                 df, header_idx = cls._read_certificati_data(path, sheet_name)
                 importer_logger.info(f"Dati letti. Header rilevato a riga: {header_idx}, Righe trovate: {len(df)}")
-                
+
                 if df.empty:
                     return False, "Foglio vuoto.", []
 
@@ -116,7 +116,7 @@ class CertificatiImporter(BaseImporter):
         """Rileva l'indice della riga di intestazione basandosi sulle parole chiave."""
         header_row_idx = -1
         max_matches = 0
-        
+
         # Parole chiave critiche per l'intestazione
         keywords = {"ID-COEMI", "ID COEMI", "ID-STRUMENTO", "ID STRUMENTO", "MATRICOLA", "CERTIFICATO", "SCADENZA"}
 
@@ -143,7 +143,8 @@ class CertificatiImporter(BaseImporter):
 
         # 1. Mapping e Validazione Colonne
         rename_map = cls._build_certificati_rename_map(df.columns.tolist())
-        if not rename_map or len(rename_map) < 3: # Almeno ID, Matricola e Scadenza
+        min_required_cols = 3
+        if not rename_map or len(rename_map) < min_required_cols: # Almeno ID, Matricola e Scadenza
             found_cols = ", ".join(list(df.columns)[:8]) + "..."
             return (
                 False,
@@ -156,14 +157,17 @@ class CertificatiImporter(BaseImporter):
         # 2. Schema, 3. Formatting, 4. Cleanup
         df = cls._normalize_certificati_schema(df)
         df = cls._apply_certificati_formatting(df)
-        
+
         # Riempimento e normalizzazione testo
         df = df.fillna("").astype(str).apply(lambda x: x.str.strip())
 
         # 5. Rimuovi righe vuote in modo robusto (gestione eventuale duplicazione colonne)
-        def get_col_safe(name: str) -> pd.Series:
+        def get_col_safe(name: str) -> Any:
             col = df[name]
-            return col.iloc[:, 0] if isinstance(col, pd.DataFrame) else col
+            # Gestione caso DataFrame se ci sono colonne duplicate nel file Excel
+            if hasattr(col, "iloc") and not hasattr(col, "name"):
+                return col.iloc[:, 0]  # type: ignore[call-overload]
+            return col
 
         mask_empty = (get_col_safe('id_coemi') == "") & (get_col_safe('matricola') == "")
         df = df[~mask_empty]
@@ -187,7 +191,7 @@ class CertificatiImporter(BaseImporter):
         """Costruisce la mappa di rinomina colonne basata sul mapping definito."""
         rename_map = {}
         used_db_cols = set()
-        
+
         # Priorità al matching ID-COEMI
         for col in columns:
             col_clean = col.strip().upper()
@@ -199,15 +203,18 @@ class CertificatiImporter(BaseImporter):
                     rename_map[col] = db_col
                     used_db_cols.add(db_col)
                     break
-                    
+
         # Secondo giro per matching parziale (fallback)
+        min_label_len = 3
         for col in columns:
-            if col in rename_map: continue
+            if col in rename_map:
+                continue
             col_clean = col.strip().upper()
             for schema_col, db_col in cls.CERTIFICATI_CAMPIONE_MAPPING.items():
-                if db_col in used_db_cols: continue
+                if db_col in used_db_cols:
+                    continue
                 s_up = schema_col.upper()
-                if s_up in col_clean and len(s_up) > 3:
+                if s_up in col_clean and len(s_up) > min_label_len:
                     rename_map[col] = db_col
                     used_db_cols.add(db_col)
                     break

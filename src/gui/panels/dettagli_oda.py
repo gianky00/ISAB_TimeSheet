@@ -209,35 +209,39 @@ class DettagliOdAPanel(BaseBotPanel):
 
     def _load_saved_data(self) -> None:
         """Ripristina lo stato del pannello (date, fornitori, tabella) dall'ultimo salvataggio."""
-        config = config_manager.load_config()
-        self.refresh_fornitori()
-        self.params_widget.set_societa(config.get("last_oda_societa", "ISAB"))
-        self.params_widget.set_fornitore(config.get("last_oda_fornitore", ""))
-        current_year = datetime.now(UTC).year
-        self.params_widget.set_dates(
-            config.get("last_oda_date_da", f"01.01.{current_year}"),
-            config.get("last_oda_date_a", QDate.currentDate().toString("dd.MM.yyyy")),
-        )
-        self.params_widget.set_dest_path(config.get("path_dettagli_oda", ""))
+        self._is_loading = True
+        try:
+            config = config_manager.load_config()
+            self.refresh_fornitori()
+            self.params_widget.set_societa(config.get("last_oda_societa", "ISAB"))
+            self.params_widget.set_fornitore(config.get("last_oda_fornitore", ""))
+            current_year = datetime.now(UTC).year
+            self.params_widget.set_dates(
+                config.get("last_oda_date_da", f"01.01.{current_year}"),
+                config.get("last_oda_date_a", QDate.currentDate().toString("dd.MM.yyyy")),
+            )
+            self.params_widget.set_dest_path(config.get("path_dettagli_oda", ""))
 
-        saved_data = config.get("last_oda_data", [])
-        if saved_data:
-            # Forza la colonna Numero Contratto a vuoto all'avvio per policy Enterprise
-            for row_dict in saved_data:
-                # Supporta sia "Numero Contratto" che la chiave normalizzata "numero_contratto"
-                for k in list(row_dict.keys()):
-                    if k.lower().replace(" ", "_") == "numero_contratto":
-                        row_dict[k] = ""
-            self.data_table.set_data(saved_data)
-        else:
-            # Se non ci sono dati salvati, svuota esplicitamente per evitare default indesiderati
-            self.data_table.clear()
+            saved_data = config.get("last_oda_data", [])
+            if saved_data:
+                # Forza la colonna Numero Contratto a vuoto all'avvio per policy Enterprise
+                for row_dict in saved_data:
+                    # Supporta sia "Numero Contratto" che la chiave normalizzata "numero_contratto"
+                    for k in list(row_dict.keys()):
+                        if k.lower().replace(" ", "_") == "numero_contratto":
+                            row_dict[k] = ""
+                self.data_table.set_data(saved_data)
+            else:
+                # Se non ci sono dati salvati, svuota esplicitamente per evitare default indesiderati
+                self.data_table.clear()
 
-        self._update_status_list()
+            self._update_status_list()
+        finally:
+            self._is_loading = False
 
     def _save_data(self) -> None:
         """Persiste i parametri attuali nella configurazione globale (Batch optimization)."""
-        if not hasattr(self, "params_widget"):
+        if getattr(self, "_is_loading", False) or not hasattr(self, "params_widget"):
             return
         date_da, date_a = self.params_widget.get_dates()
 

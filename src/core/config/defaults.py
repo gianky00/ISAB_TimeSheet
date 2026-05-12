@@ -14,7 +14,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "default_contract": "",
     "automation_engine": "selenium",  # Motore di automazione (selenium o playwright)
     "browser_headless": False,
-    "browser_timeout": 30,
+    "browser_timeout": 300,
     "download_path": "",
     "fornitori": [],
     "last_ts_data": [],

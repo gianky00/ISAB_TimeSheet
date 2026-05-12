@@ -64,6 +64,7 @@ class BaseBotPanel(QWidget):
 
         self.worker: BotWorker | None = None
         self.start_time: datetime | None = None
+        self._is_loading: bool = False
 
         # Componenti Core (Composition)
         self.controls = BotControlComponent()
