@@ -1,3 +1,4 @@
+# ruff: noqa: PLR2004, TRY300, TRY301, C901, PLR0911, PLR0912, PLR0915, PLC0415
 """
 SyncroJob - License Updater
 Modulo dedicato all'aggiornamento e alla sincronizzazione dei file di licenza dal repository GitHub.
@@ -5,13 +6,17 @@ Gestisce i periodi di grazia offline tramite token cifrati e garantisce la valid
 """
 
 import json
+import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import requests
 from cryptography.fernet import Fernet
 
+from src.core.exceptions import LicenseError
 from src.core.logging import get_logger
+from src.core.notification_manager import NotificationManager
+from src.core.paths import get_data_path
 from src.core.secrets_manager import SecretsManager
 
 from . import license_validator, time_manager
@@ -36,7 +41,6 @@ def get_license_dir() -> Path:
     Returns:
       Path: Oggetto Path della directory licenza.
     """
-    from src.core.paths import get_data_path  # noqa: PLC0415
 
     base_dir = Path(get_data_path())
     return base_dir / "Licenza"
@@ -87,7 +91,7 @@ def check_grace_period() -> bool:
     """
     token_path = _get_validity_token_path()
     if not token_path.exists():
-        raise Exception(  # noqa: TRY002, TRY003
+        raise LicenseError(
             "Nessuna validazione online precedente.\nConnessione internet richiesta per il primo avvio."
         )
 
@@ -102,17 +106,19 @@ def check_grace_period() -> bool:
         last_online_utc = last_online.astimezone(UTC)
 
         if now_utc < last_online_utc - timedelta(minutes=5):
-            raise Exception("Rilevata incoerenza orologio di sistema.")  # noqa: TRY002, TRY003, TRY301
+            raise LicenseError("Rilevata incoerenza orologio di sistema.")
 
         days_offline = (now_utc - last_online_utc).days
-        if days_offline >= 3:  # noqa: PLR2004
-            raise Exception("Periodo di grazia offline (3 giorni) SCADUTO.\nConnettiti a internet.")  # noqa: TRY002, TRY003, TRY301
+        if days_offline >= 3:
+            raise LicenseError("Periodo di grazia offline (3 giorni) SCADUTO.\nConnettiti a internet.")
 
-        return True  # noqa: TRY300
+        return True
+    except LicenseError:
+        raise
     except Exception as e:
         if any(x in str(e) for x in ("SCADUTO", "incoerenza", "Nessuna validazione")):
             raise
-        raise Exception(f"Errore verifica periodo di grazia: {e}") from e  # noqa: TRY002, TRY003
+        raise LicenseError(f"Errore verifica periodo di grazia: {e}") from e
 
 
 def check_emergency_grace_period() -> tuple[bool, str, int]:
@@ -132,7 +138,7 @@ def check_emergency_grace_period() -> tuple[bool, str, int]:
             encrypted_start = cipher.encrypt(current_time.isoformat().encode("utf-8"))
             token_path.parent.mkdir(parents=True, exist_ok=True)
             token_path.write_bytes(encrypted_start)
-            return True, "Periodo di grazia attivato (3 giorni)", 3  # noqa: TRY300
+            return True, "Periodo di grazia attivato (3 giorni)", 3
         except Exception as e:
             return False, f"Errore attivazione periodo di grazia: {e}", 0
 
@@ -149,19 +155,17 @@ def check_emergency_grace_period() -> tuple[bool, str, int]:
             return False, "Rilevata manipolazione orologio di sistema", 0
 
         elapsed = now_utc - start_utc
-        if elapsed.days >= 3:  # noqa: PLR2004
+        if elapsed.days >= 3:
             return False, "Periodo di grazia di 3 giorni SCADUTO.", 0
 
         remaining_days = 3 - elapsed.days
-        return True, f"Periodo di grazia attivo ({remaining_days} giorni rimanenti)", remaining_days  # noqa: TRY300
+        return True, f"Periodo di grazia attivo ({remaining_days} giorni rimanenti)", remaining_days
     except Exception as e:
         return False, f"Errore lettura periodo di grazia: {e}", 0
 
 
 def is_running_from_source() -> bool:
     """Verifica se l'applicazione  in esecuzione dall'interprete Python (sorgenti)."""
-    import sys  # noqa: PLC0415
-
     return not getattr(sys, "frozen", False)
 
 
@@ -175,7 +179,7 @@ def is_license_folder_empty() -> bool:
     return not (config_dat.exists() and manifest_json.exists())
 
 
-def run_update() -> bool:  # noqa: C901, PLR0911, PLR0912, PLR0915
+def run_update() -> bool:
     """
     Esegue la procedura completa di aggiornamento licenza.
     Recupera l'Hardware ID, interroga le API di GitHub e scarica i file necessari se presenti o modificati.
@@ -197,7 +201,7 @@ def run_update() -> bool:  # noqa: C901, PLR0911, PLR0912, PLR0915
         # 1. Verifica se la cartella hw_id esiste sul server (Revoca)
         dir_res = requests.get(base_url, headers=headers_api, timeout=10)
 
-        if dir_res.status_code == 404:  # noqa: PLR2004
+        if dir_res.status_code == 404:
             # Licenza rimossa dal server -> REVOCATA
             config_dat = license_dir / "config.dat"
             manifest_json = license_dir / "manifest.json"
@@ -206,19 +210,19 @@ def run_update() -> bool:  # noqa: C901, PLR0911, PLR0912, PLR0915
             if manifest_json.exists():
                 manifest_json.unlink()
 
-            from src.core.app_initializer import AppInitializer  # noqa: PLC0415
-
             logger.critical("Licenza REVOCATA dal server!")
-            AppInitializer.add_alert("CRITICAL", "LICENZA REVOCATA DAL SERVER. Contattare l'amministratore.")
-            raise Exception("LICENZA REVOCATA DAL SERVER. Contattare l'amministratore.")  # noqa: TRY002, TRY003, TRY301
+            from src.core.app_initializer import AppInitializer
 
-        if dir_res.status_code != 200:  # noqa: PLR2004
+            AppInitializer.add_alert("CRITICAL", "LICENZA REVOCATA DAL SERVER. Contattare l'amministratore.")
+            raise LicenseError("LICENZA REVOCATA DAL SERVER. Contattare l'amministratore.")
+
+        if dir_res.status_code != 200:
             logger.warning(f"Impossibile verificare la licenza cloud (HTTP {dir_res.status_code})")
             return False
 
         # 2. Scarica il manifest.json per controllare l'aggiornamento
         man_res = requests.get(f"{base_url}/manifest.json", headers=headers_raw, timeout=10)
-        if man_res.status_code != 200:  # noqa: PLR2004
+        if man_res.status_code != 200:
             logger.warning("File manifest.json non trovato sul server.")
             return False
 
@@ -231,21 +235,17 @@ def run_update() -> bool:  # noqa: C901, PLR0911, PLR0912, PLR0915
         local_status, _ = license_validator.get_detailed_license_status()
 
         if local_config.exists():
-            from src.core.license_validator import _calculate_sha256  # noqa: PLC0415
-
-            local_hash = _calculate_sha256(local_config)
+            local_hash = license_validator._calculate_sha256(local_config)
 
         # 3. Scarica config.dat solo se l'hash  diverso O se quella locale non  valida
         if local_hash != remote_hash or local_status != license_validator.LicenseStatus.VALID:
             logger.info("Rilevato aggiornamento o licenza locale non valida, download in corso...")
             conf_res = requests.get(f"{base_url}/config.dat", headers=headers_raw, timeout=10)
-            if conf_res.status_code == 200:  # noqa: PLR2004
+            if conf_res.status_code == 200:
                 new_config_bytes = conf_res.content
 
                 # --- SICUREZZA: Verifica la validità dei nuovi dati prima di sovrascrivere ---
                 try:
-                    from src.core.secrets_manager import SecretsManager  # noqa: PLC0415
-
                     key_raw = SecretsManager.get_license_key()
                     if key_raw:
                         cipher = Fernet(key_raw)
@@ -266,8 +266,9 @@ def run_update() -> bool:  # noqa: C901, PLR0911, PLR0912, PLR0915
                         logger.error("Impossibile recuperare la chiave di decifratura per la validazione.")
                         return False
                 except Exception as ve:
-                    logger.error(  # noqa: TRY400
-                        f"La nuova licenza sul cloud  corrotta o non valida ({ve}). Update annullato."
+                    logger.exception(
+                        "La nuova licenza sul cloud corrotta o non valida. Update annullato.",
+                        exc=ve,
                     )
                     return False
                 # ----------------------------------------------------------------------------
@@ -275,8 +276,6 @@ def run_update() -> bool:  # noqa: C901, PLR0911, PLR0912, PLR0915
                 files = {"manifest.json": remote_manifest_bytes, "config.dat": new_config_bytes}
                 saved = _save_license_files(license_dir, files)
                 if saved:
-                    from src.core.notification_manager import NotificationManager  # noqa: PLC0415
-
                     NotificationManager.instance().add_notification(
                         "Sincronizzazione",
                         "Licenza aggiornata con successo dal cloud.",
@@ -288,9 +287,9 @@ def run_update() -> bool:  # noqa: C901, PLR0911, PLR0912, PLR0915
             logger.error("Errore durante il download di config.dat")
             return False
 
-        logger.info("  Licenza locale gia' aggiornata.")
+        logger.info("  Licenza locale già aggiornata.")
         update_grace_timestamp()
-        return True  # noqa: TRY300
+        return True
 
     except requests.RequestException as e:
         logger.warning(f"Offline o errore di rete - Impossibile aggiornare: {e}")
@@ -299,7 +298,7 @@ def run_update() -> bool:  # noqa: C901, PLR0911, PLR0912, PLR0915
         # Se  l'eccezione di revoca la facciamo passare
         if "REVOCATA" in str(e):
             raise
-        logger.error(f"Errore inatteso durante update licenza: {e}")  # noqa: TRY400
+        logger.exception("Errore inatteso durante update licenza")
         return False
 
 
@@ -310,8 +309,8 @@ def _ensure_license_dir(path: str | Path) -> bool:
         try:
             path_obj.mkdir(parents=True)
             logger.info("Cartella licenza creata")
-        except OSError as e:
-            logger.error(f"Errore creazione cartella licenza: {e}")  # noqa: TRY400
+        except OSError:
+            logger.exception("Errore creazione cartella licenza")
             return False
     return True
 
@@ -324,7 +323,7 @@ def _save_license_files(license_dir: str | Path, files: dict[str, bytes]) -> boo
             (dir_path / name).write_bytes(content)
         logger.info("  Aggiornamento completato")
         update_grace_timestamp()
-        return True  # noqa: TRY300
-    except OSError as e:
-        logger.error(f"Errore scrittura file licenza: {e}")  # noqa: TRY400
+        return True
+    except OSError:
+        logger.exception("Errore scrittura file licenza")
         return False

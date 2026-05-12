@@ -93,7 +93,7 @@ class TimbratureDBPanel(QWidget):
 
             self.refresh_data()
         except Exception as e:
-            from src.core.logging import get_logger  # noqa: PLC0415
+            from src.core.logging import get_logger
 
             get_logger(__name__).error(f"Error in deferred init: {e}")
 
@@ -108,7 +108,6 @@ class TimbratureDBPanel(QWidget):
 
         # Tabs
         self.tabs = AnimatedTabWidget()
-        # self.tabs.setProperty("class", "Level2Tabs") # Stile gestito dal componente # noqa: ERA001
 
         # Tab 1: Database
         self.tab_database = QWidget()
@@ -133,24 +132,28 @@ class TimbratureDBPanel(QWidget):
         # Signals from Settings Tab
         self.settings_tab.settings_changed.connect(self._on_settings_changed)
 
-    def _setup_toolbar(self) -> None:  # noqa: PLR0915
+    def _setup_toolbar(self) -> None:
+        """Configura la barra degli strumenti superiore con filtri e ricerca."""
         self.toolbar_container = QFrame()
         self.toolbar_container.setObjectName("filterBar")
-        self.toolbar_container.setStyleSheet(f"""
-      QFrame#filterBar {{
-        background-color: {COLORS["bg_white"]};
-        border: 1px solid {COLORS["border_light"]};
-        border-radius: 12px;
-      }}
-    """)
+        self.toolbar_container.setStyleSheet(f"QFrame#filterBar {{ background-color: {COLORS['bg_white']}; border: 1px solid {COLORS['border_light']}; border-radius: 12px; }}")
+
         toolbar_layout = QHBoxLayout(self.toolbar_container)
         toolbar_layout.setContentsMargins(15, 10, 15, 10)
         toolbar_layout.setSpacing(15)
 
-        # Sezione Ricerca
+        self._setup_search_section(toolbar_layout)
+        self._add_toolbar_divider(toolbar_layout)
+        self._setup_filters_section(toolbar_layout)
+
+        toolbar_layout.addStretch()
+        self._setup_action_buttons(toolbar_layout)
+
+    def _setup_search_section(self, layout: QHBoxLayout) -> None:
+        """Configura la sezione di ricerca libera."""
+        from src.gui.styles import LABEL_MUTED, LINEEDIT_STYLE
         search_v = QVBoxLayout()
         search_v.setSpacing(4)
-        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE  # noqa: PLC0415
 
         lbl_search = QLabel("CERCA PERSONALE")
         lbl_search.setStyleSheet(LABEL_MUTED)
@@ -160,18 +163,22 @@ class TimbratureDBPanel(QWidget):
         self.search_input.setMinimumWidth(200)
         self.search_input.setStyleSheet(LINEEDIT_STYLE)
         self.search_input.textChanged.connect(self.refresh_data)
+
         search_v.addWidget(lbl_search)
         search_v.addWidget(self.search_input)
-        toolbar_layout.addLayout(search_v)
+        layout.addLayout(search_v)
 
-        # Divisore
+    def _add_toolbar_divider(self, layout: QHBoxLayout) -> None:
+        """Aggiunge un divisore verticale nella toolbar."""
         v_line = QFrame()
         v_line.setFrameShape(QFrame.Shape.VLine)
         v_line.setFrameShadow(QFrame.Shadow.Plain)
         v_line.setStyleSheet(f"color: {COLORS['border_light']};")
-        toolbar_layout.addWidget(v_line)
+        layout.addWidget(v_line)
 
-        # Filtri Combo
+    def _setup_filters_section(self, layout: QHBoxLayout) -> None:
+        """Configura i selettori di reparto e cantiere."""
+        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED
         filters_h = QHBoxLayout()
         filters_h.setSpacing(12)
 
@@ -201,13 +208,12 @@ class TimbratureDBPanel(QWidget):
         cant_v.addWidget(self.cantiere_filter)
         filters_h.addLayout(cant_v)
 
-        toolbar_layout.addLayout(filters_h)
-        toolbar_layout.addStretch()
-
+        layout.addLayout(filters_h)
         self._update_filter_combos()
 
-        from src.gui.widgets.modern_button import ModernButton  # noqa: PLC0415
-
+    def _setup_action_buttons(self, layout: QHBoxLayout) -> None:
+        """Aggiunge i pulsanti di azione (es. Importa)."""
+        from src.gui.widgets.modern_button import ModernButton
         import_btn = ModernButton(
             "IMPORTA EXCEL",
             variant=ModernButton.Variant.PRIMARY,
@@ -215,7 +221,7 @@ class TimbratureDBPanel(QWidget):
             icon=get_asset_path(Icons.PLUS),
         )
         import_btn.clicked.connect(self._import_excel_manually)
-        toolbar_layout.addWidget(import_btn, alignment=Qt.AlignmentFlag.AlignBottom)
+        layout.addWidget(import_btn, alignment=Qt.AlignmentFlag.AlignBottom)
 
     def _setup_database_tab(self, parent: QWidget) -> None:
         layout = QVBoxLayout(parent)
@@ -241,7 +247,7 @@ class TimbratureDBPanel(QWidget):
 
         header = self.db_table.horizontalHeader()
         if header is None:
-            raise RuntimeError("Table horizontal header is None")  # noqa: TRY003
+            raise RuntimeError("Table horizontal header is None")
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setStretchLastSection(True)
 

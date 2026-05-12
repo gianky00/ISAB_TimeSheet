@@ -39,7 +39,7 @@ class TestWaitHelpersCoverageFinal:
                 assert res is not None
 
     def test_poll_for_new_file_update_incremental(self, fs_setup):
-        import os  # noqa: PLC0415
+        import os
 
         dir_path = Path("/downloads")
         f1 = dir_path / "report.xlsx"

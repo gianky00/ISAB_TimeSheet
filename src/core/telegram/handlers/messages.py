@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore"
 from __future__ import annotations
 
 import re
@@ -95,7 +94,7 @@ async def handle_voice(service: TelegramService, update: Update, context: Contex
     Handles voice messages. (AI functionality removed)
     """
     if update.message:
-        await update.message.reply_text("   Messaggia'vocali non supportati in questa versione.")
+        await update.message.reply_text("   Messaggiàvocali non supportati in questa versione.")
 
 
 async def handle_photo(service: TelegramService, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

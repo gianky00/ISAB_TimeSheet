@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Main Window
 Finestra principale dell'applicazione che coordina tutti i servizi, i controller e i componenti dell'interfaccia utente.
@@ -129,7 +128,8 @@ class MainWindow(QMainWindow):
         self.telegram_bridge.setup_connections()
 
         # Applica Tema Default
-        if app_instance := QApplication.instance():
+        app_instance = QApplication.instance()
+        if isinstance(app_instance, QApplication):
             apply_theme(app_instance, config_manager.get_config_value("theme", "light"))
 
         self._setup_shortcuts()
@@ -203,7 +203,7 @@ class MainWindow(QMainWindow):
         self.main_layout.addWidget(self.content_area, 0, 0)
 
         # 2. Sidebar come Overlay
-        from src.gui.widgets.sidebar_widget import SidebarWidget  # noqa: PLC0415
+        from src.gui.widgets.sidebar_widget import SidebarWidget
 
         self.sidebar = SidebarWidget(self.central_widget)
         self.main_layout.addWidget(self.sidebar, 0, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
@@ -349,7 +349,7 @@ class MainWindow(QMainWindow):
             self.pdl_panel.set_pdl_list(pdl_numbers)
         else:
             # Fallback se non ancora registrato (molto improbabile dopo navigazione)
-            from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
+            from src.gui.main_window.page_index import PageIndex
 
             automazioni = self.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
             if automazioni and hasattr(automazioni, "panel_pdl"):

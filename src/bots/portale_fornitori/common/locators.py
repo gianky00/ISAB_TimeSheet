@@ -14,11 +14,11 @@ class LoginLocators:
     COMPANY_FIELD = (By.NAME, "Company")
     LOGIN_BUTTON = (
         By.XPATH,
-        "//span[text()='Accedi' and contains(@class, 'x-btn-inner')]",
+        "//span[text()='Accedì and contains(@class, 'x-btn-inner')]",
     )
     LOGIN_BUTTON_FALLBACK = (
         By.XPATH,
-        "//span[text()='Accedi' and contains(@class, 'x-btn-inner')]",
+        "//span[text()='Accedì and contains(@class, 'x-btn-inner')]",
     )
 
 
@@ -35,7 +35,7 @@ class CommonLocators:
     # Popups
     POPUP_SESSION_YES = (
         By.XPATH,
-        "//span[normalize-space(text())='Si' and contains(@class, 'x-btn-inner')]",
+        "//span[normalize-space(text())='Sì and contains(@class, 'x-btn-inner')]",
     )
 
     # Logout

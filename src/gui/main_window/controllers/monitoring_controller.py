@@ -9,12 +9,15 @@ from PySide6.QtCore import QObject, QTimer
 
 from src.core.auth_monitor import check_expiring_isab_authorizations
 from src.core.constants import Icons
+from src.core.logging import get_logger
 from src.gui.styles.constants import ANIMATION_TIMINGS
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path
 
 if TYPE_CHECKING:
     from src.gui.main_window.main import MainWindow
+
+logger = get_logger(__name__)
 
 
 class MonitoringController(QObject):
@@ -52,14 +55,16 @@ class MonitoringController(QObject):
             yellow_dot = get_asset_path(Icons.STATUS_DOT_YELLOW)
 
             msg = "<b>Monitoraggio Abilitazioni ISAB</b><br/>"
+            icon_size = 14
             if scaduti:
-                msg += f"<img src='{red_dot}' width='14' height='14'> {len(scaduti)} Abilitazioni SCADUTE (>30 gg)<br/>"
+                msg += f"<img src='{red_dot}' width='{icon_size}' height='{icon_size}'> {len(scaduti)} Abilitazioni SCADUTE (>30 gg)<br/>"
             if in_scadenza:
-                msg += f"<img src='{yellow_dot}' width='14' height='14'> {len(in_scadenza)} In scadenza (20-30 gg)<br/>"
-            msg += "<br/><small>Controlla la tabella 'Dipendenti' per i dettagli.</small>"
+                msg += f"<img src='{yellow_dot}' width='{icon_size}' height='{icon_size}'> {len(in_scadenza)} In scadenza (20-30 gg)<br/>"
+            msg += "<br/><small>Controlla la tabella 'Dipendentì per i dettagli.</small>"
 
+            toast_timeout_ms = 8000
             ToastManager.instance().show(
-                msg, "warning" if in_scadenza or scaduti else "info", 8000, is_rich_text=True
+                msg, "warning" if in_scadenza or scaduti else "info", toast_timeout_ms, is_rich_text=True
             )
-        except Exception as e:
-            print(f"Errore monitoraggio autorizzazioni: {e}")
+        except Exception:
+            logger.exception("Errore monitoraggio autorizzazioni")

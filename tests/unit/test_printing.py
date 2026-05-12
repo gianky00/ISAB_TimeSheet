@@ -9,7 +9,7 @@ class TestPrintingUtilities:
             (0, 0, "Epson WorkForce", None),
         ]
 
-        from src.utils.printing import get_installed_printers  # noqa: PLC0415
+        from src.utils.printing import get_installed_printers
 
         result = get_installed_printers()
 
@@ -21,7 +21,7 @@ class TestPrintingUtilities:
     def test_get_installed_printers_error(self, mock_enum):
         mock_enum.side_effect = Exception("API Error")
 
-        from src.utils.printing import get_installed_printers  # noqa: PLC0415
+        from src.utils.printing import get_installed_printers
 
         result = get_installed_printers()
 
@@ -31,7 +31,7 @@ class TestPrintingUtilities:
     def test_run_powershell(self, mock_run):
         mock_run.return_value = MagicMock(returncode=0, stdout="Success")
 
-        from src.utils.printing import _run_powershell  # noqa: PLC0415
+        from src.utils.printing import _run_powershell
 
         result = _run_powershell("Get-Printer")
 
@@ -42,7 +42,7 @@ class TestPrintingUtilities:
     def test_run_powershell_error(self, mock_run):
         mock_run.side_effect = Exception("PS Error")
 
-        from src.utils.printing import _run_powershell  # noqa: PLC0415
+        from src.utils.printing import _run_powershell
 
         result = _run_powershell("Get-Printer")
 
@@ -50,7 +50,7 @@ class TestPrintingUtilities:
 
     @patch("src.utils.printing._run_powershell")
     def test_set_printer_duplex_powershell(self, mock_ps):
-        from src.utils.printing import _set_printer_duplex_powershell  # noqa: PLC0415
+        from src.utils.printing import _set_printer_duplex_powershell
 
         _set_printer_duplex_powershell("HP LaserJet", "OneSided")
 
@@ -60,7 +60,7 @@ class TestPrintingUtilities:
         assert "OneSided" in call_args
 
     def test_print_pdf_file_not_exists(self, tmp_path):
-        from src.utils.printing import print_pdf  # noqa: PLC0415
+        from src.utils.printing import print_pdf
 
         result = print_pdf(str(tmp_path / "nonexistent.pdf"), "Any Printer")
 
@@ -81,7 +81,7 @@ class TestPrintPDFWithMocking:
         mock_fitz.side_effect = Exception("Fitz error")
         mock_startfile.return_value = None
 
-        from src.utils.printing import print_pdf  # noqa: PLC0415
+        from src.utils.printing import print_pdf
 
         print_pdf(str(pdf_file), None)
 

@@ -39,8 +39,7 @@ class SlidingStackedWidget(QStackedWidget):
         super().__init__(parent)
         self._animation_duration = 350
         self._easing_curve = QEasingCurve.Type.OutCubic
-        self._animation_group = QParallelAnimationGroup(self)
-        self._animation_group.finished.connect(self._on_animation_finished)
+        self._animation_group: QParallelAnimationGroup | None = None
 
         self._is_animating = False
         self._current_index = 0
@@ -55,7 +54,7 @@ class SlidingStackedWidget(QStackedWidget):
     def slide_to_index(self, index: int) -> None:  # noqa: PLR0915
         """
         Esegue l'animazione di transizione premium verso l'indice specificato.
-        Utilizza snapshot QPixmap per mantenere la fluidit  indipendentemente dal carico dei widget.
+        Utilizza snapshot QPixmap per mantenere la fluidità indipendentemente dal carico dei widget.
 
         Args:
           index: L'indice del widget verso cui navigare.
@@ -92,7 +91,7 @@ class SlidingStackedWidget(QStackedWidget):
         offset = self.width() if forward else -self.width()
         self.fade_label_new.setGeometry(offset, 0, self.width(), self.height())
 
-        # Effetti opacit
+        # Effetti opacità
         eff_old = QGraphicsOpacityEffect(self.fade_label_old)
         eff_new = QGraphicsOpacityEffect(self.fade_label_new)
         self.fade_label_old.setGraphicsEffect(eff_old)
@@ -103,9 +102,16 @@ class SlidingStackedWidget(QStackedWidget):
         old_widget.hide()  # Nasconde il reale per non interferire
 
         # 2. Configura animazioni
-        self._animation_group.clear()
+        # Fermiamo e distruggiamo il vecchio gruppo per evitare il bug "index out of bounds"
+        if self._animation_group:
+            self._animation_group.stop()
+            self._animation_group.deleteLater()
 
-        # Slide & Fade Out
+        # Creiamo un nuovo gruppo pulito
+        self._animation_group = QParallelAnimationGroup(self)
+        self._animation_group.finished.connect(self._on_animation_finished)
+
+        # Slide & Fade Out (Senza genitore nel costruttore)
         anim_out_pos = QPropertyAnimation(self.fade_label_old, b"pos")
         anim_out_pos.setDuration(self._animation_duration)
         anim_out_pos.setStartValue(QPoint(0, 0))
@@ -129,6 +135,7 @@ class SlidingStackedWidget(QStackedWidget):
         anim_in_fade.setStartValue(0.0)
         anim_in_fade.setEndValue(1.0)
 
+        # Aggiungiamo le animazioni al gruppo
         self._animation_group.addAnimation(anim_out_pos)
         self._animation_group.addAnimation(anim_out_fade)
         self._animation_group.addAnimation(anim_in_pos)

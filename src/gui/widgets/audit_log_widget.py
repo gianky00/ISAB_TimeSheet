@@ -8,9 +8,19 @@ Refactoring modulare V2.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING
 
-from PySide6.QtCore import QModelIndex, QObject, QRunnable, Qt, QThreadPool, QTimer, Signal
+import shiboken6
+from PySide6.QtCore import (
+    QModelIndex,
+    QObject,
+    QRunnable,
+    Qt,
+    QThreadPool,
+    QTimer,
+    Signal,
+    Slot,
+)
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QFrame,
@@ -20,6 +30,9 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+if TYPE_CHECKING:
+    from PySide6.QtGui import QShowEvent
 
 from src.core.audit_manager import AuditManager
 from src.core.constants import Icons
@@ -38,13 +51,13 @@ logger = logging.getLogger(__name__)
 
 
 class IntegrityWorkerSignals(QObject):
-    """Segnali emessi dal worker di verifica integrita' dei log."""
+    """Segnali emessi dal worker di verifica integrità dei log."""
 
     finished = Signal(bool)
 
 
 class IntegrityWorker(QRunnable):
-    """Worker per la verifica asincrona dell'hash di integrita' del database di audit."""
+    """Worker per la verifica asincrona dell'hash di integrità del database di audit."""
 
     def __init__(self, manager: AuditManager) -> None:
         """Inizializza il worker comunicando con l'AuditManager."""
@@ -53,7 +66,7 @@ class IntegrityWorker(QRunnable):
         self.signals = IntegrityWorkerSignals()
 
     def run(self) -> None:
-        """Esegue il controllo crittografico dell'integrita'."""
+        """Esegue il controllo crittografico dell'integrità."""
         valid = self.manager.verify_integrity()
         self.signals.finished.emit(valid)
 
@@ -83,20 +96,26 @@ class AuditLogWidget(QWidget):
         self._load_categories()
         # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
 
-    def showEvent(self, event: Any) -> None:  # type: ignore[override]
+    def showEvent(self, event: QShowEvent) -> None:
         """Esegue il primo refresh solo quando il widget diventa visibile."""
         super().showEvent(event)
         if not self._first_refresh_done:
             self._first_refresh_done = True
             QTimer.singleShot(50, self.refresh)
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Configura l'interfaccia utente."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(15)
 
-        # --- TOP HEADER ---
+        self._setup_header(layout)
+        self._setup_filter_bar(layout)
+        self._setup_data_grid(layout)
+        self._setup_pagination(layout)
+
+    def _setup_header(self, layout: QVBoxLayout) -> None:
+        """Configura l'intestazione superiore."""
         header_layout = QHBoxLayout()
         header_layout.setContentsMargins(0, 0, 0, 10)
 
@@ -105,14 +124,13 @@ class AuditLogWidget(QWidget):
         title = QLabel("Dashboard Operazioni")
         title.setStyleSheet(f"font-size: 24px; font-weight: 900; color: {COLORS['text_dark']};")
 
-        # Subtitle with Integrity Status
         status_h = QHBoxLayout()
         status_h.setSpacing(8)
         self.integrity_icon = QLabel()
         self.integrity_icon.setFixedSize(16, 16)
         status_h.addWidget(self.integrity_icon)
 
-        self.integrity_lbl = QLabel("Verifica integrita'...")
+        self.integrity_lbl = QLabel("Verifica integrità...")
         self.integrity_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 13px; font-weight: 600;")
         status_h.addWidget(self.integrity_lbl)
         status_h.addStretch()
@@ -120,7 +138,6 @@ class AuditLogWidget(QWidget):
         title_v.addWidget(title)
         title_v.addLayout(status_h)
         header_layout.addLayout(title_v)
-
         header_layout.addStretch()
 
         self.live_check = StandardCheckBox("Live Mode")
@@ -131,12 +148,14 @@ class AuditLogWidget(QWidget):
 
         layout.addLayout(header_layout)
 
-        # --- FILTER BAR ---
+    def _setup_filter_bar(self, layout: QVBoxLayout) -> None:
+        """Inizializza la barra dei filtri."""
         self.filter_bar = AuditFilterBar()
         self.filter_bar.filters_applied.connect(lambda: self.refresh(reset_page=True))
         layout.addWidget(self.filter_bar)
 
-        # --- DATA GRID (Wrapped in a ModernCard for elevation) ---
+    def _setup_data_grid(self, layout: QVBoxLayout) -> None:
+        """Inizializza la tabella dei dati."""
         self.table_card = ModernCard(elevation=12)
         table_layout = QVBoxLayout(self.table_card)
         table_layout.setContentsMargins(5, 5, 5, 5)
@@ -149,8 +168,8 @@ class AuditLogWidget(QWidget):
 
         if v_header := self.table_view.verticalHeader():
             v_header.setVisible(False)
-        if header := self.table_view.horizontalHeader():
-            header.setStretchLastSection(True)
+        if h_header := self.table_view.horizontalHeader():
+            h_header.setStretchLastSection(True)
 
         self.model = AuditTableModel([])
         self.table_view.setModel(self.model)
@@ -159,7 +178,8 @@ class AuditLogWidget(QWidget):
         table_layout.addWidget(self.table_view)
         layout.addWidget(self.table_card)
 
-        # --- PAGINATION ---
+    def _setup_pagination(self, layout: QVBoxLayout) -> None:
+        """Inizializza la barra di paginazione."""
         self.pagination_bar = AuditPaginationBar()
         self.pagination_bar.page_changed.connect(self._on_page_changed)
         layout.addWidget(self.pagination_bar)
@@ -171,7 +191,7 @@ class AuditLogWidget(QWidget):
 
     def _toggle_live_mode(self, state: int | Qt.CheckState) -> None:
         """
-        Attiva o disattiva la modalita' live.
+        Attiva o disattiva la modalità live.
 
         Args:
           state: Stato della checkbox.
@@ -188,9 +208,11 @@ class AuditLogWidget(QWidget):
         if not is_live:
             self.refresh()
 
+    @Slot()
     def _on_live_refresh(self) -> None:
-        """Esegue il refresh periodico in modalita' live."""
-        self.refresh(reset_page=True)
+        """Esegue il refresh periodico in modalità live."""
+        if shiboken6.isValid(self):
+            self.refresh(reset_page=True)
 
     def _on_page_changed(self, delta: int) -> None:
         """
@@ -209,6 +231,9 @@ class AuditLogWidget(QWidget):
         Args:
           reset_page: Se True, torna alla prima pagina.
         """
+        if not shiboken6.isValid(self):
+            return
+
         if reset_page:
             self.current_page = 0
 
@@ -228,8 +253,8 @@ class AuditLogWidget(QWidget):
             self._check_integrity()
 
     def _check_integrity(self) -> None:
-        """Verifica l'integrita' dei log in background e aggiorna l'interfaccia tramite segnali."""
-        self.integrity_lbl.setText("Verifica integrita' in corso...")
+        """Verifica l'integrità dei log in background e aggiorna l'interfaccia tramite segnali."""
+        self.integrity_lbl.setText("Verifica integrità in corso...")
         self.integrity_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-weight: 600;")
 
         worker = IntegrityWorker(self.manager)
@@ -237,8 +262,12 @@ class AuditLogWidget(QWidget):
         if pool := QThreadPool.globalInstance():
             pool.start(worker)
 
+    @Slot(bool)
     def _on_integrity_checked(self, valid: bool) -> None:
         """Callback al termine della verifica in background."""
+        if not shiboken6.isValid(self):
+            return
+
         color = COLORS["success_dark"] if valid else COLORS["error_red"]
         text = "Integro" if valid else "Legacy/Manomesso"
         icon = Icons.SHIELD if valid else Icons.ALERT_TRIANGLE
@@ -247,6 +276,7 @@ class AuditLogWidget(QWidget):
         self.integrity_lbl.setText(text)
         self.integrity_lbl.setStyleSheet(f"color: {color}; font-weight: bold;")
 
+    @Slot(QModelIndex)
     def _on_row_double_click(self, index: QModelIndex) -> None:
         """
         Gestisce il doppio click su una riga.

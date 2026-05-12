@@ -41,7 +41,7 @@ def mig_pdl_v1(conn: sqlite3.Connection) -> None:
 def mig_pdl_v2(conn: sqlite3.Connection) -> None:
     """Aggiunge vincolo UNIQUE su n_pdl e pulisce duplicati (v2)"""
     cursor = conn.cursor()
-    # 1. Rimuovi duplicati mantenendo il piu' recente (o ID piu' alto)
+    # 1. Rimuovi duplicati mantenendo il più recente (o ID più alto)
     cursor.execute(
         """
     DELETE FROM pdl
@@ -128,7 +128,7 @@ def mig_pdl_v4(conn: sqlite3.Connection) -> None:
 
 
 def mig_pdl_v5(conn: sqlite3.Connection) -> None:
-    """Aggiunge colonna 'unita'alla tabella programmazione (v5)"""
+    """Aggiunge colonna 'unitàalla tabella programmazione (v5)"""
     cursor = conn.cursor()
     with contextlib.suppress(sqlite3.OperationalError):
         cursor.execute("ALTER TABLE pdl_programmazione ADD COLUMN unita TEXT")

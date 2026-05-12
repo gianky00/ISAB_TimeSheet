@@ -1,20 +1,20 @@
 """
 Bot TS - Contabilita Search
-Gestisce le funzionalita' di ricerca per i dati della Contabilità Strumentale.
+Gestisce le funzionalità di ricerca per i dati della Contabilità Strumentale.
 """
 
-import logging
 import sqlite3
 from pathlib import Path
 from typing import Any
 
 from src.core.database import db_manager
+from src.core.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ContabilitaSearch:
-    """Gestore per le funzionalita' di ricerca nel database della Contabilità Strumentale."""
+    """Gestore per le funzionalità di ricerca nel database della Contabilità Strumentale."""
 
     @classmethod
     def search_oda(cls, db_path: Path, query: str) -> list[dict[str, Any]]:
@@ -36,7 +36,7 @@ class ContabilitaSearch:
             with db_manager.get_connection(db_path, read_only=True) as conn:
                 cursor = conn.cursor()
 
-                # Tentativo con FTS5 (molto piu' veloce)
+                # Tentativo con FTS5 (molto più veloce)
                 sql_fts = """
           SELECT n_prev, attivita, odc
           FROM contabilita_fts
@@ -67,17 +67,17 @@ class ContabilitaSearch:
 
                 logger.debug(f"[DEBUG] Search '{query}' found {len(rows)} matches")
 
-                results.extend(
-                    {
-                        "type": "ODA",
-                        "codice_oda": row[0],
-                        "descrizione": row[1] or "Nessuna descrizione",
-                        "odc": row[2],
-                    }
-                    for row in rows
-                )
-        except Exception as e:
-            logger.error(f"Search Error: {e}")  # noqa: TRY400
+                for row in rows:
+                    results.append(  # noqa: PERF401
+                        {
+                            "type": "ODA",
+                            "codice_oda": row[0],
+                            "descrizione": row[1] or "Nessuna descrizione",
+                            "odc": row[2],
+                        }
+                    )
+        except Exception:
+            logger.exception("Search Error")
 
         return results
 
@@ -107,8 +107,8 @@ class ContabilitaSearch:
                 # 3. Certificati
                 out["CERTIFICATI"] = cls._search_certificati(cursor, query, limit)
 
-        except Exception as e:
-            logger.error(f"Extended Search Error: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Extended Search Error")
 
         return out
 

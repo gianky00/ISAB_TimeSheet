@@ -102,7 +102,7 @@ class TestAuditManager:
         assert "Versione aggiornata a 2.0" in args[1]
 
     def test_retention_policy(self, temp_db_manager):
-        from datetime import datetime, timedelta  # noqa: PLC0415
+        from datetime import datetime, timedelta
 
         # Insert old record
         old_date = (datetime.now() - timedelta(days=100)).isoformat()

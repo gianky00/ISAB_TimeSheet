@@ -57,7 +57,7 @@ class AccountDialog(QDialog):
     def _setup_form(
         self, layout: QVBoxLayout, username: str, password: str, account_type: str, show_type: bool
     ) -> None:
-        """Configura il form con i campiu'di input."""
+        """Configura il form con i campiùdi input."""
         form = QFormLayout()
         form.setSpacing(10)
 

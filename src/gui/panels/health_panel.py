@@ -1,7 +1,7 @@
 """
 SyncroJob - Health Panel
 Dashboard avanzata per il monitoraggio della salute del sistema (Observability).
-Visualizza punteggi di affidabilita'(Health Score), statistiche di esecuzione dei bot nelle ultime 24 ore
+Visualizza punteggi di affidabilità (Health Score), statistiche di esecuzione dei bot nelle ultime 24 ore
 e un elenco dettagliato di anomalie rilevate, con integrazione diretta per gli alert Telegram.
 """
 
@@ -170,7 +170,7 @@ class StatCard(ModernCard):
 
 
 class AnomalyCard(ModernCard):
-    """Card anomalia con design a lista orizzontale e badge di severit ."""
+    """Card anomalia con design a lista orizzontale e badge di severità."""
 
     def __init__(self, anomaly: Anomaly, parent: QWidget | None = None) -> None:
         super().__init__(parent, elevation=6)
@@ -315,7 +315,14 @@ class HealthPanel(QWidget):
         left_panel = QVBoxLayout()
         left_panel.setSpacing(25)
 
-        # 1. Main Gauge Card
+        self._setup_score_card(left_panel)
+        self._setup_stats_grid(left_panel)
+
+        left_panel.addStretch()
+        parent_layout.addLayout(left_panel, stretch=1)
+
+    def _setup_score_card(self, parent_layout: QVBoxLayout) -> None:
+        """Inizializza la card principale dell'Health Score."""
         score_card = ModernCard(elevation=15)
         score_card.setStyleSheet(f"QFrame {{ background-color: {COLORS['bg_white']}; border-radius: 20px; }}")
         score_layout = QVBoxLayout(score_card)
@@ -336,9 +343,10 @@ class HealthPanel(QWidget):
         self._last_update.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._last_update.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px;")
         score_layout.addWidget(self._last_update)
-        left_panel.addWidget(score_card)
+        parent_layout.addWidget(score_card)
 
-        # 2. Mini Stats Grid
+    def _setup_stats_grid(self, parent_layout: QVBoxLayout) -> None:
+        """Inizializza la griglia delle statistiche rapide."""
         stats_grid = QGridLayout()
         stats_grid.setSpacing(15)
         self._stat_runs_ok = StatCard(
@@ -351,14 +359,11 @@ class HealthPanel(QWidget):
         self._stat_anomalies = StatCard(
             "Anomalie", color=COLORS["warning_orange"], icon_key=Icons.ALERT_TRIANGLE
         )
-
         stats_grid.addWidget(self._stat_runs_ok, 0, 0)
         stats_grid.addWidget(self._stat_runs_fail, 0, 1)
         stats_grid.addWidget(self._stat_error_rate, 1, 0)
         stats_grid.addWidget(self._stat_anomalies, 1, 1)
-        left_panel.addLayout(stats_grid)
-        left_panel.addStretch()
-        parent_layout.addLayout(left_panel, stretch=1)
+        parent_layout.addLayout(stats_grid)
 
     def _setup_right_panel(self, parent_layout: QHBoxLayout) -> None:
         """Configura il pannello di destra con la lista anomalie."""
@@ -419,7 +424,9 @@ class HealthPanel(QWidget):
         while self._anomalies_layout.count() > 1:
             if (item := self._anomalies_layout.takeAt(0)) and (w := item.widget()):
                 w.deleteLater()
-        self._anomaly_count_label.setText(f"{len(anomalies)} problema{'i' if len(anomalies) != 1 else ''}")
+        self._anomaly_count_label.setText(
+            f"{len(anomalies)} problemi" if len(anomalies) != 1 else "1 problema"
+        )
         if not anomalies:
             empty = QFrame()
             empty.setStyleSheet(

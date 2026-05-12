@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, name-defined, no-untyped-call"
 """
 SyncroJob - Timbrature Page
 Page Object Model for the Timbrature section of the ISAB portal.
@@ -25,6 +24,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from src.bots.base.wait_helpers import poll_for_new_file
 from src.bots.portale_fornitori.timbrature.locators import TimbratureLocators
 from src.core.constants import Timeouts
+from src.core.exceptions import AutomationError
 from src.core.paths import CONFIG_DIR
 
 
@@ -72,10 +72,11 @@ class TimbraturePage:
             actions.send_keys(Keys.TAB).pause(0.3)
             actions.send_keys(Keys.ENTER).perform()
             self._wait_for_overlay()
-            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"Errore navigazione: {e}")
             return False
+        else:
+            return True
 
     def set_filters(self, fornitore: str, data_da: str, data_a: str) -> bool:
         """Sets the search filters."""
@@ -116,11 +117,11 @@ class TimbraturePage:
             self._wait_for_overlay()
 
             self.log("Caricamento terminato.")
-            return True  # noqa: TRY300
-
         except Exception as e:
             self.log(f"Errore impostazione filtri: {e}")
             return False
+        else:
+            return True
 
     def _select_supplier(self, fornitore: str) -> None:
         """Seleziona il fornitore dal menu a tendina."""
@@ -151,7 +152,7 @@ class TimbraturePage:
                         pass
 
             if not arrow_element:
-                raise Exception("Impossibile trovare la freccia del fornitore.")  # noqa: TRY002, TRY003, TRY301
+                raise AutomationError("Impossibile trovare la freccia del fornitore.")  # noqa: TRY301
 
             option_xpath = f"//li[contains(text(), '{fornitore}')]"
             option = WebDriverWait(self.driver, 5).until(
@@ -199,11 +200,15 @@ class TimbraturePage:
             self.log("Attendo download...")
 
             # Utilizza helper centralizzato robusto
+            from src.bots.base.wait_helpers import PollConfig
+
             res_path = poll_for_new_file(
-                directory=source_dir,
+                PollConfig(
+                    directory=source_dir,
+                    pattern=["*.xlsx", "*.xls"],
+                    timeout=Timeouts.DOWNLOAD,
+                ),
                 files_before=files_before,
-                pattern=["*.xlsx", "*.xls"],
-                timeout=Timeouts.DOWNLOAD,
             )
 
             if not res_path:
@@ -219,11 +224,11 @@ class TimbraturePage:
 
             shutil.move(str(downloaded_file), str(new_path))
             self.log(f"  File scaricato e preparato: {new_path.name}")
-            return str(new_path)
-
         except Exception as e:
             self.log(f"⚠️ Errore download Excel: {e}")
             return ""
+        else:
+            return str(new_path)
 
     def _find_excel_button(self) -> Any:
         """Tenta di individuare il pulsante di download Excel."""

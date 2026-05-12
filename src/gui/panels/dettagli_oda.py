@@ -53,7 +53,7 @@ class DettagliOdAPanel(BaseBotPanel):
         self._setup_content()
 
         # Forza inizializzazione timeline immediata per Dettagli OdA (Previene blocchi su _on_start)
-        from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot  # noqa: PLC0415
+        from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
 
         self.activity_timeline.set_steps(DettagliOdABot.STEPS)
 
@@ -69,7 +69,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
     def get_bot_class(self) -> type["BaseBot"]:
         """Restituisce la classe bot specifica per lo scarico dei dettagli OdA."""
-        from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot  # noqa: PLC0415
+        from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
 
         return DettagliOdABot
 
@@ -83,16 +83,22 @@ class DettagliOdAPanel(BaseBotPanel):
 
     def _setup_content(self) -> None:
         """Costruisce il layout specifico con widget parametri e tabella dati editabile."""
-        # Sezione Parametri (Senza QGroupBox per favorire il design Floating Card)
         params_container = QWidget()
-        params_layout = QVBoxLayout(params_container)
-        params_layout.setContentsMargins(0, 0, 0, 0)
-        params_layout.setSpacing(5)
+        self.params_layout = QVBoxLayout(params_container)
+        self.params_layout.setContentsMargins(0, 0, 0, 0)
+        self.params_layout.setSpacing(5)
 
+        self._setup_params_section()
+        self._setup_table_section()
+
+        self.content_layout.addWidget(params_container)
+
+    def _setup_params_section(self) -> None:
+        """Configura la sezione dei parametri e la toolbar della tabella."""
         self.params_widget = BotParametersWidget(show_date_range=True, show_dest_path=True)
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
-        params_layout.addWidget(self.params_widget)
+        self.params_layout.addWidget(self.params_widget)
 
         # Tabella Toolbar
         table_toolbar = QHBoxLayout()
@@ -106,11 +112,11 @@ class DettagliOdAPanel(BaseBotPanel):
         )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
-        params_layout.addLayout(table_toolbar)
+        self.params_layout.addLayout(table_toolbar)
 
+    def _setup_table_section(self) -> None:
+        """Configura la tabella dati e la lista degli stati."""
         config = config_manager.load_config()
-
-        # 2. Tabella e Stati
         table_h = QHBoxLayout()
         table_h.setSpacing(10)
 
@@ -141,9 +147,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
         table_h.addWidget(self.data_table)
         table_h.addLayout(v_status)
-        params_layout.addLayout(table_h)
-
-        self.content_layout.addWidget(params_container)
+        self.params_layout.addLayout(table_h)
 
     def _update_status_list(self, force: bool = False) -> None:
         """
@@ -167,7 +171,7 @@ class DettagliOdAPanel(BaseBotPanel):
         """
         self.status_list.update_status(step_idx, success)
 
-        # Trova dinamicamente l'indice della colonna 'esito'
+        # Trova dinamicamente l'indice della colonna 'esitò
         col_idx = -1
         for i, col in enumerate(self.data_table.columns):
             if col["name"] == "esito":
@@ -205,35 +209,39 @@ class DettagliOdAPanel(BaseBotPanel):
 
     def _load_saved_data(self) -> None:
         """Ripristina lo stato del pannello (date, fornitori, tabella) dall'ultimo salvataggio."""
-        config = config_manager.load_config()
-        self.refresh_fornitori()
-        self.params_widget.set_societa(config.get("last_oda_societa", "ISAB"))
-        self.params_widget.set_fornitore(config.get("last_oda_fornitore", ""))
-        current_year = datetime.now(UTC).year
-        self.params_widget.set_dates(
-            config.get("last_oda_date_da", f"01.01.{current_year}"),
-            config.get("last_oda_date_a", QDate.currentDate().toString("dd.MM.yyyy")),
-        )
-        self.params_widget.set_dest_path(config.get("path_dettagli_oda", ""))
+        self._is_loading = True
+        try:
+            config = config_manager.load_config()
+            self.refresh_fornitori()
+            self.params_widget.set_societa(config.get("last_oda_societa", "ISAB"))
+            self.params_widget.set_fornitore(config.get("last_oda_fornitore", ""))
+            current_year = datetime.now(UTC).year
+            self.params_widget.set_dates(
+                config.get("last_oda_date_da", f"01.01.{current_year}"),
+                config.get("last_oda_date_a", QDate.currentDate().toString("dd.MM.yyyy")),
+            )
+            self.params_widget.set_dest_path(config.get("path_dettagli_oda", ""))
 
-        saved_data = config.get("last_oda_data", [])
-        if saved_data:
-            # Forza la colonna Numero Contratto a vuoto all'avvio per policy Enterprise
-            for row_dict in saved_data:
-                # Supporta sia "Numero Contratto" che la chiave normalizzata "numero_contratto"
-                for k in list(row_dict.keys()):
-                    if k.lower().replace(" ", "_") == "numero_contratto":
-                        row_dict[k] = ""
-            self.data_table.set_data(saved_data)
-        else:
-            # Se non ci sono dati salvati, svuota esplicitamente per evitare default indesiderati
-            self.data_table.clear()
+            saved_data = config.get("last_oda_data", [])
+            if saved_data:
+                # Forza la colonna Numero Contratto a vuoto all'avvio per policy Enterprise
+                for row_dict in saved_data:
+                    # Supporta sia "Numero Contratto" che la chiave normalizzata "numero_contratto"
+                    for k in list(row_dict.keys()):
+                        if k.lower().replace(" ", "_") == "numero_contratto":
+                            row_dict[k] = ""
+                self.data_table.set_data(saved_data)
+            else:
+                # Se non ci sono dati salvati, svuota esplicitamente per evitare default indesiderati
+                self.data_table.clear()
 
-        self._update_status_list()
+            self._update_status_list()
+        finally:
+            self._is_loading = False
 
     def _save_data(self) -> None:
         """Persiste i parametri attuali nella configurazione globale (Batch optimization)."""
-        if not hasattr(self, "params_widget"):
+        if getattr(self, "_is_loading", False) or not hasattr(self, "params_widget"):
             return
         date_da, date_a = self.params_widget.get_dates()
 
@@ -297,7 +305,7 @@ class DettagliOdAPanel(BaseBotPanel):
         if not params_override:
             self._save_data()
 
-        from src.core.config_manager import load_config  # noqa: PLC0415
+        from src.core.config_manager import load_config
 
         config = load_config()
 
@@ -337,7 +345,7 @@ class DettagliOdAPanel(BaseBotPanel):
         self._setup_worker_connections(self.worker)
 
         # Reset pallini all'avvio (Asincrono per non bloccare il click)
-        from PySide6.QtCore import QTimer  # noqa: PLC0415
+        from PySide6.QtCore import QTimer
 
         QTimer.singleShot(0, lambda: self._update_status_list(force=True))
 

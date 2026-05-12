@@ -41,7 +41,7 @@ def debug_test():
                         print("check_for_updates finished successfully")
                     except Exception as e:
                         print(f"Caught exception: {e}")
-                        import traceback  # noqa: PLC0415
+                        import traceback
 
                         traceback.print_exc()
 

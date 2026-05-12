@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - PDL Programmazione Table Widget
 Componente specializzato per la visualizzazione della griglia di programmazione.
@@ -12,6 +11,7 @@ from PySide6.QtWidgets import (
     QHeaderView,
     QTableWidget,
     QTableWidgetItem,
+    QWidget,
 )
 
 from src.core.database.pdl_queries import PDLQueries
@@ -28,11 +28,11 @@ class ProgrammazioneTableWidget(StandardTable):
     row_expanded = Signal(int, bool)  # row, is_expanded
     selection_changed_custom = Signal()
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(0, 0, parent)
         self._setup_ui()
 
-    def _setup_ui(self):  # noqa: ANN202
+    def _setup_ui(self) -> None:
         self.setColumnCount(12)
         self.setAlternatingRowColors(True)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -59,12 +59,12 @@ class ProgrammazioneTableWidget(StandardTable):
                 self.setColumnWidth(i, 85)
 
         self.cellDoubleClicked.connect(self._handle_double_click)
-        self.cellClicked.connect(self.selection_changed_custom.emit)
+        self.cellClicked.connect(lambda _r, _c: self.selection_changed_custom.emit())
 
-    def _handle_double_click(self, row: int, column: int):  # noqa: ANN202
-        from src.gui.widgets.pdl_timeline import PDLTimelineWidget  # noqa: PLC0415
+    def _handle_double_click(self, row: int, column: int) -> None:
+        from src.gui.widgets.pdl_timeline import PDLTimelineWidget
 
-        # Se la riga sotto  gia' una timeline, la rimuoviamo (collasso)
+        # Se la riga sotto  già una timeline, la rimuoviamo (collasso)
         next_row = row + 1
         if next_row < self.rowCount():
             next_widget = self.cellWidget(next_row, 0)
@@ -82,8 +82,8 @@ class ProgrammazioneTableWidget(StandardTable):
         self.insertRow(next_row)
         try:
             interventions = PDLQueries.get_pdl_interventions(pdl_code)
-        except Exception as e:
-            logger.error(f"Errore timeline PDL {pdl_code}: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception(f"Errore timeline PDL {pdl_code}")
             interventions = []
 
         timeline = PDLTimelineWidget(interventions)
@@ -92,7 +92,7 @@ class ProgrammazioneTableWidget(StandardTable):
         self.setRowHeight(next_row, timeline.sizeHint().height())
         self.row_expanded.emit(row, True)
 
-    def populate_results(self, results: list[dict[str, Any]], today_idx: int = -1):  # noqa: ANN201
+    def populate_results(self, results: list[dict[str, Any]], today_idx: int = -1) -> None:
         """Popola la tabella con i risultati forniti."""
         self.setRowCount(len(results))
         for row_idx, res in enumerate(results):

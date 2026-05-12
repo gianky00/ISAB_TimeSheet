@@ -1,6 +1,6 @@
 """
 SyncroJob - Input Validators
-Framework di validazione centralizzato per garantire l'integrita' dei dati inseriti dall'utente.
+Framework di validazione centralizzato per garantire l'integrità dei dati inseriti dall'utente.
 Include controlli per OdA, PDL, Codici Fiscali e date.
 """
 

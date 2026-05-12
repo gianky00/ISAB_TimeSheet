@@ -3,15 +3,17 @@ SyncroJob - Auth Monitor
 Monitoraggio proattivo delle abilitazioni ISAB basato sulle timbrature.
 """
 
-import logging
 import re
+from collections.abc import Sequence
 from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any
 
+from src.core.constants import THRESHOLD_DAYS
 from src.core.database import db_manager
+from src.core.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def _normalize(t: Any) -> str:
@@ -30,7 +32,7 @@ def _parse_date(last_date_str: Any) -> datetime | None:
 
 
 def _build_access_maps(
-    accessi_raw: list[tuple[Any, ...]],
+    accessi_raw: Sequence[Sequence[Any]],
 ) -> tuple[dict[str, tuple[int, str]], dict[tuple[str, str], tuple[int, str]]]:
     """Costruisce le mappe di ultimo accesso: per CF e per (Cognome, Nome)."""
     last_by_cf: dict[str, tuple[int, str]] = {}
@@ -91,8 +93,6 @@ def _process_employee_match(
 
     # 3. Valutazione soglie
     if match_found and delta is not None:
-        from src.core.constants import THRESHOLD_DAYS  # noqa: PLC0415
-
         if delta <= THRESHOLD_DAYS["warning"]:
             return None
 
@@ -114,7 +114,7 @@ def _process_employee_match(
 def check_expiring_isab_authorizations() -> list[dict[str, Any]]:
     """
     Scansiona tutti i dipendenti per identificare chi ha l'abilitazione ISAB in scadenza.
-    Priorita':
+    Priorità:
     1. Match per Codice Fiscale (Infallibile)
     2. Fallback per Nome/Cognome (se CF assente in Dipendenti)
     """

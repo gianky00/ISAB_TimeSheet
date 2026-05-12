@@ -7,6 +7,7 @@ from typing import Any, ClassVar
 
 from src.bots.base.base_bot import StepStatus
 from src.bots.base.selenium_base_bot import SeleniumBaseBot
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
 from src.bots.portale_fornitori.carico_ts.pages.carico_ts_page import CaricoTSPage
 from src.core.constants import Business
 
@@ -31,12 +32,11 @@ class CaricoTSBot(SeleniumBaseBot):
 
     def __init__(
         self,
-        username: str,
-        password: str,
+        config: SeleniumBotConfig,
         **kwargs: Any,
     ) -> None:
         """Inizializza il bot Carico TS."""
-        super().__init__(username=username, password=password, **kwargs)
+        super().__init__(config=config)
 
     @staticmethod
     def get_description() -> str:

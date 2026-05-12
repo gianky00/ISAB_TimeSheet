@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import psutil
 from playwright.sync_api import sync_playwright
 
 from src.core import config_manager
@@ -87,8 +88,6 @@ def _check_filesystem(path: Path) -> dict[str, Any]:
 
 def _check_processes(path: Path) -> dict[str, Any]:
     """Rileva processi che potrebbero bloccare la directory."""
-    import psutil  # noqa: PLC0415
-
     result: dict[str, Any] = {"status": "PASS", "details": []}
     blocking_procs = []
 

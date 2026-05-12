@@ -3,6 +3,7 @@ SyncroJob - Scarico Ore Data Model
 Modello tabellare ottimizzato per la gestione di grandi volumi di dati (130k+ righe).
 """
 
+import warnings
 from collections.abc import Callable
 from contextlib import suppress
 from dataclasses import dataclass
@@ -19,7 +20,7 @@ from src.gui.components.scarico_ore.filter_worker import FilterWorker
 @dataclass(slots=True)
 class ScaricoOreRow:
     """
-    Modello dati che rappresenta una singola riga nella tabella 'Scarico Ore'.
+    Modello dati che rappresenta una singola riga nella tabella 'Scarico Orè.
     Contiene le informazioni sui dipendenti, le ore lavorate e i dettagli della commessa.
     """
 
@@ -180,7 +181,9 @@ class ScaricoOreTableModel(QAbstractTableModel):
         """
         if self.is_filtering and self._filter_worker and self._filter_worker.isRunning():
             self._filter_worker.cancel()
-            self._filter_worker.finished.disconnect()  # Disconnette per evitare update fantasma
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                self._filter_worker.finished.disconnect()  # Disconnette per evitare update fantasma
 
         self.is_filtering = True
         self._filter_worker = FilterWorker(
@@ -217,7 +220,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
             return 0
         return len(self.COLUMNS)
 
-    def data(
+    def data(  # noqa: PLR0911
         self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole
     ) -> Any:
         """Restituisce i dati per una specifica cella e ruolo."""
@@ -260,7 +263,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
             try:
                 if column == 0:
                     return self._date_keys[idx]
-                if column == 7:  # noqa: PLR2004
+                if column == 7:
                     return self._float_totals[idx]
                 val = self._display_data[idx][column]
                 return val.lower() if val else ""

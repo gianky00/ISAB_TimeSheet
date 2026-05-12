@@ -11,6 +11,7 @@ from PySide6.QtCore import QObject
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from src.core.telegram.bridge.data_processor import TelegramDataProcessor
+from src.core.telegram.bridge.ui_commands import TelegramUICommands
 from src.utils.printing import get_installed_printers
 from src.utils.validators import InputValidator
 
@@ -95,14 +96,12 @@ class TelegramIntentHandler(QObject):
         ]
         coro = self.telegram.app.bot.send_message(
             chat_id=chat_id,
-            text="Aggiunti PDL. **Vuoi che li stampiu'anche?**",
+            text="Aggiunti PDL. **Vuoi che li stampiùanche?**",
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
         self._run_coroutine(coro)
 
     def _handle_generic_download(self, obj: str) -> None:
-        from .ui_commands import TelegramUICommands  # noqa: PLC0415
-
         cmds = TelegramUICommands(self.mw, self.telegram)
         if obj == "oda":
             cmds.run_ts_bot()

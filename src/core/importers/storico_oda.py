@@ -38,10 +38,10 @@ class StoricoOdaImporter(BaseImporter):
         "Gruppo Acquisti": "gruppo_acquisti",
         "Indicatore Rilascio": "indicatore_rilascio",
         "Stato Rilascio": "stato_rilascio",
-        "Attivita'": "attivita",
+        "Attività": "attivita",
         "Num riga": "num_riga",
         "Quantit ": "quantita",
-        "Unita' di Mis": "unita_mis",
+        "Unità di Mis": "unita_mis",
         "Prezzo lordo": "prezzo_lordo",
         "Testo breve": "testo_breve",
     }

@@ -190,8 +190,8 @@ def log_entry_exit[F: Callable[..., Any]](
                     logger.debug(exit_msg)
                 return result  # noqa: TRY300
 
-            except Exception as e:
-                logger.error(f"Exception in {f.__name__}: {e}")  # noqa: TRY400
+            except Exception:
+                logger.exception(f"Exception in {f.__name__}")
                 raise
 
         return cast("F", wrapper)

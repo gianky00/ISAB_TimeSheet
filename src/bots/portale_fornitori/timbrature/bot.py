@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore, no-untyped-def, no-untyped-call"
 """
 SyncroJob - Timbrature Bot
 Bot for accessing Timbrature section using Page Object Model.
@@ -10,6 +9,7 @@ from typing import Any, ClassVar
 
 from src.bots.base.base_bot import StepStatus
 from src.bots.base.selenium_base_bot import SeleniumBaseBot
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
 from src.bots.portale_fornitori.timbrature.pages.timbrature_page import TimbraturePage
 from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
@@ -27,12 +27,12 @@ class TimbratureBot(SeleniumBaseBot):
 
     @property
     def name(self) -> str:
-        """Restituisce il nome del bot."""
-        return "Timbrature"
+        """Restituisce l'ID del bot."""
+        return "timbrature"
 
     @property
     def description(self) -> str:
-        """Restituisce una descrizione delle funzionalita' del bot."""
+        """Restituisce una descrizione delle funzionalità del bot."""
         return "Scarica e archivia le timbrature dal portale ISAB"
 
     @staticmethod
@@ -54,8 +54,16 @@ class TimbratureBot(SeleniumBaseBot):
             {"name": "data_a", "label": "Data A", "width": 100},
         ]
 
-    def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs):  # noqa: ANN003, ANN204
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        config: SeleniumBotConfig,
+        data_da: str = "",
+        data_a: str = "",
+        fornitore: str = "",
+        **kwargs: Any,
+    ) -> None:
+        """Inizializza il bot Timbrature."""
+        super().__init__(config=config)
         self.data_da = data_da
         self.data_a = data_a
         self.fornitore = fornitore
@@ -153,7 +161,7 @@ class TimbratureBot(SeleniumBaseBot):
         return True
 
     @staticmethod
-    def import_to_db_static(excel_path: str, db_path: Path, log_callback=None):  # noqa: ANN001, ANN205
+    def import_to_db_static(excel_path: str, db_path: Path, log_callback: Any = None) -> Any:
         """
         Static method for manual import (GUI).
         """

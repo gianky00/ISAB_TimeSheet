@@ -1,11 +1,13 @@
 """
-PriorityBadge - Badge component per visualizzare la priorita' di una notifica.
-Supporta High (con pulse animation), Medium e Low.
+Priority Badge Widget
+=====================
+Badge animato che mostra un punto pulsante con intensità variabile.
 """
 
+import contextlib
 from typing import Any, ClassVar
 
-from PySide6.QtCore import Property, QVariantAnimation
+from PySide6.QtCore import Property, QPropertyAnimation, Signal
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 from src.gui.styles import COLORS
@@ -13,100 +15,90 @@ from src.gui.styles import COLORS
 
 class PriorityBadge(QWidget):
     """
-    Badge per priorita' notifica con indicatore colorato e pulse animation.
-
-    Levels:
-    - high: Red dot + "Alta" label + pulse animation
-    - medium: Orange dot + "Media" label
-    - low: Green dot (no label, minimal)
+    Badge circolare con animazione di pulsazione (glow).
     """
 
-    # Color mapping
-    PRIORITY_COLORS: ClassVar[dict[str, str]] = {
-        "high": COLORS["error_red"],  # Red
-        "medium": COLORS["warning_orange"],  # Orange
-        "low": COLORS["success_dark"],  # Green
+    pulse_scale_changed = Signal(float)
+
+    COLOR_MAP: ClassVar[dict[str, str]] = {
+        "alta": COLORS["danger"],
+        "media": COLORS["warning"],
+        "bassa": COLORS["info"],
+        "completato": COLORS["success"],
     }
 
-    def __init__(self, priority: str = "low", parent: QWidget | None = None) -> None:
+    def __init__(self, priority: str = "media", parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.priority = priority.lower()
         self._pulse_scale = 1.0
         self._setup_ui()
-
-        # Start pulse animation for high priority
-        if self.priority == "high":
-            self._setup_pulse_animation()
+        self._setup_animation()
 
     def _setup_ui(self) -> None:
-        """Setup layout and components."""
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
-
-        # Color dot
-        color = self.PRIORITY_COLORS.get(self.priority, self.PRIORITY_COLORS["low"])
 
         self.dot = QLabel()
-        self.dot.setFixedSize(8, 8)
+        color = self.COLOR_MAP.get(self.priority, COLORS["info"])
         self.dot.setStyleSheet(
-            f"""
-      QLabel {{
-        background-color: {color};
-        border-radius: 4px;
-        border: none;
-      }}
-    """
+            f"background-color: {color}; border-radius: 4px; min-width: 8px; min-height: 8px;"
         )
+        self.dot.setFixedSize(8, 8)
         layout.addWidget(self.dot)
 
-        # Label (only for high and medium)
-        if self.priority in ("high", "medium"):
-            label_text = "Alta" if self.priority == "high" else "Media"
-            self.label = QLabel(label_text)
-            self.label.setStyleSheet(
-                f"""
-        QLabel {{
-          color: {color};
-          font-size: 11px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          border: none;
-          background: transparent;
-        }}
-      """
-            )
-            layout.addWidget(self.label)
+    def _setup_animation(self) -> None:
+        self.anim = QPropertyAnimation(self, b"pulse_scale")
+        self.anim.setDuration(1200)
+        self.anim.setStartValue(0.6)
+        self.anim.setEndValue(1.1)
+        self.anim.setLoopCount(-1)
+        self.anim.start()
 
-    def _setup_pulse_animation(self) -> None:
-        """Setup pulse animation for high priority badge."""
-        self.pulse_anim = QVariantAnimation(self)
-        self.pulse_anim.setStartValue(1.0)
-        self.pulse_anim.setKeyValueAt(0.5, 1.3)  # Scale up to 1.3x at midpoint
-        self.pulse_anim.setEndValue(1.0)
-        self.pulse_anim.setDuration(1000)  # 1 second per pulse
-        self.pulse_anim.setLoopCount(-1)  # Infinite loop
+    def set_priority(self, priority: str) -> None:
+        """Aggiorna il colore del badge in base alla priorità."""
+        self.priority = priority.lower()
+        color = self.COLOR_MAP.get(self.priority, COLORS["info"])
+        self.dot.setStyleSheet(
+            f"background-color: {color}; border-radius: 4px; min-width: 8px; min-height: 8px;"
+        )
 
-        self.pulse_anim.valueChanged.connect(self._on_pulse_value_changed)
-        self.pulse_anim.start()
+    def stop_animation(self) -> None:
+        """Ferma l'animazione in modo sicuro."""
+        if hasattr(self, "anim") and self.anim:
+            self.anim.stop()
 
-    def _on_pulse_value_changed(self, value: Any) -> None:
-        """Apply pulse scale to dot."""
-        f_value = float(value)
-        self._pulse_scale = f_value
-        # Apply scale transformation to dot
-        size = int(8 * f_value)
-        self.dot.setFixedSize(size, size)
+    def hideEvent(self, event: Any) -> None:
+        """Spegne l'animazione quando il widget non è visibile per risparmiare CPU."""
+        self.stop_animation()
+        super().hideEvent(event)
+
+    def showEvent(self, event: Any) -> None:
+        """Riprende l'animazione quando torna visibile."""
+        if hasattr(self, "anim") and self.anim:
+            self.anim.start()
+        super().showEvent(event)
+
+    def closeEvent(self, event: Any) -> None:
+        """Cleanup finale."""
+        self.stop_animation()
+        super().closeEvent(event)
 
     def get_pulse_scale(self) -> float:
-        """Get current pulse scale value."""
+        """Getter per la scala di pulsazione."""
         return self._pulse_scale
 
     def set_pulse_scale(self, value: float) -> None:
-        """Set pulse scale value."""
-        self._pulse_scale = value
-        size = int(8 * value)
-        self.dot.setFixedSize(size, size)
+        """Setter per la scala di pulsazione (usato dall'animazione)."""
+        if self._pulse_scale != value:
+            self._pulse_scale = value
+            self.pulse_scale_changed.emit(value)
+            # Applichiamo un effetto di ridimensionamento minimo o opacità
+            with contextlib.suppress(Exception):
+                if hasattr(self.dot, "setOpacity"):
+                    self.dot.setOpacity(value)
 
-    pulseScale = Property(float, fget=get_pulse_scale, fset=set_pulse_scale)  # noqa: N815
+            # In alternativa cambiamo la size
+            size = int(8 * value)
+            self.dot.setFixedSize(size, size)
+
+    pulse_scale = Property(float, fget=get_pulse_scale, fset=set_pulse_scale, notify=pulse_scale_changed)

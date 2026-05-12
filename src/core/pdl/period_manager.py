@@ -32,7 +32,7 @@ class PDLPeriodManager:
         return [
             "Richiedente",
             "Area",
-            "Unita'",
+            "Unità",
             "N  PDL",
             "Descrizione",
             f"LUN {days[0]}",

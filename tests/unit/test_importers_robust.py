@@ -160,7 +160,7 @@ class TestImportersRobust:
     @patch("src.core.importers.scarico_ore.msoffcrypto")
     def test_scan_encrypted_file(self, mock_crypto, tmp_path):
         """Test scansione file cifrato."""
-        from src.core.constants import Business  # noqa: PLC0415
+        from src.core.constants import Business
 
         path = tmp_path / "protected.xlsx"
         path.touch()

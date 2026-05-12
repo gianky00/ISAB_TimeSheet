@@ -7,6 +7,7 @@ import os
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
@@ -31,7 +32,7 @@ from src.gui.widgets.modern_card import ModernContentCard
 
 
 class CreaNuovoTab(QWidget):
-    """Tab per la generazione di un nuovo consuntivo con tutti i campiu'necessari."""
+    """Tab per la generazione di un nuovo consuntivo con tutti i campiùnecessari."""
 
     step_clicked = Signal(str)
     _prog_computed = Signal(str)
@@ -52,7 +53,7 @@ class CreaNuovoTab(QWidget):
     def _on_prog_computed(self, prog: str) -> None:
         self.progressivo_edit.setText(prog)
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -65,7 +66,22 @@ class CreaNuovoTab(QWidget):
         layout.setContentsMargins(20, 12, 20, 16)
         layout.setSpacing(14)
 
-        # --- CARD 1: SETUP E PERCORSI ---
+        opts = self.controller.get_config_options()
+
+        self._setup_card_settings(layout)
+        self._setup_card_intervention(layout, opts)
+        self._setup_card_descriptions(layout)
+        self._setup_footer(layout)
+
+        layout.addStretch()
+        scroll.setWidget(content)
+        main_layout.addWidget(scroll)
+
+        # Init
+        self._update_dynamic_path()
+
+    def _setup_card_settings(self, layout: QVBoxLayout) -> None:
+        """Card 1: SETUP E PERCORSI."""
         card1, card1_lay = self._create_card("IMPOSTAZIONI E DESTINAZIONE")
         config_row = QHBoxLayout()
         config_row.setSpacing(20)
@@ -89,7 +105,8 @@ class CreaNuovoTab(QWidget):
         card1_lay.addLayout(config_row)
         layout.addWidget(card1)
 
-        # --- CARD 2: DATI IDENTIFICATIVI ---
+    def _setup_card_intervention(self, layout: QVBoxLayout, opts: dict[str, Any]) -> None:
+        """Card 2: DATI IDENTIFICATIVI."""
         card2, id_layout = self._create_card("DETTAGLI INTERVENTO E CLASSIFICAZIONE")
 
         row1 = QHBoxLayout()
@@ -99,8 +116,6 @@ class CreaNuovoTab(QWidget):
         row1.addLayout(self._create_input_group("DATA (A5)", self.data_edit, width=120))
 
         self.tcl_combo = FilterComboBox()
-        # Carica dinamico da controller (CORE)
-        opts = self.controller.get_config_options()
         self.tcl_combo.addItems(opts["tcl"])
         row1.addLayout(self._create_input_group("TCL (A7)", self.tcl_combo, width=180))
 
@@ -120,7 +135,7 @@ class CreaNuovoTab(QWidget):
 
         self.stato_combo = FilterComboBox()
         self.stato_combo.addItems(opts["stati"])
-        row2.addLayout(self._create_input_group("STATO Attivita'(D11)", self.stato_combo, width=220))
+        row2.addLayout(self._create_input_group("STATO Attività(D11)", self.stato_combo, width=220))
 
         self.tipo_prev_combo = FilterComboBox()
         self.tipo_prev_combo.addItems(opts["tipologie"])
@@ -135,8 +150,9 @@ class CreaNuovoTab(QWidget):
         id_layout.addLayout(row2)
         layout.addWidget(card2)
 
-        # --- CARD 3: DESCRIZIONI ---
-        card3, desc_layout = self._create_card("DESCRIZIONE DELLE Attivita'")
+    def _setup_card_descriptions(self, layout: QVBoxLayout) -> None:
+        """Card 3: DESCRIZIONI."""
+        card3, desc_layout = self._create_card("DESCRIZIONE DELLE Attività")
 
         desc_row = QHBoxLayout()
         desc_row.setSpacing(20)
@@ -156,28 +172,20 @@ class CreaNuovoTab(QWidget):
         desc_layout.addLayout(desc_row)
         layout.addWidget(card3)
 
-        # --- MAPPA WORKFLOW ---
+    def _setup_footer(self, layout: QVBoxLayout) -> None:
+        """Mappa workflow, bottone genera e log."""
         self.workflow_map = WorkflowMapWidget()
         self.workflow_map.step_clicked.connect(self._on_workflow_step)
         layout.addWidget(self.workflow_map)
 
-        # --- BOTTONE GENERA ---
         self.btn_generate = PrimaryButton("GENERA CONSUNTIVO EXCEL")
         self.btn_generate.setMinimumHeight(55)
         self.btn_generate.clicked.connect(self._on_generate)
         layout.addWidget(self.btn_generate, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        # --- LOG ---
         self.log_widget = OperationLogWidget()
         self.log_widget.setMinimumHeight(160)
         layout.addWidget(self.log_widget)
-
-        layout.addStretch()
-        scroll.setWidget(content)
-        main_layout.addWidget(scroll)
-
-        # Init
-        self._update_dynamic_path()
 
     def _create_card(self, title_text: str) -> tuple[ModernContentCard, QVBoxLayout]:
         card = ModernContentCard()
@@ -221,7 +229,7 @@ class CreaNuovoTab(QWidget):
         self.dest_path_edit.setText(dynamic_path)
         self.dest_path_edit.setToolTip(dynamic_path)
 
-        if not force and (now - self._last_prog_check < 60) and self._cached_prog:  # noqa: PLR2004
+        if not force and (now - self._last_prog_check < 60) and self._cached_prog:
             self.progressivo_edit.setText(self._cached_prog)
             return
 

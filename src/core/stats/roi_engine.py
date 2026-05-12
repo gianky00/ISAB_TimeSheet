@@ -9,6 +9,7 @@ from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
+from src.core.config_manager import get_config_value
 from src.core.database import db_manager
 from src.core.schemas import ROIMetrics
 
@@ -28,7 +29,6 @@ class ROIEngine:
     @staticmethod
     def get_weights() -> dict[str, float]:
         """Recupera i pesi (minuti risparmiati per operazione) dalla configurazione."""
-        from src.core.config_manager import get_config_value  # noqa: PLC0415
 
         default_weights = {
             "Scarico TS": 15.0,

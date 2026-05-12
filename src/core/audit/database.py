@@ -16,14 +16,14 @@ class AuditDatabase:
     _db_path_override: Path | None = None
 
     @property
-    def DB_PATH(self) -> Path:  # noqa: N802
+    def db_path(self) -> Path:
         """Restituisce il percorso dinamico del database Audit."""
         if self._db_path_override is not None:
             return self._db_path_override
         return db_manager.DB_AUDIT
 
-    @DB_PATH.setter
-    def DB_PATH(self, value: Path) -> None:  # noqa: N802
+    @db_path.setter
+    def db_path(self, value: Path) -> None:
         self._db_path_override = value
 
     def __init__(self) -> None:
@@ -31,8 +31,8 @@ class AuditDatabase:
 
     def _init_db(self) -> None:
         """Inizializza il database e migra lo schema se necessario."""
-        self.DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(self.DB_PATH) as conn:
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        with sqlite3.connect(self.db_path) as conn:
             conn.execute(
                 """
         CREATE TABLE IF NOT EXISTS audit_logs (
@@ -79,10 +79,10 @@ class AuditDatabase:
 
     def get_connection(self) -> sqlite3.Connection:
         """Restituisce una nuova connessione al database dell'Audit."""
-        return sqlite3.connect(self.DB_PATH)
+        return sqlite3.connect(self.db_path)
 
     def get_last_hash(self) -> str:
-        """Recupera l'hash dell'ultima riga inserita per garantire l'integrita' della catena."""
+        """Recupera l'hash dell'ultima riga inserita per garantire l'integrità della catena."""
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
@@ -129,7 +129,7 @@ class AuditDatabase:
           end_date: Data massima.
           levels: Lista di severit  filtrate.
           category: Categoria specifica.
-          search_text: Testo libero da cercare in piu' campi.
+          search_text: Testo libero da cercare in più campi.
           limit: Numero massimo di risultati.
           offset: Salto per paginazione.
 
@@ -179,8 +179,8 @@ class AuditDatabase:
 
                 cur.execute(query, params)
                 logs = [dict(r) for r in cur.fetchall()]
-        except Exception as e:
-            logger.error(f"Audit DB Fetch Error: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Audit DB Fetch Error")
         return logs, total
 
     def get_categories(self) -> list[str]:
@@ -194,7 +194,7 @@ class AuditDatabase:
 
     def delete_older_than(self, cutoff_iso: str) -> int:
         """
-        Elimina i log piu' vecchi della data specificata.
+        Elimina i log più vecchi della data specificata.
 
         Args:
           cutoff_iso: Data limite in formato ISO.
@@ -206,6 +206,6 @@ class AuditDatabase:
             with self.get_connection() as conn:
                 res = conn.execute("DELETE FROM audit_logs WHERE timestamp < ?", (cutoff_iso,))
                 return int(res.rowcount)
-        except Exception as e:
-            logger.error(f"Audit DB Retention Error: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Audit DB Retention Error")
             return 0

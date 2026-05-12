@@ -31,10 +31,10 @@ class TestMasterCoverage:
         assert selected is None  # Initial state is all selected
 
     def test_audit_manager_integrity(self, tmp_path):
-        import time  # noqa: PLC0415
-        from unittest.mock import PropertyMock  # noqa: PLC0415
+        import time
+        from unittest.mock import PropertyMock
 
-        from src.core.audit.manager import AuditManager  # noqa: PLC0415
+        from src.core.audit.manager import AuditManager
 
         AuditManager._instance = None  # Reset singleton per isolamento
 
@@ -50,7 +50,7 @@ class TestMasterCoverage:
             assert am.verify_integrity() is True
 
     def test_contabilita_queries_years(self, tmp_path):
-        from src.core.contabilita_queries import ContabilitaQueries  # noqa: PLC0415
+        from src.core.contabilita_queries import ContabilitaQueries
 
         # Just test the method doesn't crash with empty db
         db = tmp_path / "test.db"

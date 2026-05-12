@@ -1,16 +1,21 @@
-# mypy: disable-error-code="no-untyped-call"
 """
 SyncroJob - Playwright Safework Base Bot
 Classe base specifica per SafeWork usando Playwright.
 """
 
+from __future__ import annotations
+
 from contextlib import suppress
+from typing import TYPE_CHECKING
 
 from playwright.sync_api import TimeoutError
 
 from src.bots.base.playwright_base_bot import PlaywrightBaseBot
 from src.bots.safework.pages.playwright_login_page import PlaywrightSafeWorkLoginPage
 from src.core.constants import URLs
+
+if TYPE_CHECKING:
+    from src.bots.base.selenium_bot_config import SeleniumBotConfig
 
 
 class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
@@ -22,16 +27,12 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
     SAFEWORK_URL = URLs.SAFEWORK_URL
     ISAB_URL = SAFEWORK_URL
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = 30,
-        download_path: str = "",
+        config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
-        super().__init__(username, password, headless, timeout, download_path)
+        super().__init__(config)
         self.account_type = account_type
         self.safework_login_page: PlaywrightSafeWorkLoginPage | None = None
 
@@ -77,7 +78,7 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
 
         with suppress(Exception):
             # 1. Controllo specifico per Ricerca Estesa (Richiesto in Safework)
-            self.log("[CERCA] Controllo presenza popup 'Ricerca Estesa'...")
+            self.log("[CERCA] Controllo presenza popup 'Ricerca Estesà...")
             popup_xpath = "//p[contains(text(), 'estenderla')]"
 
             # Usiamo wait_for_selector per attendere la comparsa reale (timeout breve)
@@ -97,7 +98,7 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
                         xpath_full = sel if sel.startswith("/") else f"css={sel}"
                         if self.page.is_visible(xpath_full):
                             self.page.click(xpath_full, timeout=2000)
-                            self.log("✅ Click su 'Si' riuscito (Ricerca Estesa)")
+                            self.log("✅ Click su 'Sì riuscito (Ricerca Estesa)")
                             self.page.wait_for_timeout(1000)
                             return True
             else:

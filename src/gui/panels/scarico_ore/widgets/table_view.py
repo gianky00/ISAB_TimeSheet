@@ -82,7 +82,7 @@ class ScaricoOreTableView(QTableView):
                 return
             total = 0.0
             for idx in idxs:
-                if idx.column() == 7:  # TOTALE ORE # noqa: PLR2004
+                if idx.column() == 7:  # TOTALE ORE
                     with suppress(ValueError):
                         val = str(idx.data(Qt.ItemDataRole.DisplayRole)).replace(",", ".")
                         if val:

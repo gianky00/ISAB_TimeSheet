@@ -1,10 +1,8 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Bot Parameters Widget
 Widget riutilizzabile per la configurazione dei parametri comuni a tutti i bot (Fornitore, Date, Percorso).
 """
 
-import os
 from contextlib import suppress
 from pathlib import Path
 from typing import Any
@@ -37,7 +35,7 @@ from src.gui.widgets.core_widgets import (
 )
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.utils.helpers import get_asset_path, get_colored_icon, safe_open
 
 from .calendar_date_edit import CalendarDateEdit
 
@@ -45,8 +43,10 @@ from .calendar_date_edit import CalendarDateEdit
 class HoverPulseFrame(QFrame):
     """
     Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
-    Fornisce un feedback visivo immediato sull'interattivita'della card parametri.
+    Fornisce un feedback visivo immediato sull'interattivitàdella card parametri.
     """
+
+    pulse_value_changed = Signal(float)
 
     def __init__(self, accent_color: str | None = None, parent: QWidget | None = None) -> None:
         """
@@ -67,16 +67,18 @@ class HoverPulseFrame(QFrame):
         self._anim.setLoopCount(-1)
         self._anim.setEasingCurve(QEasingCurve.Type.InOutSine)
 
-    @Property(float)
-    def pulse_value(self) -> float:
+    def get_pulse_value(self) -> float:
         """Restituisce il valore corrente della pulsazione per l'animazione del bordo."""
         return self._pulse_val
 
-    @pulse_value.setter
-    def pulse_value(self, v: float) -> None:
+    def set_pulse_value(self, v: float) -> None:
         """Imposta il valore della pulsazione e forza il ridisegno del widget."""
-        self._pulse_val = v
-        self.update()
+        if self._pulse_val != v:
+            self._pulse_val = v
+            self.pulse_value_changed.emit(v)
+            self.update()
+
+    pulse_value = Property(float, fget=get_pulse_value, fset=set_pulse_value, notify=pulse_value_changed)
 
     def enterEvent(self, event: Any) -> None:
         """Avvia l'animazione di pulsazione del bordo all'ingresso del mouse."""
@@ -86,7 +88,7 @@ class HoverPulseFrame(QFrame):
     def leaveEvent(self, event: Any) -> None:
         """Interrompe l'animazione e ripristina lo stato solido all'uscita del mouse."""
         self._anim.stop()
-        self.pulse_value = 1.0  # type: ignore[method-assign]
+        self.set_pulse_value(1.0)
         super().leaveEvent(event)
 
     def paintEvent(self, event: Any) -> None:
@@ -134,7 +136,7 @@ class BotParametersWidget(QWidget):
         Inizializza il widget dei parametri.
 
         Args:
-          show_date_range: Se True, visualizza anche il campo 'Data A'.
+          show_date_range: Se True, visualizza anche il campo 'Data À.
           show_dest_path: Se True, visualizza il campo selezione cartella.
           parent: Widget genitore.
         """
@@ -145,27 +147,29 @@ class BotParametersWidget(QWidget):
         self.refresh_fornitori()
 
     def _setup_ui(self) -> None:
-        """Configura il layout orizzontale e i componenti interni con stile Neon & Shadow."""
+        """Configura il layout orizzontale e i componenti interni."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 15)
         main_layout.setSpacing(0)
 
-        # --- CONTAINER PRINCIPALE (La "Card" Modern Design) ---
+        # Container Principale
         self.container = QFrame()
         self.container.setObjectName("filterBar")
-
-        self.container.setStyleSheet(f"""
-      QFrame#filterBar {{
-        background-color: {COLORS["bg_white"]};
-        border: 1px solid {COLORS["border_light"]};
-        border-radius: 12px;
-      }}
-    """)
+        self.container.setStyleSheet(
+            f"QFrame#filterBar {{ background-color: {COLORS['bg_white']}; border: 1px solid {COLORS['border_light']}; border-radius: 12px; }}"
+        )
 
         self.main_row_layout = QHBoxLayout(self.container)
         self.main_row_layout.setContentsMargins(15, 10, 15, 10)
         self.main_row_layout.setSpacing(20)
 
+        self._create_ui_sections()
+
+        self.main_row_layout.addStretch()
+        main_layout.addWidget(self.container)
+
+    def _create_ui_sections(self) -> None:
+        """Crea le sezioni della toolbar parametri."""
         self._setup_societa_section()
         self._add_divider()
         self._setup_fornitore_section()
@@ -176,14 +180,11 @@ class BotParametersWidget(QWidget):
             self._add_divider()
             self._setup_dest_path_section()
 
-        self.main_row_layout.addStretch()
-        main_layout.addWidget(self.container)
-
     def _setup_societa_section(self) -> None:
-        """Configura la sezione di selezione della societa'(ISAB/PSER)."""
+        """Configura la sezione di selezione della società(ISAB/PSER)."""
         vbox = QVBoxLayout()
         vbox.setSpacing(4)
-        lbl = QLabel("Societa'")
+        lbl = QLabel("Società")
         lbl.setStyleSheet(LABEL_MUTED)
         vbox.addWidget(lbl)
 
@@ -348,18 +349,15 @@ class BotParametersWidget(QWidget):
             self.dest_path_edit.setText(path)
 
     def _open_folder(self) -> None:
-        """Apre la cartella di destinazione nell'esplora risorse di sistema."""
-        path_str = self.dest_path_edit.text()
-        if not path_str:
-            path_str = str(Path.home() / "Downloads")
-
+        """Apre la cartella di destinazione nell'esplora risorse di sistema in modo sicuro."""
+        path_str = self.dest_path_edit.text() or str(Path.home() / "Downloads")
         path = Path(path_str).resolve()
-        if not path.exists():
-            path.mkdir(parents=True, exist_ok=True)
 
-        try:
-            os.startfile(str(path))  # noqa: S606
-        except Exception:
+        if not path.exists():
+            with suppress(Exception):
+                path.mkdir(parents=True, exist_ok=True)
+
+        if not safe_open(path):
             ToastManager.instance().show(f"Impossibile aprire la cartella: {path}", "error")
 
     def refresh_fornitori(self) -> None:
@@ -385,11 +383,11 @@ class BotParametersWidget(QWidget):
             self.fornitore_combo.setCurrentIndex(index)
 
     def get_societa(self) -> str:
-        """Restituisce la societa'selezionata (ISAB o PSER)."""
+        """Restituisce la societàselezionata (ISAB o PSER)."""
         return self.societa_combo.currentText()
 
     def set_societa(self, societa: str) -> None:
-        """Imposta la societa'selezionata."""
+        """Imposta la societàselezionata."""
         index = self.societa_combo.findText(societa)
         if index >= 0:
             self.societa_combo.setCurrentIndex(index)
@@ -401,7 +399,7 @@ class BotParametersWidget(QWidget):
         return date_da, date_a
 
     def set_dates(self, date_da_str: str, date_a_str: str | None = None) -> None:
-        """Imposta le date nei campiu'di input."""
+        """Imposta le date nei campiùdi input."""
         with suppress(Exception):
             d, m, y = map(int, date_da_str.split("."))
             self.date_da.setDate(QDate(y, m, d))

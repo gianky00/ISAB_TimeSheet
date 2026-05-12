@@ -9,6 +9,8 @@ from typing import Any, ClassVar
 
 from src.bots.base.base_bot import StepStatus
 from src.bots.base.selenium_base_bot import SeleniumBaseBot
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
+from src.core.constants import Business
 
 from .pages.prenota_bp_page import PrenotaBPPage
 
@@ -35,30 +37,25 @@ class PrenotaBPBot(SeleniumBaseBot):
 
     @property
     def name(self) -> str:
-        return "Prenota BP"
+        """Restituisce l'ID del bot."""
+        return "prenota_bp"
 
     @property
     def description(self) -> str:
+        """Restituisce la descrizione del bot."""
         return "Prenotazione Badge Provvisori sul portale ISAB"
 
     def __init__(
         self,
-        username: str,
-        password: str,
+        config: SeleniumBotConfig,
         data_da: str | None = None,
         data_a: str | None = None,
         fornitore: str | None = None,
         **kwargs: Any,
     ) -> None:
-        # Pulizia kwargs come in Scarico TS
-        kwargs.pop("fornitore", None)
-        kwargs.pop("data_a", None)
-        kwargs.pop("data_da", None)
-
-        # Passiamo i parametri richiesti a BaseBot
-        super().__init__(username=username, password=password, **kwargs)
+        """Inizializza il bot Prenota BP."""
+        super().__init__(config=config)
         current_year = datetime.now(UTC).astimezone().year
-        from src.core.constants import Business  # noqa: PLC0415
 
         self.data_da = data_da or f"01.01.{current_year}"
         self.data_a = data_a or f"31.12.{current_year}"
@@ -169,13 +166,6 @@ class PrenotaBPBot(SeleniumBaseBot):
                 page.chiudi_dettagli_bp()
 
             self.results.append({"NUMERO BP": num_bp, "STATO": "OK"})
-
-            # Notifica progresso alla GUI (index, success, message)
-            callback = getattr(self, "_progress_callback", None)
-            if callback:
-                callback(index, True, "")
-
-            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"  Errore su BP {num_bp}: {e}")
             self.update_step("reserve", StepStatus.ERROR)
@@ -189,3 +179,10 @@ class PrenotaBPBot(SeleniumBaseBot):
                 callback(index, False, str(e))
 
             return False
+        else:
+            # Notifica progresso alla GUI (index, success, message)
+            callback = getattr(self, "_progress_callback", None)
+            if callback:
+                callback(index, True, "")
+
+            return True

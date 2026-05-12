@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - SafeWork Programmazione Bot
 Bot modulare per il monitoraggio della programmazione settimanale tramite Export Excel (Ricerca Massiva).
@@ -12,6 +11,7 @@ from typing import Any, ClassVar
 import pandas as pd
 
 from src.bots.base.base_bot import StepStatus
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
 from src.bots.base.wait_helpers import poll_for_new_file
 from src.bots.safework.base import SafeworkBaseBot
 from src.bots.safework.common.locators import SafeWorkLocators
@@ -27,33 +27,25 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
-        ("nav", "Navigazione Attivita'"),
+        ("nav", "Navigazione Attività"),
         ("filter", "Configurazione Filtri"),
         ("search", "Ricerca ed Export"),
         ("parse", "Analisi Risultati"),
     ]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = 30,
-        download_path: str = "",
+        config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
         """
         Inizializza il bot di programmazione.
 
         Args:
-          username: Nome utente SafeWork.
-          password: Password SafeWork.
-          headless: Se avviare il browser in modalita' nascosta.
-          timeout: Tempo di attesa per Selenium.
-          download_path: Cartella per il download degli Excel.
+          config: Configurazione standardizzata del bot.
           account_type: Tipo di account (Esecutore/ISAB).
         """
-        super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
+        super().__init__(config, account_type=account_type)
         self.results: list[dict[str, Any]] = []
 
     @staticmethod
@@ -70,6 +62,11 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
     def name(self) -> str:
         """Restituisce l'ID del bot."""
         return "programmazione_pdl"
+
+    @property
+    def description(self) -> str:
+        """Restituisce la descrizione del bot."""
+        return "Monitoraggio programmazione settimanale SafeWork"
 
     def run(self, data: list[dict[str, Any]]) -> bool:
         """
@@ -93,7 +90,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
 
         # 1. Navigazione
         self.update_step("nav", StepStatus.RUNNING)
-        self.log("   Navigazione in 'Visualizza Attivita''...")
+        self.log("   Navigazione in 'Visualizza Attività'...")
         if not self.driver:
             self.log("❌ Driver non inizializzato.")
             self.update_step("nav", StepStatus.ERROR)
@@ -109,7 +106,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         # 2. Setup Filtri Generali
         self.update_step("filter", StepStatus.RUNNING)
         if not self.attivita_page:
-            self.log("❌ Pagina Attivita'non inizializzata.")
+            self.log("❌ Pagina Attivitànon inizializzata.")
             self.update_step("filter", StepStatus.ERROR)
             return False
 
@@ -151,8 +148,11 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
 
         self.log("   Esportazione Excel massiva...")
         if self.attivita_page and self.attivita_page.esporta_excel():
-            return poll_for_new_file(  # type: ignore
-                directory=self.download_path, files_before=files_before, pattern="*.xlsx", timeout=300
+            from src.bots.base.wait_helpers import PollConfig
+
+            return poll_for_new_file(
+                PollConfig(directory=self.download_path, pattern="*.xlsx", timeout=300),
+                files_before=files_before,
             )
         return None
 

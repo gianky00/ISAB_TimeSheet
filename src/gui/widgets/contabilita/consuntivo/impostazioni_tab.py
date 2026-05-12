@@ -36,7 +36,7 @@ class ImpostazioniTab(QWidget):
         layout.addWidget(info)
 
         desc = QLabel(
-            "Modifica i nomi dei tecnici e gli stati dell'attivita'che appariranno nei menu a tendina."
+            "Modifica i nomi dei tecnici e gli stati dell'attivitàche appariranno nei menu a tendina."
         )
         desc.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 13px; border: none;")
         layout.addWidget(desc)
@@ -45,7 +45,7 @@ class ImpostazioniTab(QWidget):
         lists_row.setSpacing(30)
 
         self.tcl_editor = self._create_list_editor("Tecnici (TCL)", "preventivi_tcl")
-        self.stati_editor = self._create_list_editor("Stati Attivita'", "preventivi_stati")
+        self.stati_editor = self._create_list_editor("Stati Attività", "preventivi_stati")
 
         lists_row.addWidget(self.tcl_editor)
         lists_row.addWidget(self.stati_editor)
@@ -85,7 +85,7 @@ class ImpostazioniTab(QWidget):
             btns.addWidget(b)
 
         def add() -> None:
-            from src.gui.dialogs.standard_input_dialog import StandardInputDialog  # noqa: PLC0415
+            from src.gui.dialogs.standard_input_dialog import StandardInputDialog
 
             text, ok = StandardInputDialog.get_input(self, title, "Nuovo valore:")
             if ok and text.strip():

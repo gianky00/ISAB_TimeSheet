@@ -90,4 +90,4 @@ class SortableTableWidgetItem(QTableWidgetItem):
                 # Gestisce anche date parziali troncando il testo se necessario?
                 # Meglio match esatto per evitare falsi positivi
                 return datetime.strptime(text, fmt).replace(tzinfo=UTC)
-        raise ValueError("Not a date")  # noqa: TRY003
+        raise ValueError("Not a date")

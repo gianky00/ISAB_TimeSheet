@@ -1,7 +1,6 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore, no-untyped-call"
 """
-SyncroJob - SafeWork Visualizza Attivita'Page
-Gestione della pagina Visualizza Attivita'per la programmazione.
+SyncroJob - SafeWork Visualizza AttivitàPage
+Gestione della pagina Visualizza Attivitàper la programmazione.
 """
 
 import contextlib
@@ -18,7 +17,7 @@ from src.bots.safework.common.locators import SafeWorkLocators
 
 
 class VisualizzaAttivitaPage:
-    """Gestisce le interazioni con la pagina Visualizza Attivita'."""
+    """Gestisce le interazioni con la pagina Visualizza Attività."""
 
     def __init__(
         self, driver: webdriver.Chrome, wait: WebDriverWait[webdriver.Chrome], log_func: Callable[[str], None]
@@ -46,11 +45,11 @@ class VisualizzaAttivitaPage:
         self._seleziona_da_dropdown(SafeWorkLocators.DITTA_BUTTON, nome_ditta)
 
     def seleziona_richiedente(self, items: str | list[str]) -> bool:
-        """Seleziona uno o piu' richiedenti nel dropdown."""
+        """Seleziona uno o più richiedenti nel dropdown."""
         return self._seleziona_da_dropdown(SafeWorkLocators.RICHIEDENTE_BUTTON, items)
 
     def esegui_ricerca(self) -> None:
-        """Clicca 'Avvia Ricerca'."""
+        """Clicca 'Avvia Ricercà."""
         self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.SEARCH_START_BUTTON)).click()
 
     def esporta_excel(self) -> bool:
@@ -66,7 +65,7 @@ class VisualizzaAttivitaPage:
     def get_rows(self) -> list[Any]:
         """Restituisce le righe della tabella risultati."""
         try:
-            return self.driver.find_elements(*SafeWorkLocators.ROWS)  # type: ignore[no-any-return]
+            return self.driver.find_elements(*SafeWorkLocators.ROWS)
         except Exception:
             return []
 

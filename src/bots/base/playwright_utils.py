@@ -24,11 +24,11 @@ def get_playwright_selector(locator: tuple[str, str]) -> str:
     by, value = locator
     result = value
 
-    # Se  gia' un selettore Playwright (con prefisso)
+    # Se  già un selettore Playwright (con prefisso)
     if value.startswith(("xpath=", "id=", "css=", "text=")):
         return value
 
-    # Priorita': Rilevamento automatico XPath per robustezza
+    # Priorità: Rilevamento automatico XPath per robustezza
     if value.startswith(("//", "(")):
         return f"xpath={value}"
 

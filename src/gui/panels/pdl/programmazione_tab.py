@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - PDL Programmazione Tab (Refactored)
 Scheda coordinata per il monitoraggio della programmazione settimanale SafeWork.
@@ -17,6 +16,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
+from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
 from src.core import config_manager
 from src.core.constants import Icons
 from src.core.database.pdl_queries import PDLQueries
@@ -26,6 +27,7 @@ from src.gui.styles import COLORS
 from src.gui.widgets import MultiSelectFilter, TimelineWidget
 from src.gui.widgets.core_widgets import FilterComboBox, StandardGroupBox
 from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets.pdl.status_bar_widget import ProgrammingStatusWidget
 from src.gui.widgets.pdl.table_widget import ProgrammazioneTableWidget
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path
@@ -36,7 +38,7 @@ logger = logging.getLogger(__name__)
 class ProgrammazioneTab(QWidget):
     """Orchestratore della programmazione settimanale PDL."""
 
-    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.worker: BotWorker | None = None
         self.last_results: list[dict[str, Any]] = []
@@ -45,12 +47,18 @@ class ProgrammazioneTab(QWidget):
         self._load_requesters()
         self._load_persisted_data()
 
-    def _setup_ui(self):  # noqa: ANN202, PLR0915
+    def _setup_ui(self) -> None:
+        """Configura l'interfaccia utente principale."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(15)
 
-        # --- TOOLBAR ---
+        self._setup_toolbar(layout)
+        self._setup_log_area(layout)
+        self._setup_tables_area(layout)
+
+    def _setup_toolbar(self, layout: QVBoxLayout) -> None:
+        """Configura la barra degli strumenti con filtri e controlli."""
         top_bar = QHBoxLayout()
         filter_area = QVBoxLayout()
 
@@ -62,13 +70,14 @@ class ProgrammazioneTab(QWidget):
         controls = QHBoxLayout()
         controls.setSpacing(20)
 
-        # Import Controls
+        # Selettore Settimana
         self.week_selector = FilterComboBox()
         self.week_selector.addItems(["Settimana Corrente", "Settimana Prossima"])
         self.week_selector.setFixedWidth(160)
         self.week_selector.currentIndexChanged.connect(self._on_week_changed)
         controls.addWidget(self.week_selector)
 
+        # Filtro Richiedenti
         self.req_filter = MultiSelectFilter("Richiedenti", "Seleziona Bot...")
         self.req_filter.setFixedWidth(220)
         self.req_filter.changed.connect(
@@ -76,22 +85,23 @@ class ProgrammazioneTab(QWidget):
         )
         controls.addWidget(self.req_filter)
 
-        # View Filters
+        # Filtro Visualizzazione
         self.view_filter = MultiSelectFilter("Mostra", "Filtra Risultati...")
         self.view_filter.setFixedWidth(200)
         self.view_filter.changed.connect(lambda _: self._apply_filters())
         controls.addWidget(self.view_filter)
 
+        # Selettore Giorno
         self.day_selector = FilterComboBox()
         self.day_selector.addItems(
             [
                 "Settimana Intera",
                 "Oggi",
-                "Luned ",
-                "Marted ",
-                "Mercoled ",
-                "Gioved ",
-                "Venerd ",
+                "Lunedì",
+                "Martedì",
+                "Mercoledì",
+                "Giovedì",
+                "Venerdì",
                 "Sabato",
                 "Domenica",
             ]
@@ -100,6 +110,7 @@ class ProgrammazioneTab(QWidget):
         self.day_selector.currentTextChanged.connect(lambda _: self._apply_filters())
         controls.addWidget(self.day_selector)
 
+        # Selettore Raggruppamento
         self.group_selector = FilterComboBox()
         self.group_selector.addItems(["Tabella Unica", "Area", "Richiedente"])
         self.group_selector.setFixedWidth(140)
@@ -110,6 +121,7 @@ class ProgrammazioneTab(QWidget):
         top_bar.addLayout(filter_area)
         top_bar.addStretch()
 
+        # Bottoni Azione
         self.btn_run = ModernButton(
             "Esegui Controllo", variant=ModernButton.Variant.PRIMARY, icon=get_asset_path(Icons.PLAY)
         )
@@ -124,11 +136,15 @@ class ProgrammazioneTab(QWidget):
         top_bar.addWidget(self.btn_run)
         layout.addLayout(top_bar)
 
+    def _setup_log_area(self, layout: QVBoxLayout) -> None:
+        """Configura l'area dei log del bot."""
         self.log_widget = TimelineWidget()
         self.log_widget.setFixedHeight(180)
         self.log_widget.setVisible(False)
         layout.addWidget(self.log_widget)
 
+    def _setup_tables_area(self, layout: QVBoxLayout) -> None:
+        """Configura l'area scrollabile per le tabelle dei risultati."""
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setStyleSheet("QScrollArea { border: none; background: transparent; }")
@@ -138,31 +154,31 @@ class ProgrammazioneTab(QWidget):
         self.scroll_area.setWidget(self.tables_container)
         layout.addWidget(self.scroll_area)
 
-    def _load_requesters(self):  # noqa: ANN202
+    def _load_requesters(self) -> None:
         try:
             reqs = PDLQueries.get_unique_requesters()
             self.req_filter.set_items(reqs)
             saved = config_manager.get_config_value("selected_programming_requesters", [])
             self.req_filter.set_selected(saved)
         except Exception as e:
-            logger.error(f"Errore richiedenti: {e}")  # noqa: TRY400
+            logger.exception("Errore richiedenti", exc_info=e)
 
-    def _on_week_changed(self, idx):  # noqa: ANN001, ANN202
+    def _on_week_changed(self, idx: int) -> None:
         config_manager.set_config_value("programming_selected_week", idx)
         s, e, _ = PDLPeriodManager.get_week_range(idx)
         self.week_label.setText(f"Monitoraggio Settimana: <b>{s} - {e}</b>")
         self._load_persisted_data()
 
-    def _load_persisted_data(self):  # noqa: ANN202
+    def _load_persisted_data(self) -> None:
         s, e, _ = PDLPeriodManager.get_week_range(self.week_selector.currentIndex())
         self.last_results = PDLQueries.get_programming_results_by_week(s, e)
         self._update_tables()
 
-    def _on_group_mode_changed(self, mode):  # noqa: ANN001, ANN202
+    def _on_group_mode_changed(self, mode: str) -> None:
         config_manager.set_config_value("programming_group_mode", mode)
         self._update_tables()
 
-    def _update_tables(self):  # noqa: ANN202
+    def _update_tables(self) -> None:
         while self.tables_layout.count() > 1:
             item = self.tables_layout.takeAt(0)
             if item and (w := item.widget()):
@@ -205,13 +221,13 @@ class ProgrammazioneTab(QWidget):
         self._apply_filters()
         self.btn_email.setEnabled(len(self.last_results) > 0)
 
-    def _deselect_others(self):  # noqa: ANN202
+    def _deselect_others(self) -> None:
         sender = self.sender()
         for t in self.tables:
             if t is not sender:
                 t.clearSelection()
 
-    def _apply_filters(self):  # noqa: ANN202
+    def _apply_filters(self) -> None:
         selected_reqs = self.view_filter.selected
         day_choice = self.day_selector.currentText()
         target_day = {
@@ -227,21 +243,19 @@ class ProgrammazioneTab(QWidget):
 
         for table in self.tables:
             for i in range(7):
-                table.setColumnHidden(5 + i, target_day != -1 and i != target_day)  # noqa: PLR1714
+                table.setColumnHidden(5 + i, target_day not in (-1, i))
             for row in range(table.rowCount()):
                 it = table.item(row, 0)
                 req = it.text() if it else ""
                 visible = not selected_reqs or req in selected_reqs
                 if target_day != -1:
                     w = table.cellWidget(row, 5 + target_day)
-                    from src.gui.widgets.pdl.status_bar_widget import ProgrammingStatusWidget  # noqa: PLC0415
-
                     if isinstance(w, ProgrammingStatusWidget):
                         visible = visible and (w.tcl or w.tgo)
                 table.setRowHidden(row, not visible)
         self._refresh_heights()
 
-    def _refresh_heights(self):  # noqa: ANN202
+    def _refresh_heights(self) -> None:
         for table in self.tables:
             h = 25
             for r in range(table.rowCount()):
@@ -249,11 +263,11 @@ class ProgrammazioneTab(QWidget):
                     h += table.rowHeight(r)
             box = table.parentWidget()
             if isinstance(box, StandardGroupBox):
-                box.setVisible(h > 25)  # noqa: PLR2004
-            table.setMinimumHeight(h + 20 if h > 25 else 0)  # noqa: PLR2004
-            table.setMaximumHeight(h + 20 if h > 25 else 0)  # noqa: PLR2004
+                box.setVisible(h > 25)
+            table.setMinimumHeight(h + 20 if h > 25 else 0)
+            table.setMaximumHeight(h + 20 if h > 25 else 0)
 
-    def _on_run_clicked(self):  # noqa: ANN202
+    def _on_run_clicked(self) -> None:
         """Avvia il controllo programmazione tramite bot SafeWork."""
         # 1. Recuperòcredenziali
         username, password, account_type = self.get_safework_credentials()
@@ -270,17 +284,15 @@ class ProgrammazioneTab(QWidget):
         start_date, end_date, _ = PDLPeriodManager.get_week_range(self.week_selector.currentIndex())
 
         # 3. Istanza Bot
-        from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot  # noqa: PLC0415
-
         config = config_manager.load_config()
-        bot = SafeWorkProgrammazioneBot(
+        bot_config = SeleniumBotConfig(
             username=username,
             password=password,
-            account_type=account_type,
             headless=config.get("browser_headless", False),
             timeout=config.get("browser_timeout", 30),
             download_path=config_manager.get_download_path(),
         )
+        bot = SafeWorkProgrammazioneBot(config=bot_config, account_type=account_type)
 
         # 4. Worker
         bot_data = {
@@ -315,7 +327,7 @@ class ProgrammazioneTab(QWidget):
             default_acc.get("type", "Esecutore"),
         )
 
-    def _on_worker_finished(self, success: bool):  # noqa: ANN202
+    def _on_worker_finished(self, success: bool) -> None:
         """Gestisce il completamento del bot worker."""
         self.btn_run.setEnabled(True)
         if success and self.worker:
@@ -333,10 +345,10 @@ class ProgrammazioneTab(QWidget):
             self.worker.deleteLater()
             self.worker = None
 
-    def _on_log(self, message: str):  # noqa: ANN202
+    def _on_log(self, message: str) -> None:
         """Aggiunge un messaggio al widget dei log."""
         self.log_widget.append(message)
 
-    def _on_email_clicked(self):  # noqa: ANN202
+    def _on_email_clicked(self) -> None:
         """Gestione invio report via email (Placeholder)."""
-        ToastManager.instance().show("Funzionalita' Report Outlook in fase di implementazione.", "info")
+        ToastManager.instance().show("Funzionalità Report Outlook in fase di implementazione.", "info")

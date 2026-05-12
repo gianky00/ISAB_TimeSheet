@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import threading
+import traceback
 from datetime import UTC, datetime
 from typing import Any
 
@@ -20,7 +21,7 @@ class JSONFormatter:
     Produce log in formato JSON parsabile, ottimizzato per AI analysis.
     """
 
-    def __init__(self, mask_sensitive: bool = True):  # noqa: ANN204
+    def __init__(self, mask_sensitive: bool = True) -> None:
         """
         Inizializza formatter.
 
@@ -85,8 +86,6 @@ class JSONFormatter:
 
         # Exception info
         if exception:
-            import traceback  # noqa: PLC0415
-
             entry["exception"] = {
                 "type": type(exception).__name__,
                 "message": str(exception),
@@ -147,7 +146,7 @@ class HumanFormatter:
     Produce log in formato leggibile per troubleshooting manuale.
     """
 
-    def __init__(self, colorize: bool = True, show_context: bool = True):  # noqa: ANN204
+    def __init__(self, colorize: bool = True, show_context: bool = True) -> None:
         """
         Inizializza formatter.
 

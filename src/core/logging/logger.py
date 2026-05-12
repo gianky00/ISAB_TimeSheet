@@ -4,8 +4,11 @@ Main logger implementation con multi-sink support.
 
 import inspect
 import sys
+import traceback
 from contextlib import suppress
 from typing import Any
+
+from src.core.logging.sinks import get_bot_sink
 
 from .config import get_config
 from .context import get_context
@@ -19,7 +22,7 @@ _initialized = False
 
 class StructuredLogger:
     """
-    Logger enterprise con structured logging e multi-sink.
+    Logger professionale con structured logging e multi-sink.
 
     Features:
     - Output JSON per AI analysis
@@ -134,8 +137,6 @@ class StructuredLogger:
             pass
 
         if exception:
-            import traceback  # noqa: PLC0415
-
             with suppress(Exception):
                 print(traceback.format_exc())
 
@@ -161,8 +162,6 @@ class StructuredLogger:
         """Invia i log al sink specifico del bot se il contesto lo richiede."""
         ctx = get_context().to_dict()
         if ctx.get("trace_id") and ctx.get("bot_type"):
-            from src.core.logging.sinks import get_bot_sink  # noqa: PLC0415
-
             get_bot_sink().write(level, self.name, message, ctx, extra, exception, source)
 
     def _safe_append_file(self, path: Any, line: str, exception: Any = None) -> None:
@@ -171,8 +170,6 @@ class StructuredLogger:
             with path.open("a", encoding="utf-8") as f:
                 f.write(line + "\n")
                 if exception:
-                    import traceback  # noqa: PLC0415
-
                     f.write(traceback.format_exc() + "\n")
         except Exception as e:
             print(f"[LOGGER ERROR] Failed to write to {path}: {e}", file=sys.stderr)
@@ -218,15 +215,21 @@ class StructuredLogger:
         """Log a livello CRITICAL."""
         self.log("CRITICAL", message, extra=extra or None)
 
-    def exception(self, message: str, exc: Exception, **extra: Any) -> None:
+    def exception(self, message: str, exc: Exception | None = None, **extra: Any) -> None:
         """
         Log exception con stack trace completo.
+        Se 'exc' non viene fornito, tenta di recuperarlo dal contesto corrente.
 
         Args:
           message: Messaggio descrittivo
-          exc: Eccezione da loggare
+          exc: Eccezione da loggare (opzionale)
           **extra: Dati extra
         """
+        if exc is None:
+            _, exc_value, _ = sys.exc_info()
+            if isinstance(exc_value, Exception):
+                exc = exc_value
+
         self.log("ERROR", message, extra=extra or None, exception=exc)
 
 

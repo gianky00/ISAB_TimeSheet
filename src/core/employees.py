@@ -1,12 +1,14 @@
 import csv
-import logging
 import sqlite3
+import time
 from pathlib import Path
 from typing import Any
 
 from src.core.database import db_manager
+from src.core.logging import get_logger
+from src.core.sync_tracker import SyncTracker
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class EmployeeManager:
@@ -41,9 +43,10 @@ class EmployeeManager:
 
             # Conversione Tupla -> Dict
             employees = []
+            min_columns_with_monitoring = 7
             for row in rows:
                 # Gestiamo il caso in cui la query fallback ha meno colonne
-                has_monitoraggio = len(row) >= 7  # noqa: PLR2004
+                has_monitoraggio = len(row) >= min_columns_with_monitoring
 
                 emp = {
                     "id_risorsa": row[0],
@@ -56,11 +59,11 @@ class EmployeeManager:
                 }
                 employees.append(emp)
 
-            return employees  # noqa: TRY300
-
-        except Exception as e:
-            logger.error(f"Errore recuperòdipendenti: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Errore recupero dipendenti")
             return []
+        else:
+            return employees
 
     def get_employee_by_badge(self, badge: str) -> sqlite3.Row | None:
         """Cerca un dipendente per numero di badge."""
@@ -93,10 +96,11 @@ class EmployeeManager:
         try:
             self.db.execute_query(self.db.DB_DIPENDENTI, query, params)
             logger.info(f"Dipendente {employee_data['cognome']} aggiunto con successo.")
-            return True  # noqa: TRY300
-        except sqlite3.IntegrityError as e:
-            logger.error(f"Errore inserimento dipendente: {e}")  # noqa: TRY400
+        except sqlite3.IntegrityError:
+            logger.exception("Errore inserimento dipendente")
             return False
+        else:
+            return True
 
     def update_employee(self, id_risorsa: int, data: dict[str, Any]) -> bool:
         """Aggiorna i dati di un dipendente esistente."""
@@ -114,10 +118,11 @@ class EmployeeManager:
         try:
             self.db.execute_query(self.db.DB_DIPENDENTI, query, tuple(values))
             logger.info(f"Dipendente ID {id_risorsa} aggiornato.")
-            return True  # noqa: TRY300
-        except Exception as e:
-            logger.error(f"Errore aggiornamento dipendente: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Errore aggiornamento dipendente")
             return False
+        else:
+            return True
 
     def import_from_csv(self, csv_path: str) -> int:
         """
@@ -128,10 +133,6 @@ class EmployeeManager:
         if not path.exists():
             logger.error(f"File CSV non trovato: {csv_path}")
             return 0
-
-        import time  # noqa: PLC0415
-
-        from src.core.sync_tracker import SyncTracker  # noqa: PLC0415
 
         start_time = time.time()
         added_count = 0
@@ -161,7 +162,7 @@ class EmployeeManager:
                         "data_assunzione": row.get("Data_assunzione", ""),
                     }
 
-                    # Controlla se esiste gia'(per badge o ID)
+                    # Controlla se esiste già(per badge o ID)
                     existing = None
                     if id_risorsa:
                         existing = self.db.execute_query(
@@ -185,11 +186,11 @@ class EmployeeManager:
             SyncTracker.update_status("dipendenti", added_count, 0, duration)
 
             logger.info(f"Importazione completata: {count} dipendenti processati ({added_count} nuovi).")
-            return count  # noqa: TRY300
-
-        except Exception as e:
-            logger.error(f"Errore durante l'importazione CSV: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Errore durante l'importazione CSV")
             raise
+        else:
+            return count
 
 
 # Istanza globale

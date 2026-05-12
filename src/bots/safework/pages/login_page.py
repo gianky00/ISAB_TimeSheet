@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - SafeWork Login Page
 Encapsulamento della logica di login SafeWork.
@@ -26,7 +25,7 @@ class SafeWorkLoginPage:
 
     def login(self, username: str, password: str, account_type: str = "Esecutore") -> bool:
         """
-        Esegue il login con strategiàdifferenziata in base al tipo di account.
+        Esegue il login con strategia differenziata in base al tipo di account.
         """
         try:
             # 1. Azioni Comuni (Selezione Sito, Input Credenziali, Click Login)
@@ -34,22 +33,22 @@ class SafeWorkLoginPage:
 
             # 2. Dispatcher Logica di Attesa
             # Tipo "ISAB" -> Flusso VELOCE (TCL)
-            # Tipo "Esecutore" -> Flusso ROBUSTO (COEMI)
+            # Tipo "Esecutore" -> Flusso ROBUSTO (STANDARD)
             if account_type == "ISAB":
                 self.log(f"  Account ISAB rilevato ({username}): Avvio procedura VELOCE.")
                 return self._login_flow_tcl()
 
             self.log(f"  Account Esecutore rilevato ({username}): Avvio procedura ROBUSTA.")
-            return self._login_flow_coemi()
+            return self._login_flow_standard()
 
         except Exception as e:
             self.log(f"❌ Errore critico durante il login: {e}")
             return False
 
     def _procedura_comune_login(self, username: str, password: str) -> None:
-        """Passaggia'comuni a tutti gli account prima della verifica accesso."""
-        MAX_RETRIES = 3  # noqa: N806
-        for tentativa in range(MAX_RETRIES):
+        """Passaggi comuni a tutti gli account prima della verifica accesso."""
+        max_retries = 3
+        for tentativa in range(max_retries):
             try:
                 self.log(f"[ATTESA] Selezione sito 'ISAB Sud' (Tentativo {tentativa + 1}/3)...")
 
@@ -81,16 +80,16 @@ class SafeWorkLoginPage:
                 break  # Successo, esci dal loop
 
             except (TimeoutException, Exception) as e:
-                if "stale" in str(e).lower() and tentativa < MAX_RETRIES - 1:
-                    self.log("⚠️ Rilevato elemento non piu' valido. Ricaricamento...")
+                if "stale" in str(e).lower() and tentativa < max_retries - 1:
+                    self.log("⚠️ Rilevato elemento non più valido. Ricaricamento...")
                     self.driver.refresh()
                     continue
                 self.log(f"❌ Errore fase preliminare login: {e}")
                 raise
 
-    def _login_flow_coemi(self) -> bool:
+    def _login_flow_standard(self) -> bool:
         """
-        Flusso COEMI (Lento):
+        Flusso STANDARD (Lento):
         - DEVE attendere la comparsa dello spinner 'Caricamento...'
         - DEVE attendere la sua scomparsa.
         """
@@ -120,7 +119,8 @@ class SafeWorkLoginPage:
         try:
             WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable(SafeWorkLocators.HOME_BUTTON))
             self.log("✅ Accesso alla Dashboard completato.")
-            return True  # noqa: TRY300
         except TimeoutException:
             self.log("❌ Dashboard non raggiunta.")
             return False
+        else:
+            return True

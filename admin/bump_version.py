@@ -18,7 +18,7 @@ if sys.platform == "win32":
             sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 
-def bump_version(part="patch"):  # noqa: ANN001, ANN201
+def bump_version(part="patch"):
     """
     Incrementa la versione in src/core/version.py.
 

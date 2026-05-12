@@ -8,7 +8,7 @@ from src.core import config_manager
 @pytest.fixture(autouse=True)
 def reset_config_state(tmp_path):
     """Isolamento totale: reset cache e path temporanei."""
-    from src.core.config_manager import _reset_configuration_for_testing  # noqa: PLC0415
+    from src.core.config_manager import _reset_configuration_for_testing
 
     _reset_configuration_for_testing()
 
@@ -36,7 +36,7 @@ class TestConfigManager:
         config["browser_timeout"] = 99
         config_manager.save_config(config)
 
-        from src.core.config_manager import _reset_configuration_for_testing  # noqa: PLC0415
+        from src.core.config_manager import _reset_configuration_for_testing
 
         _reset_configuration_for_testing()
 
@@ -67,7 +67,7 @@ class TestConfigManager:
 
     def test_get_data_path(self, reset_config_state, tmp_path):
         # get_data_path è ora in src.core.paths
-        from src.core.paths import get_data_path  # noqa: PLC0415
+        from src.core.paths import get_data_path
 
         with patch("src.core.paths.DB_DIR", tmp_path):
             path = get_data_path()

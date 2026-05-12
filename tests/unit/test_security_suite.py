@@ -46,7 +46,7 @@ class TestSecuritySuite:
     def test_decrypt_legacy(self):
         """Test decrypt vecchio formato ENC: (simulato)."""
         # Creiamo un ciphertext legacy valido
-        from cryptography.fernet import Fernet  # noqa: PLC0415
+        from cryptography.fernet import Fernet
 
         fernet = Fernet(self.pm._key)
         raw_enc = fernet.encrypt(b"LegacySecret").decode()

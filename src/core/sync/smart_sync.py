@@ -3,23 +3,23 @@ SyncroJob - Smart Sync Engine
 Gestisce sincronizzazioni intelligenti (UPSERT) con calcolo esatto del delta via EXCEPT.
 """
 
+import logging
 from contextlib import suppress
-from pathlib import Path
 from typing import Any
 
 from src.core.database import db_manager
-from src.core.sync.base import BaseSyncEngine
+from src.core.sync.base import BaseSyncEngine, SyncTarget
+
+logger = logging.getLogger(__name__)
 
 
 class SmartSyncEngine(BaseSyncEngine):
     """Motore di sync intelligente per tabelle con chiavi primarie (Certificati, ODA)."""
 
     @classmethod
-    def sync_upsert_smart(  # noqa: PLR0913
+    def sync_upsert_smart(
         cls,
-        db_path: Path,
-        table_name: str,
-        columns: list[str],
+        target: SyncTarget,
         new_data: list[tuple[Any, ...]],
         conflict_cols: list[str] | None = None,
         mirror: bool = False,
@@ -28,54 +28,62 @@ class SmartSyncEngine(BaseSyncEngine):
         if not new_data:
             return 0, 0
 
-        with db_manager.get_connection(db_path) as conn:
+        with db_manager.get_connection(target.db_path) as conn:
             cursor = conn.cursor()
-            temp_table = cls._create_temp_table(cursor, table_name, columns)
-            cls._populate_temp_table(cursor, temp_table, columns, new_data)
+            temp_table = cls._create_temp_table(cursor, target.table_name, target.columns)
+            cls._populate_temp_table(cursor, temp_table, target.columns, new_data)
 
-            added_or_updated = cls._calculate_diff(cursor, table_name, temp_table, columns)
-            cls._execute_upsert(cursor, table_name, temp_table, columns, conflict_cols)
+            added_or_updated = cls._calculate_diff(cursor, target.table_name, temp_table, target.columns)
+            cls._execute_upsert(cursor, target.table_name, temp_table, target.columns, conflict_cols)
 
             deleted_count = 0
             if mirror and conflict_cols:
-                deleted_count = cls._execute_mirror_cleanup(cursor, table_name, temp_table, conflict_cols)
+                deleted_count = cls._execute_mirror_cleanup(
+                    cursor, target.table_name, temp_table, conflict_cols
+                )
 
             conn.commit()
             return added_or_updated, deleted_count
 
     @classmethod
-    def sync_full_replace_with_metadata(  # noqa: PLR0913
+    def sync_full_replace_with_metadata(
         cls,
-        db_path: Path,
-        table_name: str,
-        columns: list[str],
+        target: SyncTarget,
         new_data: list[tuple[Any, ...]],
         key_cols: list[str],
         metadata_cols: list[str],
     ) -> tuple[int, int]:
         """Sostituisce i dati preservando i metadati esistenti (es. annotazioni)."""
+        logger.info(f"Inizio sync_full_replace per {target.table_name}. Nuovi dati: {len(new_data)}")
+
         if not new_data:
             return 0, 0
 
-        with db_manager.get_connection(db_path) as conn:
+        with db_manager.get_connection(target.db_path) as conn:
             cursor = conn.cursor()
 
             # 1. Recupera metadati
-            current_metadata = cls._fetch_current_metadata(cursor, table_name, key_cols, metadata_cols)
+            current_metadata = cls._fetch_current_metadata(cursor, target.table_name, key_cols, metadata_cols)
+            logger.info(f"Metadati recuperati: {len(current_metadata)} record")
 
             # 2. Svuota tabella
-            safe_table = cls._validate_identifier(table_name)
+            safe_table = cls._validate_identifier(target.table_name)
             cursor.execute(f"DELETE FROM {safe_table}")  # nosec B608
+            logger.info(f"Tabella {target.table_name} svuotata.")
 
             # 3. Prepara righe finali
             final_rows = cls._merge_data_with_metadata(
-                new_data, columns, key_cols, metadata_cols, current_metadata
+                new_data, target.columns, key_cols, metadata_cols, current_metadata
             )
+            logger.info(f"Righe preparate per inserimento: {len(final_rows)}")
 
             # 4. Inserimento massivo
-            cls._bulk_insert_with_metadata(cursor, table_name, columns, metadata_cols, final_rows)
+            cls._bulk_insert_with_metadata(
+                cursor, target.table_name, target.columns, metadata_cols, final_rows
+            )
 
             conn.commit()
+            logger.info(f"Sync completato con successo per {target.table_name}")
             return len(final_rows), 0
 
     # -------------------------------------------------------------------------
@@ -166,7 +174,7 @@ class SmartSyncEngine(BaseSyncEngine):
     def _execute_mirror_cleanup(
         cls, cursor: Any, table_name: str, temp_table: str, conflict_cols: list[str]
     ) -> int:
-        """Rimuove le righe non piu' presenti nel sorgente (mirroring)."""
+        """Rimuove le righe non più presenti nel sorgente (mirroring)."""
         safe_table = cls._validate_identifier(table_name)
         main_id_col = cls._validate_identifier(conflict_cols[0])
 

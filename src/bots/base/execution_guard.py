@@ -1,15 +1,12 @@
 """
 SyncroJob - Bot Execution Guard
-Gestisce i controlli pre-volo dei bot: licenza, aggiornamenti e integrita'.
+Gestisce i controlli pre-volo dei bot: licenza, aggiornamenti e integrità.
 Centralizza la sicurezza dell'esecuzione.
 """
 
-import logging
+from src.core.logging import get_logger
 
-from src.core.license_updater import run_update
-from src.core.license_validator import verify_license
-
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ExecutionGuard:
@@ -26,18 +23,21 @@ class ExecutionGuard:
           Tuple (esito, messaggio_errore).
         """
         try:
+            from src.core.license_updater import run_update
+            from src.core.license_validator import verify_license
+
             # 1. Verifica/Esegue aggiornamenti licenza silenti
             run_update()
         except Exception as e:
             if "REVOCATA" in str(e):
                 logger.exception("Licenza revocata rilevata durante pre-check.")
                 return False, f"ACCESSO NEGATO: {e}"
-            logger.warning("Errore silente durante run_update: %s", e)
+            logger.warning(f"Errore silente durante run_update: {e}")
 
         # 2. Validazione licenza reale
         valid, msg = verify_license()
         if not valid:
-            logger.error("Validazione licenza fallita: %s", msg)
+            logger.error(f"Validazione licenza fallita: {msg}")
             return False, msg
 
         return True, ""

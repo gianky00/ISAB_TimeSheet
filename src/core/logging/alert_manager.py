@@ -11,10 +11,10 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Final, Literal
 
-from .analytics import Anomaly, get_anomalies
-
 if TYPE_CHECKING:
     from src.core.telegram import TelegramService
+
+from .analytics import Anomaly, get_anomalies
 
 
 @dataclass

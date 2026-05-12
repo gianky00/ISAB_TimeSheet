@@ -63,7 +63,7 @@ class DonutChart(QWidget):
             painter.end()
             return
 
-        start_angle = 90 * 16  # Start at 12 o'clock, units in 1/16th of degree
+        start_angle = 90 * 16  # Start at 12 òclock, units in 1/16th of degree
 
         # Draw segments
         current_angle = float(start_angle)

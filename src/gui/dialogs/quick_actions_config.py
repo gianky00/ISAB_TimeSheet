@@ -13,7 +13,7 @@ from src.core.config_manager import get_config_value, set_config_value
 from src.gui.design.colors import get_palette
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import StandardTreeWidget
-from src.gui.widgets.quick_actions import AVAILABLE_ACTIONS
+from src.gui.widgets.quick_actions_registry import AVAILABLE_ACTIONS
 
 
 class QuickActionsConfigDialog(QDialog):
@@ -22,7 +22,9 @@ class QuickActionsConfigDialog(QDialog):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Configura Azioni Rapide")
-        self.setFixedSize(450, 500)  # Dimensioni piu' compatte e fisse
+        dialog_width = 450
+        dialog_height = 500
+        self.setFixedSize(dialog_width, dialog_height)  # Dimensioni più compatte e fisse
         self.setModal(True)
 
         palette = get_palette()
@@ -68,7 +70,8 @@ class QuickActionsConfigDialog(QDialog):
     def _setup_ui(self) -> None:
         palette = get_palette()
         layout = QVBoxLayout(self)
-        layout.setSpacing(10)
+        layout_spacing = 10
+        layout.setSpacing(layout_spacing)
 
         lbl = QLabel("Seleziona le voci da mostrare nelle Azioni Rapide:")
         lbl.setWordWrap(True)
@@ -77,7 +80,8 @@ class QuickActionsConfigDialog(QDialog):
         # TREE WIDGET
         self.tree = StandardTreeWidget()
         self.tree.setHeaderHidden(True)
-        self.tree.setIndentation(20)
+        tree_indentation = 20
+        self.tree.setIndentation(tree_indentation)
         # Forced Style to ensure Light Theme inside Dialog
         self.tree.setStyleSheet(
             f"""
@@ -109,12 +113,14 @@ class QuickActionsConfigDialog(QDialog):
         ok_btn = buttons.button(QDialogButtonBox.StandardButton.Ok)
         if ok_btn is not None:
             ok_btn.setText("Salva")
-            ok_btn.setMinimumHeight(36)
+            btn_min_height = 36
+            ok_btn.setMinimumHeight(btn_min_height)
 
         cancel_btn = buttons.button(QDialogButtonBox.StandardButton.Cancel)
         if cancel_btn is not None:
+            btn_min_height = 36
             cancel_btn.setText("Annulla")
-            cancel_btn.setMinimumHeight(36)
+            cancel_btn.setMinimumHeight(btn_min_height)
             cancel_btn.setStyleSheet(
                 f"""
         QPushButton {{
@@ -153,8 +159,7 @@ class QuickActionsConfigDialog(QDialog):
             if not path_tuple:
                 root = self.tree.invisibleRootItem()
                 if root is None:
-                    # Should not happen
-                    raise RuntimeError("Invisible root item is None")  # noqa: TRY003
+                    raise RuntimeError("Missing tree root")
                 return root
 
             parent_path = path_tuple[:-1]

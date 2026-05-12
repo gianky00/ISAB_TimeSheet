@@ -142,10 +142,10 @@ def debug_import_simulation() -> None:
     print("DEBUG SIMULAZIONE IMPORTAZIONE")
     print("=" * 70)
 
-    from pathlib import Path  # noqa: PLC0415
+    from pathlib import Path
 
-    from src.core import config_manager  # noqa: PLC0415
-    from src.core.importers.giornaliere import GiornaliereImporter  # noqa: PLC0415
+    from src.core import config_manager
+    from src.core.importers.giornaliere import GiornaliereImporter
 
     giornaliere_path = config_manager.load_config().get("giornaliere_path", "")
 
@@ -191,13 +191,13 @@ def debug_import_simulation() -> None:
             print(f"    {rows[0][:5]}...")  # Prime 5 colonne
     except Exception as e:
         print(f"    ERRORE: {e}")
-        import traceback  # noqa: PLC0415
+        import traceback
 
         traceback.print_exc()
 
     # Controlla database attuale
     print("\n[4] Stato database attuale...")
-    from src.core.contabilita_manager import ContabilitaManager  # noqa: PLC0415
+    from src.core.contabilita_manager import ContabilitaManager
 
     for year in (2025, 2026):
         data = ContabilitaManager.get_giornaliere_by_year(year)

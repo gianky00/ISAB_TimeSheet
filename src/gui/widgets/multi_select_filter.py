@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - MultiSelect Filter Widget
 Widget professionale per la selezione multipla con ricerca e chip.
@@ -23,7 +22,9 @@ from src.utils.helpers import get_asset_path
 class MultiSelectDialog(QDialog):
     """Dialogo di selezione multipla con ricerca."""
 
-    def __init__(self, title: str, items: list[str], selected: list[str], parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(
+        self, title: str, items: list[str], selected: list[str], parent: QWidget | None = None
+    ) -> None:
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setMinimumSize(400, 500)
@@ -80,14 +81,14 @@ class MultiSelectDialog(QDialog):
         btns.addWidget(btn_confirm)
         layout.addLayout(btns)
 
-    def _filter_items(self, text: str):  # noqa: ANN202
+    def _filter_items(self, text: str) -> None:
         search_text = text.lower()
         for i in range(self.list_widget.count()):
             item = self.list_widget.item(i)
             if item:
                 item.setHidden(search_text not in item.text().lower())
 
-    def _set_all_checks(self, state: Qt.CheckState):  # noqa: ANN202
+    def _set_all_checks(self, state: Qt.CheckState) -> None:
         for i in range(self.list_widget.count()):
             item = self.list_widget.item(i)
             if item and not item.isHidden():
@@ -113,7 +114,7 @@ class MultiSelectFilter(QWidget):
 
     changed = Signal(list)
 
-    def __init__(self, label: str, placeholder: str = "Seleziona...", parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, label: str, placeholder: str = "Seleziona...", parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.label_text = label
         self.placeholder = placeholder
@@ -133,7 +134,7 @@ class MultiSelectFilter(QWidget):
         self.btn_select.clicked.connect(self._open_dialog)
         layout.addWidget(self.btn_select)
 
-    def set_items(self, items: list[str]):  # noqa: ANN201
+    def set_items(self, items: list[str]) -> None:
         """
         Imposta i possibili elementi selezionabili nel filtro.
 
@@ -141,11 +142,11 @@ class MultiSelectFilter(QWidget):
           items: Lista di stringhe.
         """
         self.items = items
-        # Rimuovi selezionati non piu' presenti
+        # Rimuovi selezionati non più presenti
         self.selected = [s for s in self.selected if s in items]
         self._update_button_text()
 
-    def set_selected(self, selected: list[str]):  # noqa: ANN201
+    def set_selected(self, selected: list[str]) -> None:
         """
         Imposta gli elementi attualmente selezionati.
 
@@ -155,13 +156,13 @@ class MultiSelectFilter(QWidget):
         self.selected = selected
         self._update_button_text()
 
-    def _update_button_text(self):  # noqa: ANN202
+    def _update_button_text(self) -> None:
         if not self.selected:
             self.btn_select.setText(self.placeholder)
         else:
             self.btn_select.setText(f"{self.label_text}: {len(self.selected)} selezionati")
 
-    def _open_dialog(self):  # noqa: ANN202
+    def _open_dialog(self) -> None:
         dlg = MultiSelectDialog(f"Seleziona {self.label_text}", self.items, self.selected, self.window())
         if dlg.exec():
             self.selected = dlg.get_selected()

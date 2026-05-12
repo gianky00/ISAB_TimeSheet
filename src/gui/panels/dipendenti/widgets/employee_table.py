@@ -108,7 +108,7 @@ class EmployeeTableView(QTableView):
         Args:
           position: Posizione del clic del mouse.
         """
-        from PySide6.QtGui import QAction  # noqa: PLC0415
+        from PySide6.QtGui import QAction
 
         sel_model = self.selectionModel()
         if not sel_model:

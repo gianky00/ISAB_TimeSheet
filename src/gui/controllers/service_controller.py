@@ -10,6 +10,8 @@ import logging
 import operator
 import os
 import re
+import sys
+from collections.abc import Sequence
 from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from typing import Any, Final
@@ -23,6 +25,13 @@ from src.core.notification_manager import NotificationManager
 from src.core.report_history import ReportHistory
 
 logger = logging.getLogger(__name__)
+
+# Assicuriamoci che i log siano visibili in console per il debug dell'utente
+if not logger.handlers:
+    _ch = logging.StreamHandler(sys.stdout)
+    _ch.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    logger.addHandler(_ch)
+    logger.setLevel(logging.INFO)
 
 
 class ServiceController(QObject):
@@ -56,6 +65,7 @@ class ServiceController(QObject):
             "safework": [],
         }
         self.scheduler_timer: QTimer | None = None
+        self._cert_worker: Any = None
 
     def start_all(self) -> None:
         """Avvia la sequenza di attivazione dei servizi di background con ritardi differiti per non saturare lo startup."""
@@ -80,11 +90,18 @@ class ServiceController(QObject):
 
     def _check_scheduled_tasks(self) -> None:
         """
-        Verifica il match orario per i bot configurati in modalita' Autopilot.
+        Verifica il match orario per i bot configurati in modalità Autopilot.
         Applica la logica di parallelismo intelligente per l'accodamento dei task.
         """
+        # Usiamo l'ora locale per il confronto con la UI
+        now_dt = datetime.now()
+        now_time = now_dt.strftime("%H:%M")
+
+        # Log INFO visibile per debug rapido dell'utente
+        if now_dt.second < 5:  # Logghiamo solo all'inizio del minuto per non intasare
+            logger.info(f"[Autopilot] Scheduler Tick - Ora locale: {now_time}")
+
         config = config_manager.load_config()
-        now = datetime.now(UTC).astimezone().strftime("%H:%M")
 
         scheduled_bots = [
             (
@@ -114,15 +131,16 @@ class ServiceController(QObject):
         ]
 
         for bot_id, panel_attr, site, target_time, enabled, prepare_cb in scheduled_bots:
-            if enabled and now == target_time and hasattr(self.mw, panel_attr):
+            if enabled and now_time == target_time and hasattr(self.mw, panel_attr):
                 panel = getattr(self.mw, panel_attr)
                 if prepare_cb:
                     prepare_cb(panel)
                 self._schedule_bot_with_parallelism(
-                    bot_id, panel, site, f"Avvio pianificato automatico ({now})..."
+                    bot_id, panel, site, f"Avvio pianificato automatico ({now_time})..."
                 )
 
-        self._check_report_email_schedule(config, now)
+        self._check_report_email_schedule(config, now_time)
+        self._check_certificati_schedule(config, now_time)
 
     def _check_report_email_schedule(self, config: dict[str, Any], now_time: str) -> None:
         """Gestisce l'invio del report email basandosi su orario e intervallo di giorni configurati."""
@@ -209,7 +227,7 @@ class ServiceController(QObject):
         return w_list, e_list
 
     def _build_access_maps(
-        self, accessi: list[tuple[Any, ...]]
+        self, accessi: Sequence[Sequence[Any]]
     ) -> tuple[dict[str, int], dict[tuple[str, str], int]]:
         """Costruisce mappe di accesso per ricerca rapida per CF o Nome/Cognome."""
         today = datetime.now(UTC)
@@ -240,8 +258,8 @@ class ServiceController(QObject):
         return re.sub(r"\s+", " ", str(t).strip().upper())
 
     def _dispatch_outlook_email(self, w_list: list[dict[str, Any]], e_list: list[dict[str, Any]]) -> None:
-        """Utilizza le APiu'COM di Windows per inviare l'email tramite Outlook."""
-        import win32com.client  # noqa: PLC0415
+        """Utilizza le API COM di Windows per inviare l'email tramite Outlook."""
+        import win32com.client
 
         body = (
             f"<html><body style='font-family: Segoe UI;'><h2>Report Accessi ISAB</h2><p>Generato il {datetime.now(UTC).astimezone().strftime('%d/%m/%Y %H:%M')}</p>"
@@ -258,11 +276,193 @@ class ServiceController(QObject):
         )
 
         m = win32com.client.Dispatch("Outlook.Application").CreateItem(0)
-        m.To = "luca.riccio@coemi.it"
-        m.CC = "isabsud@coemi.it"
+        m.To = "supporto@syncrojob.it"
+        m.CC = ""
         m.Subject = f"[AUTO] Report Monitoraggio ISAB - {datetime.now(UTC).astimezone().strftime('%d/%m/%Y')}"
         m.HTMLBody = body
         m.Send()
+
+    def _check_certificati_schedule(self, config: dict[str, Any], now_time: str) -> None:
+        """Gestisce l'automazione dei certificati campione (aggiornamento DB + analisi scadenze)."""
+        enabled = config.get("certificati_autopilot_enabled", False)
+        target_time = str(config.get("certificati_autopilot_time", "08:30"))
+
+        if not enabled:
+            return
+
+        if now_time == target_time:
+            logger.info(f"Autopilot Certificati: Match orario trovato ({now_time})")
+        else:
+            return
+
+        interval = int(config.get("certificati_autopilot_interval_days", 1))
+        last_sent = config.get("certificati_autopilot_last_sent")
+
+        should_run = last_sent is None
+        if not should_run:
+            with suppress(Exception):
+                last_sent_dt = datetime.fromisoformat(str(last_sent))
+                # Calcolo giorni passati usando date ingenue per semplicità di test locale
+                diff_days = (datetime.now() - last_sent_dt.replace(tzinfo=None)).days
+                logger.info(
+                    f"Autopilot Certificati: Check intervallo - Ultimo: {last_sent}, Giorni passati: {diff_days}, Richiesti: {interval}"
+                )
+                if diff_days >= interval:
+                    should_run = True
+
+        if should_run:
+            self._run_certificati_autopilot(config)
+        else:
+            logger.info(
+                f"Autopilot Certificati: Orario match ma intervallo giorni ({interval}) non ancora raggiunto."
+            )
+
+    def _run_certificati_autopilot(self, config: dict[str, Any]) -> None:
+        """Avvia il worker per l'aggiornamento dei certificati campione."""
+        cert_path = config.get("certificati_campione_path", "")
+        if not cert_path or not os.path.exists(cert_path):
+            logger.warning("Autopilot Certificati: Path non configurato o non valido.")
+            return
+
+        from src.core.contabilita_worker import ContabilitaWorker
+
+        logger.info("Autopilot Certificati: Avvio aggiornamento database...")
+        worker = ContabilitaWorker(
+            file_path="", giornaliere_path="", attivita_path="", certificati_path=cert_path
+        )
+        # Salviamo il riferimento per evitare garbage collection
+        self._cert_worker = worker
+        worker.finished_signal.connect(self._on_certificati_worker_finished)
+        worker.start()
+
+    def _on_certificati_worker_finished(
+        self, success: bool, msg: str, added: int, removed: int, duration: float
+    ) -> None:
+        """Al termine dell'aggiornamento DB, avvia l'analisi scadenze e la creazione della bozza Outlook."""
+        logger.info(
+            f"Autopilot Certificati: Aggiornamento terminato. Success: {success}, Added: {added}, Removed: {removed}"
+        )
+
+        # Procediamo sempre all'analisi se non ci sono errori critici bloccanti,
+        # perché potremmo avere già dati nel DB da analizzare.
+        if not success and "Errore critico" in msg:
+            logger.error(f"Autopilot Certificati: Aggiornamento fallito per errore critico: {msg}")
+            NotificationManager.instance().add_notification(
+                title="Errore Autopilot Certificati",
+                message=f"Aggiornamento database fallito: {msg}",
+                level="error",
+            )
+        else:
+            try:
+                logger.info("Autopilot Certificati: Avvio analisi scadenze e generazione bozza...")
+                self._generate_certificati_outlook_draft()
+
+                config_manager.set_config_value(
+                    "certificati_autopilot_last_sent", datetime.now(UTC).astimezone().isoformat()
+                )
+
+                status_msg = "Aggiornamento e Analisi completati."
+                if not success:
+                    status_msg = "Analisi completata (Aggiornamento DB saltato o nessun nuovo dato)."
+
+                NotificationManager.instance().add_notification(
+                    title="Autopilot Certificati",
+                    message=f"{status_msg} Bozza Outlook creata.",
+                    level="success",
+                )
+            except Exception as e:
+                logger.exception("Errore durante l'analisi automatica certificati")
+                NotificationManager.instance().add_notification(
+                    title="Errore Autopilot Certificati",
+                    message=f"Errore durante l'analisi: {e}",
+                    level="error",
+                )
+        self._cert_worker = None
+
+    def _generate_certificati_outlook_draft(self) -> None:
+        """Esegue l'analisi delle scadenze e crea una bozza Outlook tramite l'interfaccia UI (per uniformità)."""
+        from src.gui.main_window.page_index import PageIndex
+
+        # Tentiamo di recuperare il widget dei certificati dalla MainWindow per usare la logica ricca (screenshot + PDF)
+        panel = self.mw.navigation_controller.get_panel(PageIndex.STRUMENTALE)
+        if panel and hasattr(panel, "certificati_widget"):
+            logger.info("Autopilot Certificati: Utilizzo logica UI per generazione email audit...")
+            # Assicuriamoci che i dati nel widget siano rinfrescati prima dell'analisi
+            panel.certificati_widget.refresh_data()
+            # Invio email identica alla versione manuale del tab
+            panel.certificati_widget._run_analysis_and_send_email()
+            return
+
+        # Logica di Fallback (Solo se la UI non fosse accessibile)
+        from src.core.contabilita.certificati_engine import CertificatiEngine
+        from src.core.contabilita_manager import ContabilitaManager
+
+        engine = CertificatiEngine()
+        engine.load_exclusions()
+        data = ContabilitaManager.get_certificati_campione_data()
+
+        if not data:
+            logger.warning("Autopilot Certificati: Nessun dato trovato nel database.")
+            return
+
+        from src.core.contabilita_queries import ContabilitaQueries
+        groups: dict[str, list[tuple[Any, ...]]] = {}
+        for r in data:
+            key = str(r[ContabilitaQueries.CERT_IDX_ID_STRUMENTO]).strip() or str(r[ContabilitaQueries.CERT_IDX_MATRICOLA]).strip()
+            if key not in groups:
+                groups[key] = []
+            groups[key].append(r)
+
+        certs_to_report = []
+        for certs in groups.values():
+            latest = sorted(certs, key=lambda x: str(x[ContabilitaQueries.CERT_IDX_EMISSIONE]), reverse=True)[0]
+            matricola = str(latest[ContabilitaQueries.CERT_IDX_MATRICOLA]).strip()
+
+            if matricola in engine._exclusions:
+                continue
+
+            scadenza = latest[ContabilitaQueries.CERT_IDX_SCADENZA]
+            days, _ = engine.calculate_days_and_status(scadenza)
+
+            if days is not None and days <= engine.EXPIRING_THRESHOLD:
+                certs_to_report.append({
+                    "id": latest[ContabilitaQueries.CERT_IDX_ID_STRUMENTO],
+                    "matricola": matricola,
+                    "modello": latest[ContabilitaQueries.CERT_IDX_MODELLO],
+                    "scadenza": scadenza,
+                    "giorni": days
+                })
+
+        if certs_to_report:
+            engine.generate_outlook_draft(certs_to_report)
+        else:
+            logger.info("Autopilot Certificati: Nessun certificato in scadenza da segnalare.")
+
+    def handle_manual_sync_request(self, bot_id: str) -> None:
+        """Gestisce la richiesta manuale di sincronizzazione dal widget Autopilot."""
+        logger.info(f"Autopilot: Richiesta sincronizzazione manuale per {bot_id}")
+        config = config_manager.load_config()
+
+        if bot_id == "certificati":
+            self._run_certificati_autopilot(config)
+        else:
+            # Per gli altri bot, cerchiamo il pannello corrispondente e avviamo
+            panel_map = {
+                "timbrature": "timbrature_bot_panel",
+                "scarico_oda_generale": "dettagli_panel",
+                "ricerca_pdl": "pdl_search_panel",
+            }
+            attr = panel_map.get(bot_id)
+            if attr and hasattr(self.mw, attr):
+                panel = getattr(self.mw, attr)
+                site = "portale_fornitori" if bot_id != "ricerca_pdl" else "safework"
+                if bot_id == "scarico_oda_generale":
+                    self._prepare_scarico_oda_generale(panel)
+                self._schedule_bot_with_parallelism(
+                    bot_id, panel, site, "Avvio manuale da Autopilot..."
+                )
+            else:
+                logger.warning(f"Autopilot: Pannello per {bot_id} non trovato o non supportato.")
 
     def _prepare_scarico_oda_generale(self, panel: Any) -> None:
         """Configura il pannello Dettagli OdA per uno scarico massivo senza filtri specifici."""
@@ -270,11 +470,15 @@ class ServiceController(QObject):
             panel.data_table.set_data([])
             panel.log_widget.append("   Tabella pulita per scarico generale (senza filtro OdA)")
 
-    def _schedule_bot_with_parallelism(self, bot_id: str, panel: Any, site: str, log_message: str) -> None:
+    def _schedule_bot_with_parallelism(
+        self, bot_id: str, panel: Any, site: str, log_message: str
+    ) -> None:
         """Gestisce l'accodamento di un bot rispettando i vincoli di un'unica istanza Selenium per sito."""
         if self.running_bots_by_site[site]:
             self.pending_bots_by_site[site].append((bot_id, panel, log_message))
-            panel.log_widget.append(f"    Bot in coda. Sito {site.replace('_', ' ').title()} occupato.")
+            panel.log_widget.append(
+                f"    Bot in coda. Sito {site.replace('_', ' ').title()} occupato."
+            )
         else:
             self._start_bot(bot_id, panel, site, log_message)
 
@@ -316,7 +520,7 @@ class ServiceController(QObject):
         check_for_updates(parent=self.mw, silent=True, callback=self.mw._show_update_banner)
 
     def _forward_notification_to_telegram(self, notification: dict[str, Any]) -> None:
-        """Inoltra i messaggia'di sistema con criticit  elevata al bot Telegram registrato."""
+        """Inoltra i messaggi di sistema con criticità elevata al bot Telegram registrato."""
         if notification.get("title") == "Telegram":
             return
         level = notification.get("level", "info")

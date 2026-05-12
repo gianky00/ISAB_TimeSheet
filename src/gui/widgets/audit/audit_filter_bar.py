@@ -184,7 +184,7 @@ class AuditFilterBar(ModernCard):
         return None
 
     def set_enabled_dates(self, enabled: bool) -> None:
-        """Abilita o disabilita i campiu'di selezione data."""
+        """Abilita o disabilita i campiùdi selezione data."""
         self.date_from.setEnabled(enabled)
         self.date_to.setEnabled(enabled)
 

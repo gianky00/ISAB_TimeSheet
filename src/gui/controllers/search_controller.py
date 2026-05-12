@@ -5,6 +5,7 @@ Garantisce la fluidit  della GUI delegando le query al SearchWorker.
 """
 
 import logging
+import warnings
 from typing import Any
 
 from PySide6.QtCore import QObject, QPoint, QTimer
@@ -29,7 +30,7 @@ class SearchController(QObject):
         self.mw = main_window
         self.worker: SearchWorker | None = None
 
-        # Timer per il debouncing (attende 300ms di inattivita'prima di cercare)
+        # Timer per il debouncing (attende 300ms di inattivitàprima di cercare)
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self._execute_async_search)
@@ -43,7 +44,7 @@ class SearchController(QObject):
           query: La stringa digitata dall'utente.
         """
         query = query.strip()
-        if not query or len(query) < 2:  # noqa: PLR2004
+        if not query or len(query) < 2:
             self._last_query = ""
             return
 
@@ -58,7 +59,9 @@ class SearchController(QObject):
         # Interrompe in modo sicuro eventuali ricerche precedenti ancora in corso
         if self.worker and self.worker.isRunning():
             self.worker.cancel()
-            self.worker.results_ready.disconnect()  # Previene update da vecchi thread
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                self.worker.results_ready.disconnect()  # Previene update da vecchi thread
 
         self.worker = SearchWorker(self._last_query, parent=self)
         self.worker.results_ready.connect(self._show_results_menu)
@@ -123,7 +126,7 @@ class SearchController(QObject):
         self._add_disabled_action(menu, "STORICO OdA:")
         for m in matches:
             desc = m.get("descrizione", "")
-            desc_short = (desc[:50] + "...") if len(desc) > 50 else desc  # noqa: PLR2004
+            desc_short = (desc[:50] + "...") if len(desc) > 50 else desc
             text = f"OdA {m['oda']}/{m['pos_oda']} - {desc_short}"
             action = menu.addAction(text)
             if action:
@@ -182,10 +185,10 @@ class SearchController(QObject):
     def _add_attivita_matches(self, matches: list[dict[str, Any]], menu: QMenu) -> int:
         if not matches:
             return 0
-        self._add_disabled_action(menu, "Attivita'PROGRAMMATE:")
+        self._add_disabled_action(menu, "AttivitàPROGRAMMATE:")
         for m in matches:
             desc = m.get("descrizione_attivita", "")
-            desc_short = (desc[:40] + "...") if len(desc) > 40 else desc  # noqa: PLR2004
+            desc_short = (desc[:40] + "...") if len(desc) > 40 else desc
             text = f"{m['area']} - {m['pdl']}: {desc_short}"
             action = menu.addAction(text)
             if action:
@@ -199,7 +202,7 @@ class SearchController(QObject):
         self._add_disabled_action(menu, "PDL SAFEWORK:")
         for m in matches:
             desc = m.get("descrizione", "")
-            desc_short = (desc[:40] + "...") if len(desc) > 40 else desc  # noqa: PLR2004
+            desc_short = (desc[:40] + "...") if len(desc) > 40 else desc
             text = f"ODL {m['odl']} - {m['unita_tecnica']}: {desc_short}"
             action = menu.addAction(text)
             if action:

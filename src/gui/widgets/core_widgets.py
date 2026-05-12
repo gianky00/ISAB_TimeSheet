@@ -30,35 +30,35 @@ from src.gui.widgets.modern_button import ModernButton
 class PrimaryButton(ModernButton):
     """Pulsante primario con stile accent."""
 
-    def __init__(self, text: str = "", icon: str | None = None, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, text: str = "", icon: str | None = None, parent: QWidget | None = None) -> None:
         super().__init__(text=text, variant=ModernButton.Variant.PRIMARY, icon=icon, parent=parent)
 
 
 class SecondaryButton(ModernButton):
     """Pulsante secondario con stile neutro."""
 
-    def __init__(self, text: str = "", icon: str | None = None, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, text: str = "", icon: str | None = None, parent: QWidget | None = None) -> None:
         super().__init__(text=text, variant=ModernButton.Variant.SECONDARY, icon=icon, parent=parent)
 
 
 class DangerButton(ModernButton):
     """Pulsante rosso per azioni distruttive."""
 
-    def __init__(self, text: str = "", icon: str | None = None, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, text: str = "", icon: str | None = None, parent: QWidget | None = None) -> None:
         super().__init__(text=text, variant=ModernButton.Variant.DANGER, icon=icon, parent=parent)
 
 
 class GhostButton(ModernButton):
     """Pulsante trasparente con bordo."""
 
-    def __init__(self, text: str = "", icon: str | None = None, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, text: str = "", icon: str | None = None, parent: QWidget | None = None) -> None:
         super().__init__(text=text, variant=ModernButton.Variant.GHOST, icon=icon, parent=parent)
 
 
 class IconButton(QPushButton):
     """QPushButton icon-only con stile minimalista e hover."""
 
-    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._apply_style()
 
@@ -85,9 +85,9 @@ class IconButton(QPushButton):
 
 
 class SearchInput(QLineEdit):
-    """QLineEdit stilizzato per campiu'di ricerca, con placeholder e clear button."""
+    """QLineEdit stilizzato per campiùdi ricerca, con placeholder e clear button."""
 
-    def __init__(self, placeholder: str = "Cerca...", parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, placeholder: str = "Cerca...", parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setPlaceholderText(placeholder)
         self.setClearButtonEnabled(True)
@@ -112,7 +112,7 @@ class SearchInput(QLineEdit):
 class StandardInput(QLineEdit):
     """QLineEdit stilizzato per input generici (path, URL, credenziali)."""
 
-    def __init__(self, text: str = "", parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, text: str = "", parent: QWidget | None = None) -> None:
         super().__init__(text, parent) if text else super().__init__(parent)
         self._apply_style()
 
@@ -135,7 +135,7 @@ class StandardInput(QLineEdit):
 class StandardTextEdit(QTextEdit):
     """QTextEdit stilizzato con bordi e focus coerenti."""
 
-    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._apply_style()
 
@@ -161,7 +161,7 @@ class StandardTextEdit(QTextEdit):
 class FilterComboBox(QComboBox):
     """QComboBox stilizzata per filtri e selettori."""
 
-    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._apply_style()
 
@@ -201,7 +201,7 @@ class FilterComboBox(QComboBox):
 class StandardCheckBox(QCheckBox):
     """QCheckBox stilizzata con indicatore personalizzato."""
 
-    def __init__(self, text: str = "", parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, text: str = "", parent: QWidget | None = None) -> None:
         super().__init__(text, parent)
         self._apply_style()
 
@@ -229,7 +229,7 @@ class StandardCheckBox(QCheckBox):
 class StandardSpinBox(QSpinBox):
     """QSpinBox stilizzato con bordi coerenti."""
 
-    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._apply_style()
 
@@ -255,7 +255,7 @@ class StandardSpinBox(QSpinBox):
 class StandardTable(QTableWidget):
     """QTableWidget con stile enterprise, righe alternate e selezione per riga."""
 
-    def __init__(self, rows: int = 0, columns: int = 0, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, rows: int = 0, columns: int = 0, parent: QWidget | None = None) -> None:
         super().__init__(rows, columns, parent)
         self.setAlternatingRowColors(True)
         self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -292,7 +292,7 @@ class StandardTable(QTableWidget):
 class StandardListWidget(QListWidget):
     """QListWidget stilizzata con bordi arrotondati, selezione e hover."""
 
-    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._apply_style()
 
@@ -323,7 +323,7 @@ class StandardListWidget(QListWidget):
 class StandardTreeWidget(QTreeWidget):
     """QTreeWidget stilizzato con bordi e selezione coerenti."""
 
-    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._apply_style()
 
@@ -353,7 +353,7 @@ class StandardTreeWidget(QTreeWidget):
 class StandardGroupBox(QGroupBox):
     """QGroupBox stilizzata con bordo sottile e titolo accent."""
 
-    def __init__(self, title: str = "", parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, title: str = "", parent: QWidget | None = None) -> None:
         super().__init__(title, parent)
         self._apply_style()
 
@@ -380,7 +380,7 @@ class StandardGroupBox(QGroupBox):
 class StandardProgressBar(QProgressBar):
     """QProgressBar stilizzata con accent e bordi arrotondati."""
 
-    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._apply_style()
 

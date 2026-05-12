@@ -54,10 +54,12 @@ class PathsPage(QWidget):
         cont_layout.addWidget(QLabel("Cartella Giornaliere (Root):"))
         self.giornaliere_path_edit = self._create_path_row(cont_layout, self._browse_giornaliere, folder=True)
 
-        # Attivita'cont_layout.addWidget(QLabel("File Attivita'Programmate (Riepilogo):"))
+        # Attività
+        cont_layout.addWidget(QLabel("File Attività Programmate (Riepilogo):"))
         self.attivita_path_edit = self._create_path_row(cont_layout, self._browse_attivita)
 
-        # Database Report Attivita'cont_layout.addWidget(QLabel("Database Report Attivita':"))
+        # Database Report Attività
+        cont_layout.addWidget(QLabel("Database Report Attività:"))
         self.activity_db_path_edit = self._create_path_row(cont_layout, self._browse_activity_db)
 
         # Certificati Excel
@@ -135,32 +137,20 @@ class PathsPage(QWidget):
         return edit
 
     def _open_path(self, path_str: str) -> None:
-        """Apre il percorso specificato nell'esplora risorse."""
+        """Apre il percorso specificato in modo sicuro."""
         if not path_str:
             return
 
-        import os  # noqa: PLC0415
-        from pathlib import Path  # noqa: PLC0415
-
-        from src.gui.widgets.toast import ToastManager  # noqa: PLC0415
+        from src.gui.widgets.toast import ToastManager
+        from src.utils.helpers import safe_open
 
         path = Path(path_str).resolve()
         if not path.exists():
             ToastManager.instance().show(f"Percorso non trovato: {path_str}", "warning")
             return
 
-        try:
-            if path.is_file():
-                # Su Windows, apre la cartella e seleziona il file
-                import subprocess  # noqa: PLC0415
-
-                subprocess.run(["explorer", "/select,", str(path)], check=False)
-            else:
-                import os  # noqa: PLC0415
-
-                os.startfile(str(path))  # noqa: S606
-        except Exception as e:
-            ToastManager.instance().show(f"Errore apertura: {e}", "error")
+        if not safe_open(path):
+            ToastManager.instance().show(f"Impossibile aprire: {path_str}", "error")
 
     def _validate_path(self, widget: QLineEdit) -> None:
         """Valida visivamente il percorso inserito."""
@@ -219,12 +209,12 @@ class PathsPage(QWidget):
             self.giornaliere_path_edit.setText(p)
 
     def _browse_attivita(self) -> None:
-        p = self._browse_file("Seleziona File Attivita'", "Excel Files (*.xlsx *.xlsm)")
+        p = self._browse_file("Seleziona File Attività", "Excel Files (*.xlsx *.xlsm)")
         if p:
             self.attivita_path_edit.setText(p)
 
     def _browse_activity_db(self) -> None:
-        p = self._browse_file("Seleziona Database Report Attivita'", "SQLite DB (*.db *.sqlite)")
+        p = self._browse_file("Seleziona Database Report Attività", "SQLite DB (*.db *.sqlite)")
         if p:
             self.activity_db_path_edit.setText(p)
 

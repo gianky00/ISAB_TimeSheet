@@ -1,6 +1,6 @@
 """
 SyncroJob - License Validator
-Modulo core per la validazione della licenza e dell'integrita' del software.
+Modulo core per la validazione della licenza e dell'integrità del software.
 Gestisce l'estrazione dell'Hardware ID (HWID), la decifratura asimmetrica dei certificati (.dat)
 e la verifica delle scadenze temporali tramite Trusted Time (Network Time).
 """
@@ -8,11 +8,8 @@ e la verifica delle scadenze temporali tramite Trusted Time (Network Time).
 import hashlib
 import json
 import os
-import platform
 import shutil
-import subprocess
 import sys
-import uuid
 from contextlib import suppress
 from datetime import date
 from enum import Enum
@@ -22,8 +19,10 @@ from typing import Any
 from cryptography.fernet import Fernet
 
 from src.core.audit_manager import AuditManager
+from src.core.license_hwid import get_hardware_id
 from src.core.logging import get_logger
 from src.core.paths import CONFIG_DIR as PATHS_CONFIG_DIR, get_data_path
+from src.core.secrets_manager import SecretsManager
 from src.core.time_manager import get_trusted_time
 
 logger = get_logger(__name__)
@@ -41,92 +40,12 @@ class LicenseStatus(Enum):
 
 
 def _calculate_sha256(filepath: str | Path) -> str:
-    """Calcola l'hash SHA256 di un file per verifiche di integrita'."""
+    """Calcola l'hash SHA256 di un file per verifiche di integrità."""
     sha256_hash = hashlib.sha256()
     with Path(filepath).open("rb") as f:
         for byte_block in iter(lambda: f.read(4096), b""):
             sha256_hash.update(byte_block)
     return sha256_hash.hexdigest()
-
-
-def get_hardware_id() -> str:
-    """
-    Genera o recupera un identificativo univoco (HWID) per la macchina corrente.
-    Utilizza seriali dei dischi o UUID di sistema a seconda della piattaforma.
-
-    Returns:
-      str: Identificativo hardware normalizzato.
-    """
-    raw_id = ""
-    if platform.system() == "Windows":
-        raw_id = _get_windows_hardware_id() or "ERROR_GETTING_ID"
-    elif platform.system() == "Linux":
-        raw_id = _get_linux_hardware_id() or "ERROR_GETTING_ID"
-    else:
-        try:
-            raw_id = str(uuid.getnode())
-        except Exception:
-            raw_id = "ERROR_GETTING_ID"
-
-    return raw_id.strip().rstrip(".")
-
-
-def _get_windows_hardware_id() -> str | None:
-    """Recupera l'HWID su sistemi Windows tramite WMIC o PowerShell."""
-    CREATE_NO_WINDOW = 0x08000000  # noqa: N806
-    with suppress(Exception):
-        cmd = ["wmic", "diskdrive", "get", "serialnumber"]
-        output = subprocess.check_output(
-            cmd, shell=False, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW
-        ).decode()
-        parts = output.strip().split("\n")
-        if len(parts) > 1 and parts[1].strip():
-            return parts[1].strip()
-
-    with suppress(Exception):
-        cmd = [
-            "powershell",
-            "-NoProfile",
-            "-Command",
-            "Get-CimInstance -Class Win32_DiskDrive | Select-Object -ExpandProperty SerialNumber",
-        ]
-        output = (
-            subprocess.check_output(cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW)
-            .decode()
-            .strip()
-        )
-        if output:
-            return output.splitlines()[0].strip()
-
-    with suppress(Exception):
-        cmd = [
-            "powershell",
-            "-NoProfile",
-            "-Command",
-            "Get-CimInstance -Class Win32_ComputerSystemProduct | Select-Object -ExpandProperty UUID",
-        ]
-        output = (
-            subprocess.check_output(cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW)
-            .decode()
-            .strip()
-        )
-        if output:
-            return output
-    return None
-
-
-def _get_linux_hardware_id() -> str | None:
-    """Recupera l'HWID su sistemi Linux tramite lsblk o machine-id."""
-    with suppress(Exception):
-        cmd = ["lsblk", "--nodeps", "-o", "serial", "-n"]
-        output = subprocess.check_output(cmd, shell=False, stderr=subprocess.DEVNULL).decode().strip()
-        if output:
-            return output.split("\n")[0].strip()
-    machine_id = Path("/etc/machine-id")
-    if machine_id.exists():
-        with suppress(Exception):
-            return machine_id.read_text().strip()
-    return None
 
 
 def _get_license_paths() -> dict[str, Path]:
@@ -191,8 +110,6 @@ def get_license_info() -> dict[str, Any] | None:
         return None
 
     try:
-        from src.core.secrets_manager import SecretsManager  # noqa: PLC0415
-
         encrypted_data = paths["config"].read_bytes()
         key_raw = SecretsManager.get_license_key()
         if not key_raw:
@@ -204,10 +121,10 @@ def get_license_info() -> dict[str, Any] | None:
             decrypted = cipher.decrypt(encrypted_data).decode("utf-8")
             return json.loads(decrypted)  # type: ignore[no-any-return]
         except Exception as de:
-            logger.error(f"Errore decifratura config.dat: {de}")  # noqa: TRY400
+            logger.exception("Errore decifratura config.dat", exc=de)
             return None
-    except Exception as e:
-        logger.error(f"Errore caricamento licenza: {e}")  # noqa: TRY400
+    except Exception:
+        logger.exception("Errore caricamento licenza")
         return None
 
 
@@ -219,7 +136,7 @@ def verify_license() -> tuple[bool, str]:
 
 def get_detailed_license_status() -> tuple[LicenseStatus, str]:
     """
-    Esegue una verifica completa: presenza file, integrita' hash, HWID matching e scadenza temporale.
+    Esegue una verifica completa: presenza file, integrità hash, HWID matching e scadenza temporale.
 
     Returns:
       tuple: (LicenseStatus, messaggio descrittivo).
@@ -229,7 +146,7 @@ def get_detailed_license_status() -> tuple[LicenseStatus, str]:
         try:
             paths["dir"].mkdir(parents=True)
         except OSError:
-            return LicenseStatus.ERROR, "Impossibile creare cartella 'Licenza'"
+            return LicenseStatus.ERROR, "Impossibile creare cartella 'Licenzà"
 
     if not (paths["config"].exists() and paths["manifest"].exists()):
         _check_and_migrate_local_license(paths)
@@ -250,7 +167,7 @@ def _check_integrity_with_manifest(paths: dict[str, Any]) -> tuple[LicenseStatus
             AuditManager.instance().log_action(
                 "Violazione Licenza", category="sicurezza", status="error", severity="high"
             )
-            return LicenseStatus.INVALID, "Integrita' licenza compromessa (config.dat)"
+            return LicenseStatus.INVALID, "Integrità licenza compromessa (config.dat)"
     except Exception as e:
         return LicenseStatus.ERROR, f"Errore lettura manifest: {e}"
     return LicenseStatus.VALID, ""

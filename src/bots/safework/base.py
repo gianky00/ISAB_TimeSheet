@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-call"
 from contextlib import suppress
 
 from selenium.common.exceptions import TimeoutException
@@ -7,6 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.base.selenium_base_bot import SeleniumBaseBot
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
 from src.bots.safework.pages.login_page import SafeWorkLoginPage
 from src.bots.safework.pages.ricerca_pdl_page import RicercaPDLPage
 from src.bots.safework.pages.visualizza_attivita_page import VisualizzaAttivitaPage
@@ -22,16 +22,12 @@ class SafeworkBaseBot(SeleniumBaseBot):
     SAFEWORK_URL = URLs.SAFEWORK_URL
     ISAB_URL = SAFEWORK_URL
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = 30,
-        download_path: str = "",
+        config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
-        super().__init__(username, password, headless, timeout, download_path)
+        super().__init__(config)
         self.account_type = account_type
         self.safework_login_page: SafeWorkLoginPage | None = None
         self.ricerca_pdl_page: RicercaPDLPage | None = None
@@ -126,7 +122,7 @@ class SafeworkBaseBot(SeleniumBaseBot):
             return
         xpath_caricamento = "//span[contains(text(), 'Caricamento...')]"
         try:
-            # Attendiamo che appaia (se non  gia' apparso e scomparso velocemente)
+            # Attendiamo che appaia (se non  già apparso e scomparso velocemente)
             with suppress(TimeoutException):
                 WebDriverWait(self.driver, 3).until(
                     EC.visibility_of_element_located((By.XPATH, xpath_caricamento))

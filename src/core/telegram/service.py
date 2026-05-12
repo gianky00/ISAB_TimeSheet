@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported"
 import asyncio
 import threading
 import time
@@ -20,6 +19,7 @@ from telegram.ext import (
 
 from src.core import config_manager
 from src.core.constants import Icons
+from src.core.exceptions import BotError
 from src.core.telegram.handlers import callbacks, commands, messages
 from src.utils.helpers import get_asset_path
 
@@ -116,7 +116,7 @@ class TelegramService(QObject):
 
     def _add_handlers(self) -> None:
         if self.app is None:
-            raise RuntimeError("Application must be initialized before adding handlers")  # noqa: TRY003
+            raise BotError("App not initialized")
 
         # Commands
         self.app.add_handler(CommandHandler("start", lambda u, c: commands.cmd_start(self, u, c)))
@@ -259,11 +259,11 @@ class TelegramService(QObject):
     async def _send_message_async(self, chat_id: str | int, text: str) -> None:
         try:
             if self.app is None:
-                raise RuntimeError("Telegram app is None - service not initialized")  # noqa: TRY003, TRY301
+                raise BotError("App not initialized")  # noqa: TRY301
             if not self.app.bot:
                 await self.app.initialize()
             if self.app.bot is None:
-                raise RuntimeError("Telegram bot is None after initialization")  # noqa: TRY003, TRY301
+                raise BotError("Bot not initialized")  # noqa: TRY301
             await self.app.bot.send_message(
                 chat_id=chat_id,
                 text=text,
@@ -278,11 +278,11 @@ class TelegramService(QObject):
     async def _send_photo_async(self, chat_id: str | int, photo_bytes: bytes, caption: str) -> None:
         try:
             if self.app is None:
-                raise RuntimeError("Telegram app is None - service not initialized")  # noqa: TRY003, TRY301
+                raise BotError("App not initialized")  # noqa: TRY301
             if not self.app.bot:
                 await self.app.initialize()
             if self.app.bot is None:
-                raise RuntimeError("Telegram bot is None after initialization")  # noqa: TRY003, TRY301
+                raise BotError("Bot not initialized")  # noqa: TRY301
             await self.app.bot.send_photo(
                 chat_id=chat_id,
                 photo=photo_bytes,
@@ -298,11 +298,11 @@ class TelegramService(QObject):
     async def _send_document_async(self, chat_id: str | int, file_path: str, caption: str) -> None:
         try:
             if self.app is None:
-                raise RuntimeError("Telegram app is None - service not initialized")  # noqa: TRY003, TRY301
+                raise BotError("App not initialized")  # noqa: TRY301
             if not self.app.bot:
                 await self.app.initialize()
             if self.app.bot is None:
-                raise RuntimeError("Telegram bot is None after initialization")  # noqa: TRY003, TRY301
+                raise BotError("Bot not initialized")  # noqa: TRY301
             with open(file_path, "rb") as f:
                 await self.app.bot.send_document(
                     chat_id=chat_id,

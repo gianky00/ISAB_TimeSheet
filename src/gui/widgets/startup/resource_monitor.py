@@ -138,9 +138,9 @@ class ResourceMonitor(QWidget):
             self._bar_fill.setFixedWidth(6)
             self._bar_fill.move(0, 28)
 
-        if self._activity_level > 80:  # noqa: PLR2004
+        if self._activity_level > 80:
             col = COLORS["error_red"]
-        elif self._activity_level > 40:  # noqa: PLR2004
+        elif self._activity_level > 40:
             col = COLORS["warning_yellow"]
         else:
             col = COLORS["success_green"]

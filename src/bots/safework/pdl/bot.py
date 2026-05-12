@@ -1,11 +1,9 @@
-# mypy: disable-error-code="no-untyped-call"
 """
 SyncroJob - SafeWork PDL Download Bot
 Bot modulare per lo scarico e la stampa dei PDL.
 """
 
 import contextlib
-import logging
 import time
 from contextlib import suppress
 from pathlib import Path
@@ -18,13 +16,15 @@ from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.base.base_bot import StepStatus
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
 from src.bots.base.wait_helpers import poll_for_new_file
 from src.bots.safework.base import SafeworkBaseBot
 from src.bots.safework.common.locators import SafeWorkLocators
+from src.core.logging import get_logger
 from src.utils.document_processor import DocumentProcessor
 from src.utils.printing import print_pdf
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class SafeWorkPDLBot(SafeworkBaseBot):
@@ -39,17 +39,13 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         ("session", "Chiusura Sessione"),
     ]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = 30,
-        download_path: str = "",
+        config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
         """Inizializza il bot SafeWork PDL."""
-        super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
+        super().__init__(config, account_type=account_type)
         self.downloaded_files: list[str] = []
         self.missing_pdls: list[str] = []
 
@@ -57,6 +53,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     def get_name() -> str:
         """Restituisce il nome visualizzato del bot."""
         return "Scarico PDL"
+
+    @property
+    def description(self) -> str:
+        """Restituisce la descrizione del bot."""
+        return "Scarica e stampa Permessi di Lavoro da SafeWork"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
@@ -246,13 +247,18 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*.pdf")}
 
             # Clicca su Anteprima Stampa usando click_robusto
-            self.click_robusto((By.ID, "topIcon-acticonAnteprimaStampaMenu"), label="'Anteprima Stampa'")
+            self.click_robusto((By.ID, "topIcon-acticonAnteprimaStampaMenu"), label="'Anteprima Stampà")
             time.sleep(0.8)  # Breve pausa per animazione menu
-            self.click_robusto((By.ID, "appItaliano"), label="'Lingua Italiano'")
+            self.click_robusto((By.ID, "appItaliano"), label="'Lingua Italianò")
 
             # Cerchiamo il file
             self.log(f"[ATTESA] Polling per file PDF di {pdl_num}...")
-            f = poll_for_new_file(self.download_path, files_before, pattern="*.pdf", timeout=60)
+            from src.bots.base.wait_helpers import PollConfig
+
+            f = poll_for_new_file(
+                PollConfig(directory=self.download_path, pattern="*.pdf", timeout=60),
+                files_before=files_before,
+            )
             if f:
                 dest = Path(self.download_path) / f"temp_p1_{int(ts)}.pdf"
                 Path(f).rename(dest)
@@ -284,11 +290,16 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             ts = time.time()
             files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*.pdf")}
 
-            self.click_robusto((By.ID, "btnPrintPS"), label="'Stampa Parte Seconda'")
+            self.click_robusto((By.ID, "btnPrintPS"), label="'Stampa Parte Secondà")
             self._gestisci_dialogo_stampa_tutte()
 
             self.log(f"[ATTESA] Polling per file PDF Parte Seconda di {pdl_num}...")
-            f = poll_for_new_file(self.download_path, files_before, pattern="*.pdf", timeout=90)
+            from src.bots.base.wait_helpers import PollConfig
+
+            f = poll_for_new_file(
+                PollConfig(directory=self.download_path, pattern="*.pdf", timeout=90),
+                files_before=files_before,
+            )
             if f:
                 dest = Path(self.download_path) / f"temp_p2_{int(ts)}.pdf"
                 Path(f).rename(dest)
@@ -310,7 +321,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             # Verifica visibilità senza lanciare eccezioni se l'elemento non esiste ancora
             elementi = self.driver.find_elements(By.ID, "lblPAFoglio")
             if not elementi or not elementi[0].is_displayed():
-                self.log("[FILE] Espansione sezione 'Parte Seconda'...")
+                self.log("[FILE] Espansione sezione 'Parte Secondà...")
                 clicked = False
 
                 # Strategià1: ID Label
@@ -321,9 +332,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 # Strategià2: Testo XPATH
                 if not clicked:
                     with contextlib.suppress(Exception):
-                        self.driver.find_element(
-                            By.XPATH, "//span[contains(text(), 'PARTE SECONDA')]"
-                        ).click()
+                        self.driver.find_element(By.XPATH, "//span[contains(text(), 'PARTE SECONDÀ)]").click()
                         clicked = True
 
                 # Strategià3: User Specific IDTXT
@@ -345,12 +354,12 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         with suppress(Exception):
             # 1. Controllo presenza popup
-            self.log("[CERCA] Controllo presenza popup 'Ricerca Estesa'...")
+            self.log("[CERCA] Controllo presenza popup 'Ricerca Estesà...")
             WebDriverWait(self.driver, 10).until(
                 EC.visibility_of_element_located((By.XPATH, "//p[contains(text(), 'estenderla')]"))
             )
 
-            # 2. Click su 'Si'
+            # 2. Click su 'Sì
             for selector in (
                 "span[idtxt='E421C594']",
                 "//button[contains(@class, 'btn-ok') and contains(., 'Si')]",
@@ -359,7 +368,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 with suppress(Exception):
                     by = By.XPATH if selector.startswith("/") else By.CSS_SELECTOR
                     self.driver.find_element(by, selector).click()
-                    self.log(f"✅ Click su 'Si' riuscito (selector: {selector})")
+                    self.log(f"✅ Click su 'Sì riuscito (selector: {selector})")
                     self._attendi_scomparsa_overlay()
                     break
 
@@ -395,7 +404,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         return False
 
     def _gestisci_dialogo_stampa_tutte(self) -> None:
-        """Seleziona 'Stampa Tutte' nel popup se appare."""
+        """Seleziona 'Stampa Tuttè nel popup se appare."""
         if not self.driver or not self.wait:
             return
         with contextlib.suppress(Exception):
@@ -416,7 +425,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             else:
                 doc.close()
         except Exception as e:
-            logger.debug("Errore pulizia PDF: %s", e)
+            logger.debug("Errore pulizia PDF", error=str(e))
 
     def _handle_session_merge(self, data: list[dict[str, Any]], all_paths: list[str]) -> None:
         """Crea un unico PDF con tutti i PDL della sessione se configurato."""
@@ -429,8 +438,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 if DocumentProcessor.merge_pdfs(all_paths, str(path_merge)):
                     self.log(f"✅ PDF Unico Sessione creato: {path_merge.name}")
                     self.downloaded_files.append(str(path_merge))
-            except Exception as e:
-                logger.error("Errore unione sessione: %s", e)  # noqa: TRY400
+            except Exception:
+                logger.exception("Errore unione sessione")
 
     def _unisci_e_stampa(
         self, pdl_num: str, p1: str, p2: str, item: dict[str, Any], all_paths: list[str]

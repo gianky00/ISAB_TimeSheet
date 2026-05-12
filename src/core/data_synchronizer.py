@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported"
 """
 SyncroJob - Data Synchronizer
 Gestisce la sincronizzazione dei dati importati delegando agli engine specializzati.
@@ -7,6 +6,13 @@ Gestisce la sincronizzazione dei dati importati delegando agli engine specializz
 from pathlib import Path
 from typing import Any
 
+from src.core.importers.attivita import AttivitaImporter
+from src.core.importers.certificati import CertificatiImporter
+from src.core.importers.contabilita import ContabilitaImporter
+from src.core.importers.giornaliere import GiornaliereImporter
+from src.core.importers.scarico_ore import ScaricoOreImporter
+from src.core.importers.storico_oda import StoricoOdaImporter
+from src.core.sync.base import SyncTarget
 from src.core.sync.contabilita_sync import ContabilitaSyncEngine
 from src.core.sync.smart_sync import SmartSyncEngine
 
@@ -20,8 +26,6 @@ class DataSynchronizer:
     @classmethod
     def sync_contabilita(cls, db_path: Path, import_data: list[Any], years: list[int]) -> tuple[int, int]:
         """Sincronizza i dati della contabilità."""
-        from src.core.importers.contabilita import ContabilitaImporter  # noqa: PLC0415
-
         all_new_data = []
         for r in import_data:
             if hasattr(r, "values"):
@@ -37,8 +41,6 @@ class DataSynchronizer:
     @classmethod
     def sync_giornaliere(cls, db_path: Path, import_data: list[Any], years: list[int]) -> tuple[int, int]:
         """Sincronizza i dati delle giornaliere."""
-        from src.core.importers.giornaliere import GiornaliereImporter  # noqa: PLC0415
-
         all_new_data = []
         for r in import_data:
             if hasattr(r, "values"):
@@ -54,12 +56,9 @@ class DataSynchronizer:
     @classmethod
     def sync_storico_oda(cls, db_path: Path, rows_to_insert: list[tuple[Any, ...]]) -> tuple[int, int]:
         """Sincronizza lo storico ODA via Upsert intelligente."""
-        from src.core.importers.storico_oda import StoricoOdaImporter  # noqa: PLC0415
-
+        target = SyncTarget(db_path, "storico_oda", getattr(StoricoOdaImporter, "STORICO_ODA_COLS", []))
         res = SmartSyncEngine.sync_upsert_smart(
-            db_path,
-            "storico_oda",
-            getattr(StoricoOdaImporter, "STORICO_ODA_COLS", []),
+            target,
             rows_to_insert,
             conflict_cols=["oda", "pos_oda", "num_riga"],
         )
@@ -67,47 +66,49 @@ class DataSynchronizer:
 
     @classmethod
     def sync_contabilita_dati(cls, *args: Any, **kwargs: Any) -> tuple[int, int]:
-        """Alias per retrocompatibilit ."""
+        """Alias per retrocompatibilità."""
         return cls.sync_contabilita(*args, **kwargs)
 
     @classmethod
     def sync_attivita_programmate(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
-        """Sincronizza le attivita'programmate."""
-        from src.core.importers.attivita import AttivitaImporter  # noqa: PLC0415
-
-        res = SmartSyncEngine.sync_upsert_smart(
-            db_path,
-            "attivita_programmate",
-            getattr(AttivitaImporter, "ATTIVITA_COLS", []),
+        """Sincronizza le attivitàprogrammate preservando gli stili."""
+        target = SyncTarget(db_path, "attivita_programmate", getattr(AttivitaImporter, "ATTIVITA_PROGRAMMATE_COLS", []))
+        # Usiamo full_replace_with_metadata perché non abbiamo vincoli UNIQUE
+        # e vogliamo mantenere gli stili calcolati.
+        res = SmartSyncEngine.sync_full_replace_with_metadata(
+            target,
             rows,
-            conflict_cols=["oda"],
+            key_cols=["ps", "area", "descrizione"], # Chiave euristica
+            metadata_cols=["styles"],
         )
         return int(res[0]), int(res[1])
 
     @classmethod
     def sync_scarico_ore(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
-        """Sincronizza lo scarico ore."""
-        from src.core.importers.scarico_ore import ScaricoOreImporter  # noqa: PLC0415
-
-        res = SmartSyncEngine.sync_upsert_smart(
-            db_path,
-            "scarico_ore",
-            getattr(ScaricoOreImporter, "SCARICO_ORE_COLS", []),
+        """Sincronizza lo scarico ore preservando gli stili."""
+        target = SyncTarget(db_path, "scarico_ore", getattr(ScaricoOreImporter, "SCARICO_ORE_COLS", []))
+        # Usiamo full_replace_with_metadata per mantenere la formattazione colori.
+        res = SmartSyncEngine.sync_full_replace_with_metadata(
+            target,
             rows,
-            conflict_cols=["oda"],
+            key_cols=["data", "pers1", "odc", "pos"], # Chiave euristica
+            metadata_cols=["styles"],
         )
         return int(res[0]), int(res[1])
 
     @classmethod
     def sync_certificati_campione(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
-        """Sincronizza i certificati campione."""
-        from src.core.importers.certificati import CertificatiImporter  # noqa: PLC0415
-
-        res = SmartSyncEngine.sync_upsert_smart(
-            db_path,
-            "certificati_campione",
-            getattr(CertificatiImporter, "CERTIFICATI_COLS", []),
+        """Sincronizza i certificati campione preservando annotazioni e ubicazione."""
+        target = SyncTarget(
+            db_path, "certificati_campione", getattr(CertificatiImporter, "CERTIFICATI_CAMPIONE_COLS", [])
+        )
+        # Usiamo full_replace_with_metadata perché non abbiamo vincoli UNIQUE nel DB (v6)
+        # ma vogliamo mantenere le annotazioni manuali degli utenti.
+        # Usiamo 'id_coemi' come chiave primaria per il matching dei metadati.
+        res = SmartSyncEngine.sync_full_replace_with_metadata(
+            target,
             rows,
-            conflict_cols=["id_coemi", "certificato"],
+            key_cols=["id_coemi", "certificato"],
+            metadata_cols=["annotazioni", "ubicazione"],
         )
         return int(res[0]), int(res[1])

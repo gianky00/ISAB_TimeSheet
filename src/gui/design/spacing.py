@@ -25,7 +25,7 @@ class Spacing:
 
 
 class BorderRadius:
-    """Raggia'bordi."""
+    """Raggiàbordi."""
 
     none = 0
     sm = 4

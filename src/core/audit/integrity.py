@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 class AuditIntegrity:
-    """Gestisce il calcolo degli hash e la verifica dell'integrita' dei log."""
+    """Gestisce il calcolo degli hash e la verifica dell'integrità dei log."""
 
     _SALT = "SyncroJob_Secure_Audit_2026"
 

@@ -27,7 +27,7 @@ class WorkflowController(QObject):
         self.mw = main_window
 
     def run_timbrature_bot(self, mode: str) -> None:
-        """Avvia il bot delle timbrature in una modalita' specifica."""
+        """Avvia il bot delle timbrature in una modalità specifica."""
         # Assicurati che il pannello sia inizializzato
         if not hasattr(self.mw, "timbrature_bot_panel"):
             self.mw.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
@@ -58,8 +58,9 @@ class WorkflowController(QObject):
         self.mw.navigation_controller.navigate_to_panel("scarico_ts")
         panel: Any = getattr(self.mw, "scarico_panel", None)
         if panel:
+            delay_ms = 200
             QTimer.singleShot(
-                200,
+                delay_ms,
                 lambda: panel.run_externally({"single_item": {"numero_oda": args[0], "posizione_oda": ""}}),
             )
 
@@ -70,8 +71,9 @@ class WorkflowController(QObject):
         self.mw.navigation_controller.navigate_to_panel("dettagli_oda")
         panel: Any = getattr(self.mw, "dettagli_panel", None)
         if panel:
+            delay_ms = 200
             QTimer.singleShot(
-                200,
+                delay_ms,
                 lambda: panel.run_externally({"single_item": {"Numero OdA": args[0], "numero_oda": args[0]}}),
             )
 
@@ -82,8 +84,9 @@ class WorkflowController(QObject):
         self.mw.navigation_controller.navigate_to_panel("scarico_pdl")
         panel: Any = getattr(self.mw, "pdl_panel", None)
         if panel:
+            delay_ms = 200
             QTimer.singleShot(
-                200,
+                delay_ms,
                 lambda: panel.run_externally({"single_item": {"numero_pdl": args[0]}}),
             )
 
@@ -94,8 +97,9 @@ class WorkflowController(QObject):
         self.mw.navigation_controller.navigate_to_panel("prenota_bp")
         panel: Any = getattr(self.mw, "prenota_panel", None)
         if panel:
+            delay_ms = 200
             QTimer.singleShot(
-                200,
+                delay_ms,
                 lambda: panel.run_externally({"single_item": {"numero_bp": args[0]}}),
             )
 
@@ -104,21 +108,24 @@ class WorkflowController(QObject):
         self.mw.navigation_controller.navigate_to_panel("carico_ts")
         panel: Any = getattr(self.mw, "carico_panel", None)
         if panel:
-            QTimer.singleShot(200, lambda: panel.run_externally({}))
+            delay_ms = 200
+            QTimer.singleShot(delay_ms, lambda: panel.run_externally({}))
 
     def run_sync_dataease(self) -> None:
         """Avvia la sincronizzazione DataEase."""
         self.mw.navigation_controller.navigate_to(PageIndex.DATAEASE)
         panel: Any = getattr(self.mw, "scarico_ore_panel", None)
         if panel and hasattr(panel, "_start_update"):
-            QTimer.singleShot(200, panel._start_update)
+            delay_ms = 200
+            QTimer.singleShot(delay_ms, panel._start_update)
 
     def run_sync_strumentale(self) -> None:
         """Avvia la sincronizzazione contabilità strumentale."""
         self.mw.navigation_controller.navigate_to(PageIndex.STRUMENTALE)
         panel: Any = getattr(self.mw, "contabilita_panel", None)
         if panel and hasattr(panel, "refresh_tabs"):
-            QTimer.singleShot(200, panel.refresh_tabs)
+            delay_ms = 200
+            QTimer.singleShot(delay_ms, panel.refresh_tabs)
 
     def run_dettagli_oda_update(self) -> None:
         """Avvia l'aggiornamento massivo dello Storico OdA tramite il bot Dettagli OdA."""
@@ -126,11 +133,13 @@ class WorkflowController(QObject):
         automazioni_widget = self.mw.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
 
         # Import lazy per evitare dipendenza circolare
-        from src.gui.widgets.automazioni_widget import AutomazioniWidget  # noqa: PLC0415
+        from src.gui.widgets.automazioni_widget import AutomazioniWidget
 
         if isinstance(automazioni_widget, AutomazioniWidget):
             # 2. Imposta i tab corretti internamente
-            automazioni_widget.set_active_tab(0, 0)
+            tab_fornitori = 0
+            tab_dettagli_oda = 0
+            automazioni_widget.set_active_tab(tab_fornitori, tab_dettagli_oda)
 
             # 3. Recupera il pannello bot registrato
             panel: Any = getattr(self.mw, "dettagli_panel", None)
@@ -145,4 +154,7 @@ class WorkflowController(QObject):
 
                 # Avvio bot bypassando le righe (triggera Lista Generale)
                 # Passiamo data_a come data attuale (override del widget UI)
-                QTimer.singleShot(100, lambda: panel.run_externally({"rows": [], "data_a": data_attuale}))
+                delay_ms = 100
+                QTimer.singleShot(
+                    delay_ms, lambda: panel.run_externally({"rows": [], "data_a": data_attuale})
+                )

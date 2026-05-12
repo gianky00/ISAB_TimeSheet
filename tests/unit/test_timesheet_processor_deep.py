@@ -12,7 +12,7 @@ class TestTimesheetProcessorDeep:
         """Crea un file Excel finto per i test."""
         file_path = tmp_path / "timesheet.xlsx"
 
-        import openpyxl  # noqa: PLC0415
+        import openpyxl
 
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -47,7 +47,7 @@ class TestTimesheetProcessorDeep:
         """Verifica comportamento se la colonna POS manca."""
         file_path = tmp_path / "no_pos.xlsx"
 
-        import openpyxl  # noqa: PLC0415
+        import openpyxl
 
         wb = openpyxl.Workbook()
         ws = wb.active

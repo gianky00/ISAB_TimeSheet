@@ -1,3 +1,4 @@
+# ruff: noqa: PLR0915, PLR0912, C901, PLR0911
 """
 SyncroJob Enterprise - Ultra Test Runner V5.2 (The Apex Runner)
 ================================================================
@@ -198,7 +199,7 @@ def _extract_failures(output: str, target: str) -> list[FailureDetail]:
     while i < len(lines):
         line = lines[i]
 
-        # Pattern: "FAILED tests/unit/test_foo.py::test_bar - ErrorType: msg"  # noqa: ERA001
+        # Esempio pattern: `FAILED tests/unit/test_foo.py::test_bar - ErrorType: msg`
         failed_match = re.match(r"FAILED\s+([\S]+::\S+)\s*-?\s*(.*)", line)
         if failed_match:
             node_id = failed_match.group(1)
@@ -247,7 +248,7 @@ def _extract_failures(output: str, target: str) -> list[FailureDetail]:
     return failures
 
 
-def _classify_error(error_text: str, full_output: str, node_id: str) -> tuple[str, str, str]:  # noqa: PLR0911
+def _classify_error(error_text: str, full_output: str, node_id: str) -> tuple[str, str, str]:
     """Classifica un errore in tipo, messaggio e categoria semantica."""
     error_text = error_text.strip()
 
@@ -345,19 +346,20 @@ def _collect_tests_inprocess(mark: str | None = None) -> list[str]:
             encoding="utf-8",
             errors="replace",
         )
-        node_ids = []
-        for line in res.stdout.splitlines():
-            stripped = line.strip()
-            if not stripped:
-                continue
-            if stripped.startswith(("=", "no tests", "ERROR")):
-                break
-            if "::" in stripped:
-                node_ids.append(stripped)
-        return node_ids  # noqa: TRY300
     except subprocess.TimeoutExpired:
         Console.error("[!] Timeout nella discovery dei test (60s)")
         return []
+
+    node_ids = []
+    for line in res.stdout.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith(("=", "no tests", "ERROR")):
+            break
+        if "::" in stripped:
+            node_ids.append(stripped)
+    return node_ids
 
 
 # ─── Worker (SHOTGUN) ────────────────────────────────────────────────────────
@@ -491,7 +493,7 @@ class UltraRunner:
 
     # ── SNIPER ──
 
-    def _run_sniper(self, targets: list[str], args: argparse.Namespace) -> None:  # noqa: C901, PLR0912
+    def _run_sniper(self, targets: list[str], args: argparse.Namespace) -> None:
         """Esecuzione diretta e live, ottimizzata per il debugging."""
         self.strategy = "SNIPER"
         Console.header(f"SNIPER MODE: Esecuzione mirata di {len(targets)} target")
@@ -591,7 +593,7 @@ class UltraRunner:
 
     # ── SHOTGUN ──
 
-    def _run_shotgun(self, args: argparse.Namespace) -> None:  # noqa: C901, PLR0912, PLR0915
+    def _run_shotgun(self, args: argparse.Namespace) -> None:
         """Esecuzione massiva e parallela, ottimizzata per l'intera suite."""
         self.strategy = "SHOTGUN"
         Console.header("SHOTGUN MODE: Analisi massiva suite")
@@ -885,7 +887,7 @@ class UltraRunner:
 
         # Abilita ANSI su vecchi CMD Windows
         if sys.platform == "win32" and not self.ai_mode:
-            import ctypes  # noqa: PLC0415
+            import ctypes
 
             kernel32 = ctypes.windll.kernel32
             kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)

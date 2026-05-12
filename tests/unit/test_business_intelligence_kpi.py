@@ -14,7 +14,7 @@ class TestBusinessIntelligenceKPI:
     def test_get_year_stats_calculation(self, mock_queries):
         """Test: Calcolo corretto delle statistiche annuali con dati misti."""
         # Setup dati finti per Contabilita (Tabella Dati)
-        # row[2]=n_prev, row[3]=totale_prev, row[4]=attivita, row[7]=stato_attivita, row[9]=ore_sp  # noqa: ERA001
+        # Schema row: 2=n_prev, 3=totale_prev, 4=attivita, 7=stato_attivita, 9=ore_sp
         mock_data = [
             (
                 1,
@@ -80,7 +80,7 @@ class TestBusinessIntelligenceKPI:
         mock_queries.get_data_by_year.return_value = mock_data
 
         # Setup dati finti per Giornaliere
-        # row[4]=n_prev, row[5]=odc, row[9]=ore  # noqa: ERA001
+        # Schema giornaliere: 4=n_prev, 5=odc, 9=ore
         mock_giornaliere = [
             (
                 "data",

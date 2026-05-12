@@ -35,6 +35,7 @@ repos:
     rev: v2.4.1
     hooks:
       - id: codespell
+        args: ["--skip=./admin/Crea Setup/*,./admin/Crea Licenze/*,*.rtf,*.pdf,*.ico"]
         additional_dependencies: [tomli]
 
   # ── Deptry: dependency hygiene ──────────────────────────────

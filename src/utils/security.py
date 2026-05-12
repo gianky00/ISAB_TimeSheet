@@ -116,7 +116,7 @@ class PasswordManager:
         if not plaintext:
             return ""
         if plaintext.startswith("ENC:v2:"):
-            return plaintext  # Gia' criptato
+            return plaintext  # Già criptato
 
         try:
             encrypted = self._cipher.encrypt(plaintext.encode())

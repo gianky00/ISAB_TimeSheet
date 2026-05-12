@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 from contextlib import suppress
 
 from PySide6.QtCore import (
@@ -32,9 +31,9 @@ from .charts import ChartContainer, KPIChartsManager
 
 
 class ContabilitaKPIPanel(QWidget):
-    """Pannello dashboard per la visualizzazione dei KPiu'della contabilità strumentale."""
+    """Pannello dashboard per la visualizzazione dei KPiùdella contabilità strumentale."""
 
-    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Inizializza il pannello e prepara i grafici."""
         super().__init__(parent)
         self.HOURLY_COST_STD = Business.HOURLY_COST_STD
@@ -56,7 +55,7 @@ class ContabilitaKPIPanel(QWidget):
         self.anim_group: QParallelAnimationGroup | None = None
 
         with suppress(Exception):
-            import matplotlib.pyplot as plt  # noqa: PLC0415
+            import matplotlib.pyplot as plt
 
             plt.style.use("seaborn-v0_8-darkgrid")
 
@@ -64,12 +63,16 @@ class ContabilitaKPIPanel(QWidget):
         self._setup_ui()
         self.refresh_years()
 
-    def _setup_ui(self):  # noqa: ANN202, PLR0915
+    def _setup_ui(self) -> None:
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(20)
 
-        # --- Toolbar (Year Selector) ---
+        self._setup_toolbar(main_layout)
+        self._setup_scroll_area(main_layout)
+
+    def _setup_toolbar(self, layout: QVBoxLayout) -> None:
+        """Configura la barra degli strumenti superiore."""
         toolbar = QHBoxLayout()
         cal_icon = QLabel()
         cal_icon.setPixmap(
@@ -87,9 +90,10 @@ class ContabilitaKPIPanel(QWidget):
         self.year_combo.currentTextChanged.connect(self._load_kpi_data)
         toolbar.addWidget(self.year_combo)
         toolbar.addStretch()
-        main_layout.addLayout(toolbar)
+        layout.addLayout(toolbar)
 
-        # --- Scroll Area ---
+    def _setup_scroll_area(self, layout: QVBoxLayout) -> None:
+        """Configura l'area a scorrimento centrale."""
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
@@ -101,6 +105,15 @@ class ContabilitaKPIPanel(QWidget):
         self.content_layout.setSpacing(30)
         self.content_layout.setContentsMargins(10, 10, 10, 10)
 
+        self._setup_scorecards()
+        self._setup_charts_grid()
+
+        self.content_layout.addStretch()
+        self.scroll_area.setWidget(content)
+        layout.addWidget(self.scroll_area)
+
+    def _setup_scorecards(self) -> None:
+        """Configura le schede riassuntive (Scorecards)."""
         # ROW 1: General Scorecards
         self._add_section_title("METRICHE GENERALI")
         self.row1 = KPICardsRow()
@@ -136,15 +149,16 @@ class ContabilitaKPIPanel(QWidget):
         )
         self.content_layout.addWidget(self.row2)
 
-        # ROW 3: Charts Grid
+    def _setup_charts_grid(self) -> None:
+        """Configura la griglia dei grafici."""
         self._add_section_title("GRAFICI ANALITICI")
         charts_grid = QGridLayout()
         charts_grid.setSpacing(20)
 
         self.container1 = ChartContainer(
             self.charts_manager.canvas1,
-            title="Distribuzione Stato Attivita'",
-            info_callback=lambda: "Distribuzione percentuale delle attivita'per stato (esclusa FORNITURA).",
+            title="Distribuzione Stato Attività",
+            info_callback=lambda: "Distribuzione percentuale delle attivitàper stato (esclusa FORNITURA).",
         )
         self.container2 = ChartContainer(
             self.charts_manager.canvas2,
@@ -175,12 +189,8 @@ class ContabilitaKPIPanel(QWidget):
         charts_grid.addWidget(self.container5, 2, 0, 1, 2)
 
         self.content_layout.addLayout(charts_grid)
-        self.content_layout.addStretch()
 
-        self.scroll_area.setWidget(content)
-        main_layout.addWidget(self.scroll_area)
-
-        # Animazione widgets
+        # Registrazione widgets per animazione
         self.all_widgets = (
             self.row1.cards
             + self.row2.cards
@@ -279,9 +289,9 @@ class ContabilitaKPIPanel(QWidget):
                 "indirizzo_consuntivo",
                 "nome_file",
             ]
-            import pandas as pd  # noqa: PLC0415
+            import pandas as pd
 
-            from src.core.stats.stats_service import StatsService  # noqa: PLC0415
+            from src.core.stats.stats_service import StatsService
 
             df = pd.DataFrame(data, columns=cols)
             df["totale_prev"] = pd.to_numeric(df["totale_prev"], errors="coerce").fillna(0)

@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from abc import ABC, abstractmethod
 from contextlib import suppress
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from PySide6.QtCore import QObject, Signal
@@ -16,6 +17,16 @@ logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+
+@dataclass(frozen=True)
+class BotConfig:
+    """Configurazione opzionale per l'inizializzazione del bot."""
+
+    headless: bool = False
+    timeout: int = Timeouts.DEFAULT
+    download_path: str = ""
+    company: str = "ISAB"
 
 
 class BotSignals(QObject):
@@ -41,24 +52,22 @@ class BaseBot(ABC):
     STEPS: ClassVar[list[tuple[str, str]]] = []
     """Definizione degli step sequenziali visualizzati nella GUI."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         username: str,
         password: str,
-        headless: bool = False,
-        timeout: int = Timeouts.DEFAULT,
-        download_path: str = "",
-        company: str = "ISAB",
+        config: BotConfig | None = None,
     ) -> None:
         """
-        Inizializza le propriet  fondamentali del bot.
+        Inizializza le proprietà fondamentali del bot.
         """
         self.username = username
         self.password = password
-        self.headless = headless
-        self.timeout = timeout
-        self.download_path = download_path
-        self.company = company
+        self.config = config or BotConfig()
+        self.headless = self.config.headless
+        self.timeout = self.config.timeout
+        self.download_path = self.config.download_path
+        self.company = self.config.company
         self._status = BotStatus.IDLE
         self._stop_requested = False
         self._log_callback: Callable[[str], None] | None = None

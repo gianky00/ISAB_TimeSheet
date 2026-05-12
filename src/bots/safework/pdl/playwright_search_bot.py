@@ -1,13 +1,14 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - Playwright SafeWork PDL Search Bot
 Versione Playwright del bot per la ricerca massiva ed esportazione Excel dei PDL.
 """
 
+from __future__ import annotations
+
 import time
 from contextlib import suppress
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
 
@@ -17,6 +18,9 @@ from src.bots.safework.pages.playwright_ricerca_pdl_page import PlaywrightRicerc
 from src.bots.safework.playwright_base import PlaywrightSafeworkBaseBot
 from src.core.database import db_manager
 from src.core.sync_tracker import SyncTracker
+
+if TYPE_CHECKING:
+    from src.bots.base.selenium_bot_config import SeleniumBotConfig
 
 
 class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
@@ -32,16 +36,12 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
         ("db", "Importazione Database"),
     ]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = 30,
-        download_path: str = "",
+        config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
-        super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
+        super().__init__(config, account_type=account_type)
         self.sites = ["IGCC", "ISAB Nord", "ISAB Sud"]
         self.ricerca_pdl_page: PlaywrightRicercaPDLPage | None = None
 
@@ -128,7 +128,9 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
             return None
 
         try:
-            with self.page.expect_download(timeout=600000) as download_info:
+            # Usa il doppio del timeout globale per l'esportazione pesante
+            download_timeout_ms = self.config.timeout * 2 * 1000
+            with self.page.expect_download(timeout=download_timeout_ms) as download_info:
                 if self.ricerca_pdl_page.esporta_excel():
                     download = download_info.value
                     dest = Path(self.download_path) / download.suggested_filename
@@ -153,7 +155,7 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
                 "N  PDL": "n_pdl",
                 "DATA CREAZIONE": "data_creazione",
                 "AREA": "area",
-                "Unita'": "unita",
+                "Unità": "unita",
                 "DITTA": "ditta",
                 "DESCRIZIONE DEL LAVORO": "descrizione_lavoro",
                 "TIPOLOGIA": "tipologia",
@@ -165,7 +167,7 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
                 "DATA EMISSIONE": "data_emissione",
                 "APRENTE": "aprente",
                 "DATA APERTURA": "data_apertura",
-                "Priorita'": "priorita",
+                "Priorità": "priorita",
                 "CONTRATTO": "contratto",
                 "ORDINE": "ordine",
                 "SITO": "sito",

@@ -1,6 +1,6 @@
 """
 SyncroJob - Weather Service
-Servizio specializzato per il recuperòasincrono dei dati meteo e qualita' dell'aria.
+Servizio specializzato per il recuperòasincrono dei dati meteo e qualità dell'aria.
 Conforme al Single Responsibility Principle (SRP).
 """
 
@@ -73,7 +73,7 @@ class WeatherService(QObject):
             return
 
         if reply.error() != QNetworkReply.NetworkError.NoError:
-            logger.error(f"Weather APiu'Error: {reply.errorString()}")
+            logger.error(f"Weather APiùError: {reply.errorString()}")
             self.error_occurred.emit("Errore Rete Meteo")
             self._is_loading = False
             reply.deleteLater()
@@ -83,7 +83,7 @@ class WeatherService(QObject):
             raw_data = bytes(reply.readAll().data())
             self._temp_weather_data = json.loads(raw_data.decode("utf-8"))
 
-            # Step 2: RecuperòQualita' dell'Aria (AQI)
+            # Step 2: RecuperòQualità dell'Aria (AQI)
             lat, lon = 37.15, 15.18
             url_aqi = (
                 f"https://air-quality-api.open-meteo.com/v1/air-quality?"
@@ -116,7 +116,7 @@ class WeatherService(QObject):
                 raw_data = bytes(reply.readAll().data())
                 aqi_data = json.loads(raw_data.decode("utf-8"))
             else:
-                logger.warning(f"AQI APiu'Error (Non-fatal): {reply.errorString()}")
+                logger.warning(f"AQI APiùError (Non-fatal): {reply.errorString()}")
         except Exception:
             logger.exception("Errore silenzioso nel parsing AQI")
 

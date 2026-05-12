@@ -148,7 +148,7 @@ class FooterLeftWidget(QWidget):
             self.last_login_item.setText(f"<b>Ultimo Accesso:</b> {last_login}")
 
     def refresh_accounts(self) -> None:
-        """Ricarica i nomi utente degli account, il motore e la modalita' dai file di configurazione."""
+        """Ricarica i nomi utente degli account, il motore e la modalità dai file di configurazione."""
         config = config_manager.load_config()
         portale = self._get_def(config.get("accounts", []))
         safe = self._get_def(config.get("safework_accounts", []))

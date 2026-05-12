@@ -35,7 +35,7 @@ class TimbratureStorage:
         "Codice Fiscale": "codice_fiscale",
         "Codice Qualifica": "codice_qualifica",
         "Specializzazione": "specializzazione",
-        "Societa' Ospitante": "societa_ospitante",
+        "Società Ospitante": "societa_ospitante",
         "Data Ins": "data_ins",
         "Presente Nei Timesheet": "presenza_ts",
         "Sito Timbratura": "sito_timbratura",
@@ -90,8 +90,8 @@ class TimbratureStorage:
                 if added:
                     conn.commit()
 
-        except Exception as e:
-            logger.exception("Errore durante ensure_columns in TimbratureStorage", exc=e)
+        except Exception:
+            logger.exception("Errore durante ensure_columns in TimbratureStorage")
 
     def search_employees(self, query: str) -> list[dict[str, str]]:
         """
@@ -283,9 +283,9 @@ class TimbratureStorage:
             emp = mappings.get(f"{nome}|{cognome}", {"reparto": "", "cantiere": ""})
             rep, cant = emp.get("reparto", ""), emp.get("cantiere", "")
 
-            if f_rep and f_rep != "Tutti" and rep != f_rep:  # noqa: PLR1714
+            if f_rep and f_rep not in ("Tutti", rep):
                 continue
-            if f_cant and f_cant != "Tutti" and cant != f_cant:  # noqa: PLR1714
+            if f_cant and f_cant not in ("Tutti", cant):
                 continue
 
             final.append((*r, rep, cant))
@@ -383,7 +383,7 @@ class TimbratureStorage:
             old_path = self._active_db_path.parent / "timbrature_lists.json"
             if old_path.exists():
                 with suppress(Exception):
-                    import json  # noqa: PLC0415
+                    import json
 
                     old_data = json.loads(old_path.read_text(encoding="utf-8"))
                     if isinstance(old_data, dict):

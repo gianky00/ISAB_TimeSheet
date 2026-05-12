@@ -6,9 +6,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import Property, QEasingCurve, QEvent, QPropertyAnimation
+import shiboken6
+from PySide6.QtCore import Property, QEasingCurve, QEvent, QPropertyAnimation, Signal
 from PySide6.QtWidgets import QPushButton, QWidget
 
+from src.gui.styles import COLORS
 from src.utils.helpers import get_colored_icon
 
 from ..design.colors import get_palette
@@ -19,6 +21,8 @@ if TYPE_CHECKING:
 
 class ModernButton(QPushButton):
     """Pulsante con animazioni e varianti."""
+
+    hover_opacity_changed = Signal(float)
 
     class Variant:
         """Varianti cromatiche del pulsante basate sul sistema di design."""
@@ -57,16 +61,15 @@ class ModernButton(QPushButton):
         self._apply_style()
 
         if icon:
-            from src.gui.styles import COLORS  # noqa: PLC0415
-
             self.setIcon(get_colored_icon(icon, COLORS["text_dark"]))
             # Increase padding for icon
             self.setStyleSheet(self.styleSheet() + "QPushButton { padding-left: 32px; text-align: left; }")
 
     def _setup_animation(self) -> None:
-        """Inizializza l'animazione di opacit  per l'effetto hover."""
-        self._anim = QPropertyAnimation(self, b"hoverOpacity")
-        self._anim.setDuration(150)
+        """Inizializza l'animazione di opacità per l'effetto hover."""
+        self._anim = QPropertyAnimation(self, b"hover_opacity")
+        anim_duration_ms = 150
+        self._anim.setDuration(anim_duration_ms)
         self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
     def showEvent(self, event: QShowEvent) -> None:
@@ -75,34 +78,47 @@ class ModernButton(QPushButton):
         self._apply_style()
 
     def get_hover_opacity(self) -> float:
-        """Restituisce il valore corrente dell'opacit  hover."""
+        """Restituisce il valore corrente dell'opacità hover."""
         return self._hover_opacity
 
     def set_hover_opacity(self, value: float) -> None:
-        """Imposta il valore dell'opacit  hover e aggiorna lo stile."""
-        self._hover_opacity = value
-        self._apply_style()
+        """Imposta il valore dell'opacità hover e aggiorna lo stile."""
+        if not shiboken6.isValid(self):
+            return
+        if self._hover_opacity != value:
+            self._hover_opacity = value
+            self.hover_opacity_changed.emit(value)
+            self._apply_style()
 
-    hoverOpacity = Property(float, fget=get_hover_opacity, fset=set_hover_opacity)  # noqa: N815
+    hover_opacity = Property(
+        float, fget=get_hover_opacity, fset=set_hover_opacity, notify=hover_opacity_changed
+    )
 
     def enterEvent(self, event: QEnterEvent) -> None:
         """Avvia l'animazione hover all'ingresso del mouse."""
-        self._anim.setStartValue(0.0)
-        self._anim.setEndValue(0.1)
+        if not shiboken6.isValid(self):
+            return
+        start_opacity = 0.0
+        end_opacity = 0.1
+        self._anim.setStartValue(start_opacity)
+        self._anim.setEndValue(end_opacity)
         self._anim.start()
         super().enterEvent(event)
 
     def leaveEvent(self, event: QEvent) -> None:
         """Avvia l'animazione di uscita al movimento del mouse."""
-        self._anim.setStartValue(0.1)
-        self._anim.setEndValue(0.0)
+        if not shiboken6.isValid(self):
+            return
+        start_opacity = 0.1
+        end_opacity = 0.0
+        self._anim.setStartValue(start_opacity)
+        self._anim.setEndValue(end_opacity)
         self._anim.start()
         super().leaveEvent(event)
 
     def _get_colors(self) -> tuple[str, str]:
         """Restituisce la coppia di colori (sfondo, testo) in base alla variante."""
         p = self._palette
-        from src.gui.styles import COLORS  # noqa: PLC0415
 
         return {
             self.Variant.PRIMARY: (p.primary, p.on_primary),
@@ -123,6 +139,8 @@ class ModernButton(QPushButton):
 
     def _apply_style(self) -> None:
         """Genera e applica il foglio di stile QSS dinamico."""
+        if not shiboken6.isValid(self):
+            return
         bg_color, text_color = self._get_colors()
         padding, font_size = self._get_size_styles()
 

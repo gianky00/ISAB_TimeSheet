@@ -50,7 +50,7 @@ class OdaIOWorker(QThread):
             elif self.mode == "export":
                 self._run_export()
         except Exception as e:
-            logger.error(f"OdaIOWorker Error ({self.mode}): {e}")  # noqa: TRY400
+            logger.exception(f"OdaIOWorker Error ({self.mode})")
             self.finished_signal.emit(False, str(e), {})
 
     def _run_import(self) -> None:

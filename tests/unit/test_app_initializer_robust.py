@@ -25,7 +25,7 @@ class TestAppInitializerRobust:
     @patch("src.core.license_updater.run_update")
     def test_initialize_core_success(self, mock_update, mock_status, mock_db, mock_log):
         """Test inizializzazione core completa con successo."""
-        from src.core.license_validator import LicenseStatus  # noqa: PLC0415
+        from src.core.license_validator import LicenseStatus
 
         # Simula licenza valida
         mock_status.return_value = (LicenseStatus.VALID, "Valid")
@@ -45,7 +45,7 @@ class TestAppInitializerRobust:
     @patch("src.core.license_updater.run_update")
     def test_initialize_core_license_invalid(self, mock_update, mock_status, mock_db, mock_log):
         """Test blocco inizializzazione se licenza invalida."""
-        from src.core.license_validator import LicenseStatus  # noqa: PLC0415
+        from src.core.license_validator import LicenseStatus
 
         # Simula licenza NON valida
         mock_status.return_value = (LicenseStatus.EXPIRED, "Expired")
@@ -61,7 +61,7 @@ class TestAppInitializerRobust:
     @patch("src.core.license_updater.run_update")
     def test_initialize_core_failure(self, mock_update, mock_db_init, mock_logger):
         """Test gestione errore critico in init core (DB failure)."""
-        from src.core.license_validator import LicenseStatus  # noqa: PLC0415
+        from src.core.license_validator import LicenseStatus
 
         mock_db_init.side_effect = Exception("DB Error")
 
@@ -86,9 +86,9 @@ class TestAppInitializerRobust:
         mock_nav = mock_mw.navigation_controller
 
         # Setup PageIndex mocks to match integers used in code
-        with patch("src.gui.main_window.page_index.PageIndex") as MockPageIndex:  # noqa: N806
+        with patch("src.gui.main_window.page_index.PageIndex") as mock_page_index:
             # Configura gli attributi come interi (Real values from PageIndex)
-            MockPageIndex.DASHBOARD = 0
+            mock_page_index.DASHBOARD = 0
             MockPageIndex.AUTOMAZIONI = 1
             MockPageIndex.TIMBRATURE = 3
             MockPageIndex.STRUMENTALE = 4
@@ -124,8 +124,8 @@ class TestAppInitializerRobust:
         # Simula errore su caricamento pannello
         mock_nav.get_panel.side_effect = Exception("Panel Load Error")
 
-        with patch("src.gui.main_window.page_index.PageIndex") as MockPageIndex:  # noqa: N806
-            MockPageIndex.DASHBOARD = 0
+        with patch("src.gui.main_window.page_index.PageIndex") as mock_page_index:
+            mock_page_index.DASHBOARD = 0
             # ... altri ...
 
             gen = AppInitializer.init_generator(mock_mw)

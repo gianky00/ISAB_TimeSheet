@@ -47,7 +47,7 @@ class FileNames:
 class Timeouts:
     """Global timeout settings (in seconds)."""
 
-    DEFAULT = 30
+    DEFAULT = 300
     SHORT = 5
     MEDIUM = 15
     LONG = 60
@@ -57,13 +57,15 @@ class Timeouts:
     PAGE_LOAD = 15
     ELEMENT_WAIT = 20
     DOWNLOAD_WAIT = 120
+    UI_DELAY = 0.5
+    SHORT_WAIT = 2
 
 
 class Business:
     """Business logic constants."""
 
     HOURLY_COST_STD = 28.50
-    DEFAULT_SUPPLIER = "COEMI"
+    DEFAULT_SUPPLIER = "SYNCROJOB"
     DEFAULT_SITE = "ISAB"
     DEFAULT_EXCEL_PASSWORD = "isab"  # noqa: S105
 
@@ -72,14 +74,14 @@ class Emails:
     """Default email recipients and configurations."""
 
     # Report Accessi Dipendenti
-    ACCESSI_TO = "luca.riccio@coemi.it"
-    ACCESSI_CC = "isabsud@coemi.it"
+    ACCESSI_TO = "resp.accessi@example.com"
+    ACCESSI_CC = "ufficio.personale@example.com"
 
     # Programmazione PDL
-    PROG_CC = "francesco.millo@coemi.it; ciro.scaravelli@coemi.it"
+    PROG_CC = "resp.programmazione@example.com"
 
     # Supporto tecnico
-    SUPPORT = "gianky.allegretti@gmail.com"
+    SUPPORT = "supporto@syncrojob.it"
 
 
 class BotStatus(Enum):

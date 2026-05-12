@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, name-defined, no-untyped-call"
 """
 SyncroJob - Playwright Timbrature Page
 Page Object Model per la sezione Timbrature usando Playwright.
@@ -101,7 +100,7 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
             return True
 
     def _select_supplier(self, fornitore: str) -> None:
-        """Seleziona il fornitore dal menu a tendina con pattern stabilita'."""
+        """Seleziona il fornitore dal menu a tendina con pattern stabilità."""
         self.log(f"Seleziono fornitore: {fornitore}")
         try:
             self._wait_overlay()

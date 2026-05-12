@@ -1,10 +1,12 @@
+import copy
 import json
+import logging
 import queue
 import threading
 import time
 from contextlib import suppress
 from datetime import UTC, datetime
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from src.core import config_manager
 from src.core.constants import FileNames
@@ -52,14 +54,10 @@ class StatsManager:
                         config_manager.set_config_value("statistics", old_stats)
                         return old_stats
             return {}
-        from typing import cast  # noqa: PLC0415
-
         return cast("dict[str, Any]", config.get("statistics", {}))
 
     def _worker_loop(self) -> None:
         """Loop per il salvataggio asincrono su disco."""
-        import logging  # noqa: PLC0415
-
         local_logger = logging.getLogger(__name__)
 
         while True:
@@ -72,21 +70,19 @@ class StatsManager:
                 stats_to_save = task
                 config_manager.set_config_value("statistics", stats_to_save)
                 self._save_queue.task_done()
-            except Exception as e:
-                local_logger.error(f"Stats Save Error: {e}")  # noqa: TRY400
+            except Exception:
+                local_logger.exception("Stats Save Error")
                 time.sleep(1)
 
     def _save_stats(self) -> None:
         """Invia una richiesta di salvataggio al worker di background."""
         # Inviamo una copia dei dati per evitare race conditions
-        import copy  # noqa: PLC0415
-
         self._save_queue.put(copy.deepcopy(self.stats))
 
     def increment_usage(self, bot_id: str) -> None:
         """
         Incrementa il contatore delle esecuzioni (runs) per un determinato bot.
-        Aggiorna inoltre il timestamp dell'ultima attivita'rilevata.
+        Aggiorna inoltre il timestamp dell'ultima attivitàrilevata.
 
         Args:
           bot_id: Identificativo unico dell'automazione (es. 'scarico_ts').

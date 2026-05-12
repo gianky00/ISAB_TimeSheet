@@ -1,5 +1,5 @@
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any
@@ -13,7 +13,7 @@ def normalize_name(text: Any) -> str:
 
 
 def build_timbrature_maps(
-    accessi: list[tuple[str, str, str, str]],
+    accessi: Sequence[Sequence[Any]],
 ) -> tuple[dict[str, int], dict[tuple[str, str], int], Callable[[Any], str]]:
     """
     Costruisce mappe di lookup per le timbrature indicizzate per CF e per Nome/Cognome.
@@ -56,7 +56,7 @@ def build_timbrature_maps(
 
 
 def compute_employee_status(
-    r: tuple[Any, ...],
+    r: Sequence[Any],
     last_by_cf: dict[str, int],
     last_by_name: dict[tuple[str, str], int],
     normalize: Callable[[Any], str],

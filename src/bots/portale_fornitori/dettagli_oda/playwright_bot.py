@@ -1,19 +1,25 @@
-# mypy: disable-error-code="no-any-unimported, no-untyped-call"
 """
 SyncroJob - Playwright Dettagli OdA Bot
 Versione Playwright del bot per lo scarico dei dettagli OdA.
 """
 
+from __future__ import annotations
+
+import concurrent.futures
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.bots.base.base_bot import StepStatus
 from src.bots.base.playwright_base_bot import PlaywrightBaseBot
 from src.bots.portale_fornitori.dettagli_oda.playwright_page import (
     PlaywrightDettagliOdAPage,
 )
+from src.core.constants import Business
 from src.core.oda_manager import OdaManager
+
+if TYPE_CHECKING:
+    from src.bots.base.selenium_bot_config import SeleniumBotConfig
 
 
 class PlaywrightDettagliOdABot(PlaywrightBaseBot):
@@ -51,17 +57,15 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
 
     def __init__(
         self,
-        username: str,
-        password: str,
+        config: SeleniumBotConfig,
         data_da: str | None = None,
         data_a: str | None = None,
         fornitore: str | None = None,
         **kwargs: Any,
     ) -> None:
-        """Inizializza il bot con credenziali e filtri temporali."""
-        super().__init__(username, password, **kwargs)
+        """Inizializza il bot con configurazione e filtri temporali."""
+        super().__init__(config)
         current_year = datetime.now(UTC).astimezone().year
-        from src.core.constants import Business  # noqa: PLC0415
 
         self.data_da = data_da or f"01.01.{current_year}"
         self.data_a = data_a or f"31.12.{current_year}"
@@ -157,7 +161,6 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
 
     def _import_oda_to_db(self, downloaded_path: Path) -> None:
         """Innesca l'importazione dei dati Excel nel database Storico OdA."""
-        import concurrent.futures  # noqa: PLC0415
 
         try:
             self.log(f"   Avvio importazione in Storico OdA da {downloaded_path.name}...")

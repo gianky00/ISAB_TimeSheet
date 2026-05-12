@@ -51,7 +51,7 @@ class TestContabilitaPanelRefactoring:
     )
     def test_update_selection_total_tree(self, panel):
         """Test selection count in a QTreeWidget."""
-        from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem  # noqa: PLC0415
+        from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
         tree = QTreeWidget()
         item = QTreeWidgetItem(["A"])

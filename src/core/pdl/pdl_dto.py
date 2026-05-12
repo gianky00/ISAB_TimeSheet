@@ -4,6 +4,7 @@ Oggetti di trasporto dati per il modulo PDL.
 Garantisce l'incapsulamento e previene la data leakage verso la GUI.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -38,7 +39,7 @@ class PdlRowDTO:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_db_row(cls, r: tuple[Any, ...]) -> "PdlRowDTO":
+    def from_db_row(cls, r: Sequence[Any]) -> "PdlRowDTO":
         """Factory method per creare un DTO da una riga grezza del DB."""
         return cls(
             id=int(r[0]),
@@ -65,7 +66,7 @@ class PdlRowDTO:
         )
 
     def to_master_list(self) -> list[str]:
-        """Restituisce i campiu'formattati per la tabella master della GUI."""
+        """Restituisce i campiùformattati per la tabella master della GUI."""
         raw = [
             self.data_creazione,
             self.richiedente,
@@ -78,7 +79,7 @@ class PdlRowDTO:
         return [("" if val.lower() in ("nan", "none") else val) for val in raw]
 
     def to_full_list(self) -> list[str | int]:
-        """Restituisce tutti i campiu'come lista (per compatibilit  legacy se necessaria)."""
+        """Restituisce tutti i campiùcome lista (per compatibilit  legacy se necessaria)."""
         return [
             self.id,
             self.n_pdl,

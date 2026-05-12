@@ -1,7 +1,6 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore, no-untyped-call"
 """
-SyncroJob - Playwright SafeWork Visualizza Attivita'Page
-Gestione della pagina Visualizza Attivita'per la programmazione usando Playwright.
+SyncroJob - Playwright SafeWork Visualizza AttivitàPage
+Gestione della pagina Visualizza Attivitàper la programmazione usando Playwright.
 """
 
 import time
@@ -15,7 +14,7 @@ from src.bots.safework.common.locators import SafeWorkLocators
 
 
 class PlaywrightVisualizzaAttivitaPage(PlaywrightBasePage):
-    """Gestisce le interazioni con la pagina Visualizza Attivita'usando Playwright."""
+    """Gestisce le interazioni con la pagina Visualizza Attivitàusando Playwright."""
 
     def __init__(self, page: Page, log_func: Callable[[str], None]) -> None:
         super().__init__(page, log_func)
@@ -41,11 +40,11 @@ class PlaywrightVisualizzaAttivitaPage(PlaywrightBasePage):
         self._seleziona_da_dropdown(SafeWorkLocators.DITTA_BUTTON, nome_ditta)
 
     def seleziona_richiedente(self, items: str | list[str]) -> bool:
-        """Seleziona uno o piu' richiedenti nel dropdown."""
+        """Seleziona uno o più richiedenti nel dropdown."""
         return self._seleziona_da_dropdown(SafeWorkLocators.RICHIEDENTE_BUTTON, items)
 
     def esegui_ricerca(self) -> None:
-        """Clicca 'Avvia Ricerca'."""
+        """Clicca 'Avvia Ricercà."""
         sel = self._get_selector(SafeWorkLocators.SEARCH_START_BUTTON)
         self.page.click(sel)
 

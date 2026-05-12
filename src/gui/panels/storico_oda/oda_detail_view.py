@@ -71,6 +71,6 @@ class OdaDetailView(QWidget):
             self.detail_labels[h].setText(val)
 
     def clear(self) -> None:
-        """Resetta i campiu'del dettaglio."""
+        """Resetta i campiùdel dettaglio."""
         for label in self.detail_labels.values():
             label.setText("-")

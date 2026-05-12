@@ -178,13 +178,10 @@ class MyManager:
         self.signals = MySignals.instance()
 ```
 
-### Lazy Loading Navigation
-
 When adding new panels:
 1. Add to `PageIndex` enum in `main_window.py`
-2. Create placeholder in `main_window._setup_ui()` loop
-3. Add factory method in `navigation_controller.py` (`_create_*`)
-4. Register in `creators` dict with PageIndex value
+2. Add panel instantiation in `navigation_controller.py`
+3. Ensure it is added to the main stack during app startup
 
 ### Cache Management
 
@@ -242,4 +239,5 @@ UI is Italian language. Key terms:
 5. **Bot credentials**: Load from config, never hardcode
 6. **Download paths**: Always use `Path` objects and ensure parent dirs exist
 7. **WebDriver waits**: Use `WebDriverWait` with explicit conditions, not `time.sleep()`
+river waits**: Use `WebDriverWait` with explicit conditions, not `time.sleep()`
 river waits**: Use `WebDriverWait` with explicit conditions, not `time.sleep()`

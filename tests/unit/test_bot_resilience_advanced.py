@@ -34,7 +34,7 @@ class MockBot(BaseBot):
 
     def _save_error_state(self, error_msg):
         # Implementazione reale per testare test_save_error_state_generation
-        from src.core.paths import get_logs_path  # noqa: PLC0415
+        from src.core.paths import get_logs_path
 
         error_dir = Path(get_logs_path()) / "errors"
         error_dir.mkdir(parents=True, exist_ok=True)

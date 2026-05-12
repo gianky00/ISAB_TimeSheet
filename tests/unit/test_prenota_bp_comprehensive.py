@@ -91,7 +91,7 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
             # Primo tentativo fallisce (TimeoutException), secondo ha successo
             mock_local_wait.until.side_effect = [TimeoutException(), mock_el]
 
-            # overlay (short_wait)  # noqa: ERA001
+            # Gestione overlay (attesa breve)
             self.mock_short_wait.until.return_value = True
 
             locator = (By.ID, "test-id")

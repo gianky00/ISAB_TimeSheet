@@ -19,63 +19,50 @@ from src.gui.styles.palette_helpers import hex_to_rgba
 
 class PDLTimelineWidget(QWidget):
     """
-    Widget che visualizza la cronologiàdegli interventi in stile Timeline verticale.
-    Progettato per essere inserito in una riga espansa della tabella Programmazione.
+    Widget elegante per visualizzare la cronologia delle attività di una PDL.
+    Implementa un design moderno a timeline verticale con card informative.
     """
 
-    def __init__(self, interventions: list[dict[str, Any]], parent: QWidget | None = None) -> None:
+    def __init__(self, data: list[dict[str, Any]], parent: QWidget | None = None) -> None:
         """
-        Inizializza il widget della timeline.
+        Inizializza la timeline con i dati degli eventi.
 
         Args:
-          interventions: Lista di dizionari contenenti i dati degli interventi.
+          data: Lista di dizionari, ognuno rappresentante un evento (data, tecnico, descrizione, fonte).
           parent: Widget genitore.
         """
         super().__init__(parent)
-        self.interventions = interventions
+        self.data = sorted(data, key=lambda x: str(x.get("data", "")), reverse=True)
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        """Configura l'interfaccia utente."""
+        """Configura il layout principale a scorrimento."""
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(20, 10, 20, 10)
-        main_layout.setSpacing(15)
-        # Background leggero per distinguere l'area espansa
-        self.setStyleSheet(f"background-color: {COLORS['bg_light']};")
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(0)
 
-        # Titolo
-        title = QLabel(f"CronologiàInterventi Recenti ({len(self.interventions)})")
-        title.setStyleSheet(f"font-weight: bold; font-size: 14px; color: {COLORS['primary_dark']};")
-        main_layout.addWidget(title)
-
-        if not self.interventions:
-            no_data = QLabel("Nessun intervento registrato.")
-            no_data.setStyleSheet(f"color: {COLORS['text_muted']}; font-style: italic; margin-left: 20px;")
-            main_layout.addWidget(no_data)
+        if not self.data:
+            empty_lbl = QLabel("Nessuna attività registrata per questa PDL.")
+            empty_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-style: italic;")
+            empty_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            main_layout.addWidget(empty_lbl)
             return
 
-        # Timeline Container
-        timeline_container = QWidget()
-        timeline_container.setStyleSheet("background-color: transparent;")
-        timeline_layout = QVBoxLayout(timeline_container)
-        timeline_layout.setContentsMargins(0, 0, 0, 0)
-        timeline_layout.setSpacing(0)
+        # Popola la timeline
+        for i, item in enumerate(self.data):
+            is_last = i == len(self.data) - 1
+            card = self._create_event_card(item, is_last)
+            main_layout.addWidget(card)
 
-        for i, intervention in enumerate(self.interventions):
-            # Card dell'evento
-            card = self._create_event_card(intervention, is_last=(i == len(self.interventions) - 1))
-            timeline_layout.addWidget(card)
-
-        main_layout.addWidget(timeline_container)
         main_layout.addStretch()
 
-    def _create_event_card(self, data: dict[str, Any], is_last: bool) -> QWidget:  # noqa: C901, PLR0915
+    def _create_event_card(self, data: dict[str, Any], is_last: bool) -> QWidget:
         """
         Crea una singola card per un evento nella timeline.
 
         Args:
           data: Dati dell'evento.
-          is_last: Se  l'ultimo evento della lista.
+          is_last: Se è l'ultimo evento della lista.
 
         Returns:
           Il widget della card creato.
@@ -83,14 +70,26 @@ class PDLTimelineWidget(QWidget):
         container = QWidget()
         layout = QHBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(15)
+        main_spacing = 15
+        layout.setSpacing(main_spacing)
 
         # 1. Colonna Data (Sinistra)
+        layout.addWidget(self._create_date_widget(data))
+
+        # 2. Linea Temporale (Centro)
+        layout.addWidget(self._create_line_widget(data, is_last))
+
+        # 3. Contenuto Card (Destra)
+        layout.addWidget(self._create_content_card(data))
+
+        return container
+
+    def _create_date_widget(self, data: dict[str, Any]) -> QWidget:
+        """Crea il widget con giorno e mese sulla sinistra."""
         date_str = str(data.get("data", ""))
         day_num = "??"
         month_str = ""
         with suppress(Exception):
-            # Tenta parsing di formati comuni
             for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y-%m-%d %H:%M:%S"):
                 try:
                     date_obj = datetime.strptime(date_str, fmt).replace(tzinfo=UTC)
@@ -101,7 +100,8 @@ class PDLTimelineWidget(QWidget):
                     continue
 
         date_widget = QWidget()
-        date_widget.setFixedWidth(50)
+        date_widget_width = 50
+        date_widget.setFixedWidth(date_widget_width)
         date_layout = QVBoxLayout(date_widget)
         date_layout.setContentsMargins(0, 0, 0, 0)
         date_layout.setSpacing(0)
@@ -116,48 +116,56 @@ class PDLTimelineWidget(QWidget):
 
         date_layout.addWidget(lbl_day)
         date_layout.addWidget(lbl_month)
-        date_layout.addStretch()  # Spinge in alto
-        layout.addWidget(date_widget)
+        date_layout.addStretch()
+        return date_widget
 
-        # 2. Linea Temporale (Centro)
+    def _create_line_widget(self, data: dict[str, Any], is_last: bool) -> QWidget:
+        """Crea l'indicatore grafico (pallino + linea) al centro."""
         line_widget = QWidget()
-        line_widget.setFixedWidth(30)
-        line_painter = QVBoxLayout(line_widget)
-        line_painter.setContentsMargins(0, 0, 0, 0)
-        line_painter.setSpacing(0)
-        line_painter.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        line_widget_width = 30
+        line_widget.setFixedWidth(line_widget_width)
+        line_layout = QVBoxLayout(line_widget)
+        line_layout.setContentsMargins(0, 0, 0, 0)
+        line_layout.setSpacing(0)
+        line_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        # Pallino
         dot = QLabel("  ")
         dot.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Colore pallino in base allo stato/fonte
-        dot_color = COLORS["text_muted"]  # Default Grigio
         fonte_text = str(data.get("fonte", "Report"))
+        dot_color = self._get_status_color(fonte_text)
 
-        if "Validato" in fonte_text:
-            dot_color = COLORS["success_dark"]  # Verde
-        elif "In Attesa" in fonte_text:
-            dot_color = COLORS["warning_orange"]  # Giallo/Arancio
-        elif "Relazione" in fonte_text:
-            dot_color = COLORS["purple"]  # Viola
+        dot_font_size = 12
+        dot_margin_bottom = -5
+        dot.setStyleSheet(
+            f"color: {dot_color}; font-size: {dot_font_size}px; margin-bottom: {dot_margin_bottom}px;"
+        )
+        line_layout.addWidget(dot)
 
-        dot.setStyleSheet(f"color: {dot_color}; font-size: 12px; margin-bottom: -5px;")
-        line_painter.addWidget(dot)
-
-        # Linea verticale (sempre presente per connettere visivamente, tranne ultimo se vogliamo staccare)
         line = QFrame()
-        line.setFixedWidth(2)
+        line_width = 2
+        line.setFixedWidth(line_width)
         line.setStyleSheet(f"background-color: {COLORS['border_light']}; border: none;")
         if is_last:
             line.setStyleSheet(
                 f"background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS['border_light']}, stop:1 transparent);"
             )
 
-        line_painter.addWidget(line)
-        layout.addWidget(line_widget)
+        line_layout.addWidget(line)
+        return line_widget
 
-        # 3. Contenuto Card (Destra)
+    def _get_status_color(self, fonte_text: str) -> str:
+        """Restituisce il colore basato sulla fonte."""
+        if "Validato" in fonte_text:
+            return COLORS["success_dark"]
+        if "In Attesa" in fonte_text:
+            return COLORS["warning_orange"]
+        if "Relazione" in fonte_text:
+            return COLORS["purple"]
+        return COLORS["text_muted"]
+
+    def _create_content_card(self, data: dict[str, Any]) -> QFrame:
+        """Crea la card informativa sulla destra."""
         card_frame = QFrame()
         card_frame.setStyleSheet(f"""
       QFrame {{
@@ -176,41 +184,7 @@ class PDLTimelineWidget(QWidget):
         card_layout.setSpacing(8)
 
         # Header Card: Tecnico + Badge Fonte
-        header_layout = QHBoxLayout()
-        header_layout.setSpacing(10)
-
-        tecnico_text = str(data.get("tecnico", "Tecnico Sconosciuto"))
-        tecnico = QLabel(tecnico_text)
-        tecnico.setStyleSheet(
-            f"font-weight: bold; font-size: 13px; color: {COLORS['text_dark']}; border: none; background: transparent;"
-        )
-        header_layout.addWidget(tecnico)
-
-        header_layout.addStretch()
-
-        badge_bg = COLORS["primary_dark"]  # Blu default
-        badge_fg = "white"
-        if "Relazione" in fonte_text:
-            badge_bg = COLORS["purple"]  # Viola
-        elif "Validato" in fonte_text:
-            badge_bg = COLORS["success_dark"]  # Verde
-        elif "In Attesa" in fonte_text:
-            badge_bg = COLORS["warning_yellow"]
-            badge_fg = COLORS["text_dark"]
-
-        lbl_fonte = QLabel(f" {fonte_text} ")
-        lbl_fonte.setStyleSheet(f"""
-      background-color: {badge_bg};
-      color: {badge_fg};
-      border-radius: 4px;
-      padding: 2px 6px;
-      font-size: 10px;
-      font-weight: bold;
-      border: none;
-    """)
-        header_layout.addWidget(lbl_fonte)
-
-        card_layout.addLayout(header_layout)
+        card_layout.addLayout(self._create_card_header(data))
 
         # Descrizione
         desc_text = str(data.get("descrizione", ""))
@@ -230,6 +204,43 @@ class PDLTimelineWidget(QWidget):
             )
             card_layout.addWidget(lbl_ore)
 
-        layout.addWidget(card_frame)
+        return card_frame
 
-        return container
+    def _create_card_header(self, data: dict[str, Any]) -> QHBoxLayout:
+        """Crea l'header della card con tecnico e badge."""
+        header_layout = QHBoxLayout()
+        header_layout.setSpacing(10)
+
+        tecnico_text = str(data.get("tecnico", "Tecnico Sconosciuto"))
+        tecnico = QLabel(tecnico_text)
+        tecnico.setStyleSheet(
+            f"font-weight: bold; font-size: 13px; color: {COLORS['text_dark']}; border: none; background: transparent;"
+        )
+        header_layout.addWidget(tecnico)
+        header_layout.addStretch()
+
+        fonte_text = str(data.get("fonte", "Report"))
+        badge_bg, badge_fg = self._get_badge_colors(fonte_text)
+
+        lbl_fonte = QLabel(f" {fonte_text} ")
+        lbl_fonte.setStyleSheet(f"""
+      background-color: {badge_bg};
+      color: {badge_fg};
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-weight: bold;
+      border: none;
+    """)
+        header_layout.addWidget(lbl_fonte)
+        return header_layout
+
+    def _get_badge_colors(self, fonte_text: str) -> tuple[str, str]:
+        """Restituisce i colori (sfondo, testo) per il badge della fonte."""
+        if "Relazione" in fonte_text:
+            return COLORS["purple"], "white"
+        if "Validato" in fonte_text:
+            return COLORS["success_dark"], "white"
+        if "In Attesa" in fonte_text:
+            return COLORS["warning_yellow"], COLORS["text_dark"]
+        return COLORS["primary_dark"], "white"

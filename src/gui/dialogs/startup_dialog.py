@@ -1,4 +1,3 @@
-# mypy: disable-error-code="name-defined, var-annotated, unreachable"
 """
 SyncroJob - Splash Screen
 Gestisce l'inizializzazione dell'applicazione con animazioni fluide e effetti 3D.
@@ -11,13 +10,16 @@ from typing import Any
 
 from PySide6.QtCore import (
     QEasingCurve,
+    QPoint,
     QPropertyAnimation,
     Qt,
+    QThread,
     QTimer,
 )
 from PySide6.QtGui import (
     QColor,
     QIcon,
+    QMouseEvent,
 )
 from PySide6.QtWidgets import (
     QDialog,
@@ -28,6 +30,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from src.core.license_validator import get_hardware_id, get_license_info
+from src.core.version import __version__
 from src.gui.styles import COLORS
 
 # Import widget specializzati
@@ -40,6 +44,7 @@ from src.gui.widgets.startup.startup_widgets import (
     TechBlueprint,
     TypewriterLabel,
 )
+from src.utils.helpers import get_asset_path
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +58,10 @@ class StartupDialog(QDialog):
     # Margine per l'ombra (per evitare che venga tagliata creando "punte")
     SHADOW_MARGIN = 40
 
+    _thread: QThread | None
+    _worker: Any
+    _drag_pos: QPoint | None
+
     def __init__(self) -> None:
         super().__init__()
         self.setMouseTracking(True)  # Fondamentale per il Tilt 3D
@@ -63,7 +72,7 @@ class StartupDialog(QDialog):
         self._setup_animations()
 
     def _init_window(self) -> None:
-        """Configura le propriet  base della finestra."""
+        """Configura le proprietà base della finestra."""
         self.setObjectName("StartupDialog")
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -80,7 +89,7 @@ class StartupDialog(QDialog):
         self._worker = None
         self._thread = None
         self._init_result = False
-        self.current_logs = []
+        self.current_logs: list[str] = []
         self._drag_pos = None
         self._tilt_x = 0.0
         self._tilt_y = 0.0
@@ -101,7 +110,8 @@ class StartupDialog(QDialog):
         # Particle background
         self.particles = ParticleBackground(self.container)
         self.particles.setGeometry(0, 0, self.CONTENT_WIDTH, self.CONTENT_HEIGHT)
-        self.particles.init_particles(70)
+        num_particles = 70
+        self.particles.init_particles(num_particles)
 
         # Animated border
         self.border = AnimatedBorder(self.container)
@@ -115,9 +125,11 @@ class StartupDialog(QDialog):
 
         # Shadow luminosa esterna
         shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(60)
+        blur_radius = 60
+        shadow.setBlurRadius(blur_radius)
         c = QColor(COLORS["primary_blue"])
-        shadow.setColor(QColor(c.red(), c.green(), c.blue(), 100))
+        shadow_opacity = 100
+        shadow.setColor(QColor(c.red(), c.green(), c.blue(), shadow_opacity))
         shadow.setOffset(0, 0)
         self.container.setGraphicsEffect(shadow)
 
@@ -126,8 +138,13 @@ class StartupDialog(QDialog):
     def _setup_content(self) -> None:
         """Configura il contenuto principale (header, console, progress, footer)."""
         content_layout = QVBoxLayout(self.content)
-        content_layout.setContentsMargins(30, 45, 30, 45)
-        content_layout.setSpacing(20)
+        layout_margin_side = 30
+        layout_margin_v = 45
+        content_layout.setContentsMargins(
+            layout_margin_side, layout_margin_v, layout_margin_side, layout_margin_v
+        )
+        layout_spacing = 20
+        content_layout.setSpacing(layout_spacing)
 
         self._setup_header(content_layout)
         self._setup_console(content_layout)
@@ -137,28 +154,33 @@ class StartupDialog(QDialog):
     def _setup_header(self, parent_layout: QVBoxLayout) -> None:
         """Configura l'header con logo, blueprint e titoli."""
         header_container = QFrame()
-        header_container.setFixedHeight(100)
+        header_height = 100
+        header_container.setFixedHeight(header_height)
         header_layout = QHBoxLayout(header_container)
         header_layout.setContentsMargins(0, 0, 0, 0)
-        header_layout.setSpacing(20)
+        header_spacing = 20
+        header_layout.setSpacing(header_spacing)
 
         # Blueprint olografico (dietro il logo)
         self.blueprint = TechBlueprint(header_container)
-        self.blueprint.setFixedSize(100, 100)
-        self.blueprint.move(-8, -8)  # Centratura rispetto al logo
-
-        from src.utils.helpers import get_asset_path  # noqa: PLC0415
+        blueprint_size = 100
+        self.blueprint.setFixedSize(blueprint_size, blueprint_size)
+        blueprint_offset = -8
+        self.blueprint.move(blueprint_offset, blueprint_offset)  # Centratura rispetto al logo
 
         icon_path = get_asset_path("assets/app.ico")
 
         self.logo = PulsingLogo(header_container)
-        self.logo.setFixedSize(85, 85)
+        logo_size = 85
+        self.logo.setFixedSize(logo_size, logo_size)
         if Path(icon_path).exists():
-            self.logo.set_pixmap(QIcon(icon_path).pixmap(64, 64))
+            icon_px = 64
+            self.logo.set_pixmap(QIcon(icon_path).pixmap(icon_px, icon_px))
         header_layout.addWidget(self.logo)
 
         title_box = QVBoxLayout()
-        title_box.setSpacing(4)
+        title_spacing = 4
+        title_box.setSpacing(title_spacing)
         self.title = QLabel()
         self.title.setTextFormat(Qt.TextFormat.RichText)
         self.title.setText(
@@ -166,8 +188,6 @@ class StartupDialog(QDialog):
             f'SYNCRO<span style="color:{COLORS["primary_blue"]};">JOB</span></span>'
         )
         title_box.addWidget(self.title)
-
-        from src.core.version import __version__  # noqa: PLC0415
 
         self.version = QLabel(f"v{__version__}")
         self.version.setStyleSheet(
@@ -182,15 +202,14 @@ class StartupDialog(QDialog):
 
     def _setup_license_info(self, parent_layout: QHBoxLayout) -> None:
         """Configura il box con le informazioni della licenza."""
-        from src.core.license_validator import get_hardware_id, get_license_info  # noqa: PLC0415
-
         lic_info = get_license_info() or {}
         client_name = lic_info.get("Cliente", "N/D").upper()
         expiry_date = lic_info.get("Scadenza Licenza", "N/D")
         hw_id = lic_info.get("Hardware ID", get_hardware_id() or "UNKNOWN")
 
         license_box = QVBoxLayout()
-        license_box.setSpacing(2)
+        license_spacing = 2
+        license_box.setSpacing(license_spacing)
         license_box.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
 
         license_box.addLayout(self._create_info_row("CLIENTE:", client_name))
@@ -202,7 +221,8 @@ class StartupDialog(QDialog):
     def _create_info_row(self, label_text: str, value_text: str) -> QHBoxLayout:
         """Crea una riga di informazione label: valore."""
         row = QHBoxLayout()
-        row.setSpacing(5)
+        row_spacing = 5
+        row.setSpacing(row_spacing)
         row.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         lbl = QLabel(label_text)
@@ -222,26 +242,30 @@ class StartupDialog(QDialog):
         self.log_frame = QFrame()
         self.log_frame.setObjectName("LogConsole")
         c = QColor(COLORS["primary_blue"])
+        log_border_opacity = 0.25
         self.log_frame.setStyleSheet(
-            f"#LogConsole {{ background:rgba(0,0,0,0.4); border-radius:16px; border:1px solid rgba({c.red()},{c.green()},{c.blue()},0.25); }}"
+            f"#LogConsole {{ background:rgba(0,0,0,0.4); border-radius:16px; border:1px solid rgba({c.red()},{c.green()},{c.blue()},{log_border_opacity}); }}"
         )
         log_layout = QVBoxLayout(self.log_frame)
         log_layout.setContentsMargins(15, 12, 15, 12)
         log_layout.setSpacing(4)
 
         log_header = QLabel("DIAGNOSTICA DI SISTEMA")
+        header_letter_spacing = 3
         log_header.setStyleSheet(
-            f"font-size:10px; color:rgba({c.red()},{c.green()},{c.blue()},0.7); letter-spacing:3px; font-weight:800;"
+            f"font-size:10px; color:rgba({c.red()},{c.green()},{c.blue()},0.7); letter-spacing:{header_letter_spacing}px; font-weight:800;"
         )
         log_layout.addWidget(log_header)
 
         sep = QFrame()
         sep.setFixedHeight(1)
-        sep.setStyleSheet(f"background:rgba({c.red()},{c.green()},{c.blue()},0.2);")
+        sep_opacity = 0.2
+        sep.setStyleSheet(f"background:rgba({c.red()},{c.green()},{c.blue()},{sep_opacity});")
         log_layout.addWidget(sep)
 
         self.log_labels = []
-        for _i in range(5):
+        max_log_lines = 5
+        for _i in range(max_log_lines):
             lbl = TypewriterLabel()
             lbl.setWordWrap(False)
             lbl.setTextFormat(Qt.TextFormat.RichText)
@@ -264,10 +288,12 @@ class StartupDialog(QDialog):
         footer.setContentsMargins(0, 5, 0, 0)
 
         self.indicator = QLabel()
-        self.indicator.setFixedSize(8, 8)
+        indicator_size = 8
+        self.indicator.setFixedSize(indicator_size, indicator_size)
         self.indicator.setStyleSheet(f"background:{COLORS['primary_blue']}; border-radius:4px;")
         footer.addWidget(self.indicator)
-        footer.addSpacing(8)
+        indicator_spacing = 8
+        footer.addSpacing(indicator_spacing)
 
         self.status = QLabel("AVVIO IN CORSO...")
         self.status.setStyleSheet(
@@ -289,17 +315,20 @@ class StartupDialog(QDialog):
         self._dot_count = 0
         self._dot_timer = QTimer(self)
         self._dot_timer.timeout.connect(self._animate_dots)
-        self._dot_timer.start(350)
+        dot_interval_ms = 350
+        self._dot_timer.start(dot_interval_ms)
 
         self._pulse_state = True
         self._pulse_timer = QTimer(self)
         self._pulse_timer.timeout.connect(self._pulse_indicator)
-        self._pulse_timer.start(800)
+        pulse_interval_ms = 800
+        self._pulse_timer.start(pulse_interval_ms)
 
         # Fade in
         self.setWindowOpacity(0.0)
         self._fade = QPropertyAnimation(self, b"windowOpacity")
-        self._fade.setDuration(600)
+        fade_duration_ms = 600
+        self._fade.setDuration(fade_duration_ms)
         self._fade.setStartValue(0.0)
         self._fade.setEndValue(1.0)
         self._fade.setEasingCurve(QEasingCurve.Type.OutCubic)
@@ -311,13 +340,13 @@ class StartupDialog(QDialog):
         if hasattr(self, "console_overlay"):
             self.console_overlay.setGeometry(self.log_frame.rect())
 
-    def mousePressEvent(self, event: Any) -> None:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         """Inizia il drag della finestra tramite mouse."""
         if event.button() == Qt.MouseButton.LeftButton:
             self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
             event.accept()
 
-    def mouseMoveEvent(self, event: Any) -> None:
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         """Gestisce il trascinamento e l'effetto 3D Tilt."""
         if event.buttons() & Qt.MouseButton.LeftButton and self._drag_pos:
             new_pos = event.globalPosition().toPoint() - self._drag_pos
@@ -335,15 +364,17 @@ class StartupDialog(QDialog):
             # Inclinazione massima 3 gradi
             self._tilt_x = rel_y * 3.0
             self._tilt_y = -rel_x * 3.0
-            # Sostituiamo apply_tilt con parallasse soft per performance e compatibilit  shadow
-            self.particles.apply_parallax(rel_x * 5, rel_y * 5)
+            # Sostituiamo apply_tilt con parallasse soft per performance e compatibilità shadow
+            parallax_factor = 5
+            self.particles.apply_parallax(rel_x * parallax_factor, rel_y * parallax_factor)
 
-    def mouseReleaseEvent(self, event: Any) -> None:
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         """Interrompe il drag della finestra."""
         self._drag_pos = None
 
     def _animate_dots(self) -> None:
-        self._dot_count = (self._dot_count + 1) % 4
+        max_dots = 4
+        self._dot_count = (self._dot_count + 1) % max_dots
         self.dots.setText("." * self._dot_count)
 
     def _pulse_indicator(self) -> None:
@@ -358,18 +389,22 @@ class StartupDialog(QDialog):
         self.status.setText(message.upper())
         self.particles.set_progress(prog)  # Sincronizza convergenza particelle
 
-        if prog >= 90:  # noqa: PLR2004
+        threshold_success = 90
+        threshold_blue = 50
+
+        if prog >= threshold_success:
             self.indicator.setStyleSheet(f"background:{COLORS['success_green']}; border-radius:4px;")
-        elif prog >= 50:  # noqa: PLR2004
+        elif prog >= threshold_blue:
             self.indicator.setStyleSheet(f"background:{COLORS['primary_blue']}; border-radius:4px;")
         else:
             self.indicator.setStyleSheet(f"background:{COLORS['warning_orange']}; border-radius:4px;")
 
         self.current_logs.append(full_entry)
-        if len(self.current_logs) > 5:  # noqa: PLR2004
+        max_log_history = 5
+        if len(self.current_logs) > max_log_history:
             self.current_logs.pop(0)
 
-        for i in range(5):
+        for i in range(max_log_history):
             if i < len(self.current_logs):
                 is_last = i == len(self.current_logs) - 1
                 opacity = 1.0 if is_last else 0.2 + i * 0.15
@@ -379,7 +414,8 @@ class StartupDialog(QDialog):
                 )
 
                 if is_last:
-                    self.log_labels[i].set_text_animated(self.current_logs[i], speed=15)
+                    anim_speed = 15
+                    self.log_labels[i].set_text_animated(self.current_logs[i], speed=anim_speed)
                 else:
                     self.log_labels[i].set_text_instant(self.current_logs[i])
             else:
@@ -391,8 +427,10 @@ class StartupDialog(QDialog):
         self._init_result = success
         if self._thread:
             self._thread.quit()
-            self._thread.wait(500)
-        QTimer.singleShot(400, self.accept)
+            thread_wait_ms = 500
+            self._thread.wait(thread_wait_ms)
+        close_delay_ms = 400
+        QTimer.singleShot(close_delay_ms, self.accept)
 
     def get_result(self) -> bool:
         """Restituisce il risultato dell'inizializzazione dell'app."""
@@ -414,5 +452,6 @@ class StartupDialog(QDialog):
                 lbl._timer.stop()
             if self._thread and self._thread.isRunning():
                 self._thread.quit()
-                self._thread.wait(500)
+                thread_wait_ms = 500
+                self._thread.wait(thread_wait_ms)
         super().closeEvent(event)

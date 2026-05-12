@@ -1,8 +1,9 @@
+# ruff: noqa: TRY300, PLR2004
 """
 SyncroJob - Enhanced Bug Reporter
 
 Raccoglie diagnostica completa per segnalazioni bug, integrando:
-- Log enterprise (app.json, app.log, errors.json)
+- Log strutturati (app.json, app.log, errors.json)
 - Analytics report (anomalie, health score)
 - Audit trail (ultime azioni)
 - Info sistema
@@ -19,6 +20,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+try:
+    import psutil
+
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+
+from src.core.audit import AuditManager
+from src.core.logging import generate_analytics_report, view_trace
 from src.core.paths import CONFIG_DIR, get_version
 
 logger = logging.getLogger(__name__)
@@ -29,7 +39,7 @@ class BugReporter:
     Gestisce la raccolta di log e informazioni di debug per la segnalazione di bug.
 
     Crea un pacchetto ZIP contenente:
-    - Log enterprise (app.json, app.log, errors.json, performance.jsonl)
+    - Log strutturati (app.json, app.log, errors.json, performance.jsonl)
     - Log errori bot (screenshot/html recenti)
     - Analytics report (anomalie, pattern, health score)
     - Audit trail (ultime 50 azioni)
@@ -38,7 +48,7 @@ class BugReporter:
 
     @staticmethod
     def collect_diagnostics(
-        include_enterprise_logs: bool = True,
+        include_structured_logs: bool = True,
         include_analytics: bool = True,
         include_audit: bool = True,
         trace_id: str | None = None,
@@ -48,7 +58,7 @@ class BugReporter:
         Raccoglie tutti i file diagnostici e crea un archivio ZIP.
 
         Args:
-          include_enterprise_logs: Includi log strutturati enterprise
+          include_structured_logs: Includi log strutturati
           include_analytics: Includi report analytics (anomalie, health)
           include_audit: Includi audit trail recente
           trace_id: Trace ID specifico per debug mirato (opzionale)
@@ -70,9 +80,9 @@ class BugReporter:
             log_dir = CONFIG_DIR / "logs"
 
             with zipfile.ZipFile(report_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-                # 1. Enterprise Logs
-                if include_enterprise_logs and log_dir.exists():
-                    included_files.extend(BugReporter._add_enterprise_logs(zipf, log_dir))
+                # 1. Structured Logs
+                if include_structured_logs and log_dir.exists():
+                    included_files.extend(BugReporter._add_structured_logs(zipf, log_dir))
 
                 # 2. Bot Errors (screenshot/html)
                 error_dir = log_dir / "errors"
@@ -100,15 +110,15 @@ class BugReporter:
                 included_files.append("system_info.json")
 
             logger.info(f"Bug report creato: {report_path} ({len(included_files)} file)")
-            return report_path, "Report generato con successo.", included_files  # noqa: TRY300
+            return report_path, "Report generato con successo.", included_files
 
         except Exception as e:
             logger.error("Errore durante la creazione del bug report", exc_info=True)
             return None, f"Errore creazione report: {e}", []
 
     @staticmethod
-    def _add_enterprise_logs(zipf: zipfile.ZipFile, log_dir: Path) -> list[str]:
-        """Aggiunge log enterprise allo ZIP."""
+    def _add_structured_logs(zipf: zipfile.ZipFile, log_dir: Path) -> list[str]:
+        """Aggiunge log strutturati allo ZIP."""
         added = []
 
         # Log strutturati in application/
@@ -161,8 +171,6 @@ class BugReporter:
     def _add_analytics_report(zipf: zipfile.ZipFile, hours: int) -> list[str]:
         """Aggiunge report analytics con anomalie e health score."""
         try:
-            from src.core.logging import generate_analytics_report  # noqa: PLC0415
-
             report = generate_analytics_report(hours=hours)
 
             # Converti dataclass in dict
@@ -178,7 +186,7 @@ class BugReporter:
                 "analytics_report.json",
                 json.dumps(report_dict, indent=2, default=str),
             )
-            return ["analytics_report.json"]  # noqa: TRY300
+            return ["analytics_report.json"]
 
         except Exception as e:
             logger.warning(f"Impossibile generare analytics report: {e}")
@@ -188,8 +196,6 @@ class BugReporter:
     def _add_audit_trail(zipf: zipfile.ZipFile, limit: int = 50) -> list[str]:
         """Aggiunge audit trail recente."""
         try:
-            from src.core.audit import AuditManager  # noqa: PLC0415
-
             manager = AuditManager.instance()
             actions = manager.get_logs(limit=limit)
 
@@ -203,7 +209,7 @@ class BugReporter:
                 "audit_trail.json",
                 json.dumps(audit_data, indent=2, default=str),
             )
-            return ["audit_trail.json"]  # noqa: TRY300
+            return ["audit_trail.json"]
 
         except Exception as e:
             logger.warning(f"Impossibile generare audit trail: {e}")
@@ -213,8 +219,6 @@ class BugReporter:
     def _add_trace_timeline(zipf: zipfile.ZipFile, trace_id: str) -> list[str]:
         """Aggiunge timeline di un trace specifico."""
         try:
-            from src.core.logging import view_trace  # noqa: PLC0415
-
             timeline = view_trace(trace_id)
 
             if not timeline:
@@ -263,34 +267,32 @@ class BugReporter:
 
         # Memory Info
         try:
-            import psutil  # noqa: PLC0415
+            if PSUTIL_AVAILABLE:
+                mem = psutil.virtual_memory()
+                sys_info["memory"] = {
+                    "total": f"{mem.total / (1024**3):.2f} GB",
+                    "available": f"{mem.available / (1024**3):.2f} GB",
+                    "percent": f"{mem.percent}%",
+                }
 
-            mem = psutil.virtual_memory()
-            sys_info["memory"] = {
-                "total": f"{mem.total / (1024**3):.2f} GB",
-                "available": f"{mem.available / (1024**3):.2f} GB",
-                "percent": f"{mem.percent}%",
-            }
+                # CPU Info
+                sys_info["cpu"] = {
+                    "cores_physical": psutil.cpu_count(logical=False),
+                    "cores_logical": psutil.cpu_count(logical=True),
+                    "usage_percent": psutil.cpu_percent(interval=0.1),
+                }
 
-            # CPU Info
-            sys_info["cpu"] = {
-                "cores_physical": psutil.cpu_count(logical=False),
-                "cores_logical": psutil.cpu_count(logical=True),
-                "usage_percent": psutil.cpu_percent(interval=0.1),
-            }
-
-            # Disk Info
-            disk = psutil.disk_usage("/")
-            sys_info["disk"] = {
-                "total": f"{disk.total / (1024**3):.2f} GB",
-                "free": f"{disk.free / (1024**3):.2f} GB",
-                "percent": f"{disk.percent}%",
-            }
-
+                # Disk Info
+                disk = psutil.disk_usage("/")
+                sys_info["disk"] = {
+                    "total": f"{disk.total / (1024**3):.2f} GB",
+                    "free": f"{disk.free / (1024**3):.2f} GB",
+                    "percent": f"{disk.percent}%",
+                }
         except ImportError:
             sys_info["memory"] = "psutil not installed"
         except Exception as e:
-            sys_info["system_info_error"] = e
+            sys_info["system_info_error"] = str(e)
 
         return sys_info
 
@@ -313,7 +315,7 @@ class BugReporter:
 
     @staticmethod
     def get_estimated_size(
-        include_enterprise_logs: bool = True,
+        include_structured_logs: bool = True,
         include_analytics: bool = True,
         include_audit: bool = True,
     ) -> str:
@@ -322,7 +324,7 @@ class BugReporter:
 
         log_dir = CONFIG_DIR / "logs"
 
-        if include_enterprise_logs and log_dir.exists():
+        if include_structured_logs and log_dir.exists():
             app_dir = log_dir / "application"
             if app_dir.exists():
                 for f in app_dir.glob("*"):
@@ -334,6 +336,6 @@ class BugReporter:
         if include_audit:
             size_kb += 20  # Audit JSON
 
-        if size_kb < 1024:  # noqa: PLR2004
+        if size_kb < 1024:
             return f"~{size_kb} KB"
         return f"~{size_kb / 1024:.1f} MB"

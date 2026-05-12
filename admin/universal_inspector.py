@@ -39,7 +39,7 @@ class BotArchitect:
     Used for creating datasets for AI training or debugging Selenium workflows.
     """
 
-    def __init__(self):  # noqa: ANN204
+    def __init__(self) -> None:
         self.driver = None
         self.config = config_manager.load_config()
         self.state_counter = 0
@@ -48,7 +48,7 @@ class BotArchitect:
         self.workflow = []
         self.prepare_environment()
 
-    def prepare_environment(self):  # noqa: ANN201
+    def prepare_environment(self) -> None:
         """Prepara la cartella log_inspector pulendo sessioni precedenti."""
         if INSPECTOR_DIR.exists():
             shutil.rmtree(INSPECTOR_DIR)
@@ -59,7 +59,7 @@ class BotArchitect:
         """Visualizza un messaggio nel terminale con timestamp e formattazione standard."""
         print(f"[{datetime.now().strftime('%H:%M:%S')}] {text}")
 
-    def get_user_choice(self):  # noqa: ANN201
+    def get_user_choice(self):
         """Launches a Tkinter GUI to select the target portal and configuration."""
         root = tk.Tk()
         root.title("Universal Inspector - Setup")
@@ -84,7 +84,7 @@ class BotArchitect:
 
         ttk.Label(config_frame, text="Output: admin/log_inspector/", foreground="blue").pack(pady=10)
 
-        def on_confirm():  # noqa: ANN202
+        def on_confirm() -> None:
             root.quit()
             root.destroy()
 
@@ -130,14 +130,14 @@ class BotArchitect:
         root.mainloop()
         return selected_url.get(), URL_MAP.get(selected_url.get())
 
-    def init_driver(self):  # noqa: ANN201
+    def init_driver(self) -> None:
         """Initializes the Chrome WebDriver with anti-detection options."""
         chrome_options = Options()
         chrome_options.add_argument("--start-maximized")
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
         self.driver = webdriver.Chrome(options=chrome_options)
 
-    def auto_login(self, portal_name, url):  # noqa: ANN001, ANN201
+    def auto_login(self, portal_name, url) -> None:
         """Performs automatic login to the selected portal using credentials from config."""
         self.driver.get(url)
         accounts = (
@@ -175,7 +175,7 @@ class BotArchitect:
         except Exception as e:
             self.log_to_console(f"⚠️ Errore durante il login automatico: {e}")
 
-    def capture_state(self, state_name):  # noqa: ANN001, ANN201
+    def capture_state(self, state_name) -> None:
         """
         Captures the current browser state (Screenshot, DOM, JSON mapping).
         Creates a new directory in log_inspector for the snapshot.
@@ -217,7 +217,7 @@ class BotArchitect:
         self.log_to_console(f"📝 AZIONE {self.action_counter}: {action_desc}")
         self._record_entry("ACTION", action_desc, self.last_state_folder)
 
-    def _record_entry(self, entry_type, description, ref_state):  # noqa: ANN001, ANN202
+    def _record_entry(self, entry_type, description, ref_state) -> None:
         """Helper to append an entry to the workflow JSON list."""
         self.workflow.append(
             {
@@ -232,7 +232,7 @@ class BotArchitect:
         with MANIFEST_FILE.open("w", encoding="utf-8") as f:
             json.dump(self.workflow, f, indent=4)
 
-    def _get_ultimate_scanner_js(self):  # noqa: ANN202
+    def _get_ultimate_scanner_js(self) -> str:
         """Returns the JS code for deep DOM scanning and element extraction."""
         return r"""
             function scan(root = document, framePath = "root") {
@@ -268,7 +268,7 @@ class BotArchitect:
             return scan();
         """
 
-    def run(self):  # noqa: ANN201
+    def run(self) -> None:
         """
         Main execution loop.
         Initializes driver, performs login, and enters interactive command loop.

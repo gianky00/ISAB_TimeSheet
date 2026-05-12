@@ -3,7 +3,6 @@ Bot TS - Scarico TS Page
 Page Object Model for the Scarico TS section.
 """
 
-# mypy: disable-error-code="no-any-unimported, no-untyped-call"
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -20,6 +19,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.portale_fornitori.scarico_ts.locators import ScaricoTSLocators
 from src.core.constants import Timeouts
+from src.utils.helpers import cleanup_chrome_temp_files
 
 
 class ScaricoTSPage:
@@ -60,11 +60,11 @@ class ScaricoTSPage:
             # Wait for page load (check for supplier arrow)
             self.wait.until(EC.visibility_of_element_located(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW))
             self._wait_for_overlay()
-            return True  # noqa: TRY300
-
         except Exception as e:
             self.log(f"  Errore navigazione menu: {e}")
             return False
+        else:
+            return True
 
     def setup_filters(self, supplier: str, date_from: str) -> bool:
         """Sets the initial filters (Supplier and Date)."""
@@ -86,11 +86,11 @@ class ScaricoTSPage:
             date_field = self.wait.until(EC.visibility_of_element_located(ScaricoTSLocators.DATE_FROM_FIELD))
             date_field.clear()
             date_field.send_keys(date_from)
-
-            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"  Errore impostazione filtri: {e}")
             return False
+        else:
+            return True
 
     def search_and_download(self, oda_number: str, oda_position: str, download_dir: Path) -> bool:
         """Performs search for specific OdA and downloads the Excel."""
@@ -115,7 +115,7 @@ class ScaricoTSPage:
 
             # Search
             self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.SEARCH_BUTTON)).click()
-            self.log(" Pulsante 'Cerca' cliccato. Attesa risultati...")
+            self.log(" Pulsante 'Cercà cliccato. Attesa risultati...")
             self._wait_for_overlay()  # Wait for loading
 
             # Download
@@ -137,12 +137,11 @@ class ScaricoTSPage:
             if not downloaded_file:
                 self.log("   Download fallito o file non trovato.")
                 return False
-
-            return self._rename_downloaded_file(downloaded_file, download_dir, oda_number, oda_position)
-
         except Exception as e:
             self.log(f"   Errore download Excel: {e}")
             return False
+        else:
+            return self._rename_downloaded_file(downloaded_file, download_dir, oda_number, oda_position)
 
     def _get_xlsx_snapshot(self, directory: Path) -> set[Path]:
         """Crea uno snapshot dei file .xlsx esistenti."""
@@ -154,8 +153,6 @@ class ScaricoTSPage:
 
     def _cleanup_temp_files(self, directory: Path) -> None:
         """Rimuove residui temporanei di Chromium."""
-        from src.utils.helpers import cleanup_chrome_temp_files  # noqa: PLC0415
-
         removed = cleanup_chrome_temp_files(directory)
         for f_name in removed:
             self.log(f" [DEBUG] Rimosso residuo download: {f_name}")

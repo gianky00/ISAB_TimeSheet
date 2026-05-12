@@ -114,7 +114,7 @@ class ScaricoOrePanel(QWidget):
             ConfirmationDialog.show_warning(
                 self,
                 "Configurazione Mancante",
-                "Configura il percorso 'File Scarico Ore' nelle Impostazioni.",
+                "Configura il percorso 'File Scarico Orè nelle Impostazioni.",
             )
             return
 
@@ -152,7 +152,7 @@ class ScaricoOrePanel(QWidget):
 
     def _load_data(self) -> None:
         """Avvia il caricamento asincrono dei dati dal database o dalla cache locale."""
-        from src.core.database import db_manager  # noqa: PLC0415
+        from src.core.database import db_manager
 
         if not db_manager.DB_CONTABILITA.exists():
             self.filters.status_label.setText("Database non trovato.")

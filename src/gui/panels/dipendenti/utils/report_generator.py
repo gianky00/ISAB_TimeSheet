@@ -29,10 +29,10 @@ class ReportGenerator:
     def generate_email_report(parent_widget: Any = None) -> None:
         """Avvia la generazione del report in background."""
         if ReportGenerator._worker and ReportGenerator._worker.isRunning():
-            ToastManager.instance().show("Generazione report gia' in corso...", "warning")
+            ToastManager.instance().show("Generazione report già in corso...", "warning")
             return
 
-        ReportGenerator._worker = ReportWorker()  # Senza parent perche' statico
+        ReportGenerator._worker = ReportWorker()  # Senza parent perchè statico
         ReportGenerator._worker.finished_signal.connect(
             lambda success, msg, data: ReportGenerator._on_report_finished(parent_widget, success, msg, data)
         )
@@ -69,7 +69,7 @@ class ReportGenerator:
     @staticmethod
     def _fallback_browser(message: str, data: dict[str, Any]) -> None:
         """Gestisce l'apertura del report nel browser se Outlook fallisce."""
-        from src.core.dipendenti.report_service import ReportService  # noqa: PLC0415
+        from src.core.dipendenti.report_service import ReportService
 
         try:
             body_html = ReportService.build_report_html(data)
@@ -81,11 +81,11 @@ class ReportGenerator:
 
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(tmp_path)))
 
-            from src.core.report_history import ReportHistory  # noqa: PLC0415
+            from src.core.report_history import ReportHistory
 
             ReportHistory.save_report(data["warning_list"], data["expired_list"])
 
             ToastManager.instance().show(message, "warning", duration=4000)
-        except Exception as e:
-            logger.error(f"Errore fallback report browser: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Errore fallback report browser")
             ToastManager.instance().show("Impossibile aprire il report nel browser", "error")

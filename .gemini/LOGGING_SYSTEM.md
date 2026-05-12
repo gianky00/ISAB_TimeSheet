@@ -116,7 +116,8 @@ C:\Users\gianc\AppData\Local\SyncroJob\logs\
 │   └── errors.json    # Solo errori
 ├── metrics/
 └── bots/
-    └── scarico_ts_trace_abc.json  # Log per singola run
+    └── scarico_ts/
+        └── trace_abc.json  # Log per singola run organizzati per bot
 ```
 
 ### Custom Configuration

@@ -41,7 +41,7 @@ def print_banner() -> None:
     print(f"{Colors.END}")
 
 
-def get_mutatest_path():  # noqa: ANN201
+def get_mutatest_path():
     """Trova il percorso dell'eseguibile mutatest."""
     candidates = [
         Path(r"C:\Users\gianc\AppData\Roaming\Python\Python312\Scripts\mutatest.exe"),
@@ -55,7 +55,7 @@ def get_mutatest_path():  # noqa: ANN201
     return "mutatest"  # Fallback al PATH
 
 
-def check_mutatest():  # noqa: ANN201
+def check_mutatest() -> bool | None:
     """Verifica se mutatest è installato."""
     mutatest_path = get_mutatest_path()
     try:
@@ -67,7 +67,7 @@ def check_mutatest():  # noqa: ANN201
         return False
 
 
-def get_subpackages():  # noqa: ANN201
+def get_subpackages():
     """Ritorna la lista dei subpackage in src/."""
     return [
         p.name
@@ -76,7 +76,7 @@ def get_subpackages():  # noqa: ANN201
     ]
 
 
-def run_mutation(target: str, trials: int, mode: str):  # noqa: ANN201
+def run_mutation(target: str, trials: int, mode: str):
     """Esegue mutatest su un target specifico."""
     target_path = SRC_DIR / target
     mutatest_path = get_mutatest_path()
@@ -102,7 +102,7 @@ def run_mutation(target: str, trials: int, mode: str):  # noqa: ANN201
 
     start_time = time.time()
     # Usiamo shell=False per sicurezza, passando la lista
-    process = subprocess.run(cmd, capture_output=True, text=True)  # noqa: PLW1510
+    process = subprocess.run(cmd, check=False, capture_output=True, text=True)
     duration = time.time() - start_time
 
     return {
@@ -114,7 +114,7 @@ def run_mutation(target: str, trials: int, mode: str):  # noqa: ANN201
     }
 
 
-def parse_results(output: str):  # noqa: ANN201
+def parse_results(output: str):
     """Parsing dell'output di mutatest per estrarre le statistiche e i dettagli."""
     stats = {"killed": 0, "survived": 0, "incompetent": 0, "timeout": 0}
     details = []
@@ -140,7 +140,7 @@ def parse_results(output: str):  # noqa: ANN201
     return stats, details
 
 
-def generate_final_report(results: list):  # noqa: ANN201
+def generate_final_report(results: list):
     """Genera un report markdown dettagliato."""
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

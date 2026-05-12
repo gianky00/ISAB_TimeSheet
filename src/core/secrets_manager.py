@@ -14,6 +14,8 @@ import keyring  # Per integrazione con credential manager OS
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+from src.core.license_hwid import get_hardware_id
+
 logger = logging.getLogger(__name__)
 
 
@@ -82,7 +84,6 @@ class SecretsManager:
         Genera una chiave di cifratura deterministica basata sull'Hardware ID.
         Questo evita di cablare chiavi statiche nel codice per i periodi di grazia.
         """
-        from src.core.license_validator import get_hardware_id  # noqa: PLC0415
 
         hwid = get_hardware_id()
         # Usa l'HWID normalizzato per derivare una chiave Fernet valida
@@ -91,7 +92,7 @@ class SecretsManager:
     @classmethod
     def get_license_key(cls) -> bytes | None:
         """
-        Recupera la chiave di licenza in ordine di priorita'.
+        Recupera la chiave di licenza in ordine di priorità.
         """
         # 1. Environment variable
         key = cls._get_key_from_env()
@@ -150,7 +151,7 @@ class SecretsManager:
         return None
 
     _keyring_available: bool | None = None
-    """Cache per lo stato di disponibilita' del backend di keyring."""
+    """Cache per lo stato di disponibilità del backend di keyring."""
 
     @classmethod
     def is_available(cls) -> bool:

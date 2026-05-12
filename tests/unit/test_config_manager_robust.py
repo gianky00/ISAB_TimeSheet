@@ -100,7 +100,7 @@ class TestConfigManagerRobust:
         assert acc["username"] == "user1"
 
         # Remove user1
-        from src.core.config_manager import remove_account  # noqa: PLC0415
+        from src.core.config_manager import remove_account
 
         remove_account("isab", "user1")
         config = load_config()
@@ -158,7 +158,7 @@ class TestConfigManagerRobust:
 
     def test_path_getters(self):
         """Test getter dei percorsi."""
-        from src.core.paths import get_data_path, get_logs_path  # noqa: PLC0415
+        from src.core.paths import get_data_path, get_logs_path
 
         data_path = get_data_path()
         logs_path = get_logs_path()

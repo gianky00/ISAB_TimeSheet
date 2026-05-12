@@ -17,7 +17,7 @@ class SortableTreeWidgetItem(QTreeWidgetItem):
         t2 = other.text(column).strip()
 
         # 1. Date (DD/MM/YYYY o YYYY/MM/DD)
-        if "/" in t1 and "/" in t2 and len(t1) <= 10:  # noqa: PLR2004
+        if "/" in t1 and "/" in t2 and len(t1) <= 10:
             res = self._compare_dates(t1, t2)
             if res is not None:
                 return res

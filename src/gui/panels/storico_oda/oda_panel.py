@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Storico OdA Panel (Refactored)
 Pannello coordinato per la gestione dello Storico OdA.
@@ -6,13 +5,12 @@ Utilizza ODAController per la logica di business e ODATreeView per la gerarchia.
 Refactored V9.4: Bold on selection and context menu for details.
 """
 
-import os
 from contextlib import suppress
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import QPoint, Qt, QTimer
-from PySide6.QtGui import QStandardItemModel
+from PySide6.QtGui import QShowEvent, QStandardItemModel
 from PySide6.QtWidgets import (
     QFileDialog,
     QMenu,
@@ -25,15 +23,18 @@ from PySide6.QtWidgets import (
 from src.core.constants import Icons
 from src.core.oda.oda_controller import ODAController
 from src.core.sync_tracker import SyncTracker
-from src.gui.controllers.bot_worker import BotWorker  # noqa: TC001
 from src.gui.widgets import EmptyStateWidget
 from src.gui.widgets.toast import ToastManager
 from src.gui.workers.oda_io_worker import OdaIOWorker
+from src.utils.helpers import safe_open
 
 from .oda_detail_view import OdaDetailView
 from .oda_filter_widget import OdaFilterWidget
 from .utils.oda_adapter import ODAAdapter
 from .widgets.oda_tree import ODATreeView
+
+if TYPE_CHECKING:
+    from src.gui.controllers.bot_worker import BotWorker
 
 
 class StoricoOdaPanel(QWidget):
@@ -50,7 +51,7 @@ class StoricoOdaPanel(QWidget):
         super().__init__(parent)
         self.controller = controller
         self.worker: BotWorker | None = None
-        from PySide6.QtGui import QStandardItem  # noqa: PLC0415
+        from PySide6.QtGui import QStandardItem
 
         self._last_selected_parent: QStandardItem | None = None
 
@@ -91,10 +92,10 @@ class StoricoOdaPanel(QWidget):
             "Gruppo Acquisti",
             "Indicatore Rilascio",
             "Stato Rilascio",
-            "Attivita'",
+            "Attività",
             "Num riga",
             "Quantit ",
-            "Unita' di Mis",
+            "Unità di Mis",
             "Prezzo lordo",
             "Testo breve",
         ]
@@ -110,7 +111,7 @@ class StoricoOdaPanel(QWidget):
         self._setup_ui()
         # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
 
-    def showEvent(self, event) -> None:  # noqa: ANN001
+    def showEvent(self, event: QShowEvent) -> None:
         """Esegue il primo refresh solo quando il pannello diventa visibile."""
         super().showEvent(event)
         if not self._first_refresh_done:
@@ -251,7 +252,7 @@ class StoricoOdaPanel(QWidget):
 
     def _on_update_clicked(self) -> None:
         """Esegue il workflow di aggiornamento del database tramite Dettagli OdA."""
-        from src.gui.main_window.main import MainWindow  # noqa: PLC0415
+        from src.gui.main_window.main import MainWindow
 
         mw = self.window()
         if isinstance(mw, MainWindow):
@@ -302,6 +303,6 @@ class StoricoOdaPanel(QWidget):
             else:
                 ToastManager.instance().show(message, "success")
                 if "path" in stats:
-                    os.startfile(stats["path"])  # noqa: S606
+                    safe_open(stats["path"])
         else:
             QMessageBox.warning(self, "Operazione Fallita", message)

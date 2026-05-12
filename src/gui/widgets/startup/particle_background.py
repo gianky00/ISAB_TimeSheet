@@ -4,7 +4,7 @@ Sfondo animato con particelle, connessioni neurali, circuiti e convergenza final
 """
 
 import math
-import random
+import secrets
 
 from PySide6.QtCore import QPoint, Qt, QTimer
 from PySide6.QtGui import (
@@ -35,16 +35,16 @@ class Particle:
         self.phase: float = 0.0
         self.w, self.h = w, h
         self.reset(w, h)
-        self.y = random.uniform(0, h)  # noqa: S311
+        self.y = float(secrets.randbelow(h))
 
     def reset(self, w: int, h: int) -> None:
         """Reset particle to bottom with random properties."""
-        self.x = random.uniform(0, w)  # noqa: S311
+        self.x = float(secrets.randbelow(w))
         self.y = float(h + 20)
-        self.size = random.uniform(1.2, 4.0)  # noqa: S311
-        self.speed = random.uniform(0.2, 0.7)  # noqa: S311
-        self.opacity = random.uniform(0.15, 0.45)  # noqa: S311
-        self.phase = random.uniform(0, math.pi * 2)  # noqa: S311
+        self.size = 1.2 + (secrets.randbelow(2800) / 1000.0)  # 1.2 to 4.0
+        self.speed = 0.2 + (secrets.randbelow(500) / 1000.0)  # 0.2 to 0.7
+        self.opacity = 0.15 + (secrets.randbelow(300) / 1000.0)  # 0.15 to 0.45
+        self.phase = secrets.randbelow(6283) / 1000.0  # 0 to 6.283
         self.w, self.h = w, h
 
     def update(self) -> None:
@@ -52,11 +52,11 @@ class Particle:
         self.y -= self.speed
         self.x += math.sin(self.phase) * 0.25
         self.phase += 0.015
-        if self.y < -20:  # noqa: PLR2004
+        if self.y < -20:
             self.reset(self.w, self.h)
         if self.x > self.w + 20:
             self.x = -20.0
-        if self.x < -20:  # noqa: PLR2004
+        if self.x < -20:
             self.x = float(self.w + 20)
 
     def apply_force(self, dx: float, dy: float) -> None:
@@ -119,7 +119,7 @@ class ParticleBackground(QWidget):
         cx, cy = self.width() / 2.0, self.height() / 2.0
 
         for p in self.particles:
-            if self.progress > 0.92:  # noqa: PLR2004
+            if self.progress > 0.92:
                 # Forza gravitazionale verso il centro
                 strength = (self.progress - 0.92) * 8.0
                 dx, dy = cx - p.x, cy - p.y
@@ -130,8 +130,8 @@ class ParticleBackground(QWidget):
                 p.update()
 
         # Gestione impulsi neurali
-        if random.random() < 0.12 and len(self.particles) > 1:  # noqa: PLR2004, S311
-            p1 = float(random.randint(0, len(self.particles) - 1))  # noqa: S311
+        if secrets.randbelow(100) < 12 and len(self.particles) > 1:
+            p1 = float(secrets.randbelow(len(self.particles)))
             p2 = float((int(p1) + 1) % len(self.particles))
             self._pulses.append([p1, p2, 0.0])
 
@@ -170,11 +170,12 @@ class ParticleBackground(QWidget):
         p.setPen(QPen(QColor(52, 152, 219, 15), 1))
 
         grid = 40
+        choices = ["H", "V", "D"]
         for x in range(0, w, grid):
             for y in range(0, h, grid):
-                if random.random() < 0.3:  # noqa: PLR2004, S311
+                if secrets.randbelow(100) < 30:
                     # Traccia a 90 o 45 gradi
-                    mode = random.choice(["H", "V", "D"])  # noqa: S311
+                    mode = choices[secrets.randbelow(len(choices))]
                     if mode == "H":
                         p.drawLine(x, y, x + grid, y)
                     elif mode == "V":
@@ -182,7 +183,7 @@ class ParticleBackground(QWidget):
                     elif mode == "D":
                         p.drawLine(x, y, int(x + grid / 2), int(y + grid / 2))
 
-                    if random.random() < 0.2:  # noqa: PLR2004, S311
+                    if secrets.randbelow(100) < 20:
                         # Nodo circolare
                         p.setBrush(QColor(52, 152, 219, 25))
                         p.drawEllipse(QPoint(x, y), 2, 2)
@@ -240,7 +241,7 @@ class ParticleBackground(QWidget):
             # Disegno Sprite
             op = 0.6 + 0.4 * math.sin(self.phase * 2.0 + p1.phase)
             painter.setOpacity(op * p1.opacity)
-            target_size = p1.size * (8.0 if self.progress < 0.9 else 8.0 + (self.progress - 0.9) * 60)  # noqa: PLR2004
+            target_size = p1.size * (8.0 if self.progress < 0.9 else 8.0 + (self.progress - 0.9) * 60)
             painter.drawPixmap(
                 int(p1.x - target_size / 2),
                 int(p1.y - target_size / 2),
@@ -274,7 +275,7 @@ class ParticleBackground(QWidget):
             if p1_idx >= len(self.particles) or p2_idx >= len(self.particles):
                 continue
             p1, p2 = self.particles[p1_idx], self.particles[p2_idx]
-            if math.dist((p1.x, p1.y), (p2.x, p2.y)) > 150:  # noqa: PLR2004
+            if math.dist((p1.x, p1.y), (p2.x, p2.y)) > 150:
                 continue
             ix, iy = p1.x + (p2.x - p1.x) * t, p1.y + (p2.y - p1.y) * t
             glow = QRadialGradient(ix, iy, 12.0)

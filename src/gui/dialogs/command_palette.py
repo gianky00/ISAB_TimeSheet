@@ -1,7 +1,7 @@
 """
 SyncroJob - Command Palette Dialog
 Dialogo 'Quick Open' interattivo ispirato a VSCode per l'accesso rapido a comandi e funzioni.
-Supporta navigazione gerarchica, ricerca globale ricorsiva e modalita' di input interattivo.
+Supporta navigazione gerarchica, ricerca globale ricorsiva e modalità di input interattivo.
 """
 
 from contextlib import suppress
@@ -213,7 +213,7 @@ class CommandPaletteDialog(QDialog):
         return super().eventFilter(obj, event)
 
     def _handle_input_mode_key(self, event: QKeyEvent) -> bool:
-        """Gestisce i tasti speciali durante la modalita' di inserimento parametri."""
+        """Gestisce i tasti speciali durante la modalità di inserimento parametri."""
         key = event.key()
         if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self._submit_input_step()

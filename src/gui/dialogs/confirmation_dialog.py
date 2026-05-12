@@ -1,8 +1,10 @@
 """
 SyncroJob - Confirmation Dialog
-Dialogo standard per le conferme (S /No) o messaggi importanti.
-Sostituisce QMessageBox per mantenere uno stile coerente con il design d' lite del progetto.
+Dialogo standard per le conferme (Sì/No) o messaggi importanti.
+Sostituisce QMessageBox per mantenere uno stile coerente con il design d'élite del progetto.
 """
+
+import re
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -26,7 +28,7 @@ class ConfirmationDialog(QDialog):
     """
 
     class Variant:
-        """Costanti per definire la tipologiàdel messaggio."""
+        """Costanti per definire la tipologia del messaggio."""
 
         INFO = "info"
         WARNING = "warning"
@@ -56,64 +58,68 @@ class ConfirmationDialog(QDialog):
         self.setMinimumWidth(380)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
 
-        # Forza stile Light a livello di Dialog
-        self.setStyleSheet(f"""
-      QDialog {{
-        background-color: {COLORS["bg_white"]};
-        border: 1px solid {COLORS["border_medium"]};
-      }}
-    """)
-
+        self._apply_style()
         layout = QVBoxLayout(self)
         layout.setSpacing(20)
         layout.setContentsMargins(25, 25, 25, 25)
 
-        # Header con icona e messaggio
+        self._setup_header(layout, message, variant, is_rich_text)
+        self._setup_buttons(layout, variant)
+
+    def _apply_style(self) -> None:
+        """Applica lo stile base al dialogo."""
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_medium"]};
+            }}
+        """)
+
+    def _setup_header(self, layout: QVBoxLayout, message: str, variant: str, is_rich_text: bool) -> None:
+        """Configura l'intestazione con icona e messaggio."""
         header_layout = QHBoxLayout()
         header_layout.setSpacing(15)
 
-        icon_label = QLabel()
         icon_path = self._get_icon_path(variant)
-        icon_color = self._get_icon_color(variant)
         if icon_path:
-            icon_label.setPixmap(get_colored_icon(icon_path, icon_color).pixmap(32, 32))
-            icon_label.setFixedSize(32, 32)
+            icon_label = QLabel()
+            icon_color = self._get_icon_color(variant)
+            icon_size = 32
+            icon_label.setPixmap(get_colored_icon(icon_path, icon_color).pixmap(icon_size, icon_size))
+            icon_label.setFixedSize(icon_size, icon_size)
             header_layout.addWidget(icon_label, 0, Qt.AlignmentFlag.AlignTop)
 
         msg_label = QLabel()
         msg_label.setWordWrap(True)
-
         if is_rich_text:
-            # Sanificazione minima per prevenire UI Injection/XSS
-            safe_msg = self._sanitize_html(message)
             msg_label.setTextFormat(Qt.TextFormat.RichText)
-            msg_label.setText(safe_msg)
+            msg_label.setText(self._sanitize_html(message))
         else:
             msg_label.setTextFormat(Qt.TextFormat.PlainText)
             msg_label.setText(message)
 
         msg_label.setStyleSheet(f"font-size: 14px; color: {COLORS['text_dark']};")
         header_layout.addWidget(msg_label, 1)
-
         layout.addLayout(header_layout)
 
-        # Pulsanti
+    def _setup_buttons(self, layout: QVBoxLayout, variant: str) -> None:
+        """Configura l'area dei pulsanti di azione."""
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(10)
         btn_layout.addStretch()
 
         if variant == self.Variant.QUESTION:
-            self.btn_cancel = ModernButton("Annulla", variant=ModernButton.Variant.GHOST)
-            self.btn_cancel.clicked.connect(self.reject)
-            btn_layout.addWidget(self.btn_cancel)
+            btn_cancel = ModernButton("Annulla", variant=ModernButton.Variant.GHOST)
+            btn_cancel.clicked.connect(self.reject)
+            btn_layout.addWidget(btn_cancel)
 
-            self.btn_ok = ModernButton("Conferma", variant=ModernButton.Variant.PRIMARY)
-            self.btn_ok.clicked.connect(self.accept)
-            btn_layout.addWidget(self.btn_ok)
+            btn_ok = ModernButton("Conferma", variant=ModernButton.Variant.PRIMARY)
+            btn_ok.clicked.connect(self.accept)
+            btn_layout.addWidget(btn_ok)
         else:
-            self.btn_ok = ModernButton("OK", variant=ModernButton.Variant.PRIMARY)
-            self.btn_ok.clicked.connect(self.accept)
-            btn_layout.addWidget(self.btn_ok)
+            btn_ok = ModernButton("OK", variant=ModernButton.Variant.PRIMARY)
+            btn_ok.clicked.connect(self.accept)
+            btn_layout.addWidget(btn_ok)
 
         layout.addLayout(btn_layout)
 
@@ -143,8 +149,6 @@ class ConfirmationDialog(QDialog):
 
     def _sanitize_html(self, html: str) -> str:
         """Rimuove tag potenzialmente pericolosi (script, iframe, object) dall'HTML."""
-        import re  # noqa: PLC0415
-
         # Rimuove blocchi script completi
         clean = re.sub(r"<script.*?>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
         # Rimuove tag singoli pericolosi
@@ -160,7 +164,7 @@ class ConfirmationDialog(QDialog):
     @staticmethod
     def confirm(parent: QWidget | None, title: str, message: str, is_rich_text: bool = False) -> bool:
         """
-        Helper statico per mostrare rapidamente una richiesta di conferma S /No.
+        Helper statico per mostrare rapidamente una richiesta di conferma Sì/No.
 
         Args:
           parent: Widget genitore.

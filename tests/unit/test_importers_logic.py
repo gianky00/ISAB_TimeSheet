@@ -10,7 +10,7 @@ from src.core.importers.storico_oda import StoricoOdaImporter
 class TestImportersLogic:
     # --- Storico OdA Tests ---
     def test_storico_oda_clean_euro_num(self):
-        import math  # noqa: PLC0415
+        import math
 
         clean = StoricoOdaImporter._clean_euro_num
         assert clean(100) == 100.0

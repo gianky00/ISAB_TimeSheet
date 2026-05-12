@@ -1,11 +1,12 @@
 """
 SyncroJob - Bot Efficiency Widget
-Visualizza le metriche di efficienza e affidabilita' delle automazioni su tutto lo storico.
-V4.0: Storico totale, nuove metriche di successo e affidabilita' con barre di progresso.
+Visualizza le metriche di efficienza e affidabilità delle automazioni su tutto lo storico.
+V4.0: Storico totale, nuove metriche di successo e affidabilità con barre di progresso.
 """
 
 import logging
 import threading
+from typing import NamedTuple
 
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
@@ -20,10 +21,21 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 logger = logging.getLogger(__name__)
 
 
+class KPICardConfig(NamedTuple):
+    """Configurazione per la creazione di una card KPI."""
+
+    icon_key: str
+    icon_color: str
+    bg_color: str
+    value_text: str
+    value_color: str
+    tag_text: str
+
+
 class BotSavingsWidget(ModernCard):
     """
     Widget premium per la visualizzazione dell'efficienza delle automazioni.
-    Calcola il tempo risparmiato, il tasso di successo e l'affidabilita' basandosi sullo storico totale.
+    Calcola il tempo risparmiato, il tasso di successo e l'affidabilità basandosi sullo storico totale.
     """
 
     stats_updated = Signal(object)  # ROIMetrics
@@ -92,7 +104,7 @@ class BotSavingsWidget(ModernCard):
         kpi_h.setSpacing(16)
 
         # KPI 1: Tempo Risparmiato
-        time_card = self._create_kpi_card(
+        time_config = KPICardConfig(
             icon_key=Icons.CLOCK,
             icon_color=COLORS["success_dark"],
             bg_color="#f0fdf4",
@@ -100,12 +112,13 @@ class BotSavingsWidget(ModernCard):
             value_color=COLORS["success_dark"],
             tag_text="RISPARMIO REALE (NET)",
         )
+        time_card = self._create_kpi_card(time_config)
         self.lbl_time = time_card.findChild(QLabel, "kpi_value")
         self.lbl_trend = time_card.findChild(QLabel, "kpi_sub")
         kpi_h.addWidget(time_card)
 
         # KPI 2: Task Automatizzati
-        ops_card = self._create_kpi_card(
+        ops_config = KPICardConfig(
             icon_key=Icons.ROCKET,
             icon_color=COLORS["primary_blue"],
             bg_color="#eff6ff",
@@ -113,6 +126,7 @@ class BotSavingsWidget(ModernCard):
             value_color=COLORS["primary_blue"],
             tag_text="TASK COMPLETATI",
         )
+        ops_card = self._create_kpi_card(ops_config)
         self.lbl_ops = ops_card.findChild(QLabel, "kpi_value")
         self.lbl_top_task = ops_card.findChild(QLabel, "kpi_sub")
         kpi_h.addWidget(ops_card)
@@ -120,7 +134,7 @@ class BotSavingsWidget(ModernCard):
         layout.addLayout(kpi_h)
 
     def _build_detail_section(self, layout: QVBoxLayout) -> None:
-        """Costruisce la sezione di dettaglio con barre di successo e affidabilita'."""
+        """Costruisce la sezione di dettaglio con barre di successo e affidabilità."""
         # -- Success Rate Row --
         success_h = QHBoxLayout()
         success_h.setSpacing(10)
@@ -169,7 +183,7 @@ class BotSavingsWidget(ModernCard):
         lbl_rel_icon.setStyleSheet("background: transparent; border: none;")
         rel_h.addWidget(lbl_rel_icon)
 
-        lbl_rel_tag = QLabel("Affidabilita' Sistema")
+        lbl_rel_tag = QLabel("Affidabilità Sistema")
         lbl_rel_tag.setStyleSheet(
             f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: 700;"
             " background: transparent; border: none;"
@@ -192,7 +206,7 @@ class BotSavingsWidget(ModernCard):
         layout.addWidget(self.progress_rel)
 
     def _build_footer(self, layout: QVBoxLayout) -> None:
-        """Costruisce il piu' di pagina con la media giornaliera dei task."""
+        """Costruisce il più di pagina con la media giornaliera dei task."""
         self.lbl_avg = QLabel("Media giornaliera: -- task/giorno")
         self.lbl_avg.setStyleSheet(
             f"color: {COLORS['text_light']}; font-size: 11px; font-style: italic;"
@@ -213,29 +227,20 @@ class BotSavingsWidget(ModernCard):
         badge.setPixmap(get_colored_icon(icon_path, icon_color).pixmap(14, 14))
         return badge
 
-    def _create_kpi_card(  # noqa: PLR0913
-        self,
-        icon_key: str,
-        icon_color: str,
-        bg_color: str,
-        value_text: str,
-        value_color: str,
-        tag_text: str,
-    ) -> QFrame:
-        """Card KPiu'con badge icona, valore grande e sottotitolo."""
+    def _create_kpi_card(self, config: KPICardConfig) -> QFrame:
+        """Card KPI con badge icona, valore grande e sottotitolo."""
         card = QFrame()
         card.setStyleSheet(
-            f"QFrame {{ background-color: {bg_color}; border-radius: 10px;"
+            f"QFrame {{ background-color: {config.bg_color}; border-radius: 10px;"
             f" border: 1px solid {COLORS['border_light']}; }}"
         )
 
         v = QVBoxLayout(card)
         v.setContentsMargins(10, 8, 10, 8)
         v.setSpacing(4)
-
         # Badge row
         badge_h = QHBoxLayout()
-        badge = self._create_icon_badge(icon_key, icon_color, COLORS["bg_white"])
+        badge = self._create_icon_badge(config.icon_key, config.icon_color, COLORS["bg_white"])
         badge_h.addWidget(badge)
         badge_h.addStretch()
         v.addLayout(badge_h)
@@ -246,10 +251,10 @@ class BotSavingsWidget(ModernCard):
         row_h.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         # Value
-        lbl_val = QLabel(value_text)
+        lbl_val = QLabel(config.value_text)
         lbl_val.setObjectName("kpi_value")
         lbl_val.setStyleSheet(
-            f"color: {value_color}; font-size: 24px; font-weight: 900; background: transparent; border: none;"
+            f"color: {config.value_color}; font-size: 24px; font-weight: 900; background: transparent; border: none;"
         )
         row_h.addWidget(lbl_val)
 
@@ -264,7 +269,7 @@ class BotSavingsWidget(ModernCard):
         v.addLayout(row_h)
 
         # Tag
-        lbl_tag = QLabel(tag_text)
+        lbl_tag = QLabel(config.tag_text)
         lbl_tag.setStyleSheet(
             f"color: {COLORS['text_muted']}; font-size: 10px; font-weight: 800;"
             " letter-spacing: 0.5px; background: transparent; border: none;"
@@ -294,8 +299,8 @@ class BotSavingsWidget(ModernCard):
             try:
                 metrics = ROIEngine.calculate_savings()
                 self.stats_updated.emit(metrics)
-            except Exception as e:
-                logger.error(f"Efficiency Update Error: {e}")  # noqa: TRY400
+            except Exception:
+                logger.exception("Efficiency Update Error")
 
         threading.Thread(target=run, daemon=True).start()
 

@@ -1,13 +1,14 @@
-# mypy: disable-error-code="no-untyped-call"
 """
 SyncroJob - Playwright SafeWork PDL Download Bot
 Versione Playwright del bot per lo scarico e la stampa dei PDL.
 """
 
+from __future__ import annotations
+
 import time
 from contextlib import suppress
 from pathlib import Path
-from typing import Any, ClassVar, Final
+from typing import TYPE_CHECKING, Any, ClassVar, Final
 
 import fitz
 from playwright.sync_api import TimeoutError
@@ -17,6 +18,9 @@ from src.bots.safework.common.locators import SafeWorkLocators
 from src.bots.safework.playwright_base import PlaywrightSafeworkBaseBot
 from src.utils.document_processor import DocumentProcessor
 from src.utils.printing import print_pdf
+
+if TYPE_CHECKING:
+    from src.bots.base.selenium_bot_config import SeleniumBotConfig
 
 # Costanti per soglie e limiti
 MAX_PDL_DIGITS: Final[int] = 6
@@ -36,16 +40,12 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
         ("session", "Chiusura Sessione"),
     ]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = 30,
-        download_path: str = "",
+        config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
-        super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
+        super().__init__(config, account_type=account_type)
         self.downloaded_files: list[str] = []
 
     @property
@@ -171,7 +171,7 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
             self._attendi_scomparsa_overlay()
 
             preview_menu_sel = self._get_selector(SafeWorkLocators.PRINT_PREVIEW_MENU)
-            self.page.wait_for_selector(preview_menu_sel, state="visible", timeout=30000)
+            self.page.wait_for_selector(preview_menu_sel, state="visible", timeout=self.config.timeout * 1000)
         except Exception as e:
             self.log(f"❌ Errore ricerca PDL {pdl_num}: {e}")
             return False
@@ -185,7 +185,9 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
             preview_menu_sel = self._get_selector(SafeWorkLocators.PRINT_PREVIEW_MENU)
             self.page.click(preview_menu_sel)
 
-            with self.page.expect_download(timeout=60000) as download_info:
+            # Usa il timeout globale per il download
+            download_timeout_ms = self.config.timeout * 1000
+            with self.page.expect_download(timeout=download_timeout_ms) as download_info:
                 ita_sel = self._get_selector(SafeWorkLocators.DOWNLOAD_ITALIANO)
                 self.page.click(ita_sel)
 
@@ -207,9 +209,11 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
 
             if not self.page.is_visible(label_pa_sel):
                 self.page.click(title_p2_sel)
-                self.page.wait_for_selector(label_pa_sel, state="visible", timeout=10000)
+                self.page.wait_for_selector(label_pa_sel, state="visible", timeout=self.config.timeout * 1000)
 
-            with self.page.expect_download(timeout=90000) as download_info:
+            # Per la parte seconda usiamo 1.5x timeout dato il rendering anteprima
+            download_timeout_ms = int(self.config.timeout * 1.5 * 1000)
+            with self.page.expect_download(timeout=download_timeout_ms) as download_info:
                 print_ps_sel = self._get_selector(SafeWorkLocators.PRINT_PS_BUTTON)
                 self.page.click(print_ps_sel)
 

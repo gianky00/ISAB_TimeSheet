@@ -145,7 +145,7 @@ class ReportHistory:
           limit: Numero massimo di report da recuperare
 
         Returns:
-          Lista di report storici ordinati per data (dal piu' recente)
+          Lista di report storici ordinati per data (dal più recente)
         """
         data = cls._load_data()
         history: list[dict[str, Any]] = []

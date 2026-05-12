@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, no-untyped-call"
 """
 SyncroJob - Carico TS Page
 Page Object Model for Carico TS.
@@ -45,10 +44,11 @@ class CaricoTSPage:
             self.log("Navigazione Gestione Timesheet...")
             self.wait.until(EC.element_to_be_clickable(CaricoTSLocators.MANAGEMENT_MENU)).click()
             self._wait_overlay()
-            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"Errore navigazione: {e}")
             return False
+        else:
+            return True
 
     def select_supplier(self, supplier: str) -> bool:
         """
@@ -69,10 +69,11 @@ class CaricoTSPage:
             self.driver.execute_script("arguments[0].scrollIntoView({block:'nearest'});", opt)
             self.driver.execute_script("arguments[0].click();", opt)
             self._wait_overlay()
-            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"Errore fornitore: {e}")
             return False
+        else:
+            return True
 
     def process_oda(self, oda: str) -> bool:
         """
@@ -104,7 +105,8 @@ class CaricoTSPage:
             self.log("Estrai OdA cliccato.")
 
             # Just stopping here as per original logic (it stops after extract)
-            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"Errore processo OdA: {e}")
             return False
+        else:
+            return True

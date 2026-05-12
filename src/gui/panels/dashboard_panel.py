@@ -155,7 +155,7 @@ class DashboardPanel(QWidget):
         self.content_layout.addStretch()
 
         # 2. Activity Feed (Bottom)
-        subtitle = QLabel("Feed Attivita'Recenti")
+        subtitle = QLabel("Feed AttivitàRecenti")
         subtitle.setStyleSheet(
             f"font-size: 16px; font-weight: 700; color: {COLORS['text_muted']}; margin-top: 20px;"
         )

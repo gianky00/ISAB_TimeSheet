@@ -53,7 +53,7 @@ class ScaricaTSPanel(BaseBotPanel):
 
         self._setup_content()
         # Forza inizializzazione timeline immediata per Scarico TS
-        from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot  # noqa: PLC0415
+        from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
 
         self.activity_timeline.set_steps(ScaricaTSBot.STEPS)
 
@@ -71,7 +71,7 @@ class ScaricaTSPanel(BaseBotPanel):
         """
         Restituisce la classe ScaricaTSBot associata a questo pannello.
         """
-        from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot  # noqa: PLC0415
+        from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
 
         return ScaricaTSBot
 
@@ -85,17 +85,23 @@ class ScaricaTSPanel(BaseBotPanel):
 
     def _setup_content(self) -> None:
         """Inizializza e posiziona i componenti UI specifici del pannello."""
-        # Sezione Parametri (Senza QGroupBox per favorire il design Floating Card)
         params_container = QWidget()
-        params_layout = QVBoxLayout(params_container)
-        params_layout.setContentsMargins(0, 0, 0, 0)
-        params_layout.setSpacing(5)
+        self.params_layout = QVBoxLayout(params_container)
+        self.params_layout.setContentsMargins(0, 0, 0, 0)
+        self.params_layout.setSpacing(5)
 
+        self._setup_params_section()
+        self._setup_table_section()
+
+        self.content_layout.addWidget(params_container)
+
+    def _setup_params_section(self) -> None:
+        """Configura la sezione dei parametri e la toolbar della tabella."""
         # Usiamo il widget atomico per i parametri comuni
         self.params_widget = BotParametersWidget(show_date_range=False, show_dest_path=True)
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
-        params_layout.addWidget(self.params_widget)
+        self.params_layout.addWidget(self.params_widget)
 
         # Parametri specifici: Flag Elabora TS
         self.elabora_ts_check = StandardCheckBox("Elabora TS")
@@ -114,9 +120,10 @@ class ScaricaTSPanel(BaseBotPanel):
         )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
-        params_layout.addLayout(table_toolbar)
+        self.params_layout.addLayout(table_toolbar)
 
-        # 2. Tabella e Stati
+    def _setup_table_section(self) -> None:
+        """Configura la tabella dati e la lista degli stati."""
         table_h = QHBoxLayout()
         table_h.setSpacing(10)
 
@@ -140,9 +147,7 @@ class ScaricaTSPanel(BaseBotPanel):
 
         table_h.addWidget(self.data_table)
         table_h.addLayout(v_status)
-        params_layout.addLayout(table_h)
-
-        self.content_layout.addWidget(params_container)
+        self.params_layout.addLayout(table_h)
 
     def _update_status_list(self, force: bool = False) -> None:
         """Aggiorna il numero di righe nella lista degli stati."""
@@ -154,7 +159,7 @@ class ScaricaTSPanel(BaseBotPanel):
         """Aggiorna lo stato della riga quando il bot termina l'elaborazione."""
         self.status_list.update_status(step_idx, success)
 
-        # Trova dinamicamente l'indice della colonna 'esito'
+        # Trova dinamicamente l'indice della colonna 'esitò
         col_idx = -1
         for i, col in enumerate(self.data_table.columns):
             if col["name"] == "esito":
@@ -178,22 +183,26 @@ class ScaricaTSPanel(BaseBotPanel):
 
     def _load_saved_data(self) -> None:
         """Carica i dati salvati."""
-        config = config_manager.load_config()
-        self.refresh_fornitori()
-        self.params_widget.set_societa(config.get("last_scarico_ts_societa", "ISAB"))
-        self.params_widget.set_fornitore(config.get("last_scarico_ts_fornitore", ""))
-        self.params_widget.set_dest_path(config.get("path_scarico_ts", ""))
-        self.elabora_ts_check.setChecked(config.get("last_scarico_ts_elabora", True))
+        self._is_loading = True
+        try:
+            config = config_manager.load_config()
+            self.refresh_fornitori()
+            self.params_widget.set_societa(config.get("last_scarico_ts_societa", "ISAB"))
+            self.params_widget.set_fornitore(config.get("last_scarico_ts_fornitore", ""))
+            self.params_widget.set_dest_path(config.get("path_scarico_ts", ""))
+            self.elabora_ts_check.setChecked(config.get("last_scarico_ts_elabora", True))
 
-        saved_data = config.get("last_scarico_ts_data", [])
-        if saved_data:
-            self.data_table.set_data(saved_data)
+            saved_data = config.get("last_scarico_ts_data", [])
+            if saved_data:
+                self.data_table.set_data(saved_data)
 
-        self._update_status_list()
+            self._update_status_list()
+        finally:
+            self._is_loading = False
 
     def _save_data(self) -> None:
         """Salva i dati correnti."""
-        if not hasattr(self, "params_widget"):
+        if getattr(self, "_is_loading", False) or not hasattr(self, "params_widget"):
             return
         config_manager.set_config_value("last_scarico_ts_data", self.data_table.get_data())
         config_manager.set_config_value("last_scarico_ts_societa", self.params_widget.get_societa())
@@ -250,7 +259,7 @@ class ScaricaTSPanel(BaseBotPanel):
         if not params_override:
             self._save_data()
 
-        from src.core.config_manager import load_config  # noqa: PLC0415
+        from src.core.config_manager import load_config
 
         config = load_config()
 

@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - PDL Stats Widget
 Card avanzata per la visualizzazione delle metriche PDL, trend e aree interattive.
@@ -63,7 +62,7 @@ class AreaBadge(QPushButton):
         self.setMinimumWidth(75)
 
         # Logica Colori: Incremento = Rosso (Allerta carico)
-        if trend_int > 30:  # noqa: PLR2004
+        if trend_int > 30:
             bg_color = "#fee2e2"  # Rosso chiaro
             text_color = "#991b1b"  # Rosso scuro
             border_color = "#fca5a5"
@@ -189,13 +188,13 @@ class PDLStatsWidget(ModernCard):
     def refresh_stats(self) -> None:
         """Avvia un thread in background per ricalcolare le metriche PDL."""
 
-        def run():  # noqa: ANN202
+        def run() -> None:
             """Funzione worker per l'esecuzione asincrona del calcolo metriche."""
             try:
                 metrics = PDLStatsEngine.get_metrics()
                 self.stats_updated.emit(metrics)
-            except Exception as e:
-                logger.error(f"PDL Refresh Error: {e}")  # noqa: TRY400
+            except Exception:
+                logger.exception("PDL Refresh Error")
 
         threading.Thread(target=run, daemon=True).start()
 
@@ -214,7 +213,7 @@ class PDLStatsWidget(ModernCard):
         """Applica lo stile cromatico basato sull'andamento del trend."""
         val = round(trend)
         if val > 0:
-            # ROSSO per Incremento (piu' lavoro)
+            # ROSSO per Incremento (più lavoro)
             label.setText(f"{prefix}:   +{val}%")
             label.setStyleSheet(f"color: {COLORS['error_red']}; font-size: 11px; font-weight: 700;")
         elif val < 0:

@@ -22,7 +22,7 @@ class CalendarDateEdit(QDateEdit):
         # Configura il widget calendario interno per evitare i "..."
         calendar = self.calendarWidget()
         if calendar:
-            calendar.setMinimumWidth(450)  # Ancora piu' largo
+            calendar.setMinimumWidth(450)  # Ancora più largo
             calendar.setHorizontalHeaderFormat(QCalendarWidget.HorizontalHeaderFormat.ShortDayNames)
             calendar.setVerticalHeaderFormat(QCalendarWidget.VerticalHeaderFormat.NoVerticalHeader)
 

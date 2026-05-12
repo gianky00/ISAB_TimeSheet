@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from typing import Final
 
 from src.core.database.manager import db_manager
+from src.core.sync_tracker import SyncTracker
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +70,6 @@ class PDLStatsEngine:
 
                 areas_stats_list = cls._get_area_stats(stats_map)
 
-                from src.core.sync_tracker import SyncTracker  # noqa: PLC0415
-
                 last_sync = SyncTracker.get_formatted_status("pdl")
 
                 return PDLMetrics(
@@ -89,7 +88,7 @@ class PDLStatsEngine:
 
     @staticmethod
     def _get_counts(cursor: sqlite3.Cursor) -> tuple[int, int]:
-        """Recupera i conteggia'totali e attivi."""
+        """Recupera i conteggiàtotali e attivi."""
         cursor.execute("SELECT COUNT(*) FROM pdl")
         total: int = cursor.fetchone()[0]
 

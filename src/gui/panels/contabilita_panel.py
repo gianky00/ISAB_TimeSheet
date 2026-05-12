@@ -1,18 +1,21 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - Contabilità Panel
 Pannello centrale per la visualizzazione e l'analisi della Contabilità Strumentale.
-Integra reportistica annuale, dati giornalieri, attivita'programmate e certificati campione.
+Integra reportistica annuale, dati giornalieri, attività programmate e certificati campione.
 Include un motore di ricerca unificato e l'accesso al pannello di analisi KPI.
 """
 
 from __future__ import annotations
 
 import logging
+import warnings
 from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
+
+if TYPE_CHECKING:
+    from PySide6.QtGui import QShowEvent
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
@@ -91,7 +94,7 @@ class ContabilitaPanel(QWidget):
         self._setup_ui()
         # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
 
-    def showEvent(self, event) -> None:  # noqa: ANN001
+    def showEvent(self, event: QShowEvent) -> None:
         """Esegue il primo refresh solo quando il pannello diventa visibile."""
         super().showEvent(event)
         if not self._first_refresh_done:
@@ -226,6 +229,16 @@ class ContabilitaPanel(QWidget):
         self.main_tabs = AnimatedTabWidget()
         self.main_tabs.currentChanged.connect(self._on_main_tab_changed)
 
+        self._add_preventivi_tabs()
+        self._add_giornaliere_tabs()
+        self._add_programmate_tabs()
+        self._add_certificati_tabs()
+        self._add_kpi_tabs()
+
+        parent_layout.addWidget(self.main_tabs)
+
+    def _add_preventivi_tabs(self) -> None:
+        """Aggiunge i tab dei preventivi annuali."""
         self.year_tabs_widget = AnimatedTabWidget()
         self.year_tabs_widget.setTabPosition(QTabWidget.TabPosition.North)
         self.year_tabs_widget.currentChanged.connect(self._on_tab_changed)
@@ -235,6 +248,8 @@ class ContabilitaPanel(QWidget):
             "Preventivi",
         )
 
+    def _add_giornaliere_tabs(self) -> None:
+        """Aggiunge i tab delle giornaliere annuali."""
         self.giornaliere_tabs_widget = AnimatedTabWidget()
         self.giornaliere_tabs_widget.setTabPosition(QTabWidget.TabPosition.North)
         self.giornaliere_tabs_widget.currentChanged.connect(self._on_tab_changed)
@@ -244,13 +259,17 @@ class ContabilitaPanel(QWidget):
             "Giornaliere",
         )
 
+    def _add_programmate_tabs(self) -> None:
+        """Aggiunge il tab delle attività programmate."""
         self.attivita_widget = AttivitaProgrammateTab()
         self.main_tabs.addTab(
             self.attivita_widget,
             get_colored_icon(get_asset_path(Icons.CALENDAR), COLORS["text_muted"]),
-            "Attivita'Programmate",
+            "Attività Programmate",
         )
 
+    def _add_certificati_tabs(self) -> None:
+        """Aggiunge il tab dei certificati campione."""
         self.certificati_widget = CertificatiCampioneTab()
         self.main_tabs.addTab(
             self.certificati_widget,
@@ -258,14 +277,14 @@ class ContabilitaPanel(QWidget):
             "Certificati Campione",
         )
 
+    def _add_kpi_tabs(self) -> None:
+        """Aggiunge il tab dell'analisi KPI."""
         self.kpi_panel = ContabilitaKPIPanel()
         self.main_tabs.addTab(
             self.kpi_panel,
             get_colored_icon(get_asset_path(Icons.BAR_CHART), COLORS["text_muted"]),
             "Analisi KPI",
         )
-
-        parent_layout.addWidget(self.main_tabs)
 
     def _on_search_changed(self, text: str) -> None:
         """Inoltra la stringa di ricerca al widget o al tab attualmente attivo."""
@@ -288,10 +307,10 @@ class ContabilitaPanel(QWidget):
                 self._on_search_changed(text)
             self.search_input.setFocus()
 
-    def refresh_tabs(self) -> None:
+    def refresh_tabs(self, auto_email: bool = False) -> None:
         """
         Interroga il database per gli anni disponibili e aggiorna i tab degli anni.
-        Sincronizza inoltre i dati per le attivita'e i certificati.
+        Sincronizza inoltre i dati per le attività e i certificati.
         """
         years = ContabilitaManager.get_available_years()
         if not years:
@@ -315,13 +334,18 @@ class ContabilitaPanel(QWidget):
         ):
             self.certificati_widget.refresh_data()
 
+            # Se richiesto e siamo nel tab certificati, lancia email
+            if auto_email and self.main_tabs.currentIndex() == 3:
+                from PySide6.QtCore import QTimer
+                QTimer.singleShot(1000, self.certificati_widget._run_analysis_and_send_email)
+
         # Riapplica il filtro di ricerca se presente
         search_text = self.search_input.text()
         if search_text:
             self._on_search_changed(search_text)
 
     def _sync_tab_widget(
-        self, tab_widget: AnimatedTabWidget, target_years: list[int], tab_class: type[QWidget]
+        self, tab_widget: AnimatedTabWidget, target_years: list[int], tab_class: Any
     ) -> None:
         """Aggiorna i tab di un AnimatedTabWidget senza distruggere i widget esistenti per gli stessi anni."""
         existing_years = {}
@@ -362,63 +386,89 @@ class ContabilitaPanel(QWidget):
         target = curr.currentWidget() if isinstance(curr, (QTabWidget, AnimatedTabWidget)) else curr
 
         if target:
-            if hasattr(target, "table"):
-                table: Any = target.table
-                if model := table.selectionModel():
-                    with suppress(Exception):
-                        model.selectionChanged.disconnect()
-                    model.selectionChanged.connect(lambda s, d: self._update_selection_total(table))
-            elif hasattr(target, "tree"):
-                tree: Any = target.tree
-                with suppress(Exception):
-                    tree.itemSelectionChanged.disconnect()
-                tree.itemSelectionChanged.connect(lambda: self._update_selection_total(tree))
+            # Silenziamo il RuntimeWarning se il segnale non è connesso
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                if hasattr(target, "table"):
+                    table: Any = target.table
+                    if model := table.selectionModel():
+                        with suppress(TypeError, RuntimeError):
+                            model.selectionChanged.disconnect()
+                        model.selectionChanged.connect(lambda s, d: self._update_selection_total(table))
+                elif hasattr(target, "tree"):
+                    tree: Any = target.tree
+                    with suppress(TypeError, RuntimeError):
+                        tree.itemSelectionChanged.disconnect()
+                    tree.itemSelectionChanged.connect(lambda: self._update_selection_total(tree))
 
-    def _update_selection_total(self, widget: QWidget) -> None:  # noqa: C901
+    def _update_selection_total(self, widget: QWidget) -> None:
         """Esegue il calcolo granulare delle ore selezionate filtrando le righe nascoste."""
         with suppress(Exception):
             if isinstance(widget, QTreeWidget):
-                self.selection_count_label.setText(str(len(widget.selectedItems())))
-                self.selection_sum_label.setText("")
+                self._update_tree_selection(widget)
                 return
 
             if not isinstance(widget, QTableWidget):
                 return
 
-            model = widget.selectionModel()
-            if not model:
-                return
+            self._update_table_selection(widget)
 
-            indexes = model.selectedIndexes()
-            if not indexes:
-                self.selection_count_label.setText("0")
-                self.selection_sum_label.setText("0")
-                return
+    def _update_tree_selection(self, tree: QTreeWidget) -> None:
+        """Aggiorna i conteggi per un QTreeWidget."""
+        self.selection_count_label.setText(str(len(tree.selectedItems())))
+        self.selection_sum_label.setText("")
 
-            target_col = self._find_ore_column(widget)
-            selected_rows, total_ore = set(), 0.0
-            for idx in indexes:
-                row = idx.row()
-                item_0 = widget.item(row, 0)
-                is_total_row = item_0 and item_0.text() == "TOTALI"
-                if not widget.isRowHidden(row) and not is_total_row:
-                    selected_rows.add(row)
+    def _update_table_selection(self, table: QTableWidget) -> None:
+        """Aggiorna i conteggi e il totale ore per un QTableWidget."""
+        model = table.selectionModel()
+        if not model:
+            return
 
-            if target_col != -1:
-                for row in selected_rows:
-                    if it := widget.item(row, target_col):
-                        with suppress(Exception):
-                            clean = str(it.text()).replace(".", "").replace(",", ".").strip()
-                            if clean:
-                                total_ore += float(clean)
+        indexes = model.selectedIndexes()
+        if not indexes:
+            self.selection_count_label.setText("0")
+            self.selection_sum_label.setText("0")
+            return
 
-            if total_ore % 1 != 0:
-                fmt_ore = f"{total_ore:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            else:
-                fmt_ore = str(int(total_ore))
+        target_col = self._find_ore_column(table)
+        selected_rows = self._get_unique_visible_rows(table, indexes)
+        total_ore = self._calculate_total_hours(table, selected_rows, target_col)
 
-            self.selection_count_label.setText(str(len(selected_rows)))
-            self.selection_sum_label.setText(fmt_ore)
+        fmt_ore = self._format_hours(total_ore)
+
+        self.selection_count_label.setText(str(len(selected_rows)))
+        self.selection_sum_label.setText(fmt_ore)
+
+    def _get_unique_visible_rows(self, table: QTableWidget, indexes: list[Any]) -> set[int]:
+        """Filtra gli indici per ottenere righe uniche, visibili e non di totale."""
+        selected_rows = set()
+        for idx in indexes:
+            row = idx.row()
+            item_0 = table.item(row, 0)
+            is_total_row = item_0 and item_0.text() == "TOTALI"
+            if not table.isRowHidden(row) and not is_total_row:
+                selected_rows.add(row)
+        return selected_rows
+
+    def _calculate_total_hours(self, table: QTableWidget, rows: set[int], col: int) -> float:
+        """Somma le ore nelle righe e colonna specificate."""
+        total = 0.0
+        if col == -1:
+            return total
+
+        for row in rows:
+            if it := table.item(row, col):
+                with suppress(Exception):
+                    clean = str(it.text()).replace(".", "").replace(",", ".").strip()
+                    if clean:
+                        total += float(clean)
+        return total
+
+    def _format_hours(self, total: float) -> str:
+        """Formatta il totale ore per la visualizzazione IT."""
+        if total % 1 != 0:
+            return f"{total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        return str(int(total))
 
     def _find_ore_column(self, table: QTableWidget) -> int:
         """Individua l'indice della colonna contenente le ore in base all'header."""
@@ -466,7 +516,7 @@ class ContabilitaPanel(QWidget):
             final_status = f"{timestamp} {added_str} {removed_str} (Tempo: {time_str})"
             self._last_status_html = final_status
             self.status_lbl.setText(final_status)
-            self.refresh_tabs()
+            self.refresh_tabs(auto_email=True)
         else:
             self.status_lbl.setText("Errore")
             ConfirmationDialog.show_error(self, "Errore", msg)

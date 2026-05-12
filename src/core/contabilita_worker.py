@@ -158,14 +158,8 @@ class ContabilitaWorker(QThread):
             self.file_path,
             progress_callback=lambda c, t: self._update_progress_dynamic(c, t, state, "est_sheets"),
         )
-        self._update_state(
-            state,
-            success,
-            added,
-            removed,
-            f"Contabilità: OK (+{added}/-{removed})",
-            f"Err Contabilità: {msg}",
-        )
+        msg_to_add = f"Contabilità: OK (+{added}/-{removed})" if success else f"Err Contabilità: {msg}"
+        self._update_state(state, success, added, removed, msg_to_add)
 
     def _phase_import_giornaliere(self, state: Any) -> None:
         if not self.giornaliere_path:
@@ -176,14 +170,8 @@ class ContabilitaWorker(QThread):
             self.giornaliere_path,
             progress_callback=lambda c, t: self._update_progress_dynamic(c, t, state, "est_files"),
         )
-        self._update_state(
-            state,
-            success,
-            added,
-            removed,
-            f"Giornaliere: OK (+{added}/-{removed})",
-            f"Err Giornaliere: {msg}",
-        )
+        msg_to_add = f"Giornaliere: OK (+{added}/-{removed})" if success else f"Err Giornaliere: {msg}"
+        self._update_state(state, success, added, removed, msg_to_add)
 
     def _phase_import_attivita(self, state: Any) -> None:
         if not self.attivita_path:
@@ -194,7 +182,8 @@ class ContabilitaWorker(QThread):
         # Aggiorna progresso (1 step)
         self._update_progress_dynamic(1, 1, state, "est_attivita")
 
-        self._update_state(state, success, added, removed, "Att. Prog: OK", f"Err Att. Prog: {msg}")
+        msg_to_add = "Att. Prog: OK" if success else f"Err Att. Prog: {msg}"
+        self._update_state(state, success, added, removed, msg_to_add)
 
     def _phase_import_certificati(self, state: Any) -> None:
         if not self.certificati_path:
@@ -205,15 +194,12 @@ class ContabilitaWorker(QThread):
         # Aggiorna progresso (1 step)
         self._update_progress_dynamic(1, 1, state, "est_certificati")
 
-        self._update_state(state, success, added, removed, "Certificati: OK", f"Err Certificati: {msg}")
+        msg_to_add = "Certificati: OK" if success else f"Err Certificati: {msg}"
+        self._update_state(state, success, added, removed, msg_to_add)
 
-    def _update_state(  # noqa: PLR0913
-        self, state: Any, success: bool, added: int, removed: int, ok_msg: str, err_msg: str
-    ) -> None:
+    def _update_state(self, state: Any, success: bool, added: int, removed: int, message: str) -> None:
         state["added"] += added
         state["removed"] += removed
+        state["messages"].append(message)
         if success:
-            state["messages"].append(ok_msg)
             state["success"] = True
-        else:
-            state["messages"].append(err_msg)

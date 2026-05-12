@@ -128,7 +128,7 @@ class TestBotTimingSequences:
 
     def test_timbrature_navigation_timing(self, mock_timbrature_bot):
         """Verifica le attese durante la navigazione nel bot Timbrature."""
-        from src.bots.portale_fornitori.timbrature.pages.timbrature_page import (  # noqa: PLC0415
+        from src.bots.portale_fornitori.timbrature.pages.timbrature_page import (
             TimbraturePage,
         )
 
@@ -150,7 +150,7 @@ class TestBotTimingSequences:
 
     def test_timbrature_supplier_selection_timing(self, mock_timbrature_bot):
         """Verifica l'attesa durante la selezione del fornitore."""
-        from src.bots.portale_fornitori.timbrature.pages.timbrature_page import (  # noqa: PLC0415
+        from src.bots.portale_fornitori.timbrature.pages.timbrature_page import (
             TimbraturePage,
         )
 

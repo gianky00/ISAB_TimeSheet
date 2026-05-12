@@ -1,18 +1,23 @@
-# mypy: disable-error-code="no-untyped-call"
 """
 SyncroJob - Playwright Prenota BP Bot
 Versione Playwright del bot per la prenotazione automatica dei Badge Provvisori (BP).
 """
 
+from __future__ import annotations
+
 import traceback
 from contextlib import suppress
 from datetime import UTC, datetime
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.bots.base.base_bot import StepStatus
 from src.bots.base.playwright_base_bot import PlaywrightBaseBot
+from src.core.constants import Business
 
 from .playwright_page import PlaywrightPrenotaBPPage
+
+if TYPE_CHECKING:
+    from src.bots.base.selenium_bot_config import SeleniumBotConfig
 
 
 class PlaywrightPrenotaBPBot(PlaywrightBaseBot):
@@ -48,21 +53,15 @@ class PlaywrightPrenotaBPBot(PlaywrightBaseBot):
 
     def __init__(
         self,
-        username: str = "",
-        password: str = "",
+        config: SeleniumBotConfig,
         data_da: str | None = None,
         data_a: str | None = None,
         fornitore: str | None = None,
         **kwargs: Any,
     ) -> None:
-        """Inizializza il bot con i parametri di filtraggio BP."""
-        kwargs.pop("fornitore", None)
-        kwargs.pop("data_a", None)
-        kwargs.pop("data_da", None)
-
-        super().__init__(username=username, password=password, **kwargs)
+        """Inizializza il bot con configurazione e parametri di filtraggio BP."""
+        super().__init__(config)
         current_year = datetime.now(UTC).astimezone().year
-        from src.core.constants import Business  # noqa: PLC0415
 
         self.data_da = data_da or f"01.01.{current_year}"
         self.data_a = data_a or f"31.12.{current_year}"

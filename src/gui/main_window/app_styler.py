@@ -26,4 +26,4 @@ class AppStyler:
         # Metadati applicazione
         app.setApplicationName("SyncroJob")
         app.setApplicationVersion(__version__)
-        app.setDesktopFileName(f"Coemi.SyncroJob.Enterprise.{__version__}")
+        app.setDesktopFileName(f"SyncroJob.Manager.{__version__}")

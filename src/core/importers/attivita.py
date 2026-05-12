@@ -9,21 +9,21 @@ from src.core.importers.base import BaseImporter
 
 
 class AttivitaImporter(BaseImporter):
-    """Importer per le Attivita'Programmate."""
+    """Importer per le AttivitàProgrammate."""
 
     ATTIVITA_PROGRAMMATE_MAPPING: ClassVar[dict[str, str]] = {
         "PS": "ps",
         "AREA": "area",
         "PdL": "pdl",
         "IMP.": "imp",
-        "DESCRIZIONE\nATTIVITA'": "descrizione",
+        "DESCRIZIONE\nATTIVITÀ": "descrizione",
         "LUN": "lun",
         "MAR": "mar",
         "MER": "mer",
         "GIO": "gio",
         "VEN": "ven",
         "STATO\nPdL": "stato_pdl",
-        "STATO\nATTIVITA'": "stato_attivita",
+        "STATO\nATTIVITÀ": "stato_attivita",
         "DATA\nCONTROLLO": "data_controllo",
         "PERSONALE\nIMPIEGATO": "personale",
         "PO": "po",
@@ -38,25 +38,25 @@ class AttivitaImporter(BaseImporter):
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, list[tuple[Any, ...]]]:
-        """Importa il file Attivita'Programmate (veloce, senza colori)."""
+        """Importa il file AttivitàProgrammate (veloce, senza colori)."""
         path = Path(file_path)
         if not path.exists():
-            return False, f"File Attivita'Programmate non trovato: {file_path}", []
+            return False, f"File AttivitàProgrammate non trovato: {file_path}", []
 
         try:
             df = cls._read_attivita_programmate_sheet(path)
             if df is None:
-                return False, "Foglio 'Riepilogo' non trovato o file illeggibile.", []
+                return False, "Foglio 'Riepilogò non trovato o file illeggibile.", []
 
             df = cls._normalize_attivita_columns(df)
             if df is None:
                 return False, "Colonne non trovate. Controlla intestazione riga 3.", []
 
             rows = cls._prepare_attivita_rows(df)
-            return True, f"Importate {len(rows)} righe in Attivita'Programmate.", rows
+            return True, f"Importate {len(rows)} righe in AttivitàProgrammate.", rows
 
         except Exception as e:
-            return False, f"Errore importazione Attivita'Programmate: {e}", []
+            return False, f"Errore importazione AttivitàProgrammate: {e}", []
 
     @classmethod
     def _read_attivita_programmate_sheet(cls, path: Path) -> pd.DataFrame | None:

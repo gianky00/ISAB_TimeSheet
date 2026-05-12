@@ -58,7 +58,7 @@ class SmartLogTranslator:
         """Analizza il messaggio tecnico e restituisce (human_msg, tech_msg, category)."""
         category = SmartLogTranslator._detect_category(message)
 
-        # Se il messaggio ha gia' un'icona o un prefisso speciale, lo teniamo cos  come
+        # Se il messaggio ha già un'icona o un prefisso speciale, lo teniamo cos  come
         # (es. "[CLICK] Click su", "[FILE] Verifica")
         if any(
             message.startswith(icon)

@@ -1,8 +1,9 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - Playwright Base Bot
 Implementazione della classe base per i bot Playwright.
 """
+
+from __future__ import annotations
 
 import os
 import re
@@ -11,7 +12,7 @@ from abc import ABC
 from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from playwright.sync_api import Browser, BrowserContext, Page, Playwright, sync_playwright
 
@@ -26,6 +27,11 @@ from src.utils.browser_diagnostics import emergency_profile_reset
 from src.utils.browser_profile_patcher import patch_browser_profile
 from src.utils.helpers import cleanup_bot_processes
 
+from .playwright_utils import get_playwright_selector
+
+if TYPE_CHECKING:
+    from src.bots.base.selenium_bot_config import SeleniumBotConfig
+
 
 class PlaywrightBaseBot(BaseBot, ABC):
     """
@@ -33,27 +39,17 @@ class PlaywrightBaseBot(BaseBot, ABC):
     Centralizza la gestione del browser Chromium, la persistenza del profilo e i flag di sicurezza.
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = Timeouts.DEFAULT,
-        download_path: str = "",
-        company: str = "ISAB",
+        config: SeleniumBotConfig,
     ) -> None:
         """
-        Inizializza le propriet  fondamentali del bot Playwright.
+        Inizializza le proprietà fondamentali del bot Playwright.
 
         Args:
-          username: Nome utente per il login.
-          password: Password per il login.
-          headless: Se True, avvia il browser in modalita' nascosta.
-          timeout: Tempo massimo di attesa per le operazioni (secondi).
-          download_path: Percorso per il salvataggio dei file scaricati.
-          company: Societa' da selezionare al login (ISAB o PSER).
+          config: Istanza di SeleniumBotConfig con le impostazioni del bot.
         """
-        super().__init__(username, password, headless, timeout, download_path, company=company)
+        super().__init__(config.username, config.password, config)
         self.playwright: Playwright | None = None
         self.browser: Browser | None = None
         self.context: BrowserContext | None = None
@@ -62,7 +58,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
     @measure_time(threshold_ms=10000)
     def _init_driver(self) -> None:
-        """Inizializza Playwright e il browser con logica di persistenza, stabilita' e recovery."""
+        """Inizializza Playwright e il browser con logica di persistenza, stabilità e recovery."""
         self.status = BotStatus.INITIALIZING
 
         # 1. Configurazione ambiente e binari
@@ -230,7 +226,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
         self._stop_playwright_internal()
 
     def _stop_playwright_internal(self) -> None:
-        """Ferma Playwright internamente senza loggare errori se gia' fermo."""
+        """Ferma Playwright internamente senza loggare errori se già fermo."""
         if self.context:
             with suppress(Exception):
                 # Chiude tutte le pagine prima del contesto
@@ -268,8 +264,6 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
     def _get_selector(self, locator: tuple[str, str]) -> str:
         """Converte un locatore Selenium (By, value) in un selettore Playwright."""
-        from .playwright_utils import get_playwright_selector  # noqa: PLC0415
-
         return get_playwright_selector(locator)
 
     def _wait_overlay(self, timeout_ms: int = Timeouts.OVERLAY * 1000) -> None:

@@ -99,9 +99,9 @@ class AnimatedProgressBar(QWidget):
             self._shimmer_pos = -50
 
         self._border_alpha += self._border_direction
-        if self._border_alpha <= 100:  # noqa: PLR2004
+        if self._border_alpha <= 100:
             self._border_direction = 5
-        elif self._border_alpha >= 255:  # noqa: PLR2004
+        elif self._border_alpha >= 255:
             self._border_direction = -5
         self.update()
 

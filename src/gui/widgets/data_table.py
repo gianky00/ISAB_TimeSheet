@@ -106,7 +106,7 @@ class EditableDataTable(QWidget):
     def _show_context_menu(self, pos: QPoint) -> None:
         """Visualizza il menu contestuale per l'aggiunta/rimozione di righe."""
         menu = QMenu(self)
-        add_action = menu.addAction("Aggiungia'Riga")
+        add_action = menu.addAction("AggiungiàRiga")
         if add_action:
             add_action.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), COLORS["success_dark"]))
 

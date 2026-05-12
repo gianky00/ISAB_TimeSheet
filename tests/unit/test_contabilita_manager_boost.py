@@ -31,7 +31,7 @@ class TestContabilitaManagerBoost:
         manager.execute_query(db_path, query)
 
         # 2. Mock Importer per restituire una riga con n_prev ma senza ODC
-        # Riga: (year, data, personale, descrizione, tcl, odc, pdl, inizio, fine, ore, n_prev, nome_file)  # noqa: ERA001
+        # Struttura dati: (year, data, personale, descrizione, tcl, odc, pdl, inizio, fine, ore, n_prev, nome_file)
         mock_row = (
             2024,
             "01/01/2024",

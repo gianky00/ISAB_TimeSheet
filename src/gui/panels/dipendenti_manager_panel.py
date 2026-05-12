@@ -1,4 +1,5 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
+from typing import Any
+
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -20,7 +21,7 @@ from src.core.audit_manager import AuditManager
 from src.core.employees import employee_manager
 from src.core.sync_tracker import SyncTracker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
-from src.gui.styles import COLORS
+from src.gui.styles import COLORS, LABEL_MUTED, LINEEDIT_STYLE
 from src.gui.widgets.core_widgets import SearchInput, StandardInput, StandardTable
 from src.gui.widgets.modern_button import ModernButton
 
@@ -28,7 +29,7 @@ from src.gui.widgets.modern_button import ModernButton
 class EmployeeEditorDialog(QDialog):
     """Dialog per aggiunta/modifica dipendente."""
 
-    def __init__(self, parent=None, employee_data=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QWidget | None = None, employee_data: dict[str, Any] | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Scheda Dipendente")
         self.setMinimumWidth(400)
@@ -74,8 +75,8 @@ class EmployeeEditorDialog(QDialog):
 
         main_layout.addLayout(btn_layout)
 
-    def get_data(self):  # noqa: ANN201
-        """Estrae i dati inseriti nei campiu'di input e li normalizza in maiuscolo."""
+    def get_data(self) -> dict[str, str]:
+        """Estrae i dati inseriti nei campiùdi input e li normalizza in maiuscolo."""
         return {k: v.text().strip().upper() for k, v in self.inputs.items()}
 
 
@@ -86,7 +87,7 @@ class DipendentiManagerPanel(QWidget):
 
     data_changed = Signal()
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setObjectName("DipendentiManagerPanel")
 
@@ -109,7 +110,7 @@ class DipendentiManagerPanel(QWidget):
         # Caricamento dati differito per non bloccare la UI all'avvio
         QTimer.singleShot(100, self.refresh_data)
 
-    def _setup_header(self):  # noqa: ANN202
+    def _setup_header(self) -> None:
         header_layout = QHBoxLayout()
 
         title = QLabel("Gestione Dipendenti")
@@ -137,10 +138,9 @@ class DipendentiManagerPanel(QWidget):
 
         self.main_layout.addLayout(header_layout)
 
-    def _setup_toolbar(self):  # noqa: ANN202
+    def _setup_toolbar(self) -> None:
         self.toolbar_card = QFrame()
         self.toolbar_card.setObjectName("filterBar")
-        from src.gui.styles import LABEL_MUTED, LINEEDIT_STYLE  # noqa: PLC0415
 
         self.toolbar_card.setStyleSheet(f"""
       QFrame#filterBar {{
@@ -203,7 +203,7 @@ class DipendentiManagerPanel(QWidget):
         toolbar_layout.addLayout(info_v)
         self.main_layout.addWidget(self.toolbar_card)
 
-    def _setup_table(self):  # noqa: ANN202
+    def _setup_table(self) -> None:
         self.table = StandardTable()
         self.table.setColumnCount(6)
         self.table.setHorizontalHeaderLabels(
@@ -216,23 +216,22 @@ class DipendentiManagerPanel(QWidget):
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         v_header = self.table.verticalHeader()
         if v_header is None:
-            raise RuntimeError("Table vertical header is None")  # noqa: TRY003
+            raise RuntimeError("Vertical header missing")
         v_header.setVisible(False)
         h_header = self.table.horizontalHeader()
         if h_header is None:
-            raise RuntimeError("Table horizontal header is None")  # noqa: TRY003
+            raise RuntimeError("Horizontal header missing")
         h_header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         h_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # ID stretto
         h_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)  # Badge stretto
 
-        # Use global styles from light.qss
-        # self.table.setStyleSheet(...) # noqa: ERA001
+        # Stile gestito via QSS
 
         self.table.doubleClicked.connect(self._edit_selected)
 
         self.main_layout.addWidget(self.table)
 
-    def refresh_data(self):  # noqa: ANN201
+    def refresh_data(self) -> None:
         """Ricarica i dati dal DB."""
         try:
             self.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('dipendenti')}")
@@ -265,7 +264,7 @@ class DipendentiManagerPanel(QWidget):
         except Exception as e:
             ConfirmationDialog.show_error(self, "Errore", f"Impossibile caricare i dati: {e}")
 
-    def _filter_table(self, text):  # noqa: ANN001, ANN202
+    def _filter_table(self, text: str) -> None:
         """Filtra la tabella in locale con supporto multi-termine (AND logico)."""
         search_terms = text.lower().split()
         if not search_terms:
@@ -286,7 +285,7 @@ class DipendentiManagerPanel(QWidget):
             match = all(term in row_content for term in search_terms)
             self.table.setRowHidden(i, not match)
 
-    def _sync_from_csv(self):  # noqa: ANN202
+    def _sync_from_csv(self) -> None:
         """Permette di selezionare un file CSV e avvia l'importazione."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -309,7 +308,7 @@ class DipendentiManagerPanel(QWidget):
         except Exception as e:
             ConfirmationDialog.show_warning(self, "Errore Sync", f"Errore durante l'importazione:\n{e}")
 
-    def _add_employee(self):  # noqa: ANN202
+    def _add_employee(self) -> None:
         dialog = EmployeeEditorDialog(self)
         result = dialog.exec()
         if result == QDialog.DialogCode.Accepted:
@@ -331,10 +330,10 @@ class DipendentiManagerPanel(QWidget):
                     "Errore durante l'inserimento nel DB (forse ID duplicato?)",
                 )
 
-    def _edit_selected(self):  # noqa: ANN202
+    def _edit_selected(self) -> None:
         selection_model = self.table.selectionModel()
         if selection_model is None:
-            raise RuntimeError("Table selection model is None")  # noqa: TRY003
+            raise RuntimeError("Selection model missing")
         rows = selection_model.selectedRows()
         if not rows:
             return
@@ -342,11 +341,11 @@ class DipendentiManagerPanel(QWidget):
         row_idx = rows[0].row()
         id_item = self.table.item(row_idx, 0)
         if id_item is None:
-            raise RuntimeError(f"Table item at row {row_idx}, column 0 is None")  # noqa: TRY003
+            raise RuntimeError("Missing ID item")
         id_risorsa = id_item.text()
 
         # Recuperiamo dati completi
-        def get_item_text(r, c):  # noqa: ANN001, ANN202
+        def get_item_text(r: int, c: int) -> str:
             it = self.table.item(r, c)
             return it.text() if it else ""
 

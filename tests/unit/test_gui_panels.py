@@ -19,7 +19,7 @@ class TestGUIPanels:
         QApplication.processEvents()
 
         panel.params_widget.fornitore_combo.addItem("F1")
-        from PySide6.QtCore import QDate  # noqa: PLC0415
+        from PySide6.QtCore import QDate
 
         panel.params_widget.date_da.setDate(QDate(2025, 1, 1))
 

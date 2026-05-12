@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-call"
 """
 SyncroJob - Playwright Scarico TS Bot
 Versione Playwright del bot per il download dei timesheet dal portale ISAB.

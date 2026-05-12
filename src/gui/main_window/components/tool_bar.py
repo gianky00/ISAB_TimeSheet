@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - ToolBar Component
 Gestore degli elementi di navigazione e ricerca superiore e laterale.
@@ -87,7 +86,7 @@ class AnimatedSplitButton(QPushButton):
 
         self.setIconSize(QSize(20, 20))
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:
+    def enterEvent(self, event: QEnterEvent) -> None:
         """Animazione di ingrandimento dell'icona al passaggio del mouse."""
         self.anim.stop()
         self.anim.setStartValue(QSize(20, 20))
@@ -95,7 +94,7 @@ class AnimatedSplitButton(QPushButton):
         self.anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: QEvent | None) -> None:
+    def leaveEvent(self, event: QEvent) -> None:
         """Ritorno alla dimensione normale."""
         self.anim.stop()
         self.anim.setStartValue(self.iconSize())

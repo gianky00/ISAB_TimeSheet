@@ -38,7 +38,7 @@ def run_migration() -> None:
 
     except Exception as e:
         print(f"ERRORE CRITICO: {e}")
-        import traceback  # noqa: PLC0415
+        import traceback
 
         traceback.print_exc()
 

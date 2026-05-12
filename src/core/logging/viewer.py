@@ -7,7 +7,6 @@ Include un Query Builder fluido e utility per generare report sulla salute del s
 import json
 import operator
 from collections import defaultdict
-from collections.abc import Callable  # noqa: TC003
 from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -16,6 +15,8 @@ from typing import TYPE_CHECKING, Any, Final
 from .config import get_config
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from .config import LoggingConfig
 
 
@@ -42,7 +43,7 @@ class LogQuery:
         Filtra le entry in base ai livelli specificati (es. INFO, ERROR).
 
         Args:
-          *levels: Uno o piu' livelli di log desiderati.
+          *levels: Uno o più livelli di log desiderati.
 
         Returns:
           LogQuery: L'istanza corrente per concatenazione.
@@ -84,7 +85,7 @@ class LogQuery:
         """
 
         def filter_fn(entry: dict[str, Any]) -> bool:
-            """Filtra per corrispondenza dei campiu'nel contesto."""
+            """Filtra per corrispondenza dei campiùnel contesto."""
             context = entry.get("context", {})
             return all(context.get(key) == value for key, value in kwargs.items())
 
@@ -235,7 +236,7 @@ class LogViewer:
         return stats.copy()
 
     def get_error_summary(self, limit: int = DEFAULT_LIMIT) -> list[dict[str, Any]]:
-        """Analizza i log di errore e raggruppa i messaggia'piu' frequenti."""
+        """Analizza i log di errore e raggruppa i messaggiàpiù frequenti."""
         error_messages: dict[str, int] = defaultdict(int)
         error_details: dict[str, dict[str, Any]] = {}
         results = self.query("errors").execute()

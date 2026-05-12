@@ -4,13 +4,14 @@ Componente dedicato alla gestione della timeline operativa dei bot.
 Gestisce gli stati degli step e notifica la GUI tramite segnali.
 """
 
-import logging
 from enum import Enum, auto
 from typing import Any
 
 from PySide6.QtCore import QObject, Signal
 
-logger = logging.getLogger(__name__)
+from src.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class StepStatus(Enum):
@@ -61,7 +62,7 @@ class BotStepManager(QObject):
             try:
                 index = [s[0] for s in self.steps].index(step_id)
             except ValueError:
-                logger.warning("Step ID '%s' non trovato nelle definizioni.", step_id)
+                logger.warning(f"Step ID '{step_id}' non trovato nelle definizioni.")
                 return -1, ""
         else:
             index = step_id

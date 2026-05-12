@@ -1,6 +1,6 @@
 """
-SyncroJob - Contabilità Attivita'Programmate
-Tab specializzato per la visualizzazione delle attivita'programmate settimanali.
+SyncroJob - Contabilità AttivitàProgrammate
+Tab specializzato per la visualizzazione delle attivitàprogrammate settimanali.
 Include filtri avanzati per PS, PO, Area e Stato PdL.
 """
 
@@ -39,7 +39,7 @@ from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 
 class AttivitaProgrammateTab(QWidget):
     """
-    Tab per la visualizzazione e il filtraggio delle Attivita'Programmate.
+    Tab per la visualizzazione e il filtraggio delle AttivitàProgrammate.
     Utilizza una tabella ad alte prestazioni per mostrare lo stato delle PdL e la pianificazione settimanale.
     """
 
@@ -48,14 +48,14 @@ class AttivitaProgrammateTab(QWidget):
         "AREA",
         "PdL",
         "IMP.",
-        "DESCRIZIONE\nATTIVITA'",
+        "DESCRIZIONE\nATTIVITÀ",
         "LUN",
         "MAR",
         "MER",
         "GIO",
         "VEN",
         "STATO\nPdL",
-        "STATO\nATTIVITA'",
+        "STATO\nATTIVITÀ",
         "DATA\nCONTROLLO",
         "PERSONALE\nIMPIEGATO",
         "PO",
@@ -64,7 +64,7 @@ class AttivitaProgrammateTab(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
-        Inizializza il tab delle attivita'programmate.
+        Inizializza il tab delle attivitàprogrammate.
 
         Args:
           parent: Widget genitore.
@@ -80,11 +80,16 @@ class AttivitaProgrammateTab(QWidget):
         self._setup_ui()
         self._load_data()
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Configura l'interfaccia utente del tab, inclusi i filtri e la tabella."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 10, 0, 0)
 
+        self._setup_filters(layout)
+        self._setup_table(layout)
+
+    def _setup_filters(self, layout: QVBoxLayout) -> None:
+        """Configura la sezione dei filtri."""
         filter_layout = QHBoxLayout()
         filter_layout.setContentsMargins(5, 0, 5, 5)
 
@@ -118,6 +123,8 @@ class AttivitaProgrammateTab(QWidget):
         filter_layout.addStretch()
         layout.addLayout(filter_layout)
 
+    def _setup_table(self, layout: QVBoxLayout) -> None:
+        """Configura la tabella dei dati."""
         self.table = ExcelTableWidget()
         self.table.setColumnCount(len(self.COLUMNS))
         self.table.setHorizontalHeaderLabels(self.COLUMNS)
@@ -131,11 +138,22 @@ class AttivitaProgrammateTab(QWidget):
         self.table.auto_copy_headers = True
         header = self.table.horizontalHeader()
         if header is None:
-            raise RuntimeError("Table horizontal header is None")  # noqa: TRY003
+            raise RuntimeError("Table horizontal header is None")
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.table.setColumnHidden(0, True)
         self.table.setColumnHidden(14, True)
 
+        self._set_column_widths()
+
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        v_header = self.table.verticalHeader()
+        if v_header is None:
+            raise RuntimeError("Table vertical header is None")
+        v_header.setVisible(False)
+        layout.addWidget(self.table)
+
+    def _set_column_widths(self) -> None:
+        """Imposta le larghezze iniziali delle colonne."""
         self.table.setColumnWidth(1, 80)
         self.table.setColumnWidth(2, 80)
         self.table.setColumnWidth(3, 60)
@@ -147,13 +165,6 @@ class AttivitaProgrammateTab(QWidget):
         self.table.setColumnWidth(12, 100)
         self.table.setColumnWidth(13, 150)
         self.table.setColumnWidth(15, 250)
-
-        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        v_header = self.table.verticalHeader()
-        if v_header is None:
-            raise RuntimeError("Table vertical header is None")  # noqa: TRY003
-        v_header.setVisible(False)
-        layout.addWidget(self.table)
 
     def refresh_data(self) -> None:
         """Ricarica i dati dal database e aggiorna la tabella."""
@@ -182,7 +193,7 @@ class AttivitaProgrammateTab(QWidget):
         """Adatta le larghezze delle colonne al contenuto, mantenendo un minimo leggibile."""
         header = self.table.horizontalHeader()
         if header is None:
-            raise RuntimeError("Table horizontal header is None - cannot adjust column widths")  # noqa: TRY003
+            raise RuntimeError("Table horizontal header is None - cannot adjust column widths")
 
         columns_to_resize = [1, 2, 3, 10, 11, 12, 13]
         for col in columns_to_resize:
@@ -215,7 +226,7 @@ class AttivitaProgrammateTab(QWidget):
         s = str(val).strip() if val is not None else ""
         if s.lower() == "nan":
             return ""
-        if col_idx == 12 and s:  # noqa: PLR2004
+        if col_idx == 12 and s:
             with suppress(Exception):
                 return datetime.strptime(s.split(" ")[0], "%Y-%m-%d").replace(tzinfo=UTC).strftime("%d/%m/%Y")
         return s
@@ -306,7 +317,7 @@ class AttivitaProgrammateTab(QWidget):
 
     def filter_data(self, text: str) -> None:
         """
-        Esegue una ricerca testuale globale su tutte le righe non gia' nascoste dai filtri.
+        Esegue una ricerca testuale globale su tutte le righe non già nascoste dai filtri.
 
         Args:
           text: Testo di ricerca.

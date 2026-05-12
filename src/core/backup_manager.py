@@ -3,7 +3,6 @@ SyncroJob - Backup Manager
 Gestisce il backup e ripristino dei dati critici su cloud locale (OneDrive/Drive).
 """
 
-import logging
 import os
 import zipfile
 from contextlib import suppress
@@ -13,9 +12,10 @@ from typing import ClassVar
 
 from src.core.audit_manager import AuditManager
 from src.core.config_manager import load_config
+from src.core.logging import get_logger
 from src.core.paths import CONFIG_DIR
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class BackupManager:
@@ -175,10 +175,10 @@ class BackupManager:
 
             if zip_path.exists():
                 zip_path.unlink()
-            return False, "Nessun file da backuppare trovato."  # noqa: TRY300
+            success, msg = False, "Nessun file da backuppare trovato."
 
         except Exception as e:
-            logger.error(f"Backup Error: {e}")  # noqa: TRY400
+            logger.exception("Backup Error")
             AuditManager.instance().log_action(
                 "Errore Backup",
                 category="sistema",
@@ -187,11 +187,13 @@ class BackupManager:
                 params={"errore": str(e)},
             )
             return False, str(e)
+        else:
+            return success, msg
 
     @staticmethod
     def _cleanup_old_backups(target_dir: Path, keep: int = 5) -> None:
         """
-        Mantiene solo gli ultimi N backup nel database, eliminando i piu' vecchi.
+        Mantiene solo gli ultimi N backup nel database, eliminando i più vecchi.
 
         Args:
           target_dir: Cartella dove risiedono i backup.
@@ -209,7 +211,7 @@ class BackupManager:
 
     @staticmethod
     def list_backups() -> list[Path]:
-        """Restituisce la lista dei backup disponibili ordinati per data (piu' recente prima)."""
+        """Restituisce la lista dei backup disponibili ordinati per data (più recente prima)."""
         try:
             target_dir = BackupManager.get_backup_dir()
             if not target_dir.exists():
@@ -219,8 +221,8 @@ class BackupManager:
                 key=lambda p: p.stat().st_mtime,
                 reverse=True,
             )
-        except Exception as e:
-            logger.error(f"Error listing backups: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Error listing backups")
             return []
 
     @staticmethod
@@ -245,7 +247,7 @@ class BackupManager:
                 params={"file": zip_p.name},
                 severity="high",
             )
-            return True, "Ripristino completato. Riavviare l'applicazione."  # noqa: TRY300
-
         except Exception as e:
             return False, str(e)
+        else:
+            return True, "Ripristino completato. Riavviare l'applicazione."

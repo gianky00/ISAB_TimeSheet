@@ -134,9 +134,7 @@ class UpdateProgressDialog(QDialog):
         mb_down = downloaded / (1024 * 1024)
         mb_total = total / (1024 * 1024)
 
-        eta_str = (
-            f"{int(eta // 60)}m {int(eta % 60)}s" if eta >= 60 else f"{int(eta)}s"  # noqa: PLR2004
-        )
+        eta_str = f"{int(eta // 60)}m {int(eta % 60)}s" if eta >= 60 else f"{int(eta)}s"
         action = "Scaricamento" if self.worker.url_or_path.startswith("http") else "Trasferimento"
 
         self.lbl_status.setText(f"[AVVIO] {action} in corso...")
@@ -263,7 +261,7 @@ def check_for_updates(  # noqa: C901, PLR0912
         else:
             msg = f"Nuova versione {remote_ver_str} disponibile!\n"
             if changelog:
-                msg += f"\nNovita':\n{changelog}\n"
+                msg += f"\nNovità:\n{changelog}\n"
             msg += "\nVuoi aggiornare ora?"
             reply = QMessageBox.question(
                 parent,

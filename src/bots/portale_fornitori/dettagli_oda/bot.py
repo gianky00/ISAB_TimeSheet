@@ -2,15 +2,18 @@
 SyncroJob - Dettagli OdA Bot
 """
 
+import concurrent.futures
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
 from src.bots.base.base_bot import StepStatus
 from src.bots.base.selenium_base_bot import SeleniumBaseBot
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
 from src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import (
     DettagliOdAPage,
 )
+from src.core.constants import Business
 from src.core.oda_manager import OdaManager
 
 
@@ -45,24 +48,24 @@ class DettagliOdABot(SeleniumBaseBot):
 
     @property
     def name(self) -> str:
-        return "Dettagli OdA"
+        """Restituisce l'ID del bot."""
+        return "dettagli_oda"
 
     @property
     def description(self) -> str:
+        """Restituisce la descrizione del bot."""
         return "Scarica dettaglio OdA (o lista generale se OdA vuoto)"
 
     def __init__(
         self,
-        username: str,
-        password: str,
+        config: SeleniumBotConfig,
         data_da: str | None = None,
         data_a: str | None = None,
         fornitore: str | None = None,
         **kwargs: Any,
     ) -> None:
-        super().__init__(username, password, **kwargs)
+        super().__init__(config=config)
         current_year = datetime.now(UTC).astimezone().year
-        from src.core.constants import Business  # noqa: PLC0415
 
         self.data_da = data_da or f"01.01.{current_year}"
         self.data_a = data_a or f"31.12.{current_year}"
@@ -70,7 +73,7 @@ class DettagliOdABot(SeleniumBaseBot):
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """Validazione specifica per Dettagli OdA."""
-        # Non chiamiamo super().validate_data(data) perche' bloccherebbe se data  vuoto.
+        # Non chiamiamo super().validate_data(data) perchè bloccherebbe se data  vuoto.
         # Verifichiamo manualmente le credenziali e il fornitore.
         if not self.username or not self.password:
             return False, "Credenziali mancanti nelle impostazioni."
@@ -175,7 +178,6 @@ class DettagliOdABot(SeleniumBaseBot):
 
     def _import_oda_to_db(self, downloaded_path: Path) -> None:
         """Helper per l'importazione nel database. Utilizza un ProcessPool per non bloccare il GIL della GUI."""
-        import concurrent.futures  # noqa: PLC0415
 
         try:
             self.log(

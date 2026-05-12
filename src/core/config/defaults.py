@@ -14,7 +14,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "default_contract": "",
     "automation_engine": "selenium",  # Motore di automazione (selenium o playwright)
     "browser_headless": False,
-    "browser_timeout": 30,
+    "browser_timeout": 300,
     "download_path": "",
     "fornitori": [],
     "last_ts_data": [],
@@ -26,7 +26,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "enable_auto_update_contabilita": True,
     "certificati_campione_path": "",
     "master_preventivi_path": "",
-    "base_network_path_preventivi": r"\\192.168.11.251\Database_Tecnico_SMI\Contabilita' strumentale",
+    "base_network_path_preventivi": r"\\192.168.11.251\Database_Tecnico_SMI\Contabilità strumentale",
     "preventivi_tcl": [
         "MESSINA I.",
         "AGUSTA D.",
@@ -37,7 +37,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "BARBAGALLO G.",
     ],
     "preventivi_stati": [
-        "ATTIVITA' DA COMPLETARE",
+        "ATTIVITÀ DA COMPLETARE",
         "IN ATTESA TCL",
         "RICHIESTA ODC MIDOLO",
         "CONTABILIZZATA",
@@ -56,5 +56,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "Sincronizzazione": 1.0,
         "Export Excel": 5.0,
     },
+    "certificati_autopilot_enabled": False,
+    "certificati_autopilot_time": "08:30",
+    "certificati_autopilot_interval_days": 1,
+    "certificati_autopilot_last_sent": None,
     "statistics": {},
 }

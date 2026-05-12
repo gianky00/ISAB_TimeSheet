@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, no-untyped-call"
 """
 SyncroJob - Playwright Base Page Object
 Classe base condivisa per tutti i Page Objects basati su Playwright.
@@ -34,7 +33,7 @@ class PlaywrightBasePage:
             xpath_combined = f"{CommonLocators.LOADING_MASK[1]} | {CommonLocators.LOADING_TEXT[1]}"
             selector = f"xpath={xpath_combined}"
 
-            # Attendi che non ci siano piu' elementi visibili che bloccano la UI
+            # Attendi che non ci siano più elementi visibili che bloccano la UI
             self.page.wait_for_selector(selector, state="hidden", timeout=timeout_ms)
 
     def _select_combobox_item(

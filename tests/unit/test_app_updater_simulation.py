@@ -37,7 +37,7 @@ class TestAppUpdaterSimulation:
 
         # Mock della UI
         mock_msg = mocker.patch("src.gui.dialogs.updater_dialog.QMessageBox.question")
-        from PySide6.QtWidgets import QMessageBox  # noqa: PLC0415
+        from PySide6.QtWidgets import QMessageBox
 
         mock_msg.return_value = QMessageBox.StandardButton.Yes
 

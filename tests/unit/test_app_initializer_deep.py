@@ -55,7 +55,7 @@ class TestAppInitializerDeep:
         # Simulate failure for DASHBOARD
         def side_effect(idx):
             if idx == PageIndex.DASHBOARD:
-                raise Exception("Dashboard Crash")  # noqa: TRY002, TRY003
+                raise RuntimeError("Dashboard Crash")
             return MagicMock()
 
         mock_nav.get_panel.side_effect = side_effect

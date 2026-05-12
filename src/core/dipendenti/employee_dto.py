@@ -31,7 +31,7 @@ class EmployeeDTO:
         return f"{cog} {self.nome}"
 
     def to_table_row(self) -> list[str | int | None]:
-        """Restituisce i campiu'per la riga della tabella anagrafica."""
+        """Restituisce i campiùper la riga della tabella anagrafica."""
         return [
             self.inactivation_days_left,
             self.id_risorsa,

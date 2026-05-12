@@ -10,7 +10,7 @@ class TestContabilitaExtra:
     """
 
     def test_contabilita_panel_init(self, qapp, qtbot):
-        from src.gui.panels.contabilita_panel import ContabilitaPanel  # noqa: PLC0415
+        from src.gui.panels.contabilita_panel import ContabilitaPanel
 
         # We mock EVERYTHING inside the panel to isolate the container logic
         with (
@@ -45,7 +45,6 @@ class TestContabilitaExtra:
 
             # Instantiate Panel without qtbot.addWidget (to avoid strict integration)
             panel = ContabilitaPanel()
-            # panel.show() # Not strictly needed for logic test if we trigger methods manually  # noqa: ERA001
 
             try:
                 # Manually trigger deferred loading (simulating the QTimer callback)
@@ -60,7 +59,7 @@ class TestContabilitaExtra:
                 panel.deleteLater()
 
     def test_contabilita_panel_tab_switch(self, qapp, qtbot):
-        from src.gui.panels.contabilita_panel import ContabilitaPanel  # noqa: PLC0415
+        from src.gui.panels.contabilita_panel import ContabilitaPanel
 
         with (
             patch("src.gui.panels.contabilita_panel.ContabilitaManager") as mock_manager,
@@ -87,7 +86,6 @@ class TestContabilitaExtra:
             mock_manager.get_available_years.return_value = [2024]  # Single year for simplicity
 
             panel = ContabilitaPanel()
-            # panel.show()  # noqa: ERA001
 
             try:
                 panel._safe_refresh_tabs()

@@ -5,16 +5,17 @@ Thread worker per l'esportazione asincrona dei PDL in Excel.
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 import pandas as pd
 from PySide6.QtCore import QObject, QThread, Signal
 
+from src.core.logging import get_logger
+
 if TYPE_CHECKING:
     from src.core.pdl.pdl_dto import PdlRowDTO
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class PdlIOWorker(QThread):
@@ -54,5 +55,5 @@ class PdlIOWorker(QThread):
             self.finished_signal.emit(True, "Esportazione completata con successo", self.file_path)
 
         except Exception as e:
-            logger.error(f"PdlIOWorker Error: {e}")  # noqa: TRY400
+            logger.exception("PdlIOWorker Error")
             self.finished_signal.emit(False, str(e), "")

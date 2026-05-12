@@ -35,7 +35,7 @@ class TimbratureDetailView(QWidget):
             "Codice RILPRES",
             "Codice Qualifica",
             "Specializzazione",
-            "Societa' Ospitante",
+            "Società Ospitante",
             "Data Inserimento",
         ]
         self._setup_ui()
@@ -95,7 +95,7 @@ class TimbratureDetailView(QWidget):
             "Codice RILPRES": 10,
             "Codice Qualifica": 12,
             "Specializzazione": 13,
-            "Societa' Ospitante": 14,
+            "Società Ospitante": 14,
             "Data Inserimento": 15,
         }
 

@@ -24,14 +24,14 @@ class NotificationGroupHeader(QFrame):
     # Signal
     toggled = Signal(str, bool)  # group_key, is_expanded
 
-    def __init__(  # noqa: ANN204
+    def __init__(
         self,
         title: str,
         group_key: str,
         count: int = 0,
         icon: str = "  ",
         parent: QWidget | None = None,
-    ):
+    ) -> None:
         super().__init__(parent)
         self.group_key = group_key
         self._is_expanded = True  # Default: expanded

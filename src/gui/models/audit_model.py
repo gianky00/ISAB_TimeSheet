@@ -34,6 +34,15 @@ class AuditTableModel(QAbstractTableModel):
         "Dettagli",
     ]
 
+    COL_STATUS = 0
+    COL_TIMESTAMP = 1
+    COL_DURATION = 2
+    COL_MODULE = 3
+    COL_CATEGORY = 4
+    COL_ACTION = 5
+    COL_ENTITY = 6
+    COL_MESSAGE = 7
+
     def __init__(self, logs: list[dict[str, Any]] | None = None) -> None:
         """
         Inizializza il modello audit.
@@ -75,7 +84,7 @@ class AuditTableModel(QAbstractTableModel):
             return 0
         return len(self.COLUMNS)
 
-    def data(
+    def data(  # noqa: PLR0911
         self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole
     ) -> Any:
         """
@@ -110,29 +119,29 @@ class AuditTableModel(QAbstractTableModel):
 
     def _get_display_data(self, log: dict[str, Any], col: int) -> str | None:  # noqa: PLR0911
         """Restituisce il testo da mostrare per ogni colonna."""
-        if col == 0:
+        if col == self.COL_STATUS:
             return ""
-        if col == 1:
+        if col == self.COL_TIMESTAMP:
             return self._format_timestamp(log.get("timestamp"))
-        if col == 2:  # noqa: PLR2004
+        if col == self.COL_DURATION:
             return self._format_duration(log.get("duration_ms", 0))
-        if col == 3:  # noqa: PLR2004
+        if col == self.COL_MODULE:
             return str(log.get("module", "-") or "-")
-        if col == 4:  # noqa: PLR2004
+        if col == self.COL_CATEGORY:
             return str(log.get("category", "-"))
-        if col == 5:  # noqa: PLR2004
+        if col == self.COL_ACTION:
             return str(log.get("action", "-"))
-        if col == 6:  # noqa: PLR2004
-            # Priorita' a error_code se c' , altrimenti entity
+        if col == self.COL_ENTITY:
+            # Priorità a error_code se c'è, altrimenti entity
             err = log.get("error_code")
             return str(err) if err else str(log.get("entity", "-"))
-        if col == 7:  # noqa: PLR2004
+        if col == self.COL_MESSAGE:
             return self._extract_message(log)
         return None
 
     def _get_decoration_data(self, log: dict[str, Any], col: int) -> QIcon | None:
         """Restituisce l'icona (pallino colorato) per la colonna di stato."""
-        if col != 0:
+        if col != self.COL_STATUS:
             return None
 
         status = str(log.get("status", "success")).lower()
@@ -157,19 +166,19 @@ class AuditTableModel(QAbstractTableModel):
 
     def _get_foreground_data(self, log: dict[str, Any], col: int) -> QColor | None:
         """Evidenzia in rosso i codici errore e in arancione le operazioni lente."""
-        if col == 6 and log.get("error_code"):  # Error Code Red # noqa: PLR2004
+        if col == self.COL_ENTITY and log.get("error_code"):  # Error Code Red
             return QColor(COLORS["error_red"])
-        if col == 2 and (log.get("duration_ms", 0) or 0) > 5000:  # Slow ops # noqa: PLR2004
+        if col == self.COL_DURATION and (log.get("duration_ms", 0) or 0) > 5000:  # Slow ops
             return QColor(COLORS["warning_orange"])
         return None
 
     def _get_font_data(self, log: dict[str, Any], col: int) -> QFont | None:
         """Applica il grassetto alle azioni e ai codici errore."""
-        if col == 5:  # Action Bold # noqa: PLR2004
+        if col == self.COL_ACTION:  # Action Bold
             f = QFont()
             f.setBold(True)
             return f
-        if col == 6 and log.get("error_code"):  # Error Code Bold # noqa: PLR2004
+        if col == self.COL_ENTITY and log.get("error_code"):  # Error Code Bold
             f = QFont()
             f.setBold(True)
             return f
@@ -177,7 +186,7 @@ class AuditTableModel(QAbstractTableModel):
 
     def _get_alignment_data(self, col: int) -> Qt.AlignmentFlag:
         """Restituisce l'allineamento ottimale per ogni colonna."""
-        if col in (0, 2):
+        if col in (self.COL_STATUS, self.COL_DURATION):
             return Qt.AlignmentFlag.AlignCenter
         return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
@@ -202,12 +211,12 @@ class AuditTableModel(QAbstractTableModel):
         if not ms:
             return "-"
         f_ms = float(ms)
-        if f_ms < 1000:  # noqa: PLR2004
+        if f_ms < 1000:
             return f"{f_ms:.0f}ms"
         return f"{f_ms / 1000.0:.1f}s"
 
     def _extract_message(self, log: dict[str, Any]) -> str:
-        """Estrae il messaggio piu' significativo dai parametri JSON del log."""
+        """Estrae il messaggio più significativo dai parametri JSON del log."""
         p_str = log.get("params", "{}")
         try:
             p = json.loads(p_str) if isinstance(p_str, str) else p_str

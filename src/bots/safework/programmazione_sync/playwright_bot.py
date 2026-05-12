@@ -1,39 +1,41 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - Playwright SafeWork Programmazione Sync Bot
 Versione Playwright del bot per il download massivo del report di programmazione Excel.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.bots.base.base_bot import StepStatus
-from src.bots.safework.pages.playwright_visualizza_attivita_page import PlaywrightVisualizzaAttivitaPage
+from src.bots.safework.pages.playwright_visualizza_attivita_page import (
+    PlaywrightVisualizzaAttivitaPage,
+)
 from src.bots.safework.playwright_base import PlaywrightSafeworkBaseBot
+
+if TYPE_CHECKING:
+    from src.bots.base.selenium_bot_config import SeleniumBotConfig
 
 
 class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
     """
-    Bot per scaricare il report Excel delle attivita'da SafeWork usando Playwright.
+    Bot per il download massivo delle attività SafeWork (Syncro) usando Playwright.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
-        ("nav", "Navigazione Attivita'"),
+        ("nav", "Navigazione Attività"),
         ("filter", "Configurazione Filtri"),
         ("search", "Ricerca ed Esportazione"),
     ]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = 30,
-        download_path: str = "",
+        config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
-        super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
+        super().__init__(config, account_type=account_type)
         self.downloaded_file: str | None = None
         self.attivita_page: PlaywrightVisualizzaAttivitaPage | None = None
 
@@ -43,7 +45,7 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
 
     @property
     def description(self) -> str:
-        return "Download massivo report attivita'SafeWork (Playwright)"
+        return "Download massivo report attività SafeWork (Playwright)"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
@@ -69,7 +71,7 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
 
         # 1. Navigazione
         self.update_step("nav", StepStatus.RUNNING)
-        self.log("   Navigazione in 'Visualizza Attivita''...")
+        self.log("   Navigazione in 'Visualizza Attività'...")
 
         self.page.click("#topIcon-actHomePage")
         self._attendi_scomparsa_overlay()
@@ -97,7 +99,9 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
 
         self.log("   Esportazione Excel...")
         try:
-            with self.page.expect_download(timeout=600000) as download_info:
+            # Usa il doppio del timeout globale per l'esportazione pesante
+            download_timeout_ms = self.config.timeout * 2 * 1000
+            with self.page.expect_download(timeout=download_timeout_ms) as download_info:
                 if self.attivita_page.esporta_excel():
                     download = download_info.value
                     dest = Path(self.download_path) / download.suggested_filename

@@ -38,7 +38,7 @@ class PDLTableView(QTableView):
         self.customContextMenuRequested.connect(self.context_menu_requested.emit)
         self.doubleClicked.connect(lambda _: self.row_double_clicked.emit())
         if sel_model := self.selectionModel():
-            sel_model.selectionChanged.connect(self.selection_changed_custom.emit)
+            sel_model.selectionChanged.connect(lambda _1, _2: self.selection_changed_custom.emit())
 
         v_header = self.verticalHeader()
         if v_header:
@@ -60,7 +60,7 @@ class PDLTableView(QTableView):
         self.resizeColumnsToContents()
         # Limita larghezze troppo ampie tranne l'ultima (descrizione)
         for i in range(headers_count):
-            if i != 6 and h.sectionSize(i) > 200:  # noqa: PLR2004
+            if i != 6 and h.sectionSize(i) > 200:
                 h.resizeSection(i, 200)
 
         h.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)

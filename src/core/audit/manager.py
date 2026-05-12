@@ -1,3 +1,4 @@
+import getpass
 import json
 import os
 import queue
@@ -14,13 +15,14 @@ from src.core.audit.integrity import AuditIntegrity
 from src.core.audit.models import Severity, Status
 from src.core.audit.signals import AuditSignals
 from src.core.logging import get_context, get_logger
+from src.core.notification_manager import NotificationManager
 
 logger = get_logger(__name__)
 
 
 class AuditManager:
     """
-    Manager per l'Audit Log con meccanismi di integrita' e severit .
+    Manager per l'Audit Log con meccanismi di integrità e severità.
     Implementazione rifattorizzata e modulare con supporto asincrono per evitare lag UI.
     """
 
@@ -64,18 +66,18 @@ class AuditManager:
 
                 self._execute_log_internal(**task)
                 self._log_queue.task_done()
-            except Exception as e:
-                logger.error(f"Audit Worker Error: {e}")  # noqa: TRY400
+            except Exception:
+                logger.exception("Audit Worker Error")
                 time.sleep(1)  # Evita busy loop in caso di errore persistente
 
     @property
-    def DB_PATH(self) -> Path:  # noqa: N802
-        """Compatibilit  Legacy per test."""
-        return self.db.DB_PATH
+    def db_path(self) -> Path:
+        """Compatibilità Legacy per test."""
+        return self.db.db_path
 
-    @DB_PATH.setter
-    def DB_PATH(self, value: Path) -> None:  # noqa: N802
-        self.db.DB_PATH = value
+    @db_path.setter
+    def db_path(self, value: Path) -> None:
+        self.db.db_path = value
 
     def _get_current_user(self) -> str:
         """Recupera l'utente corrente."""
@@ -84,8 +86,6 @@ class AuditManager:
             if user and user.lower() != "none":
                 return user
         try:
-            import getpass  # noqa: PLC0415
-
             return getpass.getuser()
         except Exception:
             return "unknown"
@@ -145,8 +145,10 @@ class AuditManager:
         try:
             # 1. Normalizzazione e Setup
             user_id = self._get_current_user()
-            status_val = status.value if isinstance(status, Status) else str(status)
-            severity_val = severity.value if isinstance(severity, Severity) else str(severity)
+
+            # Conversione sicura per compatibilità DB (stringhe: low, medium, high / success, error, warning)
+            status_val = status.to_str() if isinstance(status, Status) else str(status)
+            severity_val = severity.to_str() if isinstance(severity, Severity) else str(severity)
 
             # Defaults
             entity = entity or "-"
@@ -155,7 +157,7 @@ class AuditManager:
             params_json = json.dumps(params, ensure_ascii=False) if params else "{}"
             timestamp = datetime.now(UTC).isoformat()
 
-            # 2. Integrita'(Hashing)
+            # 2. Integrità(Hashing)
             row_data = {
                 "timestamp": timestamp,
                 "user_id": user_id,
@@ -191,25 +193,25 @@ class AuditManager:
                 )
             )
 
-            # 4. Logging Enterprise e Segnali
-            self._log_enterprise_audit(
+            # 4. Logging Strutturato e Segnali
+            self._log_structured_audit(
                 action, audit_id, trace_id, category, entity, status_val, severity_val, duration_ms
             )
 
-            row_data["id"] = audit_id  # Per compatibilit  segnali
+            row_data["id"] = audit_id  # Per compatibilità segnali
             self.signals.log_added.emit(row_data)
             self.signals.logs_updated.emit()
 
             if notify:
                 self._generate_notification(action, entity, status_val, severity_val, params)
 
-            return audit_id  # noqa: TRY300
-
         except Exception as e:
-            logger.error("Audit Log Error", exc=e, action=action, category=category)  # noqa: TRY400
+            logger.exception("Audit Log Error", exc=e, action=action, category=category)
             return None
+        else:
+            return audit_id
 
-    def _log_enterprise_audit(  # noqa: PLR0913
+    def _log_structured_audit(  # noqa: PLR0913
         self,
         action: str,
         audit_id: Any,
@@ -243,19 +245,17 @@ class AuditManager:
     ) -> None:
         """Genera una notifica utente basata sull'esito dell'azione auditata."""
         try:
-            from src.core.notification_manager import NotificationManager  # noqa: PLC0415
-
             level = self._map_status_to_notif_level(status_val, severity_val)
             msg = f"Esito: {status_val.upper()}"
             if params and isinstance(params, dict) and "error_details" in params:
                 msg = params["error_details"]
 
             NotificationManager.instance().add_notification(f"{action}: {entity}", msg, level=level)
-        except Exception as e:
-            logger.error(f"Notification error in Audit: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Notification error in Audit")
 
     def _map_status_to_notif_level(self, status: str, severity: str) -> str:
-        """Mappa stato e severit  al livello di notifica."""
+        """Mappa stato e severità al livello di notifica."""
         if status == "error" or severity == "high":
             return "error"
         if status == "warning" or severity == "medium":
@@ -284,8 +284,8 @@ class AuditManager:
                     return False
 
                 prev_hash = row["row_hash"]
-        except Exception as e:
-            logger.exception("Integrity verification crash", exc=e)
+        except Exception:
+            logger.exception("Integrity verification crash")
             return False
         else:
             return True
@@ -333,7 +333,7 @@ class AuditManager:
         return self.db.get_categories()
 
     def run_retention_policy(self, days: int = 90) -> None:
-        """Elimina i log piu' vecchi del numero di giorni specificato."""
+        """Elimina i log più vecchi del numero di giorni specificato."""
         cutoff = (datetime.now(UTC) - timedelta(days=days)).isoformat()
         deleted_count = self.db.delete_older_than(cutoff)
         if deleted_count > 0:
@@ -372,6 +372,6 @@ class AuditManager:
                         if s_key not in stats[day]:
                             stats[day][s_key] = 0
                         stats[day][s_key] += count
-        except Exception as e:
-            logger.error(f"Stats Error: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Stats Error")
         return dict(sorted(stats.items()))

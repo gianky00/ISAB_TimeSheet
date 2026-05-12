@@ -20,7 +20,7 @@ class TestSystemIntegrity:
 
     def test_audit_retention_policy(self, mocker):
         """Verifica che la policy di retention elimini i log vecchi."""
-        from datetime import UTC  # noqa: PLC0415
+        from datetime import UTC
 
         manager = AuditManager.instance()
         mock_db = MagicMock()

@@ -8,6 +8,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+from src.core import config_manager
 from src.core.database import db_manager
 
 logger = logging.getLogger(__name__)
@@ -32,8 +33,8 @@ class PDLQueries:
                     clean_names.add(normalized)
 
             return sorted(clean_names)
-        except Exception as e:
-            logger.error(f"Errore recuperòrichiedenti: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Errore recuperòrichiedenti")
             return []
 
     @classmethod
@@ -44,10 +45,11 @@ class PDLQueries:
             try:
                 query_del = "DELETE FROM pdl_programmazione WHERE settimana_start = ? AND settimana_end = ?"
                 db_manager.execute_query(db_manager.DB_PDL, query_del, (start_date, end_date))
-                return True  # noqa: TRY300
-            except Exception as e:
-                logger.error(f"Errore pulizia programmazione vuota: {e}")  # noqa: TRY400
+            except Exception:
+                logger.exception("Errore pulizia programmazione vuota")
                 return False
+            else:
+                return True
 
         try:
             # 1. Cancelliamo solo la settimana corrente
@@ -89,10 +91,11 @@ class PDLQueries:
 
             with db_manager.get_connection(db_manager.DB_PDL) as conn:
                 conn.executemany(query, data_to_insert)
-            return True  # noqa: TRY300
-        except Exception as e:
-            logger.error(f"Errore salvataggio programmazione: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Errore salvataggio programmazione")
             return False
+        else:
+            return True
 
     @classmethod
     def get_programming_results_by_week(cls, start_date: str, end_date: str) -> list[dict[str, Any]]:
@@ -130,18 +133,17 @@ class PDLQueries:
                         ],
                     }
                 )
-            return results  # noqa: TRY300
-        except Exception as e:
-            logger.error(f"Errore recuperòprogrammazione: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Errore recuperòprogrammazione")
             return []
+        else:
+            return results
 
     @classmethod
     def get_pdl_interventions(cls, n_pdl: str) -> list[dict[str, Any]]:
         """
-        Recupera la cronologiàdegli interventi per un determinato PDL
-        dal database dei Report Attivita'.
+        dal database dei Report Attività.
         """
-        from src.core import config_manager  # noqa: PLC0415
 
         config = config_manager.load_config()
         # Path di default storico (Cerca in folder parallela se non configurato)
@@ -184,7 +186,7 @@ class PDLQueries:
       UNION ALL
 
       SELECT
-        'Relazione' as fonte,
+        'Relazionè as fonte,
         data_intervento as data,
         nome_compilatore || ' ' || cognome_compilatore as tecnico,
         '' as team,
@@ -204,6 +206,6 @@ class PDLQueries:
                 rows = cursor.fetchall()
 
             return [dict(r) for r in rows]
-        except Exception as e:
-            logger.error(f"Errore recuperòcronologiàinterventi per PDL {n_pdl}: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception(f"Errore recuperòcronologiàinterventi per PDL {n_pdl}")
             return []

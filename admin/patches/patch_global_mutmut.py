@@ -3,7 +3,7 @@ from pathlib import Path
 import mutmut
 
 
-def patch_global_mutmut():  # noqa: ANN201
+def patch_global_mutmut() -> None:
     p = Path(mutmut.__file__).parent / "__main__.py"
     if not p.exists():
         print("Global mutmut not found.")

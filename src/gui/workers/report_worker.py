@@ -11,8 +11,11 @@ import os
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
+import pythoncom
+import win32com.client
 from PySide6.QtCore import QThread, Signal
 
+from src.core.constants import Emails
 from src.core.dipendenti.report_service import ReportService
 from src.core.report_history import ReportHistory
 
@@ -74,11 +77,6 @@ class ReportWorker(QThread):
 
         if os.name == "nt":
             try:
-                import pythoncom  # noqa: PLC0415
-                import win32com.client  # noqa: PLC0415
-
-                from src.core.constants import Emails  # noqa: PLC0415
-
                 pythoncom.CoInitialize()
                 try:
                     outlook = win32com.client.Dispatch("Outlook.Application")

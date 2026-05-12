@@ -104,7 +104,7 @@ class TestGUIAdvanced:
         def test_callback():
             return "Info Dettagliata Test"
 
-        from src.gui.widgets.info_widgets import KPIBigCard  # noqa: PLC0415
+        from src.gui.widgets.info_widgets import KPIBigCard
 
         card = KPIBigCard("Test", "Valore")
         card.set_info_callback(test_callback)

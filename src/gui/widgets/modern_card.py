@@ -64,10 +64,11 @@ class ModernCard(QFrame):
         """Aumenta l'elevazione (ombra) all'ingresso del mouse."""
         self.shadow_anim.setEndValue(self.elevation + 15)
         self.shadow_anim.start()
+        # Rimosso bordo blu pesante, usato bordo neutro leggermente più definito
         self.setStyleSheet(f"""
-      QWidget {{
+      QFrame#modernCard {{
         background-color: {COLORS["bg_white"]};
-        border: 1px solid {COLORS["primary_blue"]};
+        border: 1px solid {COLORS["border_medium"]};
         border-radius: 12px;
       }}
     """)
@@ -82,7 +83,7 @@ class ModernCard(QFrame):
 
 
 class ModernContentCard(ModernCard):
-    """Card che include gia' un layout per i contenuti."""
+    """Card che include già un layout per i contenuti."""
 
     def __init__(self, parent: QWidget | None = None, elevation: int = 15) -> None:
         """Inizializza la card con layout verticale integrato."""

@@ -5,13 +5,18 @@ Gestisce la sincronizzazione tra i file Excel esportati dal portale e il databas
 """
 
 import contextlib
+import time
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Final
 
 from src.core.data_synchronizer import DataSynchronizer
 from src.core.database import db_manager
 from src.core.importers.storico_oda import StoricoOdaImporter
+from src.core.logging import get_logger
+from src.core.sync_tracker import SyncTracker
+
+logger = get_logger(__name__)
 
 
 class OdaManager:
@@ -20,16 +25,19 @@ class OdaManager:
     Centralizza l'accesso ai dati degli ordini, permettendo ricerche testuali complesse.
     """
 
+    # Lunghezza minima per tentativo di parsing data DD/MM/YY
+    MIN_DATE_LEN: Final[int] = 8
+
     @classmethod
     def init_db(cls) -> None:
         """Inizializza lo schema del database se non esistente."""
         db_manager.init_db()
 
     @classmethod
-    def get_all_oda(cls, search_text: str | None = None) -> list[tuple[Any, ...]]:
+    def get_all_oda(cls, search_text: str | None = None) -> list[Any]:
         """
         Recupera un elenco di ordini di acquisto dal database.
-        L'ordine delle colonne nel SELECT  garantito per corrispondere agli header UI.
+        L'ordine delle colonne nel SELECT è garantito per corrispondere agli header UI.
         """
         # Ordine colonne sincronizzato con StoricoOdaPanel.full_headers
         columns = [
@@ -75,7 +83,7 @@ class OdaManager:
 
             # Fix: Conversione data per ricerca smart (DD/MM/YYYY -> YYYY-MM-DD)
             search_pattern = search_text
-            if "/" in search_text and len(search_text) >= 8:  # noqa: PLR2004
+            if "/" in search_text and len(search_text) >= cls.MIN_DATE_LEN:
                 with contextlib.suppress(Exception):
                     d_obj = datetime.strptime(search_text, "%d/%m/%Y").replace(tzinfo=UTC)
                     search_pattern = d_obj.strftime("%Y-%m-%d")
@@ -92,10 +100,6 @@ class OdaManager:
         cls, file_path: str, progress_callback: Callable[[int, int], None] | None = None
     ) -> tuple[bool, str, int, int]:
         """Importa dati da Excel e sincronizza il DB."""
-        import time  # noqa: PLC0415
-
-        from src.core.sync_tracker import SyncTracker  # noqa: PLC0415
-
         start_time = time.time()
         # Nota: Usiamo StoricoOdaImporter direttamente per coerenza
         success, message, imported_rows = StoricoOdaImporter.import_storico_oda(file_path, progress_callback)

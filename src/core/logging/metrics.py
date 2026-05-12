@@ -14,12 +14,12 @@ from .config import get_config
 class PerformanceMetric:
     """Singola metrica di performance."""
 
-    def __init__(  # noqa: ANN204
+    def __init__(
         self,
         operation: str,
         duration_ms: float,
         metadata: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         self.operation = operation
         self.duration_ms = duration_ms
         self.timestamp = datetime.now(UTC)

@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - Certificati Tree Widget
 Componente specializzato per la visualizzazione gerarchica dei certificati campione.
@@ -28,7 +27,7 @@ from src.utils.helpers import get_asset_path
 class UbicazioneDelegate(QStyledItemDelegate):
     """Delegate per la selezione dell'ubicazione tramite ComboBox."""
 
-    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.items = [
             UbicazioneStrumenti.ASSENTE.value,
@@ -95,10 +94,10 @@ class AnnotazioniDelegate(QStyledItemDelegate):
 class CertificatiTreeWidget(StandardTreeWidget):
     """Tree Widget specializzato per la gestione dei certificati."""
 
-    itemEditedCustom = Signal(object, str, str)  # (item, col_name, new_value) # noqa: N815
+    item_edited_custom = Signal(object, str, str)  # (item, col_name, new_value)
 
     HEADERS: ClassVar[list[str]] = [
-        "ID-COEMI",
+        "ID-STRUMENTO",
         "Certificato",
         "Modello /\nTipo",
         "Costruttore",
@@ -113,7 +112,7 @@ class CertificatiTreeWidget(StandardTreeWidget):
     ]
 
     (
-        IDX_ID_COEMI,
+        IDX_ID_STRUMENTO,
         IDX_CERTIFICATO,
         IDX_MODELLO,
         IDX_COSTRUTTORE,
@@ -127,12 +126,12 @@ class CertificatiTreeWidget(StandardTreeWidget):
         IDX_ANNOTAZIONI,
     ) = range(12)
 
-    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._setup_ui()
         self.itemChanged.connect(self._on_item_changed)
 
-    def _setup_ui(self):  # noqa: ANN202
+    def _setup_ui(self) -> None:
         self.setHeaderLabels(self.HEADERS)
         self.setWordWrap(True)
         self.setAlternatingRowColors(True)
@@ -180,17 +179,17 @@ class CertificatiTreeWidget(StandardTreeWidget):
       }}
     """)
 
-    def apply_current_certificate_styling(  # noqa: ANN201
+    def apply_current_certificate_styling(
         self, item: SortableTreeWidgetItem, days_to_expiry: int | None, status_dot_icon: str
-    ):
-        """Applica lo styling specifico per il certificato piu' recente."""
+    ) -> None:
+        """Applica lo styling specifico per il certificato più recente."""
         if days_to_expiry is None:
             status_text, bg_color, text_color = (
                 "N/D (Senza Scadenza)",
                 COLORS["bg_alt"],
                 COLORS["text_light"],
             )
-        elif days_to_expiry == -9999:  # noqa: PLR2004
+        elif days_to_expiry == -9999:
             status_text, bg_color, text_color = (
                 "GUASTO",
                 COLORS["bg_error_pastel"],
@@ -202,13 +201,13 @@ class CertificatiTreeWidget(StandardTreeWidget):
                 COLORS["bg_error_pastel"],
                 COLORS["error_red"],
             )
-        elif 0 <= days_to_expiry <= 15:  # noqa: PLR2004
+        elif 0 <= days_to_expiry <= 15:
             status_text, bg_color, text_color = (
                 f"Scade tra {days_to_expiry} giorni",
                 COLORS["bg_warning_pastel"],
                 COLORS["warning_orange"],
             )
-        elif 16 <= days_to_expiry <= 30:  # noqa: PLR2004
+        elif 16 <= days_to_expiry <= 30:
             status_text, bg_color, text_color = (
                 f"Scade tra {days_to_expiry} giorni",
                 COLORS["bg_attention_pastel"],
@@ -232,7 +231,7 @@ class CertificatiTreeWidget(StandardTreeWidget):
         font.setBold(True)
         item.setFont(self.IDX_STATO, font)
 
-    def apply_historical_certificate_styling(self, item: SortableTreeWidgetItem):  # noqa: ANN201
+    def apply_historical_certificate_styling(self, item: SortableTreeWidgetItem) -> None:
         """Applica lo styling per i certificati storici."""
         bg_color = QColor(COLORS["bg_alt"])
         for col in range(self.columnCount()):
@@ -241,11 +240,11 @@ class CertificatiTreeWidget(StandardTreeWidget):
         item.setIcon(self.IDX_STATO, QIcon(get_asset_path(Icons.STATUS_DOT_GRAY)))
         item.setText(self.IDX_STATO, "STORICO")
         item.setForeground(self.IDX_STATO, QBrush(QColor(COLORS["text_light"])))
-        item.setToolTip(self.IDX_STATO, "Certificato storico - Esiste un certificato piu' recente")
+        item.setToolTip(self.IDX_STATO, "Certificato storico - Esiste un certificato più recente")
 
-    def _on_item_changed(self, item: QTreeWidgetItem, column: int):  # noqa: ANN202
+    def _on_item_changed(self, item: QTreeWidgetItem, column: int) -> None:
         """Gestisce il cambiamento di valore in una cella."""
         if column == self.IDX_ANNOTAZIONI:
-            self.itemEditedCustom.emit(item, "annotazioni", item.text(column))
+            self.item_edited_custom.emit(item, "annotazioni", item.text(column))
         elif column == self.IDX_UBICAZIONE:
-            self.itemEditedCustom.emit(item, "ubicazione", item.text(column))
+            self.item_edited_custom.emit(item, "ubicazione", item.text(column))

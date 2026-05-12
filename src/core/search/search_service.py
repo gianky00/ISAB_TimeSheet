@@ -48,16 +48,16 @@ class SearchService:
         try:
             matches = ContabilitaManager.search_oda(query)
             return matches[:limit]
-        except Exception as e:
-            logger.error(f"SearchService ODA error: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("SearchService ODA error")
             return []
 
     @staticmethod
     def _search_extended(query: str, limit: int) -> dict[str, list[dict[str, Any]]]:
         try:
             return ContabilitaManager.search_extended(query, limit=limit)
-        except Exception as e:
-            logger.error(f"SearchService Extended error: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("SearchService Extended error")
             return {}
 
     @staticmethod
@@ -66,8 +66,8 @@ class SearchService:
             # Cast dict results to common format
             matches = TimbratureStorage().search_employees(query)
             return matches[:limit]
-        except Exception as e:
-            logger.error(f"SearchService Employees error: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("SearchService Employees error")
             return []
 
     @staticmethod
@@ -95,8 +95,8 @@ class SearchService:
                     [search_pattern] * 5 + [limit],
                 )
                 return [dict(row) for row in cursor.fetchall()]
-        except Exception as e:
-            logger.error(f"SearchService Storico ODA error: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("SearchService Storico ODA error")
             return []
 
     @staticmethod
@@ -124,8 +124,8 @@ class SearchService:
                     [search_pattern] * 5 + [limit],
                 )
                 return [dict(row) for row in cursor.fetchall()]
-        except Exception as e:
-            logger.error(f"SearchService Attivita'Programmate error: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("SearchService AttivitàProgrammate error")
             return []
 
     @staticmethod
@@ -152,8 +152,8 @@ class SearchService:
                     [search_pattern] * 4 + [limit],
                 )
                 return [dict(row) for row in cursor.fetchall()]
-        except Exception as e:
-            logger.error(f"SearchService PDL error: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("SearchService PDL error")
             return []
 
     @staticmethod
@@ -166,6 +166,6 @@ class SearchService:
                 if query.lower() in str(log["action"]).lower() or query.lower() in str(log["entity"]).lower()
             ]
             return matches[:limit]
-        except Exception as e:
-            logger.error(f"SearchService Audit error: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("SearchService Audit error")
             return []

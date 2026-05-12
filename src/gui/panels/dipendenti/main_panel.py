@@ -1,8 +1,7 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Employees Main Panel
 Pannello principale per la gestione del personale che orchestra i tab di monitoraggio e configurazione.
-Funge da punto di ingresso unico per tutte le funzionalita' relative ai dipendenti.
+Funge da punto di ingresso unico per tutte le funzionalità relative ai dipendenti.
 """
 
 import logging

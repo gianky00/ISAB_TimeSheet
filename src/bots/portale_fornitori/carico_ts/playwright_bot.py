@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-call"
 """
 SyncroJob - Playwright Carico TS Bot
 Versione Playwright del bot per il caricamento dei timesheet.

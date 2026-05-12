@@ -3,7 +3,6 @@ SyncroJob - Database Manager
 Centralized SQLite database management with Thread Safety.
 """
 
-import logging
 import sqlite3
 import threading
 import time
@@ -20,6 +19,7 @@ from src.core.database.migrations.contabilita import (
     mig_contabilita_v4,
     mig_contabilita_v5,
     mig_contabilita_v6,
+    mig_contabilita_v7,
 )
 from src.core.database.migrations.dipendenti import (
     mig_dipendenti_v1,
@@ -37,9 +37,10 @@ from src.core.database.migrations.timbrature import (
     mig_timbrature_v3,
     mig_timbrature_v4,
 )
+from src.core.logging import get_logger
 from src.core.paths import DB_DIR
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class DatabaseManager:
@@ -59,6 +60,7 @@ class DatabaseManager:
         4: mig_contabilita_v4,
         5: mig_contabilita_v5,
         6: mig_contabilita_v6,
+        7: mig_contabilita_v7,
     }
 
     MIGRATIONS_TIMBRATURE: ClassVar[dict[int, Callable[[sqlite3.Connection], None]]] = {
@@ -88,131 +90,78 @@ class DatabaseManager:
     }
 
     # --- DYNAMIC DATABASE PATHS ---
-    # These properties ensure that if CONFIG_DIR is patched (e.g. during tests),
-    # the database paths will automatically point to the new location.
-
-    @property
-    def DB_CONTABILITA(self) -> Path:  # noqa: N802
-        return self._get_db_path(FileNames.DB_CONTABILITA)
-
-    @property
-    def DB_TIMBRATURE(self) -> Path:  # noqa: N802
-        return self._get_db_path(FileNames.DB_TIMBRATURE)
-
-    @property
-    def DB_PDL(self) -> Path:  # noqa: N802
-        return self._get_db_path(FileNames.DB_PDL)
-
-    @property
-    def DB_STORICO_ODA(self) -> Path:  # noqa: N802
-        return self._get_db_path(FileNames.DB_STORICO_ODA)
-
-    @property
-    def DB_DIPENDENTI(self) -> Path:  # noqa: N802
-        return self._get_db_path(FileNames.DB_DIPENDENTI)
-
-    @property
-    def DB_AUDIT(self) -> Path:  # noqa: N802
-        return self._get_db_path(FileNames.DB_AUDIT_LOG)
-
-    def _get_db_path(self, filename: str) -> Path:
-        """Resolves the database path using the current DB_DIR."""
-        return DB_DIR / filename
+    DB_CONTABILITA = DB_DIR / FileNames.DB_CONTABILITA
+    DB_TIMBRATURE = DB_DIR / FileNames.DB_TIMBRATURE
+    DB_PDL = DB_DIR / FileNames.DB_PDL
+    DB_STORICO_ODA = DB_DIR / FileNames.DB_STORICO_ODA
+    DB_DIPENDENTI = DB_DIR / FileNames.DB_DIPENDENTI
+    DB_AUDIT = DB_DIR / FileNames.DB_AUDIT_LOG
 
     def __new__(cls) -> "DatabaseManager":
-        """Pattern Singleton per il gestore database."""
         if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._ensure_dirs()
+            with cls._write_lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
         return cls._instance
-
-    def _ensure_dirs(self) -> None:
-        """Ensures the data directory exists."""
-        DB_DIR.mkdir(parents=True, exist_ok=True)
 
     @contextmanager
     def get_connection(
-        self, db_path: Path, read_only: bool = False, timeout: float = 30.0
+        self, db_path: Path, read_only: bool = False
     ) -> Generator[sqlite3.Connection, None, None]:
         """
-        Yields a SQLite connection with Thread Safety features.
-        - WAL Mode enabled for concurrent read/write.
-        - Increased timeout for locked databases.
-        - Auto-commit handling via context manager.
+        Provides a thread-safe connection with automatic WAL mode and transaction handling.
         """
-        uri = f"file:{db_path.absolute()}"
         if read_only:
-            uri += "?mode=ro"
+            # Per sola lettura, usiamo URI mode per garantire l'accesso se possibile
+            db_uri = f"file:{db_path.as_posix()}?mode=ro"
+            conn = sqlite3.connect(db_uri, timeout=30.0, uri=True)
+        else:
+            conn = sqlite3.connect(db_path, timeout=30.0)
 
-        conn = None
+        conn.row_factory = sqlite3.Row
         try:
-            # check_same_thread=False is safe when using one connection per context/thread
-            conn = sqlite3.connect(uri, uri=True, timeout=timeout, check_same_thread=False)
-
-            # Performance & Concurrency Optimizations
-            if not read_only:
-                conn.execute("PRAGMA journal_mode=WAL;")
-                conn.execute("PRAGMA synchronous=NORMAL;")
-                conn.execute(f"PRAGMA busy_timeout={int(timeout * 1000)};")  # nosec B608
-
-            # Enable Foreign Keys for both read and write
-            conn.execute("PRAGMA foreign_keys = ON;")
-
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
             yield conn
-
-            if not read_only and conn.in_transaction:
-                conn.commit()
-
-        except sqlite3.OperationalError as e:
-            logger.error(f"Database Operational Error ({db_path.name}): {e}")  # noqa: TRY400
-            if conn:
-                conn.rollback()
-            raise
-        except Exception as e:
-            logger.error(f"Unexpected Database Error ({db_path.name}): {e}")  # noqa: TRY400
-            if conn:
-                conn.rollback()
+            conn.commit()
+        except Exception:
+            conn.rollback()
             raise
         finally:
-            if conn:
-                conn.close()
+            conn.close()
+
+    @contextmanager
+    def get_write_connection(self, db_path: Path) -> Generator[sqlite3.Connection, None, None]:
+        """
+        Provides a connection with an exclusive write lock to prevent 'database is locked' errors.
+        """
+        with self._write_lock, self.get_connection(db_path) as conn:
+            yield conn
 
     def execute_query(
         self, db_path: Path, query: str, params: tuple[Any, ...] = (), retry_count: int = 3
-    ) -> list[Any]:
-        """Executes a query with automatic retries and write synchronization."""
-        is_write = not query.strip().upper().startswith("SELECT")
-
+    ) -> list[sqlite3.Row]:
+        """
+        Safely executes a read query with automatic retries on busy.
+        """
         last_error = None
-        for attempt in range(retry_count):
+        for i in range(retry_count):
             try:
-                # Se  una scrittura, acquisiamo il lock globale per questo processo
-                if is_write:
-                    self._write_lock.acquire()
-
-                try:
-                    # Passa read_only=not is_write per ottimizzare concorrenza
-                    with self.get_connection(db_path, read_only=not is_write) as conn:
-                        cursor = conn.cursor()
-                        cursor.execute(query, params)
-                        if not is_write:
-                            return cursor.fetchall()
-                        return []
-                finally:
-                    if is_write:
-                        self._write_lock.release()
-
+                with self.get_connection(db_path) as conn:
+                    return conn.execute(query, params).fetchall()
             except sqlite3.OperationalError as e:
                 if "locked" in str(e).lower() or "busy" in str(e).lower():
                     last_error = e
-                    time.sleep(0.1 * (attempt + 1))
+                    time.sleep(0.1 * (i + 1))
                     continue
+                raise
+            except Exception:
                 raise
 
         logger.error(f"Failed to execute query after {retry_count} retries: {last_error}")
         if last_error:
             raise last_error
-        raise sqlite3.OperationalError(f"Failed to execute query after {retry_count} retries")  # noqa: TRY003
+        raise sqlite3.OperationalError(f"Failed to execute query after {retry_count} retries")
 
     def init_db(self) -> None:
         """Initializes schema for all databases using the migration system."""
@@ -227,7 +176,7 @@ class DatabaseManager:
             res = conn.execute("PRAGMA user_version").fetchone()
             return int(res[0]) if res else 0
         except Exception:
-            logger.exception("Errore recuperòversione database")
+            logger.exception("Errore recupero versione database")
             return 0
 
     def _set_db_version(self, conn: sqlite3.Connection, version: int) -> None:
@@ -239,6 +188,9 @@ class DatabaseManager:
         """
         Executes pending migrations for a specific database.
         """
+        # Creazione directory se non esiste
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+
         with self.get_connection(db_path) as conn:
             current_ver = self._get_db_version(conn)
             target_ver = max(migrations.keys()) if migrations else 0
@@ -259,6 +211,9 @@ class DatabaseManager:
                 except Exception as e:
                     logger.critical(f"[{db_name}] Migration failed at step v{ver}: {e}")
                     raise
+
+    def close(self) -> None:
+        """Cleanup resources."""
 
 
 db_manager = DatabaseManager()

@@ -42,7 +42,8 @@ class ProgrammingSyncManager:
 
         file_name = os.path.basename(self.master_path)
         try:
-            self.excel_app = win32com.client.GetActiveObject("Excel.Application")  # type: ignore
+            self.excel_app = win32com.client.GetActiveObject("Excel.Application")
+
             for wb in self.excel_app.Workbooks:
                 if wb.Name.lower() == file_name.lower():
                     self.wb_master = wb
@@ -57,8 +58,8 @@ class ProgrammingSyncManager:
             self.excel_app.DisplayAlerts = False
             self.wb_master = self.excel_app.Workbooks.Open(self.master_path, UpdateLinks=0)
             return True  # noqa: TRY300
-        except Exception as e:
-            logger.error(f"Errore apertura Master Excel: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Errore apertura Master Excel")
             return False
 
     def run_sync_macros(self) -> None:
@@ -203,7 +204,7 @@ class ProgrammingSyncManager:
         self, mappa_pdl: dict[str, Any], modif_x: dict[str, Any], modif_stato: dict[str, Any]
     ) -> None:
         """Applica le X dei giorni e i cambi di stato sul file Master."""
-        logger.info("Esecuzione macro 'reset_programmazione'...")
+        logger.info("Esecuzione macro 'reset_programmazionè...")
         self.excel_app.Run(f"'{self.wb_master.Name}'!reset_programmazione")
 
         # Applicazione X

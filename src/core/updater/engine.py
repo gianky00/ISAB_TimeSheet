@@ -237,7 +237,7 @@ class DownloadWorker(QThread):
 
     def _handle_interruption(self) -> None:
         """Helper to raise interruption error."""
-        raise requests.exceptions.ConnectionError("Stream interrupted")  # noqa: TRY003
+        raise requests.exceptions.ConnectionError("Stream interrupted")
 
 
 def run_installer_and_exit(setup_path: str) -> None:

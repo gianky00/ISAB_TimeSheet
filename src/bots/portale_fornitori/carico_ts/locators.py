@@ -13,7 +13,7 @@ class CaricoTSLocators:
         By.XPATH,
         "//span[contains(@id, 'generic_menu_button-') and contains(@id, '-btnEl')][.//span[text()='Gestione Timesheet']]",
     )
-    SUPPLIER_INPUT = (By.XPATH, "//input[@name='CodiceFornitore' or @name='Fornitore']")
+    SUPPLIER_INPUT = (By.XPATH, "//input[@name='CodiceFornitorè or @name='Fornitore']")
     """Campo input del fornitore (supporta nomi multipli ExtJS)."""
 
     SUPPLIER_ARROW = (
@@ -22,6 +22,6 @@ class CaricoTSLocators:
     )
     ODA_INPUT = (
         By.XPATH,
-        "//label[contains(text(), 'Numero OdA')]/following::input[1]",
+        "//label[contains(text(), 'Numero OdÀ)]/following::input[1]",
     )
-    EXTRACT_BUTTON = (By.XPATH, "//span[contains(text(), 'Estrai OdA')]")
+    EXTRACT_BUTTON = (By.XPATH, "//span[contains(text(), 'Estrai OdÀ)]")

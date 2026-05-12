@@ -3,7 +3,10 @@ SyncroJob - Enterprise Logging System
 AI-ready structured logging con context propagation e performance monitoring.
 """
 
+# 1. Core Logging Infrastructure (Priority)
 from .alert_manager import AlertConfig, AlertManager, get_alert_manager
+
+# 2. Analytics and Advanced Features
 from .analytics import (
     AnalyticsReport,
     Anomaly,
@@ -36,15 +39,12 @@ from .viewer import LogViewer, health_report, query_logs, view_trace
 
 __all__ = [
     "AlertConfig",
-    # Alerts
     "AlertManager",
     "AnalyticsReport",
     "Anomaly",
-    # Analytics
     "AnomalyDetector",
     "ContextAwareSampler",
     "HealthScorer",
-    # Viewer
     "LogViewer",
     "LoggingContext",
     "Pattern",
@@ -57,29 +57,23 @@ __all__ = [
     "get_aggregated_sink",
     "get_alert_manager",
     "get_anomalies",
-    # Sinks
     "get_bot_sink",
     "get_context",
     "get_current_audit_id",
     "get_current_span_id",
     "get_current_trace_id",
     "get_health_score",
-    # Core
     "get_logger",
     "get_metrics_sink",
     "get_patterns",
-    # Sampling
     "get_sampler",
-    # Metrics
     "get_tracker",
     "health_report",
     "log_entry_exit",
-    # Decorators
     "measure_time",
     "query_logs",
     "set_audit_id",
     "set_level",
     "view_trace",
-    # Context
     "with_context",
 ]

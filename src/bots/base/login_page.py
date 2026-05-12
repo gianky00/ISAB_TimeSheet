@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, no-untyped-call"
 """
 Bot TS - Login Page Object
 Gestisce le interazioni con la pagina di login del portale ISAB.
@@ -50,13 +49,14 @@ class LoginPage:
             overlay_wait.until(EC.invisibility_of_element_located((By.XPATH, xpath_combined)))
             self.log(" -> Overlay di caricamento scomparso.")
             time.sleep(0.3)
-            return True  # noqa: TRY300
         except TimeoutException:
             self.log(f"  Timeout ({timeout_secondi}s) attesa overlay. Proseguo con cautela.")
             return False
+        else:
+            return True
 
     def _perform_login_form_action(self, username: str, password: str, company: str) -> None:
-        """Riempie il form di login, seleziona la societa' e preme Accedi."""
+        """Riempie il form di login, seleziona la società e preme Accedi."""
         username_field = self.wait.until(EC.element_to_be_clickable(LoginLocators.USERNAME_FIELD))
         username_field.clear()
         username_field.send_keys(username)
@@ -65,9 +65,9 @@ class LoginPage:
         password_field.clear()
         password_field.send_keys(password)
 
-        # Selezione Societa'(ISAB/PSER)
+        # Selezione Società(ISAB/PSER)
         try:
-            self.log(f"Selezione societa': {company}...")
+            self.log(f"Selezione società: {company}...")
             comp_field = self.wait.until(EC.element_to_be_clickable(LoginLocators.COMPANY_FIELD))
             comp_field.click()
             comp_field.clear()
@@ -83,7 +83,7 @@ class LoginPage:
                 )
                 self.driver.execute_script("arguments[0].click();", opt_el)
         except Exception as e:
-            self.log(f"⚠️ Avviso: Selezione societa''{company}' non riuscita, proseguo: {e}")
+            self.log(f"⚠️ Avviso: Selezione società'{company}' non riuscita, proseguo: {e}")
 
         try:
             accedi_btn = self.wait.until(EC.element_to_be_clickable(LoginLocators.LOGIN_BUTTON))
@@ -100,13 +100,13 @@ class LoginPage:
         self._attendi_scomparsa_overlay(Timeouts.LONG)
 
     def _check_and_handle_session_popup(self) -> None:
-        """Controlla se appare il popup 'Sessione attiva' e clicca su Si."""
+        """Controlla se appare il popup 'Sessione attivà e clicca su Si."""
         try:
             # Breve attesa per il popup (non bloccante per il flusso normale)
             wait_popup: WebDriverWait[WebDriver] = WebDriverWait(self.driver, 3)
             # Cerchiamo il bottone "Si" se appare un popup di attenzione
             yes_btn = wait_popup.until(EC.element_to_be_clickable(CommonLocators.POPUP_SESSION_YES))
-            self.log("⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.")
+            self.log("⚠️ Rilevata sessione precedente. Clicco su 'Sì per forzare l'accesso.")
             yes_btn.click()
             time.sleep(1)
         except TimeoutException:
@@ -148,7 +148,7 @@ class LoginPage:
                 )
                 self._perform_login_form_action(username, password, company)
             except TimeoutException:
-                # 2. Se il form non c' , controlla se siamo gia' loggati (fast-skip)
+                # 2. Se il form non c' , controlla se siamo già loggati (fast-skip)
                 if self._verify_logged_in_via_ui():
                     self.log("  Rilevata sessione attiva (skip login).")
                     return True
@@ -160,13 +160,11 @@ class LoginPage:
 
                 try:
                     self._perform_login_form_action(username, password, company)
-                    return True  # noqa: TRY300
                 except Exception as e:
                     self.log(f"  Fallito recuperòsessione: {e}")
                     return False
-
-            self.log("  Login completato con successo")
-            return True  # noqa: TRY300
+                else:
+                    return True
 
         except TimeoutException:
             self.log("  Timeout durante il login")
@@ -174,3 +172,6 @@ class LoginPage:
         except Exception as e:
             self.log(f"  Errore login: {e}")
             return False
+        else:
+            self.log("  Login completato con successo")
+            return True

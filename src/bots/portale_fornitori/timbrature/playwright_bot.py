@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore, no-untyped-def, no-untyped-call"
 """
 SyncroJob - Playwright Timbrature Bot
 Versione Playwright del bot per lo scarico delle timbrature.

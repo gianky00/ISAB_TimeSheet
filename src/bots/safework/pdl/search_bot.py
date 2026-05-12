@@ -1,10 +1,8 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - SafeWork PDL Search Bot
 Bot modulare per la ricerca massiva ed esportazione Excel dei PDL.
 """
 
-import logging
 import time
 from pathlib import Path
 from typing import Any, ClassVar
@@ -12,12 +10,14 @@ from typing import Any, ClassVar
 import pandas as pd
 
 from src.bots.base.base_bot import StepStatus
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
 from src.bots.safework.base import SafeworkBaseBot
 from src.bots.safework.common.locators import SafeWorkLocators
 from src.core.database import db_manager
+from src.core.logging import get_logger
 from src.core.sync_tracker import SyncTracker
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class SafeWorkPDLSearchBot(SafeworkBaseBot):
@@ -34,43 +34,40 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         ("db", "Importazione Database"),
     ]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = 30,
-        download_path: str = "",
+        config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
         """
         Inizializza il bot di ricerca PDL.
 
         Args:
-          username: Nome utente SafeWork.
-          password: Password SafeWork.
-          headless: Se avviare il browser in modalita' nascosta.
-          timeout: Tempo di attesa per Selenium.
-          download_path: Cartella per il download degli Excel.
+          config: Configurazione standardizzata del bot.
           account_type: Tipo di account (Esecutore/ISAB).
         """
-        super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
+        super().__init__(config, account_type=account_type)
         self.sites = ["IGCC", "ISAB Nord", "ISAB Sud"]
 
     @staticmethod
     def get_name() -> str:
-        """Restituisce il nome identificativo del bot."""
+        """Restituisce il nome visualizzato del bot."""
         return "Ricerca PDL"
-
-    @staticmethod
-    def get_columns() -> list[dict[str, Any]]:
-        """Definisce le colonne richieste (nessuna per questo bot)."""
-        return []
 
     @property
     def name(self) -> str:
         """Restituisce l'ID del bot."""
         return "ricerca_pdl"
+
+    @property
+    def description(self) -> str:
+        """Restituisce la descrizione del bot."""
+        return "Ricerca massiva ed esportazione Excel dei PDL da SafeWork"
+
+    @staticmethod
+    def get_columns() -> list[dict[str, Any]]:
+        """Restituisce le colonne richieste (nessuna)."""
+        return []
 
     def run(self, data: list[dict[str, Any]]) -> bool:
         """
@@ -152,7 +149,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         Returns:
           str | None: Percorso del file scaricato o None.
         """
-        from src.bots.base.wait_helpers import poll_for_new_file  # noqa: PLC0415
+        from src.bots.base.wait_helpers import poll_for_new_file
 
         files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*") if f.is_file()}
 
@@ -163,8 +160,11 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             return None
 
         if self.ricerca_pdl_page.esporta_excel():
-            return poll_for_new_file(  # type: ignore
-                directory=self.download_path, files_before=files_before, pattern="Ricerca*.xlsx", timeout=600
+            from src.bots.base.wait_helpers import PollConfig
+
+            return poll_for_new_file(
+                PollConfig(directory=self.download_path, pattern="Ricerca*.xlsx", timeout=600),
+                files_before=files_before,
             )
         return None
 
@@ -174,7 +174,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             Path(file_path).unlink()
             self.log(f"    File temporaneo rimosso: {Path(file_path).name}")
         except Exception:
-            logger.debug(f"Impossibile rimuovere il file temporaneo: {file_path}")
+            logger.debug("Impossibile rimuovere il file temporaneo", file_path=file_path)
 
     def _import_to_db(self, file_path: str) -> None:
         """
@@ -192,7 +192,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
                 "N  PDL": "n_pdl",
                 "DATA CREAZIONE": "data_creazione",
                 "AREA": "area",
-                "Unita'": "unita",
+                "Unità": "unita",
                 "DITTA": "ditta",
                 "DESCRIZIONE DEL LAVORO": "descrizione_lavoro",
                 "TIPOLOGIA": "tipologia",
@@ -204,7 +204,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
                 "DATA EMISSIONE": "data_emissione",
                 "APRENTE": "aprente",
                 "DATA APERTURA": "data_apertura",
-                "Priorita'": "priorita",
+                "Priorità": "priorita",
                 "CONTRATTO": "contratto",
                 "ORDINE": "ordine",
                 "SITO": "sito",

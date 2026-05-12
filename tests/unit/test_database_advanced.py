@@ -69,7 +69,8 @@ class TestDatabaseAdvanced:
         try:
             with manager.get_connection(db_path) as conn:
                 conn.execute("INSERT INTO test (id) VALUES (1)")
-                raise ValueError("Forced error")  # noqa: TRY003, TRY301
+                def _raise(): raise ValueError("Forced error")  # noqa: TRY301
+                _raise()
         except ValueError:
             pass
 

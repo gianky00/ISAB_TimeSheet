@@ -35,6 +35,16 @@ class SignalConnector(QObject):
         """Esegue tutte le connessioni dei segnali."""
         self.connect_global_signals()
         self.connect_sidebar_signals()
+        self.connect_autopilot_signals()
+
+    def connect_autopilot_signals(self) -> None:
+        """Collega i segnali del widget Autopilot al ServiceController."""
+        from src.gui.main_window.page_index import PageIndex
+        dashboard = self.main_window.navigation_controller.get_panel(PageIndex.DASHBOARD)
+        if dashboard and hasattr(dashboard, "autopilot_widget"):
+            dashboard.autopilot_widget.bot_sync_requested.connect(
+                self.main_window.service_controller.handle_manual_sync_request
+            )
 
     def connect_global_signals(self) -> None:
         """
@@ -51,7 +61,7 @@ class SignalConnector(QObject):
 
         # Tray Icon (System notification)
         if hasattr(self.main_window, "tray_icon_component"):
-            from PySide6.QtWidgets import QSystemTrayIcon  # noqa: PLC0415
+            from PySide6.QtWidgets import QSystemTrayIcon
 
             icon_map = {
                 "info": QSystemTrayIcon.MessageIcon.Information,

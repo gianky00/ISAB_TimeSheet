@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported"
 """
 SyncroJob - Base Sync Engine
 Logica comune per la sincronizzazione dei dati nel database SQLite.
@@ -7,7 +6,10 @@ Logica comune per la sincronizzazione dei dati nel database SQLite.
 import re
 import sqlite3
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
+
+from src.core.exceptions import ValidationError
 
 
 @dataclass
@@ -18,6 +20,15 @@ class PartitionConfig:
     values: list[Any]
 
 
+@dataclass
+class SyncTarget:
+    """Bersaglio per la sincronizzazione (DB, Tabella, Colonne)."""
+
+    db_path: Path
+    table_name: str
+    columns: list[str]
+
+
 class BaseSyncEngine:
     """Motore base per sincronizzazioni atomiche."""
 
@@ -25,7 +36,7 @@ class BaseSyncEngine:
     def _validate_identifier(identifier: str) -> str:
         """Protegge da SQL Injection validando nomi di tabelle e colonne."""
         if not re.match(r"^[a-zA-Z0-9_]+$", identifier):
-            raise ValueError("Identificatore non valido")  # noqa: TRY003
+            raise ValidationError("Invalid identifier")
         return identifier
 
     @staticmethod

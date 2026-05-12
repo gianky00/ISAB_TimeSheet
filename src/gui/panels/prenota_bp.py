@@ -72,7 +72,7 @@ class PrenotaBPPanel(BaseBotPanel):
         Returns:
             Type[PrenotaBPBot]: Classe del bot.
         """
-        from src.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot  # noqa: PLC0415
+        from src.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot
 
         return PrenotaBPBot
 
@@ -161,7 +161,7 @@ class PrenotaBPPanel(BaseBotPanel):
         """
         self.status_list.update_status(step_idx, success)
 
-        # Trova dinamicamente l'indice della colonna 'esito'
+        # Trova dinamicamente l'indice della colonna 'esitò
         col_idx = -1
         for i, col in enumerate(self.data_table.columns):
             if col["name"] == "esito":
@@ -180,27 +180,39 @@ class PrenotaBPPanel(BaseBotPanel):
 
     def _load_saved_data(self) -> None:
         """Carica l'ultima lista BP e i parametri temporali dalla configurazione."""
-        config = config_manager.load_config()
-        self.params_widget.set_societa(config.get("last_prenota_societa", "ISAB"))
-        saved_data = config.get("last_prenota_bp_data", [])
-        if saved_data:
-            self.data_table.set_data(saved_data)
+        self._is_loading = True
+        try:
+            config = config_manager.load_config()
+            self.params_widget.set_societa(config.get("last_prenota_societa", "ISAB"))
+            self.params_widget.set_fornitore(config.get("last_prenota_bp_fornitore", ""))
+            saved_data = config.get("last_prenota_bp_data", [])
+            if saved_data:
+                self.data_table.set_data(saved_data)
 
-        current_year = datetime.now(UTC).year
-        date_da = config.get("last_prenota_date_from", f"01.01.{current_year}")
-        date_a = config.get("last_prenota_date_to", f"31.12.{current_year}")
-        self.params_widget.set_dates(date_da, date_a)
-        self._update_status_list()
+            current_year = datetime.now(UTC).year
+            date_da = config.get("last_prenota_date_from", f"01.01.{current_year}")
+            date_a = config.get("last_prenota_date_to", f"31.12.{current_year}")
+            self.params_widget.set_dates(date_da, date_a)
+            self._update_status_list()
+        finally:
+            self._is_loading = False
 
     def _save_data(self) -> None:
         """Salva i dati correnti della tabella e i parametri temporali in configurazione."""
-        data = self.data_table.get_data()
-        config_manager.set_config_value("last_prenota_bp_data", data)
-        config_manager.set_config_value("last_prenota_societa", self.params_widget.get_societa())
+        if getattr(self, "_is_loading", False) or not hasattr(self, "params_widget"):
+            return
 
+        data = self.data_table.get_data()
         date_da, date_a = self.params_widget.get_dates()
-        config_manager.set_config_value("last_prenota_date_from", date_da)
-        config_manager.set_config_value("last_prenota_date_to", date_a)
+
+        updates = {
+            "last_prenota_bp_data": data,
+            "last_prenota_societa": self.params_widget.get_societa(),
+            "last_prenota_bp_fornitore": self.params_widget.get_fornitore(),
+            "last_prenota_date_from": date_da,
+            "last_prenota_date_to": date_a,
+        }
+        config_manager.set_config_values(updates)
 
     def _clear_table(self) -> None:
         """Svuota la tabella dei BP dopo conferma dell'utente."""

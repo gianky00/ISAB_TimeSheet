@@ -7,10 +7,11 @@ from contextlib import suppress
 from typing import Any
 
 from src.core.secrets_manager import SecretsManager
+from src.utils.security import password_manager
 
 
 def decrypt_all_credentials(config: dict[str, Any]) -> None:
-    """Decripta le credenziali per tutti i tipiu'di account configurati."""
+    """Decripta le credenziali per tutti i tipiùdi account configurati."""
     _decrypt_account_list(config.get("accounts", []), "isab_portal")
     _decrypt_account_list(config.get("safework_accounts", []), "safework_portal")
 
@@ -19,8 +20,6 @@ def _decrypt_account_list(accounts: list[dict[str, Any]], service_name: str) -> 
     """Decripta una lista di account usando keyring o fallback locale."""
     if not accounts:
         return
-
-    from src.utils.security import password_manager  # noqa: PLC0415
 
     for acc in accounts:
         username = acc.get("username")
@@ -53,8 +52,6 @@ def _encrypt_account_list(accounts: list[dict[str, Any]], service_name: str) -> 
     """Sposta in keyring o cripta localmente le password di una lista di account."""
     if not accounts:
         return
-
-    from src.utils.security import password_manager  # noqa: PLC0415
 
     for acc in accounts:
         password = acc.get("password")

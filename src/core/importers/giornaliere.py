@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import warnings
@@ -12,9 +11,10 @@ from typing import Any, ClassVar
 import pandas as pd
 
 from src.core.importers.base import BaseImporter
+from src.core.logging import get_logger
 from src.core.schemas import validate_giornaliere
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class GiornaliereImporter(BaseImporter):
@@ -26,7 +26,7 @@ class GiornaliereImporter(BaseImporter):
     GIORNALIERE_MAPPING: ClassVar[dict[str, str]] = {
         "DATA": "data",
         "PERSONALE": "personale",
-        "DESCRIZIONE ATTIVITA'": "descrizione",
+        "DESCRIZIONE ATTIVITÀ": "descrizione",
         "TCL": "tcl",
         "ODC": "odc",
         "N  PDL": "pdl",
@@ -187,10 +187,10 @@ class GiornaliereImporter(BaseImporter):
                 "nome_file",
             ]
             rows = list(df[target_cols].itertuples(index=False, name=None))
-            return (year, rows, None)  # noqa: TRY300
-
         except Exception as e:
             return (year, [], str(e))
+        else:
+            return (year, rows, None)
 
     @classmethod
     def _read_giornaliera_sheet(cls, file_path: Any) -> pd.DataFrame | None:
@@ -208,8 +208,8 @@ class GiornaliereImporter(BaseImporter):
                     return pd_obj.read_excel(file_path, sheet_name="RIASSUNTO", engine="openpyxl")  # type: ignore[no-any-return]
                 except zipfile.BadZipFile:
                     return None
-                except Exception as e:
-                    raise e  # noqa: TRY201
+                except Exception:
+                    raise
 
     @classmethod
     def _normalize_giornaliera_columns(cls, df: pd.DataFrame) -> pd.DataFrame | None:
@@ -260,7 +260,7 @@ class GiornaliereImporter(BaseImporter):
 
     @staticmethod
     def _remove_total_rows(df: pd.DataFrame) -> pd.DataFrame:
-        """Rimuove le righe che contengono la parola 'Totale'."""
+        """Rimuove le righe che contengono la parola 'Totalè."""
         for col in df.columns:
             if df[col].dtype == "object":
                 mask = df[col].astype(str).str.contains("Totale", na=False, case=False)

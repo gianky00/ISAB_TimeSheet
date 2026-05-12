@@ -26,26 +26,46 @@ class PDLFilterWidget(QWidget):
     reset_clicked = Signal()
     export_clicked = Signal()
 
+    # Dichiarazione attributi per MyPy (creati dinamicamente in _setup_combo_filters)
+    group_filter: FilterComboBox
+    site_filter: FilterComboBox
+    area_filter: FilterComboBox
+    unit_filter: FilterComboBox
+    search_input: SearchInput
+    btn_bot_update: ModernButton
+    clear_btn: ModernButton
+    export_btn: ModernButton
+    lbl_sync_status: QLabel
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._setup_ui()
         # Force compact height
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
+        """Inizializza il layout principale del widget filtri."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # Bar Container with modern Card style (using ModernCard for elevation/hover)
         self.container = ModernCard(elevation=10)
         self.container.setObjectName("filterBar")
-
         layout = QHBoxLayout(self.container)
         layout.setContentsMargins(15, 10, 15, 10)
         layout.setSpacing(15)
 
-        # --- SEZIONE RICERCA ---
+        self._setup_search_section(layout)
+        self._add_divider(layout)
+        self._setup_combo_filters(layout)
+        layout.addStretch()
+        self._setup_actions_section(layout)
+
+        main_layout.addWidget(self.container)
+        self._connect_signals()
+
+    def _setup_search_section(self, layout: QHBoxLayout) -> None:
+        """Configura la sezione di ricerca testuale."""
         search_container = QVBoxLayout()
         search_container.setSpacing(4)
         search_label = QLabel("CERCA PDL")
@@ -59,73 +79,45 @@ class PDLFilterWidget(QWidget):
         search_container.addWidget(self.search_input)
         layout.addLayout(search_container)
 
-        # Vertical Divider
+    def _add_divider(self, layout: QHBoxLayout) -> None:
+        """Aggiunge un divisore verticale tra le sezioni."""
         v_line = QFrame()
         v_line.setFrameShape(QFrame.Shape.VLine)
         v_line.setFrameShadow(QFrame.Shadow.Plain)
         v_line.setStyleSheet(f"color: {COLORS['border_light']};")
         layout.addWidget(v_line)
 
-        # --- FILTRI COMBO ---
+    def _setup_combo_filters(self, layout: QHBoxLayout) -> None:
+        """Configura i filtri a tendina (Gruppo, Sito, Area, Unità)."""
         filter_group = QHBoxLayout()
         filter_group.setSpacing(12)
 
-        # Gruppo
-        group_v = QVBoxLayout()
-        group_v.setSpacing(4)
-        lbl_group = QLabel("GRUPPO")
-        lbl_group.setStyleSheet(LABEL_MUTED)
-        self.group_filter = FilterComboBox()
-        self.group_filter.addItem("Tutti")
-        self.group_filter.setMinimumWidth(80)
-        self.group_filter.setStyleSheet(COMBOBOX_STYLE)
-        group_v.addWidget(lbl_group)
-        group_v.addWidget(self.group_filter)
-        filter_group.addLayout(group_v)
+        # Configurazione helper per le combo
+        configs = [
+            ("GRUPPO", "group_filter", 80, ["Tutti"]),
+            ("SITO", "site_filter", 110, ["Tutti i siti", "IGCC", "ISAB Nord", "ISAB Sud"]),
+            ("AREA", "area_filter", 120, ["Tutte"]),
+            ("UNITÀ", "unit_filter", 100, ["Tutte"]),
+        ]
 
-        # Sito
-        site_v = QVBoxLayout()
-        site_v.setSpacing(4)
-        lbl_site = QLabel("SITO")
-        lbl_site.setStyleSheet(LABEL_MUTED)
-        self.site_filter = FilterComboBox()
-        self.site_filter.addItems(["Tutti i siti", "IGCC", "ISAB Nord", "ISAB Sud"])
-        self.site_filter.setMinimumWidth(110)
-        self.site_filter.setStyleSheet(COMBOBOX_STYLE)
-        site_v.addWidget(lbl_site)
-        site_v.addWidget(self.site_filter)
-        filter_group.addLayout(site_v)
-
-        # Area
-        area_v = QVBoxLayout()
-        area_v.setSpacing(4)
-        lbl_area = QLabel("AREA")
-        lbl_area.setStyleSheet(LABEL_MUTED)
-        self.area_filter = FilterComboBox()
-        self.area_filter.addItem("Tutte")
-        self.area_filter.setMinimumWidth(120)
-        self.area_filter.setStyleSheet(COMBOBOX_STYLE)
-        area_v.addWidget(lbl_area)
-        area_v.addWidget(self.area_filter)
-        filter_group.addLayout(area_v)
-
-        # Unità
-        unit_v = QVBoxLayout()
-        unit_v.setSpacing(4)
-        lbl_unit = QLabel("UNITÀ")
-        lbl_unit.setStyleSheet(LABEL_MUTED)
-        self.unit_filter = FilterComboBox()
-        self.unit_filter.addItem("Tutte")
-        self.unit_filter.setMinimumWidth(100)
-        self.unit_filter.setStyleSheet(COMBOBOX_STYLE)
-        unit_v.addWidget(lbl_unit)
-        unit_v.addWidget(self.unit_filter)
-        filter_group.addLayout(unit_v)
+        for label, attr_name, min_width, items in configs:
+            v_box = QVBoxLayout()
+            v_box.setSpacing(4)
+            lbl = QLabel(label)
+            lbl.setStyleSheet(LABEL_MUTED)
+            combo = FilterComboBox()
+            combo.addItems(items)
+            combo.setMinimumWidth(min_width)
+            combo.setStyleSheet(COMBOBOX_STYLE)
+            setattr(self, attr_name, combo)
+            v_box.addWidget(lbl)
+            v_box.addWidget(combo)
+            filter_group.addLayout(v_box)
 
         layout.addLayout(filter_group)
-        layout.addStretch()
 
-        # --- INFO & STATUS ---
+    def _setup_actions_section(self, layout: QHBoxLayout) -> None:
+        """Configura la sezione delle azioni (Reset, Export, Update)."""
         info_v = QVBoxLayout()
         info_v.setSpacing(4)
         info_v.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -133,7 +125,6 @@ class PDLFilterWidget(QWidget):
         self.lbl_sync_status = QLabel("Ultimo Sync: --")
         self.lbl_sync_status.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 10px;")
 
-        # Action Buttons Row
         actions_h = QHBoxLayout()
         actions_h.setSpacing(8)
 
@@ -141,20 +132,20 @@ class PDLFilterWidget(QWidget):
         self.clear_btn = ModernButton("", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL)
         self.clear_btn.setIcon(get_colored_icon(get_asset_path(Icons.RESET), COLORS["text_muted"]))
 
-        # Update Bot
-        self.btn_bot_update = ModernButton(
-            "AGGIORNA",
-            variant=ModernButton.Variant.PRIMARY,
-            size=ModernButton.Size.SMALL,
-            icon=get_asset_path(Icons.REFRESH),
-        )
-
         # Export
         self.export_btn = ModernButton(
             "EXPORT",
             variant=ModernButton.Variant.SUCCESS,
             size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.EXCEL),
+        )
+
+        # Update
+        self.btn_bot_update = ModernButton(
+            "AGGIORNA",
+            variant=ModernButton.Variant.PRIMARY,
+            size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.REFRESH),
         )
 
         actions_h.addWidget(self.clear_btn)
@@ -165,9 +156,8 @@ class PDLFilterWidget(QWidget):
         info_v.addLayout(actions_h)
         layout.addLayout(info_v)
 
-        main_layout.addWidget(self.container)
-
-        # Connessioni
+    def _connect_signals(self) -> None:
+        """Connette i segnali dei widget alle azioni del pannello."""
         self.group_filter.currentTextChanged.connect(self.filter_changed.emit)
         self.site_filter.currentTextChanged.connect(self.site_changed.emit)
         self.area_filter.currentTextChanged.connect(self.area_changed.emit)

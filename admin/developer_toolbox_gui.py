@@ -43,13 +43,13 @@ class CommandRunner(QThread):
     output_received = Signal(str)
     finished_signal = Signal(int)
 
-    def __init__(self, command: list[str], shell: bool = False):  # noqa: ANN204
+    def __init__(self, command: list[str], shell: bool = False) -> None:
         super().__init__()
         self.command = command
         self.shell = shell
         self.process: QProcess | subprocess.Popen[str] | None = None
 
-    def run(self):  # noqa: ANN201
+    def run(self) -> None:
         """Esegue il comando e emette l'output in tempo reale"""
         try:
             # Variabili d'ambiente per forzare ASCII e UTF-8
@@ -119,17 +119,17 @@ class CommandRunner(QThread):
             self.output_received.emit(f"\n[ERROR] {e!s}\n")
             self.finished_signal.emit(1)
 
-    def _read_output(self):  # noqa: ANN202
+    def _read_output(self) -> None:
         """Legge output dal processo QProcess"""
         if isinstance(self.process, QProcess):
             data = self.process.readAll().data().decode("utf-8", errors="replace")
             self.output_received.emit(data)
 
-    def _on_finished(self, exit_code: int):  # noqa: ANN202
+    def _on_finished(self, exit_code: int) -> None:
         """Chiamato quando il processo finisce"""
         self.finished_signal.emit(exit_code)
 
-    def stop(self):  # noqa: ANN201
+    def stop(self) -> None:
         """Termina il processo in esecuzione"""
         if self.process:
             if isinstance(self.process, QProcess):
@@ -143,12 +143,12 @@ class CommandRunner(QThread):
 class DeveloperToolboxGUI(QMainWindow):
     """Finestra principale del Developer Toolbox"""
 
-    def __init__(self):  # noqa: ANN204
+    def __init__(self) -> None:
         super().__init__()
         self.current_runner: CommandRunner | None = None
         self.init_ui()
 
-    def init_ui(self):  # noqa: ANN201, PLR0915
+    def init_ui(self) -> None:  # noqa: PLR0915
         """Inizializza l'interfaccia utente"""
         self.setWindowTitle("SyncroJob - Developer Toolbox (Apex Edition)")
         self.setGeometry(100, 100, 1400, 900)
@@ -380,7 +380,7 @@ class DeveloperToolboxGUI(QMainWindow):
         # Gestione CLI args
         QTimer.singleShot(500, self._handle_cli_args)
 
-    def _handle_cli_args(self):  # noqa: ANN202
+    def _handle_cli_args(self) -> None:
         """Gestisce eventuali argomenti passati da riga di comando"""
         if len(sys.argv) < 2:  # noqa: PLR2004
             return
@@ -484,7 +484,7 @@ class DeveloperToolboxGUI(QMainWindow):
         group.setLayout(layout)
         return group
 
-    def _run_command(self, command: list[str], label: str, shell: bool = False):  # noqa: ANN202
+    def _run_command(self, command: list[str], label: str, shell: bool = False) -> None:
         """Esegue un comando in un thread separato"""
         self._log_output(f"\n{'=' * 60}\n")
         self._log_output(f"[INFO] Avvio: {label}\n")
@@ -500,18 +500,18 @@ class DeveloperToolboxGUI(QMainWindow):
         self.current_runner.finished_signal.connect(self._on_command_finished)
         self.current_runner.start()
 
-    def _update_spinner(self):  # noqa: ANN202
+    def _update_spinner(self) -> None:
         """Aggiorna lo spinner visivo nella GUI"""
         self.spinner_idx = (self.spinner_idx + 1) % len(self.spinner_chars)
         self.status_label.setText(f"In esecuzione {self.spinner_chars[self.spinner_idx]}")
 
-    def _log_output(self, text: str):  # noqa: ANN202
+    def _log_output(self, text: str) -> None:
         """Aggiunge testo alla console di output"""
         self.output_console.moveCursor(QTextCursor.MoveOperation.End)
         self.output_console.insertPlainText(text)
         self.output_console.moveCursor(QTextCursor.MoveOperation.End)
 
-    def _on_command_finished(self, exit_code: int):  # noqa: ANN202
+    def _on_command_finished(self, exit_code: int) -> None:
         """Chiamato quando un comando finisce"""
         self.spinner_timer.stop()
         if exit_code == 0:
@@ -526,7 +526,7 @@ class DeveloperToolboxGUI(QMainWindow):
         self._log_output(f"\n[{status}] Operazione completata.\n")
         self.current_runner = None
 
-    def _stop_current_process(self):  # noqa: ANN202
+    def _stop_current_process(self) -> None:
         """Termina il processo corrente"""
         if self.current_runner:
             self._log_output("\n[WARNING] Interruzione processo...\n")
@@ -535,37 +535,37 @@ class DeveloperToolboxGUI(QMainWindow):
 
     # === COMANDI ===
 
-    def _init_system(self):  # noqa: ANN202
+    def _init_system(self) -> None:
         """Opzione 0: Init System"""
         self._run_command(["poetry", "install"], "Init System (Poetry Install)")
 
-    def _full_audit(self):  # noqa: ANN202
+    def _full_audit(self) -> None:
         """Opzione 1: Full Audit"""
         self._run_command([str(VENV_PYTHON), "admin/pre_flight_check.py"], "Full Audit")
 
-    def _fast_audit(self):  # noqa: ANN202
+    def _fast_audit(self) -> None:
         """Opzione 2: Fast Audit"""
         self._run_command([str(VENV_PYTHON), "admin/pre_flight_check.py", "--fast"], "Fast Audit")
 
-    def _smart_check(self):  # noqa: ANN202
+    def _smart_check(self) -> None:
         """Opzione 3: Smart Check"""
         self._run_command(
             [str(VENV_PYTHON), "admin/pre_flight_check.py", "--fast", "--inc"],
             "Smart Check (Incremental)",
         )
 
-    def _only_tests(self):  # noqa: ANN202
+    def _only_tests(self) -> None:
         """Opzione 4: Only Tests"""
         self._run_command([str(VENV_PYTHON), "admin/pre_flight_check.py", "--test-only"], "Only Tests")
 
-    def _auto_fix(self):  # noqa: ANN202
+    def _auto_fix(self) -> None:
         """Opzione 5: Auto-Fix"""
         self._run_command(
             [str(VENV_PYTHON), "admin/pre_flight_check.py", "--fix", "--fast"],
             "Auto-Fix (Ruff)",
         )
 
-    def _dashboard(self):  # noqa: ANN202
+    def _dashboard(self) -> None:
         """Opzione 6: Dashboard"""
         dashboard_path = PROJECT_ROOT / "reports" / "preflight" / "dashboard.html"
         if dashboard_path.exists():
@@ -574,57 +574,57 @@ class DeveloperToolboxGUI(QMainWindow):
         else:
             self._log_output(f"\n[ERROR] Dashboard non trovata: {dashboard_path}\n")
 
-    def _security_scan(self):  # noqa: ANN202
+    def _security_scan(self) -> None:
         """Opzione 7: Security Scan"""
         self._run_command(
             [str(VENV_PYTHON), "admin/pre_flight_check.py", "--target", "security"],
             "Security Scan",
         )
 
-    def _coverage(self):  # noqa: ANN202
+    def _coverage(self) -> None:
         """Opzione 8: Coverage"""
         self._run_command(
             [str(VENV_BIN / "pytest"), "--cov=src", "--cov-report=html"],
             "Code Coverage",
         )
 
-    def _architecture(self):  # noqa: ANN202
+    def _architecture(self) -> None:
         """Opzione 9: Architecture"""
         self._run_command(
             [str(VENV_PYTHON), "docs/generate_architecture.py"],
             "Generate Architecture Diagram",
         )
 
-    def _build_docs(self):  # noqa: ANN202
+    def _build_docs(self) -> None:
         """Opzione 10: Build Docs"""
         self._run_command([str(VENV_BIN / "mkdocs"), "build"], "Build MkDocs")
 
-    def _serve_docs(self):  # noqa: ANN202
+    def _serve_docs(self) -> None:
         """Opzione 11: Serve Docs"""
         self._log_output("\n[INFO] Avvio server MkDocs...\n")
         self._log_output("[INFO] Premi 'Stop Process' per terminare il server.\n\n")
         self._run_command([str(VENV_BIN / "mkdocs"), "serve"], "Serve MkDocs")
 
-    def _commit_wizard(self):  # noqa: ANN202
+    def _commit_wizard(self) -> None:
         """Opzione 12: Commit Wizard"""
         self._run_command([str(VENV_BIN / "cz"), "commit"], "Commit Wizard")
 
-    def _version_bump(self):  # noqa: ANN202
+    def _version_bump(self) -> None:
         """Opzione 13: Version Bump"""
         self._run_command([str(VENV_BIN / "cz"), "bump", "--changelog"], "Version Bump")
 
-    def _full_release(self):  # noqa: ANN202
+    def _full_release(self) -> None:
         """Opzione 14: Full Release"""
         self._run_command([str(VENV_PYTHON), "admin/release.py", "auto"], "Full Release")
 
-    def _fast_release(self):  # noqa: ANN202
+    def _fast_release(self) -> None:
         """Opzione 15: Fast Release"""
         self._run_command(
             [str(VENV_PYTHON), "admin/release.py", "auto", "--skip-tests"],
             "Fast Release",
         )
 
-    def _emergency_setup(self):  # noqa: ANN202
+    def _emergency_setup(self) -> None:
         """Opzione 15b: Emergency Setup - solo build, no audit, no git, no bump"""
         build_script = str(PROJECT_ROOT / "admin" / "Crea Setup" / "build_dist.py")
         self._run_command(
@@ -632,17 +632,17 @@ class DeveloperToolboxGUI(QMainWindow):
             "Emergency Setup (Build Only)",
         )
 
-    def _full_deploy(self):  # noqa: ANN202
+    def _full_deploy(self) -> None:
         """Opzione 16: Full Deploy"""
         self._run_command(
             [str(VENV_PYTHON), "admin/release.py", "auto", "--skip-tests", "--deploy"], "Full Deploy"
         )
 
-    def _secrets_mgmt(self):  # noqa: ANN202
+    def _secrets_mgmt(self) -> None:
         """Opzione 17: Secrets Management"""
         self._run_command([str(VENV_PYTHON), "admin/manage_secrets_gui.py"], "Secrets Management GUI")
 
-    def _performance(self):  # noqa: ANN202
+    def _performance(self) -> None:
         """Opzione 18: Performance Profiling"""
         self._run_command(
             [
@@ -656,56 +656,56 @@ class DeveloperToolboxGUI(QMainWindow):
             "Performance Profiling (cProfile)",
         )
 
-    def _db_maintain(self):  # noqa: ANN202
+    def _db_maintain(self) -> None:
         """Opzione 19: DB Maintenance"""
         self._run_command([str(VENV_PYTHON), "admin/db_maintenance.py"], "Database Maintenance")
 
-    def _raw_metrics(self):  # noqa: ANN202
+    def _raw_metrics(self) -> None:
         """Opzione 20: Raw Metrics"""
         self._run_command(
             [str(VENV_PYTHON), "admin/pre_flight_check.py", "--target", "metrics"],
             "Raw Metrics",
         )
 
-    def _clean_code(self):  # noqa: ANN202
+    def _clean_code(self) -> None:
         """Opzione 21: Clean Code"""
         self._run_command(
             [str(VENV_PYTHON), "admin/pre_flight_check.py", "--target", "clean"],
             "Clean Code",
         )
 
-    def _depty_check(self):  # noqa: ANN202
+    def _depty_check(self) -> None:
         """Opzione 22: Dependency Check"""
         self._run_command(
             [str(VENV_PYTHON), "admin/pre_flight_check.py", "--target", "deps"],
             "Dependency Check",
         )
 
-    def _project_stats(self):  # noqa: ANN202
+    def _project_stats(self) -> None:
         """Opzione 23: Project Stats"""
         self._run_command(
             [str(VENV_PYTHON), "admin/pre_flight_check.py", "--target", "stats"],
             "Project Stats",
         )
 
-    def _run_app(self):  # noqa: ANN202
+    def _run_app(self) -> None:
         """Opzione 24: Run App (Dev)"""
         self._run_command([str(VENV_PYTHON), "main.py"], "Run App (Development Mode)")
 
-    def _clean_cache(self):  # noqa: ANN202
+    def _clean_cache(self) -> None:
         """Opzione 25: Clean Cache"""
         self._run_command([str(VENV_PYTHON), "admin/clean_venv.py"], "Clean Cache")
 
-    def _inspector(self):  # noqa: ANN202
+    def _inspector(self) -> None:
         """Opzione 26: Inspector"""
         self._run_command([str(VENV_PYTHON), "admin/universal_inspector.py"], "Universal Inspector")
 
-    def _dep_audit(self):  # noqa: ANN202
+    def _dep_audit(self) -> None:
         """Opzione 27: Dependency Audit"""
         self._run_command([str(VENV_PYTHON), "admin/analyze_dependencies.py"], "Dependency Audit")
 
 
-def main():  # noqa: ANN201
+def main() -> None:
     """Entry point"""
     app = QApplication(sys.argv)
 
