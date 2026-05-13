@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v1.46.0 (2026-05-12)
+
 ### Feat
 
 - **autopilot**: automazione certificati campione e unificazione logica Outlook

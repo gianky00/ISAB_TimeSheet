@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QComboBox as QtQComboBox
 
-from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
+from src.gui.widgets.core_widgets import SortableTableWidgetItem
 
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QTableWidget

@@ -32,9 +32,9 @@ from src.gui.widgets import ExcelTableWidget
 from src.gui.widgets.core_widgets import (
     FilterComboBox,
     PrimaryButton,
+    SortableTableWidgetItem,
     StandardCheckBox,
 )
-from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 
 
 class AttivitaProgrammateTab(QWidget):

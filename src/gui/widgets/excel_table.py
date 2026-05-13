@@ -19,10 +19,9 @@ from PySide6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
-from src.gui.widgets.core_widgets import FilterComboBox
+from src.gui.widgets.core_widgets import FilterComboBox, SortableTableWidgetItem
 from src.gui.widgets.effects import HoverPulseFrame
 from src.gui.widgets.mixins.clipboard_mixin import ClipboardMixin
-from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
