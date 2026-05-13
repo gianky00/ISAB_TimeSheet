@@ -236,7 +236,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self._attendi_scomparsa_overlay(timeout_secondi=5)
 
         try:
-            self.driver.execute_script("window.scrollTo(0, 0);")
+            self.driver.execute_script("window.scrollTo(0, 0);")  # type: ignore[no-untyped-call]
 
             # Pulizia preventiva
             clean_name = pdl_num.replace("/", "") + ".pdf"
@@ -282,7 +282,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self._attendi_scomparsa_overlay()
 
         try:
-            self.driver.execute_script("window.scrollTo(0, 0);")
+            self.driver.execute_script("window.scrollTo(0, 0);")  # type: ignore[no-untyped-call]
 
             # Pulizia preventiva
             self._safe_remove(str(Path(self.download_path) / "ReportPdLRinnovi.pdf"))

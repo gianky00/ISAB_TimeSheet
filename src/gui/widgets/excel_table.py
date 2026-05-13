@@ -79,9 +79,9 @@ class ExcelTableWidget(QTableWidget):
     def keyPressEvent(self, event: Any) -> None:
         """Gestisce le scorciatoie da tastiera standard (Copia, Incolla, Canc)."""
         if event.matches(QKeySequence.StandardKey.Copy):
-            self.copy_selection()  # type: ignore
+            self.copy_selection()
         elif event.matches(QKeySequence.StandardKey.Paste):
-            self.paste_selection()  # type: ignore
+            self.paste_selection()
         elif event.key() == Qt.Key.Key_Delete:
             self.clear_selection()
         else:
@@ -114,7 +114,7 @@ class ExcelTableWidget(QTableWidget):
         icon_color = COLORS["text_dark"]
 
         copy_act = QAction(get_colored_icon(get_asset_path(Icons.EDIT), icon_color), "Copia", self)
-        copy_act.triggered.connect(self.copy_selection)  # type: ignore
+        copy_act.triggered.connect(self.copy_selection)
 
         menu.addAction(copy_act)
         menu.exec(global_pos)
@@ -236,7 +236,7 @@ class EditableDataTable(QWidget):
         remove_act.triggered.connect(self._remove_row)
 
         copy_act = QAction(get_colored_icon(get_asset_path(Icons.EDIT), icon_color), "Copia", self)
-        copy_act.triggered.connect(self.table.copy_selection)  # type: ignore
+        copy_act.triggered.connect(self.table.copy_selection)
 
         for act in (add_act, remove_act, copy_act):
             menu.addAction(act)
@@ -250,7 +250,7 @@ class EditableDataTable(QWidget):
             row_data = {}
             has_content = False
             for c, col_def in enumerate(self.columns):
-                val = self.table._get_cell_value(r, c)  # type: ignore
+                val = self.table._get_cell_value(r, c)
                 row_data[col_def["name"]] = val
                 # Considera la riga valida solo se ha contenuto in una colonna non di servizio
                 if val and col_def["name"].upper() not in ignore_cols:

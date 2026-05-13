@@ -145,7 +145,7 @@ class TimbraturePage:
                         try:
                             ActionChains(self.driver).move_to_element(arrow_element).click().perform()
                         except Exception:
-                            self.driver.execute_script("arguments[0].click();", arrow_element)
+                            self.driver.execute_script("arguments[0].click();", arrow_element)  # type: ignore[no-untyped-call]
                         break
                 except Exception:
                     with suppress(Exception):
@@ -159,12 +159,12 @@ class TimbraturePage:
                 EC.presence_of_element_located((By.XPATH, option_xpath))
             )
 
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)  # type: ignore[no-untyped-call]
 
             try:
                 option.click()
             except (ElementClickInterceptedException, Exception):
-                self.driver.execute_script("arguments[0].click();", option)
+                self.driver.execute_script("arguments[0].click();", option)  # type: ignore[no-untyped-call]
             self._wait_for_overlay()
 
         except Exception as e:
@@ -189,13 +189,13 @@ class TimbraturePage:
                 f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() in allowed_ext
             }
 
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", excel_btn)
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", excel_btn)  # type: ignore[no-untyped-call]
 
             self.log("Clicco su Excel...")
             try:
                 excel_btn.click()
             except Exception:
-                self.driver.execute_script("arguments[0].click();", excel_btn)
+                self.driver.execute_script("arguments[0].click();", excel_btn)  # type: ignore[no-untyped-call]
 
             self.log("Attendo download...")
 

@@ -69,7 +69,7 @@ class SafeworkBaseBot(SeleniumBaseBot):
             # Fallback JS click
             try:
                 el = self.driver.find_element(*locator)
-                self.driver.execute_script("arguments[0].click();", el)
+                self.driver.execute_script("arguments[0].click();", el)  # type: ignore[no-untyped-call]
             except Exception as e:
                 self.log(f"❌ Errore click su {label or locator}: {e}")
                 raise

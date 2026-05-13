@@ -18,9 +18,9 @@ from src.core.notification_manager import NotificationManager
 from src.core.report_history import ReportHistory
 
 try:
-    import win32com.client
+    import win32com.client as win32_client
 except ImportError:
-    win32com.client = None
+    win32_client = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +135,7 @@ class ReportService:
     @classmethod
     def _dispatch_outlook_email(cls, w_list: list[dict[str, Any]], e_list: list[dict[str, Any]]) -> None:
         """Utilizza le API COM di Windows per inviare l'email tramite Outlook."""
-        if not win32com.client:
+        if not win32_client:
             logger.error("win32com.client non disponibile per l'invio email.")
             return
 
@@ -153,7 +153,7 @@ class ReportService:
             + "</ul></body></html>"
         )
 
-        m = win32com.client.Dispatch("Outlook.Application").CreateItem(0)
+        m = win32_client.Dispatch("Outlook.Application").CreateItem(0)
         m.To = "supporto@syncrojob.it"
         m.CC = ""
         m.Subject = f"[AUTO] Report Monitoraggio ISAB - {datetime.now(UTC).astimezone().strftime('%d/%m/%Y')}"
