@@ -32,6 +32,7 @@ from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.contabilita_worker import ContabilitaWorker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
+from src.gui.controllers.contabilita_controller import ContabilitaController
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.contabilita_kpi import ContabilitaKPIPanel
 from src.gui.styles import COLORS, LABEL_MUTED, LINEEDIT_STYLE
@@ -48,6 +49,8 @@ from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
+
+
 
 
 class ContabilitaPanel(QWidget):
@@ -70,10 +73,9 @@ class ContabilitaPanel(QWidget):
           parent: Widget genitore opzionale.
         """
         super().__init__(parent)
-        self.worker: ContabilitaWorker | None = None
+        self.controller = ContabilitaController(self)
         self.status_labels: list[QLabel] = []
         self.update_buttons: list[ModernButton] = []
-        self._last_status_html = "Pronto"
 
         # UI Elements
         self.toolbar_card: ModernCard
@@ -88,10 +90,22 @@ class ContabilitaPanel(QWidget):
         self.attivita_widget: AttivitaProgrammateTab
         self.certificati_widget: CertificatiCampioneTab
         self.kpi_panel: ContabilitaKPIPanel
+        self.worker: ContabilitaWorker | None = None
 
         self._first_refresh_done = False
         self._setup_ui()
-        # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
+        self._connect_controller()
+
+    def _connect_controller(self) -> None:
+        """Collega i segnali del controller alla UI."""
+        self.controller.status_updated.connect(self.status_lbl.setText)
+        self.controller.import_finished.connect(self._on_import_finished_from_controller)
+        self.controller.data_refreshed.connect(self.refresh_tabs)
+
+    def _on_import_finished_from_controller(self, success: bool, message: str) -> None:
+        """Gestisce la fine dell'importazione dal controller."""
+        if not success:
+            logger.error(f"Importazione fallita dal controller: {message}")
 
     def showEvent(self, event: QShowEvent) -> None:
         """Esegue il primo refresh solo quando il pannello diventa visibile."""
@@ -192,7 +206,7 @@ class ContabilitaPanel(QWidget):
         self.search_input.setClearButtonEnabled(True)
         self.search_input.setMinimumWidth(300)
         self.search_input.setStyleSheet(LINEEDIT_STYLE)
-        self.search_input.textChanged.connect(self._on_search_changed)
+        self.search_input.textChanged.connect(self.controller.handle_search)
         search_v.addWidget(lbl_search)
         search_v.addWidget(self.search_input)
         layout.addLayout(search_v)
@@ -213,7 +227,7 @@ class ContabilitaPanel(QWidget):
             size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.REFRESH),
         )
-        self.update_btn.clicked.connect(self.start_import_process)
+        self.update_btn.clicked.connect(self.controller.start_import_process)
 
         btn_h = QHBoxLayout()
         btn_h.setSpacing(5)

@@ -16,6 +16,8 @@ from src.core.data_synchronizer import DataSynchronizer
 from src.core.database import db_manager
 from src.core.excel_importer import ExcelImporter
 from src.core.logging import get_logger
+from src.core.processing.base import Pipeline
+from src.core.processing.contabilita.import_steps import DatabaseSyncStep, ExcelReadStep
 
 logger = get_logger(__name__)
 
@@ -46,20 +48,27 @@ class ContabilitaManager:
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, int, int]:
-        """Importa i dati dal file Excel specificato (Tabella Dati)."""
-        (
-            success,
-            message,
-            imported_rows,
-            imported_years,
-        ) = ExcelImporter.import_contabilita_dati(file_path, progress_callback)
-        if not success:
-            return False, message, 0, 0
+        """
+        Importa i dati dal file Excel specificato (Tabella Dati) utilizzando la Pipeline.
+        """
+        # Passiamo le classi correnti (che nei test sono patchate nel namespace di ContabilitaManager)
+        pipeline = Pipeline()
+        pipeline.add_step(ExcelReadStep(progress_callback, importer=ExcelImporter))
+        pipeline.add_step(DatabaseSyncStep(synchronizer=DataSynchronizer))
 
-        total_added, total_removed = DataSynchronizer.sync_contabilita_dati(
-            db_manager.DB_CONTABILITA, imported_rows, imported_years
-        )
-        return True, message, total_added, total_removed
+        context = {"file_path": file_path}
+
+        try:
+            result = pipeline.run(context)
+            return (
+                result.get("success", False),
+                result.get("message", ""),
+                result.get("total_added", 0),
+                result.get("total_removed", 0)
+            )
+        except Exception:
+            logger.exception("Errore nella pipeline di importazione Excel")
+            return False, "Errore critico pipeline", 0, 0
 
     @classmethod
     def import_giornaliere(
@@ -209,6 +218,21 @@ class ContabilitaManager:
             db_manager.execute_query(db_manager.DB_CONTABILITA, query, (value, record_id))
         except Exception:
             logger.exception("Errore aggiornamento certificato", field=field)
+            return False
+        else:
+            return True
+
+    @classmethod
+    def update_certificati_ubicazione_by_id_coemi(cls, id_coemi: str, value: str) -> bool:
+        """Aggiorna l'ubicazione per tutti i certificati di uno strumento (storico incluso)."""
+        if not id_coemi:
+            return False
+
+        try:
+            query = "UPDATE certificati_campione SET ubicazione = ? WHERE id_coemi = ?"
+            db_manager.execute_query(db_manager.DB_CONTABILITA, query, (value, id_coemi))
+        except Exception:
+            logger.exception("Errore aggiornamento ubicazione cumulativa", id_coemi=id_coemi)
             return False
         else:
             return True

@@ -424,8 +424,26 @@ class CertificatiCampioneTab(QWidget):
     def _on_item_edited(self, item: QTreeWidgetItem, col_name: str, new_value: str) -> None:
         """Salva nel database quando un utente modifica Annotazioni o Ubicazione."""
         record_id = item.data(0, Qt.ItemDataRole.UserRole)
-        if record_id:
+        if not record_id:
+            return
+
+        if col_name == "ubicazione":
+            # Propaghiamo l'ubicazione a tutti i certificati dello stesso strumento (ID COEMI)
+            id_coemi = item.text(self.tree.IDX_ID_STRUMENTO)
+            if ContabilitaManager.update_certificati_ubicazione_by_id_coemi(id_coemi, new_value):
+                # Aggiorniamo visivamente tutti i fratelli se necessario (o ricarichiamo i dati)
+                self._update_ui_after_ubicazione_change(item, new_value)
+        else:
+            # Annotazioni rimangono specifiche del singolo certificato
             ContabilitaManager.update_certificato_field(record_id, col_name, new_value)
+
+    def _update_ui_after_ubicazione_change(self, edited_item: QTreeWidgetItem, new_value: str) -> None:
+        """Aggiorna visivamente l'ubicazione per tutti i certificati dello stesso gruppo."""
+        if parent := edited_item.parent():
+            for i in range(parent.childCount()):
+                child = parent.child(i)
+                if child:
+                    child.setText(self.tree.IDX_UBICAZIONE, new_value)
 
     def _update_excluded_count_label(self) -> None:
         """Aggiorna il contatore degli strumenti esclusi nella toolbar."""
