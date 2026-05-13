@@ -1,3 +1,11 @@
+## Unreleased
+
+### Fix
+
+- risoluzione violazioni Ruff e 80 segnalazioni Mypy
+
+## v1.46.2 (2026-05-13)
+
 ## v1.46.1 (2026-05-13)
 
 ## v1.46.0 (2026-05-12)
