@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
-import pytest
 
 from src.core.excel_importer import ExcelImporter
 
@@ -70,68 +69,73 @@ class TestExcelImporter:
         assert "non trovato" in msg
 
     # --- Giornaliere ---
-    @pytest.mark.skip(reason="Mock Path issues")
-    @patch("src.core.importers.base.BaseImporter._decrypt_if_encrypted")
-    @patch("src.core.importers.giornaliere.GiornaliereImporter._read_giornaliera_sheet")
-    @patch("src.core.importers.giornaliere.ProcessPoolExecutor")
-    def test_import_giornaliere(self, mock_executor_cls, mock_read_sheet, mock_decrypt):
-        # Mock file system
-        with patch("src.core.importers.giornaliere.Path") as mock_path:
-            root = MagicMock()
-            mock_path.return_value = root
-            root.exists.return_value = True
+    def test_import_giornaliere(self, tmp_path):
+        """Test prioritario: Importazione giornaliere da directory strutturata."""
+        root = tmp_path / "Giornaliere"
+        root.mkdir()
+        folder2024 = root / "Giornaliere 2024"
+        folder2024.mkdir()
 
-            # Mock folder
-            folder = MagicMock()
-            folder.is_dir.return_value = True
-            folder.name = "Giornaliere 2024"
+        df = pd.DataFrame(
+            {
+                "DATA": ["01/01/2024"],
+                "PERSONALE": ["Mario Rossi"],
+                "DESCRIZIONE ATTIVITÀ": ["Manutenzione 22/123"],
+                "TCL": ["T1"],
+                "ODC": [""],
+                "N  PDL": ["PDL1"],
+                "INIZIO": ["08:00"],
+                "FINE": ["17:00"],
+                "ORE": ["8.0"],
+                "consuntivo": ["P123"],
+            }
+        ).astype(str)
 
-            # Mock file
-            file_path = MagicMock()
-            file_path.name = "2024_01_User.xlsx"
-            file_path.suffix = ".xlsx"
-            folder.glob.return_value = [file_path]
+        file_path = folder2024 / "test_giornaliera.xlsx"
+        with pd.ExcelWriter(file_path, engine="openpyxl") as writer:
+            df.to_excel(writer, sheet_name="RIASSUNTO", index=False)
 
-            root.iterdir.return_value = [folder]
+        lookup_map = {"P123": "5400999"}
+        mock_cb = MagicMock()
 
-            # Mock decryption
-            mock_decrypt.return_value = (file_path, False)
-
-            # Mock DF with correct columns matching GIORNALIERE_MAPPING
-            # Add EXTRA ROW because _clean_giornaliera_data removes the last row (footer)
-            df = pd.DataFrame(
-                {
-                    "DATA": ["2024-01-01", "Totale"],
-                    "PERSONALE": ["Mario", ""],
-                    "ORE": [8, 8],
-                    "DESCRIZIONE ATTIVITA'": ["Work", ""],
-                    "COMMESSA": ["C1", ""],
-                    "consuntivo": ["P1", ""],
-                    "INIZIO": ["08:00", ""],
-                    "FINE": ["17:00", ""],
-                    "N° PDL": ["123456", ""],
-                    "TCL": ["TCL1", ""],
-                    "ODC": ["ODC1", ""],
-                }
+        with (
+            patch("src.core.importers.giornaliere.GiornaliereImporter._process_single_giornaliera") as mock_proc,
+            patch("src.gui.main_window.page_index.PageIndex") as mock_page_index,
+            patch("src.core.importers.giornaliere.ProcessPoolExecutor") as mock_pool,
+        ):
+            mock_page_index.DASHBOARD = 0
+            mock_proc.return_value = (
+                2024,
+                [
+                    (
+                        2024,
+                        "01/01/2024",
+                        "Mario Rossi",
+                        "Manutenzione",
+                        "T1",
+                        "5400999",
+                        "PDL1",
+                        "08:00",
+                        "17:00",
+                        "8.0",
+                        "P123",
+                        "test_giornaliera.xlsx",
+                    )
+                ],
+                None,
             )
-            mock_read_sheet.return_value = df
-
-            # Mock Executor to run synchronously
             mock_executor = MagicMock()
-            mock_executor_cls.return_value.__enter__.return_value = mock_executor
+            mock_pool.return_value.__enter__.return_value = mock_executor
+            mock_executor.map.return_value = [mock_proc.return_value]
 
-            def side_effect_map(func, iterable):
-                return [func(item) for item in iterable]
-
-            mock_executor.map.side_effect = side_effect_map
-
-            lookup_map = {"C1": {"odc": "ODC1", "tcl": "TCL1"}}
-
-            success, _msg, rows, years = ExcelImporter.import_giornaliere("root", lookup_map)
-
-            assert success
-            assert len(rows) > 0
+            success, _msg, rows, years = ExcelImporter.import_giornaliere(
+                str(root), lookup_map, progress_callback=mock_cb
+            )
+            assert success is True
             assert 2024 in years
+            assert len(rows) > 0
+            assert rows[0][5] == "5400999"
+            assert rows[0][11] == "test_giornaliera.xlsx"
 
     # --- Storico OdA ---
     @patch("pandas.read_excel")
@@ -188,7 +192,7 @@ class TestExcelImporter:
         assert rows[0][-1] == ""  # styles
 
     # --- Scarico Ore (OpenPyXL) ---
-    @patch("src.core.importers.scarico_ore.ScaricoOreImporter._load_scarico_workbook")
+    @patch("src.core.processing.scarico_ore.steps.LoadScaricoOreStep._load_scarico_workbook")
     @patch("src.core.importers.scarico_ore.Path.exists", return_value=True)
     def test_import_scarico_ore_with_styles(self, mock_exists, mock_load_wb):
         # Mock Workbook and Worksheet
@@ -255,8 +259,8 @@ class TestExcelImporter:
         assert styles["commessa"]["bg"] == "#00FF00"
 
     # --- Certificati Campione ---
-    @patch("pandas.read_excel")
-    @patch("src.core.importers.certificati.pd.ExcelFile")
+    @patch("src.core.processing.certificati.steps.pd.read_excel")
+    @patch("src.core.processing.certificati.steps.pd.ExcelFile")
     @patch("src.core.importers.certificati.Path.exists", return_value=True)
     def test_import_certificati_campione(self, mock_exists, mock_excel_file, mock_read):
         # Mock ExcelFile to return sheet names

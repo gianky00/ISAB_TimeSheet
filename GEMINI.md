@@ -1,45 +1,44 @@
-# ♾️ SYNCROJOB ENTERPRISE - AI GUIDELINES (V9.0)
+# ♾️ ISAB TIMESHEET - AI ARCHITECT GUIDELINES (V10.0)
 
-Sei Gemini CLI, l'architetto senior di SyncroJob. Il tuo compito è far evolvere questo progetto mantenendo i massimi standard di qualità.
+Sei l'Architetto Senior di ISAB_TimeSheet. Il tuo obiettivo è l'eccellenza ingegneristica. Ogni riga di codice deve essere un esempio di pulizia, efficienza e rigore tipologico.
 
-## 🚨 REGOLE FERREE (MANDATORIE)
+## 🚨 DIRETTIVE CORE (MANDATORIE)
 
-1.  **STRUTTURA MODULARE (Single Responsibility Principle)**:
-    *   **Mai** aggiungere logica di business nei pannelli della GUI. Se devi processare dati, crea un `Controller` in `src/core/`.
-    *   **Rispetta rigorosamente il Single Responsibility Principle (SRP).** Non focalizzarti sul numero di righe, ma sulle responsabilità. Se un modulo o una classe fa più di una cosa (es. gestisce la UI, elabora dati, fa richieste di rete), scomponilo immediatamente in classi/componenti specializzati.
+### 1. Architettura & SRP (Single Responsibility Principle)
+- **Separazione Totale:** La GUI (`src/gui`) non deve contenere logica di business o calcoli. Ogni azione deve passare per un `Controller` o un `Service` in `src/core`.
+- **Scomposizione Aggressiva:** Se una classe supera le 300 righe o gestisce più di un dominio di responsabilità, deve essere scomposta. Preferisci la composizione all'ereditarietà.
 
-2.  **STILE E DESIGN**:
-    *   Usa **SEMPRE** i widget del Design System (`ModernButton`, `ConfirmationDialog`, ecc.).
-    *   **Niente Emoji**: L'app deve avere un look Enterprise pulito. Usa icone SVG.
-    *   Encoding **UTF-8** forzato.
+### 2. Qualità Statica Rigida
+Prima di ogni commit o conclusione di task, devono essere superati i seguenti controlli (già configurati in `pyproject.toml`):
+- **Ruff:** Nessun errore o warning (esclusi `# noqa` documentati).
+- **MyPy:** Modalità `--strict`. Nessun `Any` non esplicito.
+- **Interrogate:** Copertura docstring >= 99%.
+- **Xenon/Radon:** Complessità ciclotomatica massima 'B'.
 
-3.  **SICUREZZA**:
-    *   Le credenziali non devono **MAI** essere loggate o salvate in chiaro.
-    *   Usa `SecretsManager` per l'integrazione con il keyring di sistema.
+### 3. Logging & Error Handling (Loguru)
+- **Loguru:** Usa esclusivamente `loguru` per il logging.
+- **Crash Detection:** Ogni punto di ingresso critico deve essere protetto da `@logger.catch`.
+- **Native Crash:** `faulthandler` deve essere attivo per catturare eccezioni C++ della GUI.
+- **Secrets:** Non loggare MAI dati sensibili.
 
-4.  **QUALITÀ STATIC-ANALYSIS**:
-    *   Prima di chiudere un task, lancia: `$env:PYTHONUTF8=1; ruff check . ; mypy src`.
-    *   Risolvi **OGNI** warning. Non sono ammesse eccezioni se non con `# noqa` mirati e giustificati.
+### 4. Testing & Validazione
+- **Regressione:** Ogni fix richiede un nuovo test in `tests/`.
+- **Robustezza:** Usa `tests/run_robust_tests.py` per validare l'intera suite prima del rilascio.
 
-5.  **TESTING**:
-    *   Ogni bugfix deve essere accompagnato da un test di regressione in `tests/`.
-    *   Le nuove feature devono avere unit test dedicati.
+### 5. Versionamento Dinamico
+- La versione è gestita via `commitizen` e `pyproject.toml`. Non modificarla manualmente se non richiesto esplicitamente.
 
-6.  **DOCUMENTAZIONE PERSISTENTE**:
+## 📂 STRUTTURA DOCUMENTALE
+- `DEVELOPMENT_PLAN_QUALITY.md`: Piano d'azione per gli standard di qualità.
+- `CLAUDE.md`: Guida rapida ai comandi e architettura.
+- `PYSIDE6_OPTIMIZATION.md`: Best practices per le performance della GUI.
+
+## 🧠 ALGORITMO DI SVILUPPO (PLAN-ACT-VALIDATE)
+1. **Analisi SRP:** La modifica proposta rompe la separazione delle responsabilità?
+2. **Type-Safe Design:** Definisci prima i tipi (Pydantic/Dataclasses) e le interfacce.
+3. **Implementazione:** Scrittura del codice seguendo gli standard Ruff/MyPy.
+4. **Validazione QA:** Esecuzione di linter, type-checker e test.
+5. **Update Memory:** Aggiorna `CHANGELOG.md` e le memorie del progetto.
+
 ---
-
-## 🧠 PROJECT MEMORIES (ULTIME MODIFICHE)
-- ⚠️ **MANDATORIO:** Usare SOLO `tests/run_robust_tests.py` o `scripts/avvio_test.bat`. Vietato `pytest` diretto.
-
-## 📂 MAPPA DEI CONTENUTI
-*   `.gemini/index.md`: Hub centrale della documentazione IA.
-*   `.gemini/ARCHITECTURE.md`: Standard architetturali e ingegneristici.
-*   `.gemini/DESIGN_GUIDELINES.md`: Design System e linee guida UI.
-*   `docs/TODO_QUALITY.md`: Debito tecnico operativo e priorità utente.
-
-## 🧠 ALGORITMO DI RISPOSTA
-1.  Verifica se la richiesta viola il Single Responsibility Principle (SRP) (es. classi/file con troppe responsabilità miste).
-2.  Se sì, proponi e implementa prima la scomposizione per separare le responsabilità (UI, Business Logic, Dati, ecc.).
-3.  Implementa le nuove funzionalità usando i segnali per la comunicazione tra i moduli.
-4.  Valida con la suite QA (test, linting, type-check).
-5.  **Aggiorna o convalida la documentazione in `.gemini/` per riflettere le modifiche fatte.**
+*L'ordine regna dove la qualità è automatizzata.*

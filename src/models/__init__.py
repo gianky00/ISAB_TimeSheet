@@ -6,6 +6,8 @@ from src.models.contabilita import (
 )
 from src.models.employee import EmployeeRecord
 from src.models.oda import OdaRecord
+from src.models.pdl import PdlProgrammazioneRecord, PdlRecord
+from src.models.timesheet import TimesheetRecord
 
 __all__ = [
     "AttivitaProgrammataRecord",
@@ -14,4 +16,7 @@ __all__ = [
     "EmployeeRecord",
     "GiornalieraRecord",
     "OdaRecord",
+    "PdlProgrammazioneRecord",
+    "PdlRecord",
+    "TimesheetRecord",
 ]

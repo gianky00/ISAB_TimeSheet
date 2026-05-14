@@ -31,7 +31,7 @@ def test_import_contabilita_valid_data(importer):
         "MESE": ["Gennaio", ""],
         "N° PREV.": ["100", ""],
         "TOTALE PREV.": ["1000", ""],
-        "ATTIVITA'": ["Manutenzione", ""],
+        "ATTIVITÀ": ["Manutenzione", ""],
         "ODC": ["123456", ""],
         "TCL": ["TCL1", ""],
     }

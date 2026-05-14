@@ -148,11 +148,11 @@ class ContabilitaImporter(BaseImporter):
             if not df.empty:
                 df = df.iloc[:-1]  # Rimuovi riga dei totali solitamente presente
 
-            df.dropna(how="all", inplace=True)
+            df = df.dropna(how="all").copy()
             if df.empty:
                 return []
 
-            df["year"] = year
+            df.loc[:, "year"] = year
             df = cls._normalize_columns(df)
             df = cls._ensure_required_columns(df)
 

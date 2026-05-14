@@ -1,18 +1,19 @@
 import os
 import re
-import warnings
-import zipfile
 from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
-import pandas as pd
-
 from src.core.importers.base import BaseImporter
 from src.core.logging import get_logger
-from src.core.schemas import validate_giornaliere
+from src.core.processing.base import Pipeline
+from src.core.processing.giornaliere.steps import (
+    EnrichGiornalieraStep,
+    NormalizeGiornalieraStep,
+    ReadGiornalieraStep,
+)
 
 logger = get_logger(__name__)
 
@@ -155,142 +156,28 @@ class GiornaliereImporter(BaseImporter):
         year, file_path, lookup_map = args
         try:
             file_obj, _ = cls._decrypt_if_encrypted(file_path)
-            df = cls._read_giornaliera_sheet(file_obj)
-            if df is None:
-                return (year, [], None)
 
-            df = cls._normalize_giornaliera_columns(df)
-            if df is None:
-                return (year, [], None)
+            pipeline = Pipeline()
+            pipeline.add_step(ReadGiornalieraStep())
+            pipeline.add_step(NormalizeGiornalieraStep())
+            pipeline.add_step(EnrichGiornalieraStep())
 
-            df = cls._clean_giornaliera_data(df)
-            if df.empty:
-                return (year, [], None)
+            context = {
+                "file_path": file_path,
+                "file_obj": file_obj,
+                "year": year,
+                "lookup_map": lookup_map,
+            }
 
-            cls._enrich_giornaliera_odc(df, lookup_map)
+            result = pipeline.run(context)
 
-            df["year"] = year
-            df["nome_file"] = file_path.name
+            if not result.get("success"):
+                return (year, [], result.get("message"))
 
-            target_cols = [
-                "year",
-                "data",
-                "personale",
-                "descrizione",
-                "tcl",
-                "odc",
-                "pdl",
-                "inizio",
-                "fine",
-                "ore",
-                "n_prev",
-                "nome_file",
-            ]
-            rows = list(df[target_cols].itertuples(index=False, name=None))
+            rows = result.get("rows", [])
+
         except Exception as e:
             return (year, [], str(e))
         else:
             return (year, rows, None)
 
-    @classmethod
-    def _read_giornaliera_sheet(cls, file_path: Any) -> pd.DataFrame | None:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            pd_obj = cls._get_pd()
-            try:
-                return pd_obj.read_excel(file_path, sheet_name="RIASSUNTO")  # type: ignore[no-any-return]
-            except ValueError:
-                return None
-            except zipfile.BadZipFile:
-                return None
-            except Exception:
-                try:
-                    return pd_obj.read_excel(file_path, sheet_name="RIASSUNTO", engine="openpyxl")  # type: ignore[no-any-return]
-                except zipfile.BadZipFile:
-                    return None
-                except Exception:
-                    raise
-
-    @classmethod
-    def _normalize_giornaliera_columns(cls, df: pd.DataFrame) -> pd.DataFrame | None:
-        df.columns = df.columns.astype(str).str.strip()
-        rename_map = {}
-
-        for excel_col, db_col in cls.GIORNALIERE_MAPPING.items():
-            if excel_col in df.columns:
-                rename_map[excel_col] = db_col
-            else:
-                for col in df.columns:
-                    if col.upper() == excel_col.upper():
-                        rename_map[col] = db_col
-                        break
-
-        if not rename_map:
-            return None
-
-        df.rename(columns=rename_map, inplace=True)
-
-        try:
-            df = validate_giornaliere(df)
-        except Exception as e:
-            logger.warning(f"Validazione Pandera Giornaliere fallita (uso fallback): {e}")
-
-        return df
-
-    @classmethod
-    def _clean_giornaliera_data(cls, df: pd.DataFrame) -> pd.DataFrame:
-        """Pulisce i dati rimuovendo righe di totale e dati mancanti."""
-        if df.empty:
-            return df
-
-        # Rimuove l'ultima riga se presente (solitamente un totale Excel)
-        if len(df) > 0:
-            df = df.iloc[:-1]
-
-        if df.empty:
-            return df
-
-        # 1. Rimuove righe contenenti "Totale" in qualsiasi colonna
-        df = cls._remove_total_rows(df)
-        if df.empty:
-            return df
-
-        # 2. Rimuove righe con dati critici mancanti
-        return cls._filter_invalid_rows(df)
-
-    @staticmethod
-    def _remove_total_rows(df: pd.DataFrame) -> pd.DataFrame:
-        """Rimuove le righe che contengono la parola 'Totalè."""
-        for col in df.columns:
-            if df[col].dtype == "object":
-                mask = df[col].astype(str).str.contains("Totale", na=False, case=False)
-                df = df[~mask]
-        return df
-
-    @staticmethod
-    def _filter_invalid_rows(df: pd.DataFrame) -> pd.DataFrame:
-        """Rimuove righe con valori nulli nelle colonne fondamentali."""
-        critical_cols = [c for c in ["data", "personale", "ore"] if c in df.columns]
-        if critical_cols:
-            df.dropna(subset=critical_cols, how="any", inplace=True)
-        return df
-
-    @classmethod
-    def _enrich_giornaliera_odc(cls, df: pd.DataFrame, lookup_map: dict[str, str]) -> None:
-        mask_empty = df["odc"] == ""
-        if mask_empty.any() and lookup_map:
-            mapped = df.loc[mask_empty, "n_prev"].map(lookup_map)
-            df.loc[mask_empty, "odc"] = mapped.fillna("")
-
-        mask_empty = df["odc"] == ""
-        if mask_empty.any():
-            comm_pattern = r"\b(\d{2}/\d{3})\b"
-            extracted = df.loc[mask_empty, "descrizione"].str.extract(comm_pattern, expand=False)
-            df.loc[mask_empty, "odc"] = extracted.fillna("")
-
-        mask_standard = ~df["odc"].str.contains("canone", case=False, na=False) & ~df["odc"].str.match(
-            r"^\d{2}/\d{3}$", na=False
-        )
-        if mask_standard.any():
-            extracted = df.loc[mask_standard, "odc"].str.extract(r"(5400\d+)", expand=False)
-            df.loc[mask_standard, "odc"] = extracted.fillna("")

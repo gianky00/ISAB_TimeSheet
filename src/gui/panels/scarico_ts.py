@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
-from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.controllers.bot_worker import BotWorker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
@@ -185,16 +184,18 @@ class ScaricaTSPanel(BaseBotPanel):
         """Carica i dati salvati."""
         self._is_loading = True
         try:
-            config = config_manager.load_config()
-            self.refresh_fornitori()
-            self.params_widget.set_societa(config.get("last_scarico_ts_societa", "ISAB"))
-            self.params_widget.set_fornitore(config.get("last_scarico_ts_fornitore", ""))
-            self.params_widget.set_dest_path(config.get("path_scarico_ts", ""))
-            self.elabora_ts_check.setChecked(config.get("last_scarico_ts_elabora", True))
+            from src.core.bots.services import ScaricoTSService
+            service = ScaricoTSService()
+            cfg = service.load_config()
 
-            saved_data = config.get("last_scarico_ts_data", [])
-            if saved_data:
-                self.data_table.set_data(saved_data)
+            self.refresh_fornitori()
+            self.params_widget.set_societa(cfg["societa"])
+            self.params_widget.set_fornitore(cfg["fornitore"])
+            self.params_widget.set_dest_path(cfg["dest_path"])
+            self.elabora_ts_check.setChecked(cfg["elabora_ts"])
+
+            if cfg["data"]:
+                self.data_table.set_data(cfg["data"])
 
             self._update_status_list()
         finally:
@@ -204,11 +205,18 @@ class ScaricaTSPanel(BaseBotPanel):
         """Salva i dati correnti."""
         if getattr(self, "_is_loading", False) or not hasattr(self, "params_widget"):
             return
-        config_manager.set_config_value("last_scarico_ts_data", self.data_table.get_data())
-        config_manager.set_config_value("last_scarico_ts_societa", self.params_widget.get_societa())
-        config_manager.set_config_value("last_scarico_ts_fornitore", self.params_widget.get_fornitore())
-        config_manager.set_config_value("path_scarico_ts", self.params_widget.get_dest_path())
-        config_manager.set_config_value("last_scarico_ts_elabora", self.elabora_ts_check.isChecked())
+
+        from src.core.bots.services import ScaricoTSService
+        service = ScaricoTSService()
+
+        params = {
+            "societa": self.params_widget.get_societa(),
+            "fornitore": self.params_widget.get_fornitore(),
+            "dest_path": self.params_widget.get_dest_path(),
+            "elabora_ts": self.elabora_ts_check.isChecked(),
+        }
+
+        service.save_config(params, self.data_table.get_data())
 
     def _clear_table(self) -> None:
         """Svuota la tabella."""
@@ -236,57 +244,30 @@ class ScaricaTSPanel(BaseBotPanel):
         """
         super()._on_start(params_override)
 
-        username, password = self.get_credentials()
-        data = self.data_table.get_data()
-        societa = self.params_widget.get_societa()
-        fornitore = self.params_widget.get_fornitore()
-        data_da, _ = self.params_widget.get_dates()
-        download_path = self.params_widget.get_dest_path() or config_manager.get_download_path()
-        elabora_ts = self.elabora_ts_check.isChecked()
-
-        # Handle Overrides
-        if params_override:
-            if "data_da" in params_override:
-                data_da = params_override["data_da"]
-                self.log_widget.append(f"ℹ️ Override Data Inizio: {data_da}")
-
-            if "single_item" in params_override:
-                item = params_override["single_item"]
-                if item:
-                    data = [item]
-                    self.log_widget.append(f"ℹ️ Esecuzione singola per: {item.get('Numero OdA', 'N/D')}")
-
         if not params_override:
             self._save_data()
 
-        from src.core.config_manager import load_config
+        from src.core.bots.services import ScaricoTSService
+        service = ScaricoTSService()
 
-        config = load_config()
+        data_da, _ = self.params_widget.get_dates()
+        params = {
+            "societa": self.params_widget.get_societa(),
+            "fornitore": self.params_widget.get_fornitore(),
+            "dest_path": self.params_widget.get_dest_path(),
+            "elabora_ts": self.elabora_ts_check.isChecked(),
+            "data_da": data_da,
+        }
 
+        username, password = self.get_credentials()
+        bot_params, bot_data = service.prepare_payload(
+            (username, password, ""),
+            params,
+            self.data_table.get_data(),
+            params_override
+        )
         main_win: Any = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
-
-        # Configura i parametri per le bot (nessuna istanza bot qui)
-        bot_params = {
-            "username": username,
-            "password": password,
-            "headless": config.get("browser_headless", False),
-            "timeout": config.get("browser_timeout", 30),
-            "download_path": download_path,
-            "data_da": data_da,
-            "fornitore": fornitore,
-            "company": societa,
-            "elabora_ts": elabora_ts,
-        }
-
-        # Dati da elaborare
-        bot_data = {
-            "rows": data,
-            "data_da": data_da,
-            "fornitore": fornitore,
-            "company": societa,
-            "elabora_ts": elabora_ts,
-        }
 
         # Inizializza il worker (avvio asincrono)
         self.worker = BotWorker(

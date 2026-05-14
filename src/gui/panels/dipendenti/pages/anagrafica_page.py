@@ -100,10 +100,10 @@ class AnagraficaPage(QWidget):
         self.header.set_sync_status(f"Ultimo Sync: {SyncTracker.get_formatted_status('timbrature')}")
 
         # 1. Caricamento dati grezzi
-        full_rows = AnagraficaController.get_employees(self.header.search_input.text())
+        full_rows = self.controller.get_employees(self.header.search_input.text())
 
         # 2. Processing (Calcolo scadenze e filtri)
-        dtos, counts = AnagraficaController.process_rows(full_rows, self.current_filter)
+        dtos, counts = self.controller.process_rows(full_rows, self.current_filter)
 
         # 3. Map DTOs to UI structure
         master_rows: list[list[str | int | None]] = [d.to_table_row() for d in dtos]
@@ -133,7 +133,7 @@ class AnagraficaPage(QWidget):
         self.refresh_data()
 
     def _on_monitoring_toggled(self, id_risorsa: str, enable: bool) -> None:
-        if AnagraficaController.toggle_monitoring(id_risorsa, enable):
+        if self.controller.toggle_monitoring(id_risorsa, enable):
             status = "riattivato" if enable else "escluso"
             ToastManager.instance().show(f"Monitoraggio {status}", "success")
             self.refresh_data()
@@ -173,7 +173,7 @@ class AnagraficaPage(QWidget):
                 val = format_db_date(val)
             details[h] = val
 
-        access_info = AnagraficaController.get_last_isab_access(
+        access_info = self.controller.get_last_isab_access(
             str(row_data[col_cognome]), str(row_data[col_nome])
         )
         self.detail_view.update_data(details, access_info)

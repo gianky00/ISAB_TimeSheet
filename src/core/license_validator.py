@@ -25,6 +25,16 @@ from src.core.paths import CONFIG_DIR as PATHS_CONFIG_DIR, get_data_path
 from src.core.secrets_manager import SecretsManager
 from src.core.time_manager import get_trusted_time
 
+__all__ = [
+    "LicenseStatus",
+    "get_detailed_license_status",
+    "get_hardware_id",
+    "get_license_client",
+    "get_license_expiry",
+    "get_license_info",
+    "verify_license",
+]
+
 logger = get_logger(__name__)
 
 

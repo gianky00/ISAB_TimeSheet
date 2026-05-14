@@ -78,6 +78,8 @@ yesqa = "^1.5.0"
 pyfakefs = "^6.1.1"
 nuitka = "^4.0.5"
 pytest-playwright = "^0.7.2"
+types-pillow = "^10.2.0.20240822"
+types-setuptools = "^82.0.0.20260508"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -264,6 +266,8 @@ pretty = true
 
 [[tool.mypy.overrides]]
 module = [
+    "diagrams",
+    "diagrams.*",
     "selenium.*",
     "webdriver_manager.*",
     "PIL.*",

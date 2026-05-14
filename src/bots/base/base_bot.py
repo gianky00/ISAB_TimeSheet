@@ -10,6 +10,8 @@ from PySide6.QtCore import QObject, Signal
 
 from src.bots.base.execution_guard import ExecutionGuard
 from src.bots.base.step_manager import BotStepManager, StepStatus
+
+__all__ = ["BaseBot", "BotConfig", "BotSignals", "BotStatus", "StepStatus"]
 from src.core.constants import BotStatus, Timeouts, URLs
 from src.core.logging import generate_trace_id, get_logger, measure_time, with_context
 

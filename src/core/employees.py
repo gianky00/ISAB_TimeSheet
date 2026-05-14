@@ -1,12 +1,12 @@
-import csv
 import sqlite3
 import time
-from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from src.core.database import db_manager
+from src.core.database.repositories import EmployeeRepository
 from src.core.logging import get_logger
 from src.core.sync_tracker import SyncTracker
+from src.models import EmployeeRecord
 
 logger = get_logger(__name__)
 
@@ -15,182 +15,89 @@ class EmployeeManager:
     """
     Gestisce la logica di business per i dipendenti, facendo da interfaccia
     tra la GUI/Bot e il Database SQLite.
-    Sostituisce la gestione diretta dei file CSV.
+    Delegato al nuovo EmployeeRepository per l'accesso ai dati.
     """
+
+    _repo = EmployeeRepository()
 
     def __init__(self) -> None:
         self.db = db_manager
 
     def get_all_employees(self, active_only: bool = True) -> list[dict[str, Any]]:
         """Restituisce tutti i dipendenti dal database come lista di dizionari."""
-        # Selezioniamo colonne esplicite per sicurezza
-        query = "SELECT id_risorsa, cognome, nome, badge, codice_fiscale, data_assunzione, monitoraggio_attivo FROM dipendenti"
-
-        try:
-            # Verifica se la colonna monitoraggio_attivo esiste provando una select limitata
-            # Se fallisce, fallback su query senza filtro
-            rows = []
-            try:
-                final_query = query
-                if active_only:
-                    final_query += " WHERE monitoraggio_attivo = 1"
-                final_query += " ORDER BY cognome, nome"
-                rows = self.db.execute_query(self.db.DB_DIPENDENTI, final_query)
-            except sqlite3.OperationalError:
-                # Fallback per schema vecchio
-                query_fallback = "SELECT id_risorsa, cognome, nome, badge, codice_fiscale, data_assunzione FROM dipendenti ORDER BY cognome, nome"
-                rows = self.db.execute_query(self.db.DB_DIPENDENTI, query_fallback)
-
-            # Conversione Tupla -> Dict
-            employees = []
-            min_columns_with_monitoring = 7
-            for row in rows:
-                # Gestiamo il caso in cui la query fallback ha meno colonne
-                has_monitoraggio = len(row) >= min_columns_with_monitoring
-
-                emp = {
-                    "id_risorsa": row[0],
-                    "cognome": row[1],
-                    "nome": row[2],
-                    "badge": row[3],
-                    "codice_fiscale": row[4],
-                    "data_assunzione": row[5],
-                    "monitoraggio_attivo": row[6] if has_monitoraggio else 1,
-                }
-                employees.append(emp)
-
-        except Exception:
-            logger.exception("Errore recupero dipendenti")
-            return []
-        else:
-            return employees
+        results = self._repo.get_all(active_only, as_objects=False)
+        # Type narrowing for mypy
+        return [r for r in results if isinstance(r, dict)]
 
     def get_employee_by_badge(self, badge: str) -> sqlite3.Row | None:
         """Cerca un dipendente per numero di badge."""
+        # Nota: il repository restituisce oggetti o dict. Per compatibilità Row, facciamo query qui o cast
         query = "SELECT * FROM dipendenti WHERE badge = ?"
         results = self.db.execute_query(self.db.DB_DIPENDENTI, query, (badge,))
         return results[0] if results else None
 
     def add_employee(self, employee_data: dict[str, Any]) -> bool:
-        """
-        Aggiunge un nuovo dipendente.
-        employee_data deve contenere: nome, cognome, badge, ecc.
-        """
-        query = """
-      INSERT INTO dipendenti (
-        id_risorsa, cognome, nome, data_nascita,
-        codice_fiscale, badge, data_assunzione, monitoraggio_attivo
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """
-        params = (
-            employee_data.get("id_risorsa"),  # Pu  essere None (autoincrement) o specifico
-            employee_data["cognome"].upper(),
-            employee_data["nome"].upper(),
-            employee_data.get("data_nascita"),
-            employee_data.get("codice_fiscale", "").upper(),
-            employee_data.get("badge"),
-            employee_data.get("data_assunzione"),
-            1,  # Default attivo
+        """Aggiunge un nuovo dipendente tramite repository."""
+        # Convertiamo dict in Model
+        emp = EmployeeRecord(
+            id_risorsa=employee_data.get("id_risorsa"),
+            cognome=employee_data["cognome"].upper(),
+            nome=employee_data["nome"].upper(),
+            badge=employee_data.get("badge", ""),
+            codice_fiscale=employee_data.get("codice_fiscale", "").upper(),
+            data_assunzione=employee_data.get("data_assunzione"),
+            monitoraggio_attivo=1,
+            data_nascita=employee_data.get("data_nascita")
         )
-
-        try:
-            self.db.execute_query(self.db.DB_DIPENDENTI, query, params)
-            logger.info(f"Dipendente {employee_data['cognome']} aggiunto con successo.")
-        except sqlite3.IntegrityError:
-            logger.exception("Errore inserimento dipendente")
-            return False
-        else:
-            return True
+        return self._repo.save(emp)
 
     def update_employee(self, id_risorsa: int, data: dict[str, Any]) -> bool:
-        """Aggiorna i dati di un dipendente esistente."""
-        # Costruiamo la query dinamicamente in base ai campi forniti
-        fields = []
-        values = []
-        for key, value in data.items():
-            fields.append(f"{key} = ?")
-            values.append(value)
-
-        values.append(id_risorsa)  # Per le WHERE
-
-        query = f"UPDATE dipendenti SET {', '.join(fields)} WHERE id_risorsa = ?"  # nosec B608
-
-        try:
-            self.db.execute_query(self.db.DB_DIPENDENTI, query, tuple(values))
-            logger.info(f"Dipendente ID {id_risorsa} aggiornato.")
-        except Exception:
-            logger.exception("Errore aggiornamento dipendente")
+        """Aggiorna i dati di un dipendente esistente tramite repository."""
+        # Recuperiamo l'attuale per non perdere dati non presenti nel dict 'data'
+        query = "SELECT * FROM dipendenti WHERE id_risorsa = ?"
+        current = self.db.execute_query(self.db.DB_DIPENDENTI, query, (id_risorsa,))
+        if not current:
             return False
-        else:
-            return True
+
+        current_data = dict(current[0])
+        current_data.update(data)
+
+        emp = EmployeeRecord(**current_data)
+        return self._repo.save(emp)
 
     def import_from_csv(self, csv_path: str) -> int:
         """
-        Importa/Sincronizza i dipendenti dal vecchio CSV al DB.
-        Ritorna il numero di record importati.
+        Importa/Sincronizza i dipendenti dal CSV al DB tramite Pipeline.
+        Ritorna il numero di record processati.
         """
-        path = Path(csv_path)
-        if not path.exists():
-            logger.error(f"File CSV non trovato: {csv_path}")
-            return 0
+        from src.core.processing.base import Pipeline
+        from src.core.processing.employees.import_steps import EmployeeCsvReadStep, EmployeeDatabaseSyncStep
 
         start_time = time.time()
-        added_count = 0
-        updated_count = 0
-        count = 0
+
+        pipeline = Pipeline()
+        pipeline.add_step(EmployeeCsvReadStep())
+        pipeline.add_step(EmployeeDatabaseSyncStep(self._repo))
+
+        context = {"file_path": csv_path}
 
         try:
-            with path.open("r", encoding="utf-8-sig") as f:
-                reader = csv.DictReader(f, delimiter=";")
+            result = pipeline.run(context)
+            if not result.get("success"):
+                return 0
 
-                # Normalizziamo i nomi delle colonne rimuovendo spazi extra
-                if reader.fieldnames:
-                    reader.fieldnames = [name.strip() for name in reader.fieldnames]
-
-                for row in reader:
-                    # Mappatura CSV -> DB
-                    id_val = row.get("id_risorsa") or row.get("ID")
-                    id_risorsa = int(id_val) if id_val and str(id_val).isdigit() else None
-
-                    data = {
-                        "id_risorsa": id_risorsa,
-                        "cognome": row.get("Cognome", ""),
-                        "nome": row.get("Nome", ""),
-                        "data_nascita": row.get("Data_nascita", ""),
-                        "codice_fiscale": row.get("Codice_fiscale", ""),
-                        "badge": row.get("Badge", ""),
-                        "data_assunzione": row.get("Data_assunzione", ""),
-                    }
-
-                    # Controlla se esiste già(per badge o ID)
-                    existing = None
-                    if id_risorsa:
-                        existing = self.db.execute_query(
-                            self.db.DB_DIPENDENTI,
-                            "SELECT id_risorsa FROM dipendenti WHERE id_risorsa = ?",
-                            (id_risorsa,),
-                        )
-
-                    if existing and id_risorsa is not None:
-                        self.update_employee(id_risorsa, data)
-                        updated_count += 1
-                    else:
-                        self.add_employee(data)
-                        added_count += 1
-
-                    count += 1
+            total_added = cast("int", result.get("added_count", 0))
+            total_processed = cast("int", result.get("total_processed", 0))
 
             duration = time.time() - start_time
-            # Consideriamo "Added" i nuovi, e Removed 0.
-            # (In futuro si potrebbe calcolare removed se il CSV fosse l'unica fonte di verit )
-            SyncTracker.update_status("dipendenti", added_count, 0, duration)
+            SyncTracker.update_status("dipendenti", total_added, 0, duration)
 
-            logger.info(f"Importazione completata: {count} dipendenti processati ({added_count} nuovi).")
+            logger.info(f"Importazione completata: {total_processed} processati ({total_added} nuovi).")
+            return total_processed
+
         except Exception:
-            logger.exception("Errore durante l'importazione CSV")
-            raise
-        else:
-            return count
+            logger.exception("Errore durante l'importazione CSV tramite Pipeline")
+            return 0
 
 
 # Istanza globale

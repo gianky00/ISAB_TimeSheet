@@ -3,7 +3,7 @@ from contextlib import suppress
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.wait import WebDriverWait
 
 from src.bots.base.selenium_base_bot import SeleniumBaseBot
 from src.bots.base.selenium_bot_config import SeleniumBotConfig

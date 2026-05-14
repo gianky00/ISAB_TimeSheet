@@ -14,7 +14,7 @@ from selenium.common.exceptions import (
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.wait import WebDriverWait
 
 from src.bots.portale_fornitori.common.locators import CommonLocators, LoginLocators
 from src.core.constants import Timeouts

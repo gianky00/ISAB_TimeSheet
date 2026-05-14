@@ -39,6 +39,33 @@ class PdlRowDTO:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
+    def from_model(cls, m: Any) -> "PdlRowDTO":
+        """Crea un DTO a partire dal modello PdlRecord."""
+        return cls(
+            id=m.id,
+            n_pdl=m.n_pdl,
+            data_creazione=m.data_creazione,
+            area=m.area,
+            unita=m.unita,
+            ditta=m.ditta,
+            descrizione=m.descrizione_lavoro,
+            tipologia=m.tipologia,
+            stato=m.stato,
+            apparecchiatura=m.apparecchiatura,
+            richiedente=m.richiedente,
+            data_richiesta=m.data_richiesta,
+            emittente=m.emittente,
+            data_emissione=m.data_emissione,
+            aprente=m.aprente,
+            data_apertura=m.data_apertura,
+            priorita=m.priorita,
+            contratto=m.contratto,
+            ordine=m.ordine,
+            sito=m.sito,
+            importato_il=m.importato_il
+        )
+
+    @classmethod
     def from_db_row(cls, r: Sequence[Any]) -> "PdlRowDTO":
         """Factory method per creare un DTO da una riga grezza del DB."""
         return cls(
