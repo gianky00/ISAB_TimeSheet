@@ -18,10 +18,9 @@ class EmployeeManager:
     Delegato al nuovo EmployeeRepository per l'accesso ai dati.
     """
 
-    _repo = EmployeeRepository()
-
-    def __init__(self) -> None:
-        self.db = db_manager
+    def __init__(self, db_manager_instance: Any = None) -> None:
+        self.db = db_manager_instance or db_manager
+        self._repo = EmployeeRepository(self.db)
 
     def get_all_employees(self, active_only: bool = True) -> list[dict[str, Any]]:
         """Restituisce tutti i dipendenti dal database come lista di dizionari."""
@@ -47,7 +46,7 @@ class EmployeeManager:
             codice_fiscale=employee_data.get("codice_fiscale", "").upper(),
             data_assunzione=employee_data.get("data_assunzione"),
             monitoraggio_attivo=1,
-            data_nascita=employee_data.get("data_nascita")
+            data_nascita=employee_data.get("data_nascita"),
         )
         return self._repo.save(emp)
 
@@ -70,8 +69,11 @@ class EmployeeManager:
         Importa/Sincronizza i dipendenti dal CSV al DB tramite Pipeline.
         Ritorna il numero di record processati.
         """
-        from src.core.processing.base import Pipeline
-        from src.core.processing.employees.import_steps import EmployeeCsvReadStep, EmployeeDatabaseSyncStep
+        from src.core.processing.base import Pipeline  # noqa: PLC0415
+        from src.core.processing.employees.import_steps import (  # noqa: PLC0415
+            EmployeeCsvReadStep,
+            EmployeeDatabaseSyncStep,
+        )
 
         start_time = time.time()
 
@@ -93,11 +95,11 @@ class EmployeeManager:
             SyncTracker.update_status("dipendenti", total_added, 0, duration)
 
             logger.info(f"Importazione completata: {total_processed} processati ({total_added} nuovi).")
-            return total_processed
-
         except Exception:
             logger.exception("Errore durante l'importazione CSV tramite Pipeline")
             return 0
+        else:
+            return total_processed
 
 
 # Istanza globale

@@ -48,10 +48,11 @@ class PDLController:
             # Convertiamo i modelli in DTO
             dtos = [PdlRowDTO.from_model(r) for r in records]
             self._cache[cache_key] = dtos
-            return dtos
         except Exception:
             logger.exception("Errore caricamento PDL tramite repository")
             return []
+        else:
+            return dtos
 
     def clear_cache(self) -> None:
         """Svuota la cache interna dei risultati."""

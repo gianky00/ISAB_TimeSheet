@@ -52,6 +52,22 @@ L'obiettivo è garantire 60fps costanti, testabilità isolata, protezione del Ma
   - **Refactoring**: Sostituire `terminate()` con un meccanismo di `cancel()` controllato (flag `_is_cancelled`).
   - **Stato**: ✅ Completato (Implementato pattern cancel() nei worker a esecuzione lunga)
 
+### 🔵 LIVELLO: OTTIMIZZAZIONE (V4.0 - SRP & Pipeline)
+*Focus: Scomposizione moduli monolitici e standardizzazione importer.*
+
+- [x] **Timesheet Processor & Excel Transformation**
+  - **Problema**: Logica VBA monolitica in un unico file procedurale (`timesheet_processor.py`).
+  - **Refactoring**: Migrazione al pattern `Pipeline` con step atomici e DTO dedicato.
+  - **Stato**: ✅ Completato (Scomposto in Steps e Pipeline SRP)
+
+### 🟢 LIVELLO: ECCELLENZA (V5.0 - Global Standardization)
+*Focus: Uniformità totale delle pipeline di importazione e persistenza.*
+
+- [x] **Standardizzazione Importers (Certificati, Giornaliere, Scarico Ore)**
+  - **Problema**: Logica di persistenza DB dispersa e non uniforme negli Importer.
+  - **Refactoring**: Implementazione `SyncStep` dedicati integrati nelle pipeline. Centralizzazione percorsi DB in `DatabaseManager`.
+  - **Stato**: ✅ Completato (Zero debito tecnico residuo su importazione dati)
+
 ---
 
 ## 🔧 DETTAGLIO VIOLAZIONI V3.0 (MEMORY & RESOURCE AUDIT)

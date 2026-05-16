@@ -32,11 +32,13 @@ class CaricoTSBot(SeleniumBaseBot):
 
     def __init__(
         self,
-        config: SeleniumBotConfig,
+        username: str | None = None,
+        password: str | None = None,
+        config: SeleniumBotConfig | None = None,
         **kwargs: Any,
     ) -> None:
         """Inizializza il bot Carico TS."""
-        super().__init__(config=config)
+        super().__init__(username, password, config)
 
     @staticmethod
     def get_description() -> str:

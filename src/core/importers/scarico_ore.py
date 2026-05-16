@@ -27,6 +27,7 @@ from src.core.processing.base import Pipeline
 from src.core.processing.scarico_ore.steps import (
     LoadScaricoOreStep,
     ProcessScaricoOreRowsStep,
+    SyncScaricoOreStep,
 )
 
 logger = get_logger(__name__)
@@ -128,6 +129,7 @@ class ScaricoOreImporter(BaseImporter):
             pipeline = Pipeline()
             pipeline.add_step(LoadScaricoOreStep())
             pipeline.add_step(ProcessScaricoOreRowsStep())
+            pipeline.add_step(SyncScaricoOreStep())
 
             context: dict[str, Any] = {
                 "file_path": str(path),

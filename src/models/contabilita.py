@@ -4,6 +4,7 @@ from dataclasses import dataclass
 @dataclass
 class ContabilitaRecord:
     """Modello per un record di Contabilità Strumentale (Preventivi)."""
+
     data_prev: str | None
     mese: str | None
     n_prev: str | None
@@ -25,6 +26,7 @@ class ContabilitaRecord:
 @dataclass
 class GiornalieraRecord:
     """Modello per un record di Giornaliera."""
+
     data: str
     personale: str
     tcl: str
@@ -43,6 +45,7 @@ class GiornalieraRecord:
 @dataclass
 class AttivitaProgrammataRecord:
     """Modello per un'attività programmata."""
+
     n_prev: str
     odc: str
     descrizione: str
@@ -55,13 +58,14 @@ class AttivitaProgrammataRecord:
 @dataclass
 class CertificatoCampioneRecord:
     """Modello per un certificato campione."""
-    id_strumento: str
+
+    id_coemi: str
     certificato: str
     modello: str
     costruttore: str
     matricola: str
-    range: str
-    errore: str
+    range_strumento: str
+    errore_max: str
     emissione: str
     scadenza: str
     stato: str

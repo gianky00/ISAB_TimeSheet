@@ -130,7 +130,16 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
         # 2. In visibility_of_element_located per SUBMENU -> Fallisce
         # 3. In wait_and_click (MENU_BUONO_PRELIEVO)
         # 4. In fine navigate_to_gestione_bp
-        self.mock_short_wait.until.side_effect = [True, TimeoutException(), True, True, True]
+        self.mock_short_wait.until.side_effect = [
+            True,
+            TimeoutException(),
+            True,
+            True,
+            True,
+            True,
+            True,
+            True,
+        ]
 
         mock_submenu = MagicMock()
         # self.wait.until calls:

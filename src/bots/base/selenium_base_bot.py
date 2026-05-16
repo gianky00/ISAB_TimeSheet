@@ -34,17 +34,25 @@ class SeleniumBaseBot(BaseBot, ABC):
     Gestisce l'inizializzazione di ChromeDriver, le opzioni del browser e le attese.
     """
 
-    def __init__(self, config: SeleniumBotConfig) -> None:
+    def __init__(
+        self,
+        username: str | None = None,
+        password: str | None = None,
+        config: SeleniumBotConfig | None = None,
+    ) -> None:
         """
-        Inizializza le proprietà fondamentali del bot Selenium usando un oggetto di configurazione.
+        Inizializza le proprietà fondamentali del bot Selenium.
+        Supporta sia la firma legacy (user, pwd, config) che quella moderna (config=config).
+        """
+        # Estrazione intelligente dei parametri per compatibilità Factory/Test
+        actual_config = config or SeleniumBotConfig()
+        actual_user = username if username is not None else actual_config.username
+        actual_pwd = password if password is not None else actual_config.password
 
-        Args:
-          config: Oggetto di configurazione SeleniumBotConfig.
-        """
         super().__init__(
-            config.username,
-            config.password,
-            config,
+            actual_user,
+            actual_pwd,
+            actual_config,
         )
         self.driver: webdriver.Chrome | None = None
         self.wait: WebDriverWait[webdriver.Chrome] | None = None

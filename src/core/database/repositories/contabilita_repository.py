@@ -40,7 +40,9 @@ class ContabilitaRepository:
     @overload
     def get_data_by_year(self, year: int, as_objects: Literal[False] = ...) -> list[tuple[Any, ...]]: ...
 
-    def get_data_by_year(self, year: int, as_objects: bool = True) -> list[ContabilitaRecord] | list[tuple[Any, ...]]:
+    def get_data_by_year(
+        self, year: int, as_objects: bool = True
+    ) -> list[ContabilitaRecord] | list[tuple[Any, ...]]:
         """Restituisce i record di contabilità per un anno specifico."""
         db_path = self.db.DB_CONTABILITA
         if not db_path.exists():
@@ -57,9 +59,11 @@ class ContabilitaRepository:
 
                 # Per compatibilità legacy, selezioniamo solo le colonne mappate da Excel
                 from src.core.excel_importer import ExcelImporter  # noqa: PLC0415
+
                 cols = list(ExcelImporter.COLUMNS_MAPPING.values())
                 cursor.execute(
-                    f"SELECT {', '.join(cols)} FROM contabilita WHERE year = ? ORDER BY n_prev DESC, id DESC", (year,)
+                    f"SELECT {', '.join(cols)} FROM contabilita WHERE year = ? ORDER BY n_prev DESC, id DESC",
+                    (year,),
                 )
                 return [tuple(row) for row in cursor.fetchall()]
         except Exception:
@@ -67,12 +71,18 @@ class ContabilitaRepository:
             return []
 
     @overload
-    def get_giornaliere_by_year(self, year: int, as_objects: Literal[True] = ...) -> list[GiornalieraRecord]: ...
+    def get_giornaliere_by_year(
+        self, year: int, as_objects: Literal[True] = ...
+    ) -> list[GiornalieraRecord]: ...
 
     @overload
-    def get_giornaliere_by_year(self, year: int, as_objects: Literal[False] = ...) -> list[tuple[Any, ...]]: ...
+    def get_giornaliere_by_year(
+        self, year: int, as_objects: Literal[False] = ...
+    ) -> list[tuple[Any, ...]]: ...
 
-    def get_giornaliere_by_year(self, year: int, as_objects: bool = True) -> list[GiornalieraRecord] | list[tuple[Any, ...]]:
+    def get_giornaliere_by_year(
+        self, year: int, as_objects: bool = True
+    ) -> list[GiornalieraRecord] | list[tuple[Any, ...]]:
         """Restituisce i record di giornaliera per un anno specifico."""
         db_path = self.db.DB_CONTABILITA
         if not db_path.exists():
@@ -88,9 +98,22 @@ class ContabilitaRepository:
                     return [GiornalieraRecord(**dict(row)) for row in rows]
 
                 # Per compatibilità legacy
-                cols = ["data", "personale", "tcl", "descrizione", "n_prev", "odc", "pdl", "inizio", "fine", "ore", "nome_file"]
+                cols = [
+                    "data",
+                    "personale",
+                    "tcl",
+                    "descrizione",
+                    "n_prev",
+                    "odc",
+                    "pdl",
+                    "inizio",
+                    "fine",
+                    "ore",
+                    "nome_file",
+                ]
                 cursor.execute(
-                    f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC", (year,)
+                    f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC",
+                    (year,),
                 )
                 return [tuple(row) for row in cursor.fetchall()]
         except Exception:
@@ -98,12 +121,16 @@ class ContabilitaRepository:
             return []
 
     @overload
-    def get_attivita_programmate(self, as_objects: Literal[True] = ...) -> list[AttivitaProgrammataRecord]: ...
+    def get_attivita_programmate(
+        self, as_objects: Literal[True] = ...
+    ) -> list[AttivitaProgrammataRecord]: ...
 
     @overload
     def get_attivita_programmate(self, as_objects: Literal[False] = ...) -> list[tuple[Any, ...]]: ...
 
-    def get_attivita_programmate(self, as_objects: bool = True) -> list[AttivitaProgrammataRecord] | list[tuple[Any, ...]]:
+    def get_attivita_programmate(
+        self, as_objects: bool = True
+    ) -> list[AttivitaProgrammataRecord] | list[tuple[Any, ...]]:
         """Restituisce le attività programmate."""
         db_path = self.db.DB_CONTABILITA
         if not db_path.exists():
@@ -118,6 +145,7 @@ class ContabilitaRepository:
 
                 # Per compatibilità legacy
                 from src.core.excel_importer import ExcelImporter  # noqa: PLC0415
+
                 cols = ExcelImporter.ATTIVITA_PROGRAMMATE_COLS
                 cursor.execute(f"SELECT {', '.join(cols)} FROM attivita_programmate ORDER BY id ASC")
                 return [tuple(row) for row in cursor.fetchall()]
@@ -126,12 +154,16 @@ class ContabilitaRepository:
             return []
 
     @overload
-    def get_certificati_campione(self, as_objects: Literal[True] = ...) -> list[CertificatoCampioneRecord]: ...
+    def get_certificati_campione(
+        self, as_objects: Literal[True] = ...
+    ) -> list[CertificatoCampioneRecord]: ...
 
     @overload
     def get_certificati_campione(self, as_objects: Literal[False] = ...) -> list[tuple[Any, ...]]: ...
 
-    def get_certificati_campione(self, as_objects: bool = True) -> list[CertificatoCampioneRecord] | list[tuple[Any, ...]]:
+    def get_certificati_campione(
+        self, as_objects: bool = True
+    ) -> list[CertificatoCampioneRecord] | list[tuple[Any, ...]]:
         """Restituisce i certificati campione."""
         db_path = self.db.DB_CONTABILITA
         if not db_path.exists():
@@ -139,14 +171,38 @@ class ContabilitaRepository:
         try:
             with self.db.get_connection(db_path, read_only=True) as conn:
                 cursor = conn.cursor()
+
+                # Rilevamento colonne per gestire transizione id_strumento -> id_coemi
+                cursor.execute("PRAGMA table_info(certificati_campione)")
+                db_cols = [row[1] for row in cursor.fetchall()]
+                id_col = "id_coemi" if "id_coemi" in db_cols else "id_strumento"
+
                 if as_objects:
                     cursor.execute("SELECT * FROM certificati_campione ORDER BY id ASC")
                     rows = cursor.fetchall()
-                    return [CertificatoCampioneRecord(**dict(row)) for row in rows]
+                    results = []
+                    for row in rows:
+                        d = dict(row)
+                        # Allineamento dinamico al modello
+                        if "id_strumento" in d and "id_coemi" not in d:
+                            d["id_coemi"] = d.pop("id_strumento")
+
+                        # Rimuovi campi non presenti nel modello (es. created_at)
+                        filtered_d = {
+                            k: v for k, v in d.items() if k in CertificatoCampioneRecord.__dataclass_fields__
+                        }
+                        results.append(CertificatoCampioneRecord(**filtered_d))
+                    return results
 
                 # Per compatibilità legacy
                 from src.core.excel_importer import ExcelImporter  # noqa: PLC0415
-                cols = ExcelImporter.CERTIFICATI_CAMPIONE_COLS
+
+                cols = list(ExcelImporter.CERTIFICATI_CAMPIONE_COLS)
+
+                # Sostituiamo id_coemi con quello reale del DB se necessario
+                if id_col == "id_strumento" and "id_coemi" in cols:
+                    cols[cols.index("id_coemi")] = "id_strumento"
+
                 cols_str = ", ".join(cols)
                 query = f"SELECT {cols_str}, annotazioni, ubicazione, id FROM certificati_campione ORDER BY id ASC"
                 cursor.execute(query)

@@ -95,6 +95,9 @@ class DatabaseManager:
     DB_PDL = DB_DIR / FileNames.DB_PDL
     DB_STORICO_ODA = DB_DIR / FileNames.DB_STORICO_ODA
     DB_DIPENDENTI = DB_DIR / FileNames.DB_DIPENDENTI
+    DB_CERTIFICATI = DB_DIR / FileNames.DB_CERTIFICATI
+    DB_SCARICO_ORE = DB_DIR / FileNames.DB_SCARICO_ORE
+    DB_GIORNALIERE = DB_DIR / FileNames.DB_GIORNALIERE
     DB_AUDIT = DB_DIR / FileNames.DB_AUDIT_LOG
 
     def __new__(cls) -> "DatabaseManager":

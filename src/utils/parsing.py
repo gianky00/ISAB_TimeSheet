@@ -99,10 +99,17 @@ def _smart_convert(s: str) -> float:
     if "," in s:
         return float(s.replace(",", "."))
 
-    # Caso 3: Solo punto (es. 1.234 o 10.50)
-    # Rileviamo se il punto  migliaia (3 cifre dopo) o decimale
+    # Caso 3: Solo punto (es. 1.234 o 10.50 o 1.234.567)
+    # Rileviamo se il punto è migliaia (3 cifre dopo) o decimale
     parts = s.split(".")
     it_thousands_len = 3
-    if len(parts) > 1 and len(parts[-1]) == it_thousands_len and len(parts) == 2:  # noqa: PLR2004
+
+    # Se ci sono più di 2 parti, sono sicuramente migliaia (es. 1.234.567)
+    if len(parts) > 2:  # noqa: PLR2004
         return float(s.replace(".", ""))
+
+    # Se ci sono 2 parti (un solo punto), verifichiamo se sono migliaia o decimali
+    if len(parts) == 2 and len(parts[-1]) == it_thousands_len:  # noqa: PLR2004
+        return float(s.replace(".", ""))
+
     return float(s)

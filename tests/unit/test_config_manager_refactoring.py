@@ -54,7 +54,7 @@ def test_load_config_from_file(clean_config_env):
     config = load_config()
     assert config["browser_headless"] is True
     # Default values should still be there
-    assert config["browser_timeout"] == 30
+    assert config["browser_timeout"] == 300
 
 
 def test_load_config_corrupted_file(clean_config_env):

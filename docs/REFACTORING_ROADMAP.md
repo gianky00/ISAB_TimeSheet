@@ -51,7 +51,11 @@ Questo documento traccia i moduli di SyncroJob che richiedono una scomposizione 
 ---
 
 ## ✅ Moduli Completati
+- [x] **Timesheet & Calcolo Ore**: Pipeline, Model, Step SRP.
 - [x] **Contabilità**: Repository, Pipeline, Model, Controller GUI.
+- [x] **Certificati & Giornaliere**: Standardizzazione Pipeline e Sync Steps.
+- [x] **Scarico Ore**: Migrazione totale a Pipeline SRP con persistenza delegata.
+- [x] **Bot Automations**: Disaccoppiamento GUI tramite `BotExecutionController`.
 - [x] **Storico OdA**: Repository, Model, Business Controller.
 - [x] **Anagrafica Dipendenti**: Repository, Pipeline, Model, DTO.
 - [x] **PDL (Permessi di Lavoro)**: Repository, Model, Controller.

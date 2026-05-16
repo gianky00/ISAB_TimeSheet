@@ -13,8 +13,8 @@ class TestAuditManager:
     @pytest.fixture
     def temp_db_manager(self, tmp_path, mocker):
         db_file = tmp_path / "audit_test.db"
-        # Patch the actual location in AuditDatabase
-        mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_file)
+        # Patch the actual location in db_manager
+        mocker.patch("src.core.database.db_manager.DB_AUDIT", db_file)
         # Patch AuditSignals to avoid PySide6 issues in headless
         mocker.patch("src.core.audit.manager.AuditSignals.instance")
 

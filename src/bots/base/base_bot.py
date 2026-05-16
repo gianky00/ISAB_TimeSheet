@@ -133,7 +133,7 @@ class BaseBot(ABC):
             self._status = value
             self.signals.status_changed.emit(value)
             if value in (BotStatus.ERROR, BotStatus.COMPLETED, BotStatus.STOPPED):
-                self.log(f"   Stato finale: {value.name}")
+                self.log(f"🏁 Stato finale: {value.name}")
 
     #    Validazione e Logging
 

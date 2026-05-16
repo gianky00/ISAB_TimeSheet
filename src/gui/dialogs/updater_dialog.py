@@ -220,8 +220,9 @@ def check_for_updates(  # noqa: C901, PLR0912
     if not update_sources:
         if not silent:
             QMessageBox.information(
-                parent, "✅ Aggiornamento", f"L'applicazione  aggiornata (v{version.__version__})"
+                parent, "[OK] Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
             )
+
         return
 
     latest_update = max(update_sources, key=lambda x: pkg_version.parse(x["version"]))
@@ -232,8 +233,9 @@ def check_for_updates(  # noqa: C901, PLR0912
     if not download_url:
         if not silent:
             QMessageBox.information(
-                parent, "✅ Aggiornamento", f"L'applicazione  aggiornata (v{version.__version__})"
+                parent, "[OK] Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
             )
+
         return
 
     if pkg_version.parse(remote_ver_str) > pkg_version.parse(version.__version__):
@@ -273,7 +275,7 @@ def check_for_updates(  # noqa: C901, PLR0912
                 perform_auto_update(download_url, parent)
     elif not silent:
         QMessageBox.information(
-            parent, "✅ Aggiornamento", f"L'applicazione  aggiornata (v{version.__version__})"
+            parent, "[OK] Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
         )
 
 

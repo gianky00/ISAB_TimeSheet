@@ -9,14 +9,18 @@ from src.core.processing.certificati.steps import (
     FormatCertificatiStep,
     NormalizeCertificatiStep,
     ReadCertificatiExcelStep,
+    SyncCertificatiStep,
 )
 
 logger = logging.getLogger(__name__)
 
+
 class CertificatiImporter(BaseImporter):
     """Importer per i Certificati Campione tramite Pipeline."""
 
-    CERTIFICATI_CAMPIONE_MAPPING: ClassVar[dict[str, str]] = NormalizeCertificatiStep.CERTIFICATI_CAMPIONE_MAPPING
+    CERTIFICATI_CAMPIONE_MAPPING: ClassVar[dict[str, str]] = (
+        NormalizeCertificatiStep.CERTIFICATI_CAMPIONE_MAPPING
+    )
     CERTIFICATI_CAMPIONE_COLS: ClassVar[list[str]] = NormalizeCertificatiStep.CERTIFICATI_CAMPIONE_COLS
 
     @classmethod
@@ -37,6 +41,7 @@ class CertificatiImporter(BaseImporter):
             pipeline.add_step(ReadCertificatiExcelStep())
             pipeline.add_step(NormalizeCertificatiStep())
             pipeline.add_step(FormatCertificatiStep())
+            pipeline.add_step(SyncCertificatiStep())
 
             context = {"file_path": str(path)}
             result = pipeline.run(context)

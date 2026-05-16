@@ -89,16 +89,16 @@ class TestAppInitializerRobust:
         with patch("src.gui.main_window.page_index.PageIndex") as mock_page_index:
             # Configura gli attributi come interi (Real values from PageIndex)
             mock_page_index.DASHBOARD = 0
-            MockPageIndex.AUTOMAZIONI = 1
-            MockPageIndex.TIMBRATURE = 3
-            MockPageIndex.STRUMENTALE = 4
-            MockPageIndex.DATAEASE = 5
-            MockPageIndex.ANAGRAFICHE = 6
-            MockPageIndex.SETTINGS = 7
-            MockPageIndex.HELP = 8
-            MockPageIndex.NOTIFICATIONS = 9
-            MockPageIndex.STORICO_ODA = 10
-            MockPageIndex.DIPENDENTI = 11
+            mock_page_index.AUTOMAZIONI = 1
+            mock_page_index.TIMBRATURE = 3
+            mock_page_index.STRUMENTALE = 4
+            mock_page_index.DATAEASE = 5
+            mock_page_index.ANAGRAFICHE = 6
+            mock_page_index.SETTINGS = 7
+            mock_page_index.HELP = 8
+            mock_page_index.NOTIFICATIONS = 9
+            mock_page_index.STORICO_ODA = 10
+            mock_page_index.DIPENDENTI = 11
 
             # Esegui generatore
             gen = AppInitializer.init_generator(mock_mw)
@@ -136,13 +136,13 @@ class TestAppInitializerRobust:
 
             # Se siamo arrivati qui senza crash, test passato
 
-    @patch("src.core.logging.configure_logging")
+    @patch("src.core.app_initializer.configure_logging")
     def test_setup_logging_success(self, mock_conf):
         """Test configurazione logging."""
         AppInitializer._setup_logging()
         mock_conf.assert_called_once()
 
-    @patch("src.core.logging.configure_logging", side_effect=Exception("Log Fail"))
+    @patch("src.core.app_initializer.configure_logging", side_effect=Exception("Log Fail"))
     @patch("logging.basicConfig")
     def test_setup_logging_fallback(self, mock_basic, mock_conf):
         """Test fallback logging base su errore."""

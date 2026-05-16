@@ -58,13 +58,15 @@ class DettagliOdABot(SeleniumBaseBot):
 
     def __init__(
         self,
-        config: SeleniumBotConfig,
+        username: str | None = None,
+        password: str | None = None,
+        config: SeleniumBotConfig | None = None,
         data_da: str | None = None,
         data_a: str | None = None,
         fornitore: str | None = None,
         **kwargs: Any,
-    ) -> None:
-        super().__init__(config=config)
+    ) -> None:  # noqa: PLR0913
+        super().__init__(username, password, config)
         current_year = datetime.now(UTC).astimezone().year
 
         self.data_da = data_da or f"01.01.{current_year}"

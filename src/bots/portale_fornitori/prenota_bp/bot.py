@@ -2,8 +2,6 @@
 Bot per la prenotazione automatica dei Badge Provvisori (BP) sul Portale Fornitori ISAB.
 """
 
-import traceback
-from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any, ClassVar
 
@@ -11,8 +9,11 @@ from src.bots.base.base_bot import StepStatus
 from src.bots.base.selenium_base_bot import SeleniumBaseBot
 from src.bots.base.selenium_bot_config import SeleniumBotConfig
 from src.core.constants import Business
+from src.core.logging import get_logger
 
 from .pages.prenota_bp_page import PrenotaBPPage
+
+logger = get_logger(__name__)
 
 
 class PrenotaBPBot(SeleniumBaseBot):
@@ -38,7 +39,7 @@ class PrenotaBPBot(SeleniumBaseBot):
     @property
     def name(self) -> str:
         """Restituisce l'ID del bot."""
-        return "prenota_bp"
+        return "Prenota BP"
 
     @property
     def description(self) -> str:
@@ -47,142 +48,120 @@ class PrenotaBPBot(SeleniumBaseBot):
 
     def __init__(
         self,
-        config: SeleniumBotConfig,
+        username: str | None = None,
+        password: str | None = None,
+        config: SeleniumBotConfig | None = None,
         data_da: str | None = None,
         data_a: str | None = None,
         fornitore: str | None = None,
         **kwargs: Any,
-    ) -> None:
+    ) -> None:  # noqa: PLR0913
         """Inizializza il bot Prenota BP."""
-        super().__init__(config=config)
+        super().__init__(username, password, config)
         current_year = datetime.now(UTC).astimezone().year
-
-        self.data_da = data_da or f"01.01.{current_year}"
-        self.data_a = data_a or f"31.12.{current_year}"
-        self.fornitore = fornitore or Business.DEFAULT_SUPPLIER
+        self.data_da = data_da or kwargs.get("data_da") or f"01.01.{current_year}"
+        self.data_a = data_a or kwargs.get("data_a") or f"31.12.{current_year}"
+        self.fornitore = fornitore or kwargs.get("fornitore") or Business.DEFAULT_SUPPLIER
         self.results: list[dict[str, Any]] = []
 
     def _get_row_value(self, row: dict[str, Any], target_key: str) -> str:
         """Estrae un valore dalla riga in modo robusto (ignora case, spazi e underscore)."""
 
         def normalize(s: Any) -> str:
-            return str(s).upper().replace(" ", "").replace("_", "")
+            return str(s).strip().lower().replace(" ", "").replace("_", "")
 
         target_norm = normalize(target_key)
         for k, v in row.items():
             if normalize(k) == target_norm:
-                return str(v) if v is not None else ""
+                return str(v).strip()
         return ""
 
-    def run(self, data: Any) -> bool:
-        """Esecuzione principale del bot."""
+    def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
+        """Verifica la presenza dei dati necessari (numero_bp)."""
+        base_ok, base_msg = super().validate_data(data)
+        if not base_ok:
+            return False, base_msg
+
+        rows = data.get("rows", []) if isinstance(data, dict) else data
+        if not rows:
+            return False, "Nessun dato fornito."
+
+        for i, row in enumerate(rows):
+            if not self._get_row_value(row, "numero_bp"):
+                return False, f"Numero BP mancante alla riga {i + 1}"
+
+        return True, ""
+
+    def run(self, data: list[dict[str, Any]]) -> bool:
+        """Esegue il workflow di prenotazione BP."""
         self.update_step("login", StepStatus.COMPLETED)
 
-        rows = self._init_run_data(data)
-        if not rows:
-            return True
-        if not self.driver:
-            return False
-
-        self.log(f"Avvio elaborazione per {len(rows)} BP (Fornitore: {self.fornitore})")
-
         try:
-            return self._execute_workflow(rows)
+            self.update_step("nav", StepStatus.RUNNING)
+            page = PrenotaBPPage(self.driver, self.wait)
+            if not page.navigate_to_gestione_bp():
+                self.log("❌ Impossibile raggiungere la sezione Gestione BP")
+                self.update_step("nav", StepStatus.ERROR)
+                return False
+            self.update_step("nav", StepStatus.COMPLETED)
+
+            # 2. Ciclo di prenotazione per ogni riga
+            success_count = 0
+            for i, row in enumerate(data):
+                self._check_stop()
+                try:
+                    if self._process_single_bp(page, row, i):
+                        success_count += 1
+                except Exception as e:
+                    self.log(f"❌ Errore riga {i + 1}: {e}")
+                    if callback := getattr(self, "_progress_callback", None):
+                        callback(i, False, str(e))
+
+            self.update_step("cleanup", StepStatus.RUNNING)
+            self.log(f"ℹ️ Fine: {success_count}/{len(data)} BP processati.")
+            self.update_step("cleanup", StepStatus.COMPLETED)
+            return success_count == len(data)
+
         except Exception as e:
-            self.log(f"  Errore fatale durante l'esecuzione: {e}")
-            self.update_step("nav", StepStatus.ERROR)
-            traceback.print_exc()
-            return False
-        finally:
-            self.log("Fine sessione Prenota BP.")
-
-    def _execute_workflow(self, rows: list[dict[str, Any]]) -> bool:
-        """Gestisce la navigazione e il ciclo di elaborazione dei BP."""
-        if not self.driver:
-            self.log("  Errore: Driver non inizializzato.")
+            self.log(f"❌ Errore fatale Prenota BP: {e}")
+            logger.exception("PrenotaBP Critical Error")
             return False
 
-        self.update_step("nav", StepStatus.RUNNING)
-        page = PrenotaBPPage(self.driver, self.log)
+    def _process_single_bp(self, page: PrenotaBPPage, row: dict[str, Any], index: int) -> bool:
+        """Gestisce la prenotazione di un singolo BP."""
+        num_bp = self._get_row_value(row, "numero_bp")
+        note = self._get_row_value(row, "note_ritiro") or "Ritiro c/o Portineria"
 
-        page.navigate_to_gestione_bp()
-        self.update_step("nav", StepStatus.COMPLETED)
+        self.log(f"🔄 Elaborazione BP: {num_bp}...")
 
-        processed_count = self._process_all_rows(page, rows)
-
-        self.log(f"  Elaborazione completata: {processed_count}/{len(rows)} BP prenotati.")
-        self._finalize_steps()
-        return True
-
-    def _process_all_rows(self, page: PrenotaBPPage, rows: list[dict[str, Any]]) -> int:
-        """Ciclo di elaborazione per tutte le righe con supporto allo stop richiesto."""
-        processed_count = 0
-        for i, row in enumerate(rows):
-            if self._stop_requested:
-                self.log("⚠️ Stop richiesto dall'utente.")
-                break
-            if self._process_single_bp(page, i, row):
-                processed_count += 1
-        return processed_count
-
-    def _finalize_steps(self) -> None:
-        """Aggiorna gli step finali di pulizia."""
-        self.update_step("cleanup", StepStatus.RUNNING)
-        self.update_step("cleanup", StepStatus.COMPLETED)
-
-    def _init_run_data(self, data: Any) -> list[dict[str, Any]]:
-        """Inizializza i parametri della sessione."""
-        if isinstance(data, dict):
-            self.data_da = data.get("data_da") or self.data_da
-            self.data_a = data.get("data_a") or self.data_a
-            self.fornitore = data.get("fornitore") or self.fornitore
-            result: list[dict[str, Any]] = data.get("rows", [])
-            return result
-        return list(data)
-
-    def _process_single_bp(self, page: PrenotaBPPage, index: int, row: dict[str, Any]) -> bool:
-        """Elabora un singolo buono prelievo."""
-        num_bp = str(row.get("numero_bp", "")).strip()
-        note = str(row.get("note_ritiro", "")).strip()
-
-        if not num_bp:
-            self.log(f"Riga {index + 1}: Numero BP mancante, salto.")
+        # 1. Filtro
+        self.update_step("filter", StepStatus.RUNNING)
+        if not page.filtra_buoni_prelievo(self.fornitore, self.data_da, self.data_a, num_bp):
+            self.log(f"⚠️ Buono {num_bp} non trovato o non disponibile.")
+            self.update_step("filter", StepStatus.ERROR)
             return False
+        self.update_step("filter", StepStatus.COMPLETED)
 
-        try:
-            self.update_step("filter", StepStatus.RUNNING)
-            page.filtra_buoni_prelievo(self.fornitore, num_bp, self.data_da, self.data_a)
-            self.update_step("filter", StepStatus.COMPLETED)
+        # 2. Apertura Dettaglio
+        self.update_step("details", StepStatus.RUNNING)
+        if not page.apri_dettagli_bp(num_bp):
+            self.log(f"⚠️ Impossibile aprire dettaglio per {num_bp}")
+            self.update_step("details", StepStatus.ERROR)
+            return False
+        self.update_step("details", StepStatus.COMPLETED)
 
-            self.update_step("details", StepStatus.RUNNING)
-            page.apri_dettagli_bp()
-            self.update_step("details", StepStatus.COMPLETED)
-
-            self.update_step("reserve", StepStatus.RUNNING)
-            page.gestisci_creazione_richiesta(note)
+        # 3. Prenotazione
+        self.update_step("reserve", StepStatus.RUNNING)
+        success, msg = page.esegui_prenotazione(note)
+        if success:
+            self.log(f"✅ BP {num_bp} prenotato con successo.")
             self.update_step("reserve", StepStatus.COMPLETED)
-
-            with suppress(Exception):
-                page.chiudi_dettagli_bp()
-
-            self.results.append({"NUMERO BP": num_bp, "STATO": "OK"})
-        except Exception as e:
-            self.log(f"  Errore su BP {num_bp}: {e}")
-            self.update_step("reserve", StepStatus.ERROR)
-            with suppress(Exception):
-                page.chiudi_dettagli_bp()
-            self.results.append({"NUMERO BP": num_bp, "STATO": "ERRORE", "MSG": str(e)})
-
-            # Notifica progresso alla GUI (index, success, message)
-            callback = getattr(self, "_progress_callback", None)
-            if callback:
-                callback(index, False, str(e))
-
-            return False
         else:
-            # Notifica progresso alla GUI (index, success, message)
-            callback = getattr(self, "_progress_callback", None)
-            if callback:
-                callback(index, True, "")
+            self.log(f"❌ Errore prenotazione {num_bp}: {msg}")
+            self.update_step("reserve", StepStatus.ERROR)
 
-            return True
+        # Notifica progresso
+        if callback := getattr(self, "_progress_callback", None):
+            callback(index, success, msg)
+
+        return success

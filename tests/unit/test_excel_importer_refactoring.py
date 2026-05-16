@@ -15,6 +15,17 @@ from src.core.importers.contabilita import ContabilitaImporter
 from src.core.importers.giornaliere import GiornaliereImporter
 
 
+# Mock DataSynchronizer per tutti i test degli importer
+@pytest.fixture(autouse=True)
+def mock_data_synchronizer():
+    with (
+        patch("src.core.data_synchronizer.DataSynchronizer.sync_certificati_campione", return_value=(1, 0)),
+        patch("src.core.data_synchronizer.DataSynchronizer.sync_scarico_ore", return_value=(1, 0)),
+        patch("src.core.data_synchronizer.DataSynchronizer.sync_giornaliere", return_value=(1, 0)),
+    ):
+        yield
+
+
 @pytest.fixture
 def mock_xls_file(tmp_path):
     """Crea un file Excel reale per i test di contabilità."""
@@ -250,6 +261,7 @@ def test_process_single_giornaliera_extraction_logic(tmp_path):
         assert rows[1][5] == "540012345"
         assert "CANONE" in rows[2][5].upper()
 
+
 def test_process_single_giornaliera_invalid_sheet(tmp_path):
     file_path = tmp_path / "no_riassunto.xlsx"
     pd.DataFrame({"A": [1]}).to_excel(file_path, sheet_name="Sheet1")
@@ -338,6 +350,7 @@ def test_import_scarico_ore_missing_sheet(tmp_path):
 def test_process_scarico_ore_row_validation():
     """Test casi limite validazione riga scarico ore."""
     from src.core.processing.scarico_ore.steps import ProcessScaricoOreRowsStep
+
     step = ProcessScaricoOreRowsStep()
 
     # Mocking cell objects from openpyxl

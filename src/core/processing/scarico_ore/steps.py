@@ -17,11 +17,13 @@ except ImportError:
 
 try:
     import openpyxl
+
     HAS_OPENPYXL = True
 except ImportError:
     HAS_OPENPYXL = False
 
 logger = get_logger(__name__)
+
 
 class LoadScaricoOreStep(ProcessingStep):
     """Carica e decritta il file Excel dello Scarico Ore."""
@@ -73,6 +75,7 @@ class LoadScaricoOreStep(ProcessingStep):
                 keep_vba=False,
                 keep_links=False,
             )
+
 
 class ProcessScaricoOreRowsStep(ProcessingStep):
     """Processa le righe dello Scarico Ore estraendo stili e dati."""
@@ -133,8 +136,18 @@ class ProcessScaricoOreRowsStep(ProcessingStep):
         styles_json = self._extract_row_styles(row, vals)
 
         return (
-            vals[0], vals[1], vals[2], vals[3], vals[4], vals[5],
-            vals[6], vals[7], vals[8], vals[9], vals[10], styles_json,
+            vals[0],
+            vals[1],
+            vals[2],
+            vals[3],
+            vals[4],
+            vals[5],
+            vals[6],
+            vals[7],
+            vals[8],
+            vals[9],
+            vals[10],
+            styles_json,
         )
 
     def _extract_row_values(self, row: Any) -> list[str] | None:
@@ -161,8 +174,17 @@ class ProcessScaricoOreRowsStep(ProcessingStep):
         s_comm = _clean_zero(c_comm.value)
 
         return [
-            s_data, s_p1, s_p2, s_odc, s_pos, s_dalle,
-            s_alle, s_tot, s_desc, s_fin, s_comm,
+            s_data,
+            s_p1,
+            s_p2,
+            s_odc,
+            s_pos,
+            s_dalle,
+            s_alle,
+            s_tot,
+            s_desc,
+            s_fin,
+            s_comm,
         ]
 
     def _extract_row_styles(self, row: Any, vals: list[str]) -> str:
@@ -215,3 +237,24 @@ class ProcessScaricoOreRowsStep(ProcessingStep):
             return str(val.strftime("%Y-%m-%d"))
         s = str(val).strip()
         return s.split(" ")[0] if " " in s else s
+
+
+class SyncScaricoOreStep(ProcessingStep):
+    """Passaggio per la sincronizzazione dello scarico ore con il database."""
+
+    def execute(self, context: dict[str, Any]) -> None:
+        if not context.get("success"):
+            return
+
+        rows = context.get("rows", [])
+        if not rows:
+            return
+
+        from src.core.data_synchronizer import DataSynchronizer  # noqa: PLC0415
+        from src.core.database import db_manager  # noqa: PLC0415
+
+        total_added, total_removed = DataSynchronizer.sync_scarico_ore(db_manager.DB_SCARICO_ORE, rows)
+
+        context["total_added"] = total_added
+        context["total_removed"] = total_removed
+        context["success"] = True

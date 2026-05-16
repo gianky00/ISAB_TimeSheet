@@ -14,7 +14,6 @@ from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
-from src.gui.controllers.bot_worker import BotWorker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel
 from src.gui.styles import STATUS_COLORS
@@ -47,6 +46,11 @@ class PrenotaBPPanel(BaseBotPanel):
             parent=parent,
         )
 
+        from src.gui.controllers.bot_execution_controller import BotExecutionController
+
+        self.bot_controller = BotExecutionController("prenota_bp", self)
+        self._setup_controller_connections()
+
         self.params_widget: BotParametersWidget
         self.clear_btn: ModernButton
         self.data_table: EditableDataTable
@@ -55,6 +59,15 @@ class PrenotaBPPanel(BaseBotPanel):
         self._setup_content()
         self._data_loaded = False
         # Il caricamento dati viene differito a showEvent
+
+    def _setup_controller_connections(self) -> None:
+        """Connette i segnali del controller agli slot del pannello."""
+        self.bot_controller.log_received.connect(self.log_widget.append)
+        self.bot_controller.execution_finished.connect(self._on_worker_finished)
+        self.bot_controller.row_status_updated.connect(self.on_step_completed)
+        self.bot_controller.step_changed.connect(self.activity_timeline.on_step_changed)
+        self.bot_controller.critical_error.connect(lambda t, m: ConfirmationDialog.show_error(self, t, m))
+        self.bot_controller.input_requested.connect(self._ask_user_input)
 
     def showEvent(self, event: Any) -> None:
         """Esegue il primo caricamento dati solo quando il pannello diventa visibile."""
@@ -181,6 +194,7 @@ class PrenotaBPPanel(BaseBotPanel):
         self._is_loading = True
         try:
             from src.core.bots.services import PrenotaBPService
+
             service = PrenotaBPService()
             cfg = service.load_config()
 
@@ -208,6 +222,7 @@ class PrenotaBPPanel(BaseBotPanel):
         }
 
         from src.core.bots.services import PrenotaBPService
+
         service = PrenotaBPService()
         service.save_config(params, self.data_table.get_data())
 
@@ -219,7 +234,7 @@ class PrenotaBPPanel(BaseBotPanel):
 
     def _on_start(self, params_override: dict[str, Any] | None = None) -> None:
         """
-        Prepara l'ambiente e avvia il worker del bot.
+        Prepara l'ambiente e avvia il worker del bot tramite controller.
 
         Args:
             params_override: Eventuali parametri che sovrascrivono quelli della UI.
@@ -250,26 +265,15 @@ class PrenotaBPPanel(BaseBotPanel):
             self._save_data()
 
         from src.core.bots.services import PrenotaBPService
+
         service = PrenotaBPService()
 
-        bot_params, bot_data = service.prepare_payload(
-            (username, password, ""),
-            params,
-            self.data_table.get_data(),
-            params_override
+        bot_params, bot_payload = service.prepare_payload(
+            (username, password, ""), params, self.data_table.get_data(), params_override
         )
 
         main_win: Any = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
-
-        # Inizializza il worker tramite BotWorker standard (registrato in BOT_REGISTRY)
-        self.worker = BotWorker(
-            bot_id="prenota_bp",
-            bot_params=bot_params,
-            data=bot_data,
-            telegram_service=tg_service,
-        )
-        self._setup_worker_connections(self.worker)
 
         # Reset pallini all'avvio
         self._update_status_list(force=True)
@@ -279,6 +283,23 @@ class PrenotaBPPanel(BaseBotPanel):
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
-        self.log_widget.append("Avvio bot Prenota BP...")
-        self.worker.start()
-        self.bot_started.emit()
+        self.log_widget.append("Preparazione Bot Prenota BP...")
+
+        # BotWorker aspetta list[dict] nel parametro data
+        # prepare_payload restituisce (params, data_dict)
+        # Assicuriamoci che bot_data sia una lista
+        bot_data = [bot_payload] if isinstance(bot_payload, dict) else bot_payload
+
+        # Delega l'avvio al controller universale
+        if self.bot_controller.start(bot_params, bot_data, tg_service):
+            self.bot_started.emit()
+        else:
+            self.log_widget.append("❌ Errore: Il bot è già in esecuzione.")
+            self._update_status(STATUS_COLORS["error"], "Errore avvio")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
+
+    def _on_stop(self) -> None:
+        """Gestisce la richiesta di stop tramite controller."""
+        self.bot_controller.stop()
+        super()._on_stop()

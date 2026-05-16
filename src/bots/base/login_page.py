@@ -50,7 +50,7 @@ class LoginPage:
             self.log(" -> Overlay di caricamento scomparso.")
             time.sleep(0.3)
         except TimeoutException:
-            self.log(f"  Timeout ({timeout_secondi}s) attesa overlay. Proseguo con cautela.")
+            self.log("  Scomparsa overlay non rilevata (proseguo...)")
             return False
         else:
             return True
@@ -135,7 +135,7 @@ class LoginPage:
             self.driver.get(self.isab_url)
 
             if "Proxy Error" in self.driver.title or "Proxy Error" in self.driver.page_source:
-                self.log("  Rilevato 'Proxy Error' durante l'accesso iniziale.")
+                self.log("⚠ Rilevato 'Proxy Error' durante l'accesso iniziale.")
                 return False
 
             self.log("Tentativo di login...")
@@ -150,7 +150,7 @@ class LoginPage:
             except TimeoutException:
                 # 2. Se il form non c' , controlla se siamo già loggati (fast-skip)
                 if self._verify_logged_in_via_ui():
-                    self.log("  Rilevata sessione attiva (skip login).")
+                    self.log("✓ Rilevata sessione attiva (skip login).")
                     return True
 
                 self.log("⚠️ Username assente e sessione invalida/scaduta.")
@@ -170,7 +170,7 @@ class LoginPage:
             self.log("  Timeout durante il login")
             return False
         except Exception as e:
-            self.log(f"  Errore login: {e}")
+            self.log(f"✗ Errore login: {e}")
             return False
         else:
             self.log("  Login completato con successo")

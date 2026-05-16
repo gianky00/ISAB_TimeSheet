@@ -146,7 +146,9 @@ class EnrichGiornalieraStep(ProcessingStep):
             df.loc[mask_standard, "odc"] = extracted.fillna("")
 
         df["year"] = context["year"]
-        df["nome_file"] = context["file_path"].name if hasattr(context["file_path"], "name") else "Sconosciuto"
+        df["nome_file"] = (
+            context["file_path"].name if hasattr(context["file_path"], "name") else "Sconosciuto"
+        )
 
         target_cols = [
             "year",
@@ -164,3 +166,27 @@ class EnrichGiornalieraStep(ProcessingStep):
         ]
 
         context["rows"] = list(df[target_cols].itertuples(index=False, name=None))
+
+
+class SyncGiornaliereStep(ProcessingStep):
+    """Passaggio per la sincronizzazione delle giornaliere con il database."""
+
+    def execute(self, context: dict[str, Any]) -> None:
+        if not context.get("success"):
+            return
+
+        rows = context.get("rows", [])
+        if not rows:
+            return
+
+        from src.core.data_synchronizer import DataSynchronizer  # noqa: PLC0415
+        from src.core.database import db_manager  # noqa: PLC0415
+
+        total_added, total_removed = DataSynchronizer.sync_giornaliere(
+            db_manager.DB_GIORNALIERE, rows, [context["year"]]
+        )
+
+        # Nota: In modalità parallela, questi valori verranno aggregati dall'importer
+        context["total_added"] = total_added
+        context["total_removed"] = total_removed
+        context["success"] = True

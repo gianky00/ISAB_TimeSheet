@@ -36,18 +36,19 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
 
     def __init__(
         self,
-        config: SeleniumBotConfig,
+        username: str | None = None,
+        password: str | None = None,
+        config: SeleniumBotConfig | None = None,
         account_type: str = "Esecutore",
-    ) -> None:
+        **kwargs: Any,
+    ) -> None:  # noqa: PLR0913
         """
         Inizializza il bot di ricerca PDL.
-
-        Args:
-          config: Configurazione standardizzata del bot.
-          account_type: Tipo di account (Esecutore/ISAB).
         """
-        super().__init__(config, account_type=account_type)
+        super().__init__(username, password, config, account_type=account_type)
         self.sites = ["IGCC", "ISAB Nord", "ISAB Sud"]
+        self.exclude_closed = kwargs.get("exclude_closed", True)
+        self.site_selection = kwargs.get("site_selection", "Seleziona tutto")
 
     @staticmethod
     def get_name() -> str:

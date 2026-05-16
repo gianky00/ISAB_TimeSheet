@@ -147,7 +147,9 @@ class TestLicenseValidatorDeep:
         # Fail lsblk, fallback to machine-id
 
         with patch("subprocess.check_output", side_effect=Exception("no lsblk")):
-            with patch.object(Path, "exists", side_effect=lambda p: str(p) == "/etc/machine-id"):
+            with patch.object(
+                Path, "exists", side_effect=lambda *args: str(args[0]).replace("\\", "/") == "/etc/machine-id"
+            ):
                 with patch.object(Path, "read_text", return_value="MACHINE-ID-123"):
                     hwid = get_hardware_id()
 

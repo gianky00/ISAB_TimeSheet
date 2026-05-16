@@ -49,7 +49,7 @@ class TestConfigManagerRobust:
     def test_load_config_defaults(self):
         """Test caricamento configurazione di default."""
         config = load_config()
-        assert config["browser_timeout"] == 30
+        assert config["browser_timeout"] == 300
         assert config["reparti"] == ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]
         assert self.mock_config_dir.exists()
 

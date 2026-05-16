@@ -83,12 +83,12 @@ class TestAppInitializer:
         assert isinstance(name, str)
         assert isinstance(prog, int)
 
-    @patch("src.core.logging.configure_logging")
+    @patch("src.core.app_initializer.configure_logging")
     def test_setup_logging_enterprise(self, mock_configure):
         AppInitializer._setup_logging()
         mock_configure.assert_called_once()
 
-    @patch("src.core.logging.configure_logging", side_effect=Exception("Logging error"))
+    @patch("src.core.app_initializer.configure_logging", side_effect=Exception("Logging error"))
     def test_setup_logging_fallback(self, mock_configure):
         # Should not raise, falls back to basicConfig
         AppInitializer._setup_logging()

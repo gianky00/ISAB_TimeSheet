@@ -9,12 +9,10 @@ from pathlib import Path
 from typing import Any
 
 from src.core import config_manager
-
-logger = logging.getLogger(__name__)
-
-
 from src.core.database.repositories import PdlRepository
 from src.models import PdlProgrammazioneRecord
+
+logger = logging.getLogger(__name__)
 
 
 class PDLQueries:
@@ -60,9 +58,8 @@ class PDLQueries:
     def get_programming_results_by_week(cls, start_date: str, end_date: str) -> list[dict[str, Any]]:
         """Recupera la programmazione settimanale riconvertendo i record in dizionari legacy."""
         records = cls._repo.get_programming_by_week(start_date, end_date)
-        results = []
-        for r in records:
-            results.append({
+        return [
+            {
                 "richiedente": r.richiedente,
                 "pdl": r.n_pdl,
                 "area": r.area,
@@ -78,8 +75,9 @@ class PDLQueries:
                     {"giorno": 6, "tcl": r.sab_tcl, "tgo": r.sab_tgo},
                     {"giorno": 7, "tcl": r.dom_tcl, "tgo": r.dom_tgo},
                 ],
-            })
-        return results
+            }
+            for r in records
+        ]
 
     @classmethod
     def get_pdl_interventions(cls, n_pdl: str) -> list[dict[str, Any]]:

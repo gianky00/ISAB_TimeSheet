@@ -68,16 +68,18 @@ class ScaricaTSBot(SeleniumBaseBot):
 
     def __init__(
         self,
-        config: SeleniumBotConfig,
+        username: str | None = None,
+        password: str | None = None,
+        config: SeleniumBotConfig | None = None,
         data_da: str | None = None,
         fornitore: str = "",
         elabora_ts: bool = False,
         **kwargs: Any,
-    ) -> None:
+    ) -> None:  # noqa: PLR0913
         """
-        Inizializza il bot.
+        Inizializza il bot Scarico TS.
         """
-        super().__init__(config=config)
+        super().__init__(username, password, config)
         self.data_da = data_da or f"01.01.{datetime.now(UTC).year}"
         self.fornitore = fornitore
         self.elabora_ts = elabora_ts

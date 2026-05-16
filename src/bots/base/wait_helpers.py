@@ -206,23 +206,40 @@ from src.bots.base.file_polling_params import FilePollingParams  # noqa: E402
 # ... (rest of imports)
 
 
-def poll_for_file(params: FilePollingParams) -> str | None:
+def poll_for_file(  # noqa: PLR0913
+    params: FilePollingParams | Path | str | None = None,
+    pattern: str = "*.xlsx",
+    timeout: int = 120,
+    poll_interval: float = 1.0,
+    min_age: float | None = None,
+    exclude_patterns: list[str] | None = None,
+    **kwargs: Any,
+) -> str | None:
     """
     Attende che un file appaia in una directory usando polling.
     Approccio PERMISSIVO: ritorna il file più recente che soddisfa i criteri.
-
-    Args:
-      params: Oggetto FilePollingParams con i parametri di polling.
-
-    Returns:
-      Path assoluto del file più recente, o None se timeout.
+    Supporta sia il nuovo pattern con FilePollingParams che la firma legacy.
     """
+    # Gestione firma legacy
+    if not isinstance(params, FilePollingParams):
+        directory = params or kwargs.get("directory")
+        if not directory:
+            raise ValueError("Directory non specificata in poll_for_file")
+        params = FilePollingParams(
+            directory=directory,
+            pattern=pattern,
+            timeout=timeout,
+            poll_interval=poll_interval,
+            min_age=min_age,
+            exclude_patterns=exclude_patterns,
+        )
+
     directory_path = Path(params.directory)
     if not directory_path.exists():
         logger.error(f"Directory does not exist: {directory_path}")
         return None
 
-    exclude_patterns = params.exclude_patterns or []
+    actual_exclude = params.exclude_patterns or []
     start_time = time.time()
 
     while time.time() - start_time < params.timeout:
@@ -233,7 +250,7 @@ def poll_for_file(params: FilePollingParams) -> str | None:
         files = list(directory_path.glob(params.pattern))
         _log_debug_poll_info(directory_path, params.pattern, files, start_time)
 
-        valid_files = _filter_valid_files(files, exclude_patterns, params.min_age)
+        valid_files = _filter_valid_files(files, actual_exclude, params.min_age)
 
         if valid_files:
             # Ritorna il più recente basandosi sull'effective_time
@@ -298,11 +315,42 @@ def _filter_valid_files(files: list[Path], excludes: list[str], min_age: float |
     return valid
 
 
-def poll_for_new_file(config: PollConfig, files_before: Iterable[Path | str]) -> str | None:
+def poll_for_new_file(
+    config: PollConfig | Path | str | None = None,
+    files_before: Iterable[Path | str] | None = None,
+    pattern: str | list[str] = "*.xlsx",
+    timeout: int = 120,
+    poll_interval: float = 1.0,
+    **kwargs: Any,
+) -> str | None:
     """
     Attende che appaia un NUOVO file rispetto a uno snapshot precedente.
-    Supporta pattern multipli e ignora file temporanei pre-esistenti.
+    Supporta sia il nuovo pattern con PollConfig che la firma legacy.
     """
+    # Gestione firma legacy
+    if not isinstance(config, PollConfig):
+        directory = config or kwargs.get("directory")
+        if not directory:
+            raise ValueError("Directory non specificata in poll_for_new_file")
+
+        # Recupera files_before da kwargs se non passato posizionalmente
+        actual_files_before = files_before if files_before is not None else kwargs.get("files_before", [])
+
+        # Gestione intelligente parametri pattern/timeout/poll_interval
+        # Se sono passati come keyword arguments in kwargs (perché non presenti nella firma ma catturati), li usiamo.
+        # Altrimenti usiamo quelli passati posizionalmente o i default.
+        actual_pattern = kwargs.get("pattern", pattern)
+        actual_timeout = kwargs.get("timeout", timeout)
+        actual_poll_interval = kwargs.get("poll_interval", poll_interval)
+
+        config = PollConfig(
+            directory=directory,
+            pattern=actual_pattern,
+            timeout=actual_timeout,
+            poll_interval=actual_poll_interval,
+        )
+        files_before = actual_files_before
+
     directory_path = Path(config.directory)
     snapshot_map = _create_snapshot_map(directory_path, files_before)
     patterns = [config.pattern] if isinstance(config.pattern, str) else config.pattern

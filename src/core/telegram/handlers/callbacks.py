@@ -69,19 +69,19 @@ def _is_utility_data(data: str) -> bool:
 async def _handle_nav_actions(service: "TelegramService", data: str, query: "CallbackQuery") -> None:
     if data == "menu_main":
         await query.edit_message_text(
-            "[AVVIO] *Command Center*",
+            "📱 *Command Center*",
             reply_markup=TelegramUI.get_main_keyboard(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
     elif data == "nav_bots":
         await query.edit_message_text(
-            "   *Seleziona Piattaforma*",
+            "🤖 Seleziona Piattaforma:",
             reply_markup=TelegramUI.get_bots_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
     elif data == "nav_db":
         await query.edit_message_text(
-            "    *Seleziona Database*",
+            "📊 Seleziona Database:",
             reply_markup=TelegramUI.get_db_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
@@ -339,7 +339,7 @@ async def _handle_utility_actions(  # noqa: C901
     if data == "status":
         service.status_requested.emit(str(chat_id))
     elif data == "screenshot":
-        await query.edit_message_text("   Screenshot:", reply_markup=TelegramUI.get_screenshot_menu())
+        await query.edit_message_text("📸 Screenshot:", reply_markup=TelegramUI.get_screenshot_menu())
     elif data in ("snap_app", "snap_pc"):
         service.screenshot_requested.emit(data.replace("snap_", ""))
     elif data == "stop_all":

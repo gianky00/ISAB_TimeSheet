@@ -24,10 +24,12 @@ class SafeworkBaseBot(SeleniumBaseBot):
 
     def __init__(
         self,
-        config: SeleniumBotConfig,
+        username: str | None = None,
+        password: str | None = None,
+        config: SeleniumBotConfig | None = None,
         account_type: str = "Esecutore",
     ) -> None:
-        super().__init__(config)
+        super().__init__(username, password, config)
         self.account_type = account_type
         self.safework_login_page: SafeWorkLoginPage | None = None
         self.ricerca_pdl_page: RicercaPDLPage | None = None

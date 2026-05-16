@@ -12,7 +12,6 @@ from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
-from src.gui.controllers.bot_worker import BotWorker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel
 from src.gui.widgets import BotParametersWidget, EditableDataTable
@@ -44,6 +43,11 @@ class ScaricaTSPanel(BaseBotPanel):
             parent=parent,
         )
 
+        from src.gui.controllers.bot_execution_controller import BotExecutionController
+
+        self.bot_controller = BotExecutionController("scarico_ts", self)
+        self._setup_controller_connections()
+
         self.params_widget: BotParametersWidget
         self.elabora_ts_check: StandardCheckBox
         self.clear_btn: ModernButton
@@ -58,6 +62,15 @@ class ScaricaTSPanel(BaseBotPanel):
 
         self._data_loaded = False
         # Il caricamento dati viene differito a showEvent
+
+    def _setup_controller_connections(self) -> None:
+        """Connette i segnali del controller agli slot del pannello."""
+        self.bot_controller.log_received.connect(self.log_widget.append)
+        self.bot_controller.execution_finished.connect(self._on_worker_finished)
+        self.bot_controller.row_status_updated.connect(self.on_step_completed)
+        self.bot_controller.step_changed.connect(self.activity_timeline.on_step_changed)
+        self.bot_controller.critical_error.connect(lambda t, m: ConfirmationDialog.show_error(self, t, m))
+        self.bot_controller.input_requested.connect(self._ask_user_input)
 
     def showEvent(self, event: Any) -> None:
         """Esegue il primo caricamento dati solo quando il pannello diventa visibile."""
@@ -185,6 +198,7 @@ class ScaricaTSPanel(BaseBotPanel):
         self._is_loading = True
         try:
             from src.core.bots.services import ScaricoTSService
+
             service = ScaricoTSService()
             cfg = service.load_config()
 
@@ -207,6 +221,7 @@ class ScaricaTSPanel(BaseBotPanel):
             return
 
         from src.core.bots.services import ScaricoTSService
+
         service = ScaricoTSService()
 
         params = {
@@ -237,7 +252,7 @@ class ScaricaTSPanel(BaseBotPanel):
 
     def _on_start(self, params_override: dict[str, Any] | None = None) -> None:
         """
-        Avvia l'esecuzione del bot Scarico TS gestendo il worker e i segnali.
+        Avvia l'esecuzione del bot Scarico TS gestendo il controller.
 
         Args:
             params_override: Parametri opzionali per sovrascrivere l'UI.
@@ -248,6 +263,7 @@ class ScaricaTSPanel(BaseBotPanel):
             self._save_data()
 
         from src.core.bots.services import ScaricoTSService
+
         service = ScaricoTSService()
 
         data_da, _ = self.params_widget.get_dates()
@@ -260,31 +276,30 @@ class ScaricaTSPanel(BaseBotPanel):
         }
 
         username, password = self.get_credentials()
-        bot_params, bot_data = service.prepare_payload(
-            (username, password, ""),
-            params,
-            self.data_table.get_data(),
-            params_override
+        bot_params, bot_payload = service.prepare_payload(
+            (username, password, ""), params, self.data_table.get_data(), params_override
         )
         main_win: Any = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-        # Inizializza il worker (avvio asincrono)
-        self.worker = BotWorker(
-            bot_id="scarico_ts",
-            bot_params=bot_params,
-            data=bot_data,
-            telegram_service=tg_service,
-        )
-
-        self._setup_worker_connections(self.worker)
-
-        self.start_btn.setEnabled(False)
-        self.stop_btn.setEnabled(True)
+        # Delega l'avvio al controller
         self.log_widget.clear()
-        self.log_widget.append("Avvio bot Scarico TS...")
-        self.worker.start()
-        self.bot_started.emit()
+        self.log_widget.append("Preparazione Bot Scarico TS...")
+
+        # BotWorker aspetta list[dict] nel parametro data
+        # prepare_payload restituisce (params, data_dict)
+        # Assicuriamoci che bot_data sia una lista
+        bot_data = [bot_payload] if isinstance(bot_payload, dict) else bot_payload
+
+        if self.bot_controller.start(bot_params, bot_data, tg_service):
+            self.bot_started.emit()
+        else:
+            self.log_widget.append("❌ Errore: Il bot è già in esecuzione.")
+
+    def _on_stop(self) -> None:
+        """Gestisce la richiesta di stop."""
+        self.bot_controller.stop()
+        super()._on_stop()
 
     def _on_worker_finished(self, success: bool) -> None:
         """Chiamato al termine del bot."""

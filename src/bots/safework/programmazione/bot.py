@@ -35,17 +35,16 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
 
     def __init__(
         self,
-        config: SeleniumBotConfig,
+        username: str | None = None,
+        password: str | None = None,
+        config: SeleniumBotConfig | None = None,
         account_type: str = "Esecutore",
+        **kwargs: Any,
     ) -> None:
         """
         Inizializza il bot di programmazione.
-
-        Args:
-          config: Configurazione standardizzata del bot.
-          account_type: Tipo di account (Esecutore/ISAB).
         """
-        super().__init__(config, account_type=account_type)
+        super().__init__(username, password, config, account_type=account_type)
         self.results: list[dict[str, Any]] = []
 
     @staticmethod

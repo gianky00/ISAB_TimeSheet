@@ -8,6 +8,7 @@ from src.core.processing.base import ProcessingStep
 
 logger = get_logger(__name__)
 
+
 class ReadCertificatiExcelStep(ProcessingStep):
     """Legge il file Excel dei certificati campione, rilevando header e sheet."""
 
@@ -45,7 +46,15 @@ class ReadCertificatiExcelStep(ProcessingStep):
     def _detect_header(self, df_preview: pd.DataFrame) -> int:
         header_row_idx = -1
         max_matches = 0
-        keywords = {"ID-COEMI", "ID COEMI", "ID-STRUMENTO", "ID STRUMENTO", "MATRICOLA", "CERTIFICATO", "SCADENZA"}
+        keywords = {
+            "ID-COEMI",
+            "ID COEMI",
+            "ID-STRUMENTO",
+            "ID STRUMENTO",
+            "MATRICOLA",
+            "CERTIFICATO",
+            "SCADENZA",
+        }
 
         for i, row in df_preview.iterrows():
             row_values = [str(val).strip().upper() for val in row.values]
@@ -59,6 +68,7 @@ class ReadCertificatiExcelStep(ProcessingStep):
             header_row_idx = 5
         return header_row_idx
 
+
 class NormalizeCertificatiStep(ProcessingStep):
     """Rinomina, normalizza le colonne e filtra righe vuote o invalide."""
 
@@ -66,21 +76,43 @@ class NormalizeCertificatiStep(ProcessingStep):
     MIN_MATCH_LEN = 3
 
     CERTIFICATI_CAMPIONE_MAPPING: ClassVar[dict[str, str]] = {
-        "ID-COEMI": "id_coemi", "ID COEMI": "id_coemi", "ID-STRUMENTO": "id_coemi", "ID STRUMENTO": "id_coemi",
-        "Certificato Taratura": "certificato", "CERTIFICATO": "certificato",
-        "Modello / Tipo": "modello", "MODELLO": "modello", "TIPO": "modello",
-        "Costruttore": "costruttore", "COSTRUTTORE": "costruttore",
-        "Matricola": "matricola", "MATRICOLA": "matricola",
-        "Range Strumento": "range_strumento", "RANGE": "range_strumento",
-        "Errore max %": "errore_max", "ERR %": "errore_max", "ERROR %": "errore_max",
-        "Emissione Certificato": "emissione", "EMISSIONE": "emissione",
-        "Scadenza Certificato": "scadenza", "SCADENZA": "scadenza",
-        "Stato Certificato": "stato", "STATO": "stato",
+        "ID-COEMI": "id_coemi",
+        "ID COEMI": "id_coemi",
+        "ID-STRUMENTO": "id_coemi",
+        "ID STRUMENTO": "id_coemi",
+        "Certificato Taratura": "certificato",
+        "CERTIFICATO": "certificato",
+        "Modello / Tipo": "modello",
+        "MODELLO": "modello",
+        "TIPO": "modello",
+        "Costruttore": "costruttore",
+        "COSTRUTTORE": "costruttore",
+        "Matricola": "matricola",
+        "MATRICOLA": "matricola",
+        "Range Strumento": "range_strumento",
+        "RANGE": "range_strumento",
+        "Errore max %": "errore_max",
+        "ERR %": "errore_max",
+        "ERROR %": "errore_max",
+        "Emissione Certificato": "emissione",
+        "EMISSIONE": "emissione",
+        "Scadenza Certificato": "scadenza",
+        "SCADENZA": "scadenza",
+        "Stato Certificato": "stato",
+        "STATO": "stato",
     }
 
     CERTIFICATI_CAMPIONE_COLS: ClassVar[list[str]] = [
-        "id_coemi", "certificato", "modello", "costruttore", "matricola",
-        "range_strumento", "errore_max", "emissione", "scadenza", "stato",
+        "id_coemi",
+        "certificato",
+        "modello",
+        "costruttore",
+        "matricola",
+        "range_strumento",
+        "errore_max",
+        "emissione",
+        "scadenza",
+        "stato",
     ]
 
     def execute(self, context: dict[str, Any]) -> None:
@@ -113,7 +145,7 @@ class NormalizeCertificatiStep(ProcessingStep):
                 return col.iloc[:, 0]
             return col
 
-        mask_empty = (get_col_safe('id_coemi') == "") & (get_col_safe('matricola') == "")
+        mask_empty = (get_col_safe("id_coemi") == "") & (get_col_safe("matricola") == "")
         df = df[~mask_empty]
 
         context["df"] = df
@@ -145,6 +177,7 @@ class NormalizeCertificatiStep(ProcessingStep):
                     used_db_cols.add(db_col)
                     break
         return rename_map
+
 
 class FormatCertificatiStep(ProcessingStep):
     """Applica formattazione a date, percentuali e stati, ripulendo tag debug."""
@@ -213,3 +246,26 @@ class FormatCertificatiStep(ProcessingStep):
             return f"{num:g}%".replace(".", ",")
         except (ValueError, TypeError):
             return str(val).replace(".", ",")
+
+
+class SyncCertificatiStep(ProcessingStep):
+    """Passaggio per la sincronizzazione dei certificati con il database."""
+
+    def execute(self, context: dict[str, Any]) -> None:
+        if not context.get("success"):
+            return
+
+        rows = context.get("rows", [])
+        if not rows:
+            return
+
+        from src.core.data_synchronizer import DataSynchronizer  # noqa: PLC0415
+        from src.core.database import db_manager  # noqa: PLC0415
+
+        total_added, total_removed = DataSynchronizer.sync_certificati_campione(
+            db_manager.DB_CERTIFICATI, rows
+        )
+
+        context["total_added"] = total_added
+        context["total_removed"] = total_removed
+        context["success"] = True

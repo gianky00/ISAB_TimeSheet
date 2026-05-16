@@ -13,6 +13,7 @@ from src.core.processing.giornaliere.steps import (
     EnrichGiornalieraStep,
     NormalizeGiornalieraStep,
     ReadGiornalieraStep,
+    SyncGiornaliereStep,
 )
 
 logger = get_logger(__name__)
@@ -161,6 +162,7 @@ class GiornaliereImporter(BaseImporter):
             pipeline.add_step(ReadGiornalieraStep())
             pipeline.add_step(NormalizeGiornalieraStep())
             pipeline.add_step(EnrichGiornalieraStep())
+            pipeline.add_step(SyncGiornaliereStep())
 
             context = {
                 "file_path": file_path,
@@ -180,4 +182,3 @@ class GiornaliereImporter(BaseImporter):
             return (year, [], str(e))
         else:
             return (year, rows, None)
-

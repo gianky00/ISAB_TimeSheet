@@ -77,8 +77,8 @@ class TestEmployeeManager:
         # Verifica normalizzazione UPPER
         args = mock_db.execute_query.call_args
         params = args[0][2]
-        assert params[1] == "ROSSI"
-        assert params[2] == "MARIO"
+        assert params[0] == "ROSSI"
+        assert params[1] == "MARIO"
         assert params[4] == "RSSMRA"
 
     def test_add_employee_integrity_error(self, manager, mock_db):

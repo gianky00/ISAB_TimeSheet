@@ -71,6 +71,11 @@ class AuditManager:
                 time.sleep(1)  # Evita busy loop in caso di errore persistente
 
     @property
+    def DB_PATH(self) -> Path:  # noqa: N802
+        """Alias per compatibilità test."""
+        return self.db.db_path
+
+    @property
     def db_path(self) -> Path:
         """Compatibilità Legacy per test."""
         return self.db.db_path
