@@ -113,10 +113,17 @@ class ContabilitaKPIPanel(QWidget):
         layout.addWidget(self.scroll_area)
 
     def _setup_scorecards(self) -> None:
-        """Configura le schede riassuntive (Scorecards)."""
+        """Configura le schede riassuntive (Scorecards) con stile Modern Card."""
+        from src.gui.styles.ui_effects import UIEffectsManager
+        from src.gui.styles.widget_styles import CARD_SHADOW_BLUR, CARD_SHADOW_COLOR, CARD_STYLE
+
         # ROW 1: General Scorecards
         self._add_section_title("METRICHE GENERALI")
         self.row1 = KPICardsRow()
+        self.row1.setStyleSheet(CARD_STYLE)
+        UIEffectsManager.apply_shadow(self.row1, blur=CARD_SHADOW_BLUR, color=CARD_SHADOW_COLOR)
+        UIEffectsManager.animate_fade(self.row1, duration=500)
+
         self.card_totale = self.row1.add_card("TOTALE PREVENTIVATO", "  0,00", COLORS["success_dark"])
         self.card_ore = self.row1.add_card("ORE SPESE TOTALI", "0", COLORS["primary_dark"])
         self.card_resa = self.row1.add_card("RESA MEDIA", "0", COLORS["warning_orange"])
@@ -126,6 +133,10 @@ class ContabilitaKPIPanel(QWidget):
         # ROW 2: Deep Technical Analysis
         self._add_section_title("ANALISI REDDITIVIT  E EFFICIENZA")
         self.row2 = KPICardsRow()
+        self.row2.setStyleSheet(CARD_STYLE)
+        UIEffectsManager.apply_shadow(self.row2, blur=CARD_SHADOW_BLUR, color=CARD_SHADOW_COLOR)
+        UIEffectsManager.animate_fade(self.row2, duration=700)
+
         self.card_margine = self.row2.add_card(
             "MARGINE OPERATIVO STIMATO",
             "  0,00",
