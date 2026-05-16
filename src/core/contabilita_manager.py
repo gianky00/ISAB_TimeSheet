@@ -5,7 +5,6 @@ Orchestra i servizi di importazione, ricerca e statistiche delegando le responsa
 """
 
 from collections.abc import Callable
-from pathlib import Path
 from typing import Any
 
 from src.core.contabilita.importer_service import ContabilitaImporterService
@@ -28,6 +27,7 @@ class ContabilitaManager:
     def scan_scarico_ore_rows(cls, file_path: str) -> int:
         """Stima rapida delle righe per Scarico Ore (DataEase) per calcolo ETA."""
         from src.core.excel_importer import ExcelImporter  # noqa: PLC0415
+
         return ExcelImporter.scan_scarico_ore_rows(file_path)
 
     @classmethod

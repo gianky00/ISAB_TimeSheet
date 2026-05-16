@@ -189,6 +189,7 @@ class GiornaliereImporter(BaseImporter):
     def _normalize_giornaliera_columns(cls, df: pd.DataFrame) -> pd.DataFrame:
         """Alias per retrocompatibilità con i test."""
         from src.core.processing.giornaliere.steps import NormalizeGiornalieraStep  # noqa: PLC0415
+
         context = {"df": df, "success": True}
         NormalizeGiornalieraStep().execute(context)
         return context["df"]
@@ -197,4 +198,5 @@ class GiornaliereImporter(BaseImporter):
     def _clean_data(cls, df: pd.DataFrame) -> pd.DataFrame:
         """Alias per retrocompatibilità con i test."""
         from src.core.processing.giornaliere.steps import NormalizeGiornalieraStep  # noqa: PLC0415
+
         return NormalizeGiornalieraStep()._clean_data(df)

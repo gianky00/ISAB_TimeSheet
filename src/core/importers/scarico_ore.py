@@ -151,6 +151,7 @@ class ScaricoOreImporter(BaseImporter):
     def _process_all_scarico_rows(cls, ws: Any, progress_callback: Any) -> list[tuple[Any, ...]]:
         """Alias per retrocompatibilità con i test."""
         from src.core.processing.scarico_ore.steps import ProcessScaricoOreRowsStep  # noqa: PLC0415
+
         context = {"ws": ws, "progress_callback": progress_callback, "success": True}
         ProcessScaricoOreRowsStep().execute(context)
         return context.get("rows", [])

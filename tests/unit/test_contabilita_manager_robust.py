@@ -1,6 +1,9 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
 import pytest
+
 from src.core.contabilita_manager import ContabilitaManager
+
 
 class TestContabilitaManagerRobust:
     @pytest.fixture
@@ -57,7 +60,7 @@ class TestContabilitaManagerRobust:
     def test_getters_delegation(self, mocker):
         """Test delega ai metodi del repository."""
         mock_repo = mocker.patch("src.core.contabilita_manager.ContabilitaManager._repo")
-        
+
         ContabilitaManager.get_available_years()
         mock_repo.get_available_years.assert_called_once()
 

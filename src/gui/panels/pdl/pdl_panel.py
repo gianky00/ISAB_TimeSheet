@@ -18,8 +18,8 @@ from PySide6.QtWidgets import (
 )
 
 from src.core.constants import Icons
-from src.core.pdl.pdl_service import PDLService
 from src.core.pdl.pdl_controller import PDLController
+from src.core.pdl.pdl_service import PDLService
 from src.core.sync_tracker import SyncTracker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.formatters import FastTableModel

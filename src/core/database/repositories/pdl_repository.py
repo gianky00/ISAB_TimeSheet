@@ -13,14 +13,36 @@ class PdlRepository:
     def __init__(self, db_manager_instance: Any = None) -> None:
         self.db = db_manager_instance or db_manager
         self.columns = [
-            "id", "n_pdl", "data_creazione", "area", "unita", "ditta",
-            "descrizione_lavoro", "tipologia", "stato", "apparecchiatura",
-            "richiedente", "data_richiesta", "emittente", "data_emissione",
-            "aprente", "data_apertura", "priorita", "contratto", "ordine",
-            "sito", "importato_il"
+            "id",
+            "n_pdl",
+            "data_creazione",
+            "area",
+            "unita",
+            "ditta",
+            "descrizione_lavoro",
+            "tipologia",
+            "stato",
+            "apparecchiatura",
+            "richiedente",
+            "data_richiesta",
+            "emittente",
+            "data_emissione",
+            "aprente",
+            "data_apertura",
+            "priorita",
+            "contratto",
+            "ordine",
+            "sito",
+            "importato_il",
         ]
 
-    def get_filtered(self, filters: dict[str, Any], sort_col_name: str = "importato_il", sort_order: str = "DESC", as_objects: bool = True) -> list[PdlRecord] | list[tuple[Any, ...]]:
+    def get_filtered(
+        self,
+        filters: dict[str, Any],
+        sort_col_name: str = "importato_il",
+        sort_order: str = "DESC",
+        as_objects: bool = True,
+    ) -> list[PdlRecord] | list[tuple[Any, ...]]:
         """Recupera i PDL filtrati e ordinati."""
         query = f"SELECT {', '.join(self.columns)} FROM pdl WHERE 1=1"
         params = []
@@ -49,8 +71,16 @@ class PdlRepository:
 
         if search_text:
             search_cols = [
-                "n_pdl", "area", "unita", "ditta", "descrizione_lavoro",
-                "tipologia", "stato", "richiedente", "ordine", "sito"
+                "n_pdl",
+                "area",
+                "unita",
+                "ditta",
+                "descrizione_lavoro",
+                "tipologia",
+                "stato",
+                "richiedente",
+                "ordine",
+                "sito",
             ]
             or_clause = " OR ".join([f"{col} LIKE ?" for col in search_cols])
             query += f" AND ({or_clause})"
@@ -93,14 +123,18 @@ class PdlRepository:
 
     def get_programming_by_week(self, start_date: str, end_date: str) -> list[PdlProgrammazioneRecord]:
         """Recupera la programmazione per una settimana specifica."""
-        query = "SELECT * FROM pdl_programmazione WHERE settimana_start = ? AND settimana_end = ? ORDER BY id ASC"
+        query = (
+            "SELECT * FROM pdl_programmazione WHERE settimana_start = ? AND settimana_end = ? ORDER BY id ASC"
+        )
         try:
             rows = self.db.execute_query(self.db.DB_PDL, query, (start_date, end_date))
             return [PdlProgrammazioneRecord(**dict(row)) for row in rows]
         except Exception:
             return []
 
-    def save_programming(self, records: list[PdlProgrammazioneRecord], start_date: str, end_date: str) -> bool:
+    def save_programming(
+        self, records: list[PdlProgrammazioneRecord], start_date: str, end_date: str
+    ) -> bool:
         """Salva la programmazione settimanale."""
         try:
             # 1. Pulizia settimana esistente
@@ -113,32 +147,67 @@ class PdlRepository:
             # 2. Inserimento nuovi record
             # Raccogliamo i campi escludendo ID se None
             fields = [
-                "richiedente", "n_pdl", "area", "unita", "descrizione",
-                "lun_tcl", "lun_tgo", "mar_tcl", "mar_tgo", "mer_tcl", "mer_tgo",
-                "gio_tcl", "gio_tgo", "ven_tcl", "ven_tgo", "sab_tcl", "sab_tgo", "dom_tcl", "dom_tgo",
-                "settimana_start", "settimana_end"
+                "richiedente",
+                "n_pdl",
+                "area",
+                "unita",
+                "descrizione",
+                "lun_tcl",
+                "lun_tgo",
+                "mar_tcl",
+                "mar_tgo",
+                "mer_tcl",
+                "mer_tgo",
+                "gio_tcl",
+                "gio_tgo",
+                "ven_tcl",
+                "ven_tgo",
+                "sab_tcl",
+                "sab_tgo",
+                "dom_tcl",
+                "dom_tgo",
+                "settimana_start",
+                "settimana_end",
             ]
             query = f"""
-                INSERT INTO pdl_programmazione ({', '.join(fields)})
-                VALUES ({', '.join(['?'] * len(fields))})
+                INSERT INTO pdl_programmazione ({", ".join(fields)})
+                VALUES ({", ".join(["?"] * len(fields))})
             """
 
             data_to_insert = []
             for r in records:
                 data = (
-                    r.richiedente, r.n_pdl, r.area, r.unita, r.descrizione,
-                    r.lun_tcl, r.lun_tgo, r.mar_tcl, r.mar_tgo, r.mer_tcl, r.mer_tgo,
-                    r.gio_tcl, r.gio_tgo, r.ven_tcl, r.ven_tgo, r.sab_tcl, r.sab_tgo, r.dom_tcl, r.dom_tgo,
-                    r.settimana_start, r.settimana_end
+                    r.richiedente,
+                    r.n_pdl,
+                    r.area,
+                    r.unita,
+                    r.descrizione,
+                    r.lun_tcl,
+                    r.lun_tgo,
+                    r.mar_tcl,
+                    r.mar_tgo,
+                    r.mer_tcl,
+                    r.mer_tgo,
+                    r.gio_tcl,
+                    r.gio_tgo,
+                    r.ven_tcl,
+                    r.ven_tgo,
+                    r.sab_tcl,
+                    r.sab_tgo,
+                    r.dom_tcl,
+                    r.dom_tgo,
+                    r.settimana_start,
+                    r.settimana_end,
                 )
                 data_to_insert.append(data)
 
             with self.db.get_connection(self.db.DB_PDL) as conn:
                 conn.executemany(query, data_to_insert)
-            return True
         except Exception:
             logger.exception("Errore repository PDL save_programming")
             return False
+        else:
+            return True
 
     def get_interventions(self, n_pdl: str, ext_db_path: str) -> list[dict[str, Any]]:
         """Recupera la cronologia interventi per un PDL da un database esterno."""

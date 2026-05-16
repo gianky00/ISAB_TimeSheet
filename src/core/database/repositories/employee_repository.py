@@ -27,68 +27,51 @@ class EmployeeRepository:
     def get_all(
         self, active_only: bool = True, as_objects: bool = True
     ) -> list[EmployeeRecord] | list[dict[str, Any]]:
-        """Restituisce tutti i dipendenti, opzionalmente filtrati per quelli attivi."""
+        """Restituisce tutti i dipendenti."""
         query = f"SELECT {', '.join(self.columns)} FROM dipendenti"
+        if active_only:
+            query += " WHERE monitoraggio_attivo = 1"
+        query += " ORDER BY cognome, nome"
 
         try:
-            if active_only:
-                query += " WHERE monitoraggio_attivo = 1"
-            query += " ORDER BY cognome, nome"
-
             rows = self.db.execute_query(self.db.DB_DIPENDENTI, query)
-
-            results: list[dict[str, Any]] = []
+            results = []
             for row in rows:
                 try:
-                    # Tenta conversione Row -> dict
-                    d = dict(row)
+                    results.append(dict(row))
                 except (TypeError, ValueError):
-                    # Fallback per tuple (es. mock nei test)
-                    d = dict(zip(self.columns, row, strict=False))
-                results.append(d)
+                    results.append(dict(zip(self.columns, row, strict=False)))
 
             if as_objects:
                 return [EmployeeRecord(**d) for d in results]
         except sqlite3.OperationalError:
-            # Fallback per schema vecchio (se mancano colonne come monitoraggio_attivo o data_nascita)
-            logger.warning("Repository Employee: schema DB non allineato, uso fallback")
-            query_fallback = "SELECT id_risorsa, cognome, nome, badge, codice_fiscale, data_assunzione FROM dipendenti ORDER BY cognome, nome"
-            rows = self.db.execute_query(self.db.DB_DIPENDENTI, query_fallback)
-
-            if as_objects:
-                obj_results: list[EmployeeRecord] = []
-                for row in rows:
-                    data = {
-                        "id_risorsa": row[0],
-                        "cognome": row[1],
-                        "nome": row[2],
-                        "badge": row[3],
-                        "codice_fiscale": row[4],
-                        "data_assunzione": row[5],
-                        "monitoraggio_attivo": 1,
-                        "data_nascita": None,
-                    }
-                    obj_results.append(EmployeeRecord(**data))
-                return obj_results
-            dict_results: list[dict[str, Any]] = []
-            for row in rows:
-                data = {
-                    "id_risorsa": row[0],
-                    "cognome": row[1],
-                    "nome": row[2],
-                    "badge": row[3],
-                    "codice_fiscale": row[4],
-                    "data_assunzione": row[5],
-                    "monitoraggio_attivo": 1,
-                    "data_nascita": None,
-                }
-                dict_results.append(data)
-            return dict_results
+            return self._fallback_get_all(as_objects)
         except Exception:
-            logger.exception("Errore repository Employee get_all")
+            logger.exception("Errore repository Employee")
             return []
         else:
             return results
+
+    def _fallback_get_all(self, as_objects: bool) -> list[EmployeeRecord] | list[dict[str, Any]]:
+        """Fallback per schema DB vecchio."""
+        query = "SELECT id_risorsa, cognome, nome, badge, codice_fiscale, data_assunzione FROM dipendenti ORDER BY cognome, nome"
+        rows = self.db.execute_query(self.db.DB_DIPENDENTI, query)
+        data = [
+            {
+                "id_risorsa": r[0],
+                "cognome": r[1],
+                "nome": r[2],
+                "badge": r[3],
+                "codice_fiscale": r[4],
+                "data_assunzione": r[5],
+                "monitoraggio_attivo": 1,
+                "data_nascita": None,
+            }
+            for r in rows
+        ]
+        if as_objects:
+            return [EmployeeRecord(**d) for d in data]
+        return data
 
     def get_filtered(
         self, search_text: str = "", active_only: bool = False, as_objects: bool = True
@@ -142,7 +125,7 @@ class EmployeeRepository:
             # Update - Usiamo una copia dei dati per non modificare l'oggetto originale
             data = dict(vars(employee))
             id_risorsa = data.pop("id_risorsa")
-            
+
             # Applichiamo la normalizzazione ai dati da salvare
             data["cognome"] = cognome
             data["nome"] = nome

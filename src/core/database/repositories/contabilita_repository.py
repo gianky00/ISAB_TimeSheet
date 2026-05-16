@@ -203,6 +203,19 @@ class ContabilitaRepository:
                 if id_col == "id_strumento" and "id_coemi" in cols:
                     cols[cols.index("id_coemi")] = "id_strumento"
 
+                cols = [
+                    "id_coemi",
+                    "certificato",
+                    "modello",
+                    "costruttore",
+                    "matricola",
+                    "range_strumento",
+                    "errore_max",
+                    "emissione",
+                    "scadenza",
+                    "stato",
+                ]
+                cols_str = ", ".join(cols)
                 query = f"SELECT {cols_str}, annotazioni, ubicazione, id FROM certificati_campione ORDER BY id ASC"
                 cursor.execute(query)
                 return [tuple(row) for row in cursor.fetchall()]
@@ -225,6 +238,7 @@ class ContabilitaRepository:
 
                 # Per compatibilità legacy
                 from src.core.excel_importer import ExcelImporter  # noqa: PLC0415
+
                 cols = ExcelImporter.SCARICO_ORE_COLS
                 query = f"SELECT {', '.join(cols)} FROM scarico_ore ORDER BY id DESC"  # nosec B608
                 cursor.execute(query)

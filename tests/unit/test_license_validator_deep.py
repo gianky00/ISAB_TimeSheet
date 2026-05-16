@@ -1,8 +1,7 @@
 import base64
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
 from src.core.license_validator import (
     LicenseStatus,
     get_detailed_license_status,
@@ -41,6 +40,7 @@ class TestLicenseValidatorDeep:
         mock_get_key.return_value = key_b64
 
         from cryptography.fernet import Fernet
+
         f = Fernet(key_b64)
         payload = {"Cliente": "Test Client", "Hardware ID": "HW1"}
         encrypted = f.encrypt(json.dumps(payload).encode())
@@ -83,6 +83,7 @@ class TestLicenseValidatorDeep:
     )
     def test_detailed_status_hardware_mismatch(self, mock_integrity, mock_hwid, mock_info):
         from pathlib import Path
+
         mock_info.return_value = {"Hardware ID": "OTHER-HW", "Cliente": "C1"}
 
         with patch.object(Path, "exists", return_value=True):
@@ -114,18 +115,18 @@ class TestLicenseValidatorDeep:
 
     def test_get_hardware_id_linux_machine_id(self, mocker):
         from pathlib import Path
-        
+
         # Mocks a livello di modulo per evitare interferenze
         mocker.patch("platform.system", return_value="Linux")
         mocker.patch("subprocess.check_output", side_effect=Exception("no lsblk"))
-        
+
         # Mock Path.exists e Path.read_text in modo più specifico
         mock_exists = mocker.patch.object(Path, "exists", autospec=True)
         mock_read = mocker.patch.object(Path, "read_text", autospec=True)
-        
+
         def exists_side_effect(self_path):
             return str(self_path).replace("\\", "/") == "/etc/machine-id"
-            
+
         mock_exists.side_effect = exists_side_effect
         mock_read.return_value = "MACHINE-ID-123"
 

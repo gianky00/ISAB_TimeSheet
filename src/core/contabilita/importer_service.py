@@ -7,7 +7,6 @@ from collections.abc import Callable
 from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 from src.core.data_synchronizer import DataSynchronizer
 from src.core.database import db_manager
@@ -46,7 +45,7 @@ class ContabilitaImporterService:
                 result.get("success", False),
                 result.get("message", ""),
                 result.get("total_added", 0),
-                result.get("total_removed", 0)
+                result.get("total_removed", 0),
             )
         except Exception:
             logger.exception("Errore nella pipeline di importazione Excel")
@@ -76,7 +75,7 @@ class ContabilitaImporterService:
                 all_new_rows,
                 years_encountered,
             ) = ExcelImporter.import_giornaliere(root_path, lookup_map, progress_callback)
-            
+
             if not success:
                 return False, message, 0, 0
 
@@ -92,7 +91,7 @@ class ContabilitaImporterService:
                     0,
                     0,
                 )
-            
+
             return (
                 True,
                 f"Importate Giornaliere per anni: {sorted(set(years_encountered))}",

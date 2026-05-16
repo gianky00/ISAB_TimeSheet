@@ -30,10 +30,12 @@ from src.core.telegram_bridge import TelegramUIBridge
 from src.core.telegram_manager import TelegramService
 from src.core.version import __version__ as VERSION  # noqa: N812
 from src.gui.components.animated_stack import SlidingStackedWidget
+from src.gui.controllers.app_status_controller import AppStatusController
 from src.gui.controllers.bot_controller import BotController
 from src.gui.controllers.navigation_controller import NavigationController
 from src.gui.controllers.search_controller import SearchController
 from src.gui.controllers.service_controller import ServiceController
+from src.gui.controllers.update_controller import UpdateController
 from src.gui.dialogs.bug_report_dialog import BugReportDialog
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import apply_theme
@@ -49,8 +51,6 @@ from .controllers.app_event_handler import AppEventHandler
 from .controllers.monitoring_controller import MonitoringController
 from .controllers.signal_connector import SignalConnector
 from .controllers.workflow_controller import WorkflowController
-from .controllers.update_controller import UpdateController
-from .controllers.app_status_controller import AppStatusController
 from .page_index import PageIndex
 
 logger = logging.getLogger("MainWindow")

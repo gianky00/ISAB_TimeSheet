@@ -93,7 +93,7 @@ class TestEmployeeManager:
         """Verifica l'aggiornamento dinamico dei campi."""
         mock_db.execute_query.side_effect = [
             [(10, "Rossi", "Mario", "B010", "CF10", "2020-01-01", 1, None)],  # SELECT *
-            None  # UPDATE
+            None,  # UPDATE
         ]
         data = {"nome": "Paolo", "monitoraggio_attivo": 0}
         success = manager.update_employee(10, data)
@@ -105,16 +105,8 @@ class TestEmployeeManager:
 
         assert "nome = ?" in query
         assert "monitoraggio_attivo = ?" in query
-        
+
         # Repository: cognome, nome, badge, codice_fiscale, data_assunzione, monitoraggio_attivo, data_nascita, id_risorsa
-        # In questo caso data aggiorna solo nome e monitoraggio_attivo
-        # Il repository `save` passa dict(vars(employee)) al dict aggiornato
-        # params è la lista dei valori ordinati per UPDATE: cognome=?, nome=?, badge=?, ...
-        # L'ordine delle colonne in Repository è:
-        # id_risorsa (pop), cognome, nome, badge, codice_fiscale, data_assunzione, monitoraggio_attivo, data_nascita
-        # params[0] = cognome (normalizzato)
-        # params[1] = nome (normalizzato)
-        # params[5] = monitoraggio_attivo
         assert params[1] == "PAOLO"
         assert params[5] == 0
         assert params[-1] == 10

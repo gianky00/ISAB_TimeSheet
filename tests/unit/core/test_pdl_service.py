@@ -1,5 +1,4 @@
-import sqlite3
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -40,7 +39,7 @@ class TestPDLService:
 
         mock_repo.save_programming.return_value = True
         success = PDLService.save_programming_results(results, "01/01", "07/01")
-        
+
         assert success is True
         assert mock_repo.save_programming.called
         args = mock_repo.save_programming.call_args
@@ -51,7 +50,7 @@ class TestPDLService:
     def test_get_programming_results_by_week(self, mock_repo):
         """Verifica il recupero dei dati settimanali mappati in dizionari."""
         from src.models import PdlProgrammazioneRecord
-        
+
         mock_record = PdlProgrammazioneRecord(
             id=1,
             richiedente="R1",
@@ -75,7 +74,7 @@ class TestPDLService:
             sab_tgo=False,
             dom_tcl=False,
             dom_tgo=False,
-            ultimo_aggiornamento="2024"
+            ultimo_aggiornamento="2024",
         )
         mock_repo.get_programming_by_week.return_value = [mock_record]
 
@@ -90,7 +89,7 @@ class TestPDLService:
         """Verifica il recupero interventi delegato al repo."""
         db_file = tmp_path / "ext.db"
         db_file.touch()
-        
+
         mock_repo.get_interventions.return_value = [{"fonte": "Report (Validato)", "tecnico": "T1"}]
 
         with patch("src.core.config_manager.load_config") as mock_cfg:
