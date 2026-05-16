@@ -4,11 +4,11 @@ Pulsante moderno con varianti e stati.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import shiboken6
 from PySide6.QtCore import Property, QEasingCurve, QEvent, QPropertyAnimation, Signal
-from PySide6.QtWidgets import QPushButton, QWidget
+from PySide6.QtWidgets import QGraphicsDropShadowEffect, QPushButton, QWidget
 
 from src.gui.styles import COLORS
 from src.utils.helpers import get_colored_icon
@@ -66,11 +66,30 @@ class ModernButton(QPushButton):
             self.setStyleSheet(self.styleSheet() + "QPushButton { padding-left: 32px; text-align: left; }")
 
     def _setup_animation(self) -> None:
-        """Inizializza l'animazione di opacità per l'effetto hover."""
+        """Inizializza l'animazione di opacità e ombra per l'effetto hover/click."""
         self._anim = QPropertyAnimation(self, b"hover_opacity")
         anim_duration_ms = 150
         self._anim.setDuration(anim_duration_ms)
         self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        # Inizializza ombra
+        self._shadow = QGraphicsDropShadowEffect(self)
+        self._shadow.setBlurRadius(8)
+        self._shadow.setOffset(0, 2)
+        self._shadow.setColor("#40000000")
+        self.setGraphicsEffect(self._shadow)
+
+    def mousePressEvent(self, event: Any) -> None:
+        """Riduce l'ombra al clic per simulare pressione."""
+        self._shadow.setBlurRadius(2)
+        self._shadow.setOffset(0, 0)
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event: Any) -> None:
+        """Ripristina l'ombra al rilascio."""
+        self._shadow.setBlurRadius(8)
+        self._shadow.setOffset(0, 2)
+        super().mouseReleaseEvent(event)
 
     def showEvent(self, event: QShowEvent) -> None:
         """Forza l'aggiornamento dello stile quando il widget viene mostrato."""

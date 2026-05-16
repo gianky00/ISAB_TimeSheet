@@ -193,7 +193,7 @@ class StoricoOdaPanel(QWidget):
         self.splitter.addWidget(scroll)
 
         # Dettaglio
-        self.detail_view = OdaDetailView()
+        self.detail_view = OdaDetailView(headers=self.full_headers)
         self.detail_view.setVisible(False)
         self.splitter.addWidget(self.detail_view)
         self.splitter.setStretchFactor(0, 1)
