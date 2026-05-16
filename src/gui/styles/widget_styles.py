@@ -42,11 +42,11 @@ def card_style(border_color: str = COLORS["border_light"]) -> str:
   """
 
 
-CARD_STYLE_SIMPLE: Final[str] = f"""
-  QFrame {{
+CARD_STYLE: Final[str] = f"""
+  QWidget {{
     background-color: {COLORS["bg_white"]};
+    border-radius: 12px;
     border: 1px solid {COLORS["border_light"]};
-    border-radius: 8px;
   }}
 """
 
