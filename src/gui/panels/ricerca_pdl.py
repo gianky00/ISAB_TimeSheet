@@ -87,16 +87,21 @@ class RicercaPDLPanel(BaseBotPanel):
 
     def _setup_content(self) -> None:
         """Inizializza e posiziona i componenti UI di filtraggio e ricerca con design Modern Card."""
+        from src.gui.styles.ui_effects import UIEffectsManager
+        from src.gui.styles.widget_styles import CARD_SHADOW_BLUR, CARD_SHADOW_COLOR
+
         # Sezione Parametri (Design Modern Card Uniformato)
-        params_container = QFrame()
+        params_container = QWidget()
         params_container.setObjectName("filterBar")
         params_container.setStyleSheet(f"""
-      QFrame#filterBar {{
-        background-color: {COLORS["bg_white"]};
-        border: 1px solid {COLORS["border_light"]};
-        border-radius: 12px;
-      }}
-    """)
+            QWidget#filterBar {{
+                background-color: {COLORS["bg_white"]};
+                border-radius: 12px;
+                border: 1px solid {COLORS["border_light"]};
+            }}
+        """)
+        UIEffectsManager.apply_shadow(params_container, blur=CARD_SHADOW_BLUR, color=CARD_SHADOW_COLOR)
+        UIEffectsManager.animate_fade(params_container, duration=400)
 
         params_layout = QHBoxLayout(params_container)
         params_layout.setContentsMargins(15, 10, 15, 10)

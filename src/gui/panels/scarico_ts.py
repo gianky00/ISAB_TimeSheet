@@ -97,9 +97,17 @@ class ScaricaTSPanel(BaseBotPanel):
 
     def _setup_content(self) -> None:
         """Inizializza e posiziona i componenti UI specifici del pannello."""
+        from src.gui.styles.ui_effects import UIEffectsManager
+        from src.gui.styles.widget_styles import CARD_SHADOW_BLUR, CARD_SHADOW_COLOR
+
         params_container = QWidget()
+        # Card style wrap
+        params_container.setStyleSheet("background: white; border-radius: 12px; border: 1px solid #dee2e6;")
+        UIEffectsManager.apply_shadow(params_container, blur=CARD_SHADOW_BLUR, color=CARD_SHADOW_COLOR)
+        UIEffectsManager.animate_fade(params_container, duration=400)
+
         self.params_layout = QVBoxLayout(params_container)
-        self.params_layout.setContentsMargins(0, 0, 0, 0)
+        self.params_layout.setContentsMargins(15, 15, 15, 15)
         self.params_layout.setSpacing(5)
 
         self._setup_params_section()

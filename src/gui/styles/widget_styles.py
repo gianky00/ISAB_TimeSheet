@@ -13,6 +13,13 @@ from src.gui.styles.palette_helpers import hex_to_rgba
 # =============================================================================
 
 
+# =============================================================================
+# SHADOW STYLES
+# =============================================================================
+CARD_SHADOW_COLOR: Final[str] = "#30000000"
+CARD_SHADOW_BLUR: Final[int] = 12
+
+
 def card_style(border_color: str = COLORS["border_light"]) -> str:
     """Stile base per card con bordo colorato a sinistra."""
     return f"""
