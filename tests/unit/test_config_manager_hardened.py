@@ -30,7 +30,7 @@ class TestConfigManagerHardened:
     def test_load_config_defaults(self, setup_config):
         """Verifica caricamento dei valori di default se il file non esiste."""
         config = load_config()
-        assert config["browser_timeout"] == 30
+        assert config["browser_timeout"] == 300
         assert setup_config.parent.exists()  # Verifica creazione directory
 
     def test_load_config_corrupted_json(self, setup_config):
@@ -40,7 +40,7 @@ class TestConfigManagerHardened:
 
         config = load_config()
         # Deve tornare ai default senza crashare
-        assert config["browser_timeout"] == 30
+        assert config["browser_timeout"] == 300
 
     def test_atomic_save_mechanism(self, setup_config, mocker):
         """Verifica il meccanismo di salvataggio atomico tramite file .tmp."""

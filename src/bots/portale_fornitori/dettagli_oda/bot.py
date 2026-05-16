@@ -65,7 +65,7 @@ class DettagliOdABot(SeleniumBaseBot):
         data_a: str | None = None,
         fornitore: str | None = None,
         **kwargs: Any,
-    ) -> None:  # noqa: PLR0913
+    ) -> None:
         super().__init__(username, password, config)
         current_year = datetime.now(UTC).astimezone().year
 

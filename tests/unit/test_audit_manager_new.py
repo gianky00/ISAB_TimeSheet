@@ -16,10 +16,12 @@ class TestAuditManager:
         AuditManager._instance = None  # Reset Singleton
         db_path = tmp_path / "audit_test.db"
 
-        with patch("src.core.audit.database.AuditDatabase.DB_PATH", db_path):
-            manager = AuditManager()
-            yield manager
-            AuditManager._instance = None
+        # Patch the source in db_manager which is used by AuditDatabase property
+        mocker.patch("src.core.database.db_manager.DB_AUDIT", db_path)
+
+        manager = AuditManager()
+        yield manager
+        AuditManager._instance = None
 
     def test_log_action_success(self, setup_manager):
         manager = setup_manager

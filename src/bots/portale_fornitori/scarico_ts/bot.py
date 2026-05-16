@@ -75,7 +75,7 @@ class ScaricaTSBot(SeleniumBaseBot):
         fornitore: str = "",
         elabora_ts: bool = False,
         **kwargs: Any,
-    ) -> None:  # noqa: PLR0913
+    ) -> None:
         """
         Inizializza il bot Scarico TS.
         """

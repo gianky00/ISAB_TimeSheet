@@ -2,6 +2,7 @@ import base64
 import json
 from unittest.mock import MagicMock, patch
 
+import pytest
 from src.core.license_validator import (
     LicenseStatus,
     get_detailed_license_status,
@@ -32,37 +33,28 @@ class TestLicenseValidatorDeep:
         from pathlib import Path
 
         config_path = Path("fake.dat")
-
         mock_paths.return_value = {"config": config_path}
 
-        # 32-byte key for Fernet
-
+        # 32-byte key for Fernet, then base64 encoded
         key = b"12345678901234567890123456789012"
-
-        mock_get_key.return_value = key
+        key_b64 = base64.urlsafe_b64encode(key)
+        mock_get_key.return_value = key_b64
 
         from cryptography.fernet import Fernet
-
-        key_b64 = base64.urlsafe_b64encode(key)
-
         f = Fernet(key_b64)
-
         payload = {"Cliente": "Test Client", "Hardware ID": "HW1"}
-
         encrypted = f.encrypt(json.dumps(payload).encode())
 
         # Mock both exists and read_bytes on the Path object
-
         with patch.object(Path, "exists", return_value=True):
             with patch.object(Path, "read_bytes", return_value=encrypted):
                 info = get_license_info()
-
                 assert info is not None
-
                 assert info["Cliente"] == "Test Client"
 
+    @patch("src.core.license_validator.AuditManager.instance")
     @patch("src.core.license_validator._get_license_paths")
-    def test_detailed_status_integrity_fail(self, mock_paths):
+    def test_detailed_status_integrity_fail(self, mock_paths, mock_audit):
         from pathlib import Path
 
         mock_paths.return_value = {
@@ -73,25 +65,14 @@ class TestLicenseValidatorDeep:
 
         manifest_data = {"config.dat": "CORRECT_HASH"}
 
-        # Mock Path methods to satisfy existence checks
-
         with patch.object(Path, "exists", return_value=True):
-            with patch("builtins.open", MagicMock()) as mock_open:
-                mock_open.return_value.__enter__.return_value.read.side_effect = [
-                    json.dumps(manifest_data).encode(),  # manifest read
-                    b"wrong data",  # config.dat read for hashing
-                ]
-
-                # Mock hash calculation to return wrong hash
-
+            with patch.object(Path, "read_text", return_value=json.dumps(manifest_data)):
                 with patch(
                     "src.core.license_validator._calculate_sha256",
                     return_value="WRONG_HASH",
                 ):
                     status, msg = get_detailed_license_status()
-
                     assert status == LicenseStatus.INVALID
-
                     assert "Integrità" in msg
 
     @patch("src.core.license_validator.get_license_info")
@@ -102,14 +83,11 @@ class TestLicenseValidatorDeep:
     )
     def test_detailed_status_hardware_mismatch(self, mock_integrity, mock_hwid, mock_info):
         from pathlib import Path
-
         mock_info.return_value = {"Hardware ID": "OTHER-HW", "Cliente": "C1"}
 
         with patch.object(Path, "exists", return_value=True):
             status, msg = get_detailed_license_status()
-
             assert status == LicenseStatus.INVALID
-
             assert "Hardware ID non valido" in msg
 
     @patch("src.core.license_validator.get_license_info")
@@ -127,30 +105,29 @@ class TestLicenseValidatorDeep:
             "Hardware ID": "MY-HW",
             "Scadenza Licenza": "01/01/2023",
         }
-
-        # Trusted time is in 2024
-
         mock_trusted_time.return_value = (datetime(2024, 1, 1), True)
 
         with patch.object(Path, "exists", return_value=True):
             status, msg = get_detailed_license_status()
-
             assert status == LicenseStatus.EXPIRED
-
             assert "SCADUTA" in msg
 
-    @patch("platform.system", return_value="Linux")
-    @patch("builtins.open", MagicMock())
-    def test_get_hardware_id_linux_machine_id(self, mock_platform):
+    def test_get_hardware_id_linux_machine_id(self, mocker):
         from pathlib import Path
+        
+        # Mocks a livello di modulo per evitare interferenze
+        mocker.patch("platform.system", return_value="Linux")
+        mocker.patch("subprocess.check_output", side_effect=Exception("no lsblk"))
+        
+        # Mock Path.exists e Path.read_text in modo più specifico
+        mock_exists = mocker.patch.object(Path, "exists", autospec=True)
+        mock_read = mocker.patch.object(Path, "read_text", autospec=True)
+        
+        def exists_side_effect(self_path):
+            return str(self_path).replace("\\", "/") == "/etc/machine-id"
+            
+        mock_exists.side_effect = exists_side_effect
+        mock_read.return_value = "MACHINE-ID-123"
 
-        # Fail lsblk, fallback to machine-id
-
-        with patch("subprocess.check_output", side_effect=Exception("no lsblk")):
-            with patch.object(
-                Path, "exists", side_effect=lambda *args: str(args[0]).replace("\\", "/") == "/etc/machine-id"
-            ):
-                with patch.object(Path, "read_text", return_value="MACHINE-ID-123"):
-                    hwid = get_hardware_id()
-
-                    assert hwid == "MACHINE-ID-123"
+        hwid = get_hardware_id()
+        assert hwid == "MACHINE-ID-123"

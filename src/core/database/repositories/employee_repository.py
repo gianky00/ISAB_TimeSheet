@@ -133,10 +133,21 @@ class EmployeeRepository:
 
     def save(self, employee: EmployeeRecord) -> bool:
         """Salva o aggiorna un dipendente nel database."""
+        # Normalizzazione preventiva
+        cognome = employee.cognome.upper() if employee.cognome else ""
+        nome = employee.nome.upper() if employee.nome else ""
+        cf = employee.codice_fiscale.upper() if employee.codice_fiscale else None
+
         if employee.id_risorsa:
             # Update - Usiamo una copia dei dati per non modificare l'oggetto originale
             data = dict(vars(employee))
             id_risorsa = data.pop("id_risorsa")
+            
+            # Applichiamo la normalizzazione ai dati da salvare
+            data["cognome"] = cognome
+            data["nome"] = nome
+            data["codice_fiscale"] = cf
+
             fields = [f"{k} = ?" for k in data]
             values = list(data.values())
             values.append(id_risorsa)
@@ -158,10 +169,10 @@ class EmployeeRepository:
                 VALUES ({", ".join(["?"] * len(cols))})
             """
             params = (
-                employee.cognome.upper(),
-                employee.nome.upper(),
+                cognome,
+                nome,
                 employee.badge,
-                employee.codice_fiscale.upper() if employee.codice_fiscale else None,
+                cf,
                 employee.data_assunzione,
                 employee.monitoraggio_attivo,
                 employee.data_nascita,

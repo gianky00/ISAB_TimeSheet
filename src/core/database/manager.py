@@ -123,10 +123,13 @@ class DatabaseManager:
 
         conn.row_factory = sqlite3.Row
         try:
-            conn.execute("PRAGMA journal_mode=WAL")
-            conn.execute("PRAGMA synchronous=NORMAL")
+            conn.execute("PRAGMA foreign_keys=ON")
+            if not read_only:
+                conn.execute("PRAGMA journal_mode=WAL")
+                conn.execute("PRAGMA synchronous=NORMAL")
             yield conn
-            conn.commit()
+            if not read_only:
+                conn.commit()
         except Exception:
             conn.rollback()
             raise

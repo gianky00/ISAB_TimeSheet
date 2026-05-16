@@ -203,10 +203,32 @@ class ContabilitaRepository:
                 if id_col == "id_strumento" and "id_coemi" in cols:
                     cols[cols.index("id_coemi")] = "id_strumento"
 
-                cols_str = ", ".join(cols)
                 query = f"SELECT {cols_str}, annotazioni, ubicazione, id FROM certificati_campione ORDER BY id ASC"
                 cursor.execute(query)
                 return [tuple(row) for row in cursor.fetchall()]
         except Exception:
             logger.exception("Errore repository get_certificati_campione")
+            return []
+
+    def get_scarico_ore(self, as_objects: bool = False) -> list[tuple[Any, ...]] | list[Any]:
+        """Restituisce i record dello scarico ore (cantiere)."""
+        db_path = self.db.DB_CONTABILITA
+        if not db_path.exists():
+            return []
+        try:
+            with self.db.get_connection(db_path, read_only=True) as conn:
+                cursor = conn.cursor()
+                if as_objects:
+                    # In futuro possiamo implementare un modello per ScaricoOre
+                    cursor.execute("SELECT * FROM scarico_ore ORDER BY id DESC")
+                    return cursor.fetchall()
+
+                # Per compatibilità legacy
+                from src.core.excel_importer import ExcelImporter  # noqa: PLC0415
+                cols = ExcelImporter.SCARICO_ORE_COLS
+                query = f"SELECT {', '.join(cols)} FROM scarico_ore ORDER BY id DESC"  # nosec B608
+                cursor.execute(query)
+                return [tuple(row) for row in cursor.fetchall()]
+        except Exception:
+            logger.exception("Errore repository get_scarico_ore")
             return []

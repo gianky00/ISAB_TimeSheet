@@ -40,7 +40,7 @@ class TimbratureBot(SeleniumBaseBot):
         data_a: str | None = None,
         fornitore: str | None = None,
         **kwargs: Any,
-    ) -> None:  # noqa: PLR0913
+    ) -> None:
         """Inizializza il bot Timbrature."""
         super().__init__(username, password, config)
         current_year = datetime.now(UTC).year

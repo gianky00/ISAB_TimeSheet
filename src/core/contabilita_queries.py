@@ -59,18 +59,4 @@ class ContabilitaQueries:
     @classmethod
     def get_scarico_ore_data(cls, db_path: Path) -> list[tuple[Any, ...]]:
         """Restituisce tutti i dati della tabella scarico_ore."""
-        # Nota: scarico_ore non è ancora nel repository, lo aggiungiamo se serve o lo lasciamo qui temporaneamente
-        # Per ora deleghiamo al manager o implementiamo nel repo
-        from src.core.database import db_manager  # noqa: PLC0415
-        from src.core.excel_importer import ExcelImporter  # noqa: PLC0415
-        if not db_path.exists():
-            return []
-        try:
-            with db_manager.get_connection(db_path, read_only=True) as conn:
-                cursor = conn.cursor()
-                cols = ExcelImporter.SCARICO_ORE_COLS
-                query = f"SELECT {', '.join(cols)} FROM scarico_ore ORDER BY id DESC"  # nosec B608
-                cursor.execute(query)
-                return cursor.fetchall()
-        except Exception:
-            return []
+        return cls._repo.get_scarico_ore(as_objects=False)

@@ -111,7 +111,7 @@ class SearchController(QObject):
     def _add_oda_matches(self, matches: list[dict[str, Any]], menu: QMenu) -> int:
         if not matches:
             return 0
-        self._add_disabled_action(menu, "CONTABILIT  STRUMENTALE (OdA):")
+        self._add_disabled_action(menu, "CONTABILITÀ STRUMENTALE (OdA):")
         for oda in matches:
             text = f"OdA {oda['codice_oda']} - {oda['descrizione'][:50]}..."
             action = menu.addAction(text)

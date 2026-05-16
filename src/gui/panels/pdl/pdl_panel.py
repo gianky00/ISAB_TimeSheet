@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.core.constants import Icons
-from src.core.database import pdl_queries
+from src.core.pdl.pdl_service import PDLService
 from src.core.pdl.pdl_controller import PDLController
 from src.core.sync_tracker import SyncTracker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
@@ -285,7 +285,7 @@ class PDLDBPanel(QWidget):
         if row_idx < len(self._raw_full_data):
             pdl_dto = self._raw_full_data[row_idx]
             try:
-                interventions = pdl_queries.PDLQueries.get_pdl_interventions(pdl_dto.n_pdl)
+                interventions = PDLService.get_pdl_interventions(pdl_dto.n_pdl)
             except Exception:
                 interventions = []
             self.detail_view.update_details(pdl_dto.to_full_list(), interventions)

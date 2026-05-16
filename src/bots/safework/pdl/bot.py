@@ -46,7 +46,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         config: SeleniumBotConfig | None = None,
         account_type: str = "Esecutore",
         **kwargs: Any,
-    ) -> None:  # noqa: PLR0913
+    ) -> None:
         """Inizializza il bot SafeWork PDL."""
         super().__init__(username, password, config, account_type=account_type)
         self.downloaded_files: list[str] = []

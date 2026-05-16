@@ -127,25 +127,16 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
 
         # Sequenza short_wait.until (per _wait_for_overlay)
         # 1. Inizio navigate_to_gestione_bp
-        # 2. In visibility_of_element_located per SUBMENU -> Fallisce
+        # 2. In visibility_of_element_located per SUBMENU -> Fallisce (Triggera espansione)
         # 3. In wait_and_click (MENU_BUONO_PRELIEVO)
         # 4. In fine navigate_to_gestione_bp
-        self.mock_short_wait.until.side_effect = [
-            True,
-            TimeoutException(),
-            True,
-            True,
-            True,
-            True,
-            True,
-            True,
-        ]
+        self.mock_short_wait.until.side_effect = [True, TimeoutException(), True, True, True, True, True, True, True, True]
 
         mock_submenu = MagicMock()
         # self.wait.until calls:
         # 1. element_to_be_clickable SUBMENU_GESTIONE_BP
         # 2. presence_of_element_located FILTER_FORNITORE
-        self.mock_wait.until.side_effect = [mock_submenu, True]
+        self.mock_wait.until.side_effect = [mock_submenu] + [True] * 19
 
         with patch.object(self.page, "wait_and_click") as mock_wc:
             self.page.navigate_to_gestione_bp()

@@ -41,7 +41,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         config: SeleniumBotConfig | None = None,
         account_type: str = "Esecutore",
         **kwargs: Any,
-    ) -> None:  # noqa: PLR0913
+    ) -> None:
         """
         Inizializza il bot di ricerca PDL.
         """

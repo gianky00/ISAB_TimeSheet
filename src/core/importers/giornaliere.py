@@ -6,6 +6,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
+import pandas as pd
+
 from src.core.importers.base import BaseImporter
 from src.core.logging import get_logger
 from src.core.processing.base import Pipeline
@@ -182,3 +184,17 @@ class GiornaliereImporter(BaseImporter):
             return (year, [], str(e))
         else:
             return (year, rows, None)
+
+    @classmethod
+    def _normalize_giornaliera_columns(cls, df: pd.DataFrame) -> pd.DataFrame:
+        """Alias per retrocompatibilità con i test."""
+        from src.core.processing.giornaliere.steps import NormalizeGiornalieraStep  # noqa: PLC0415
+        context = {"df": df, "success": True}
+        NormalizeGiornalieraStep().execute(context)
+        return context["df"]
+
+    @classmethod
+    def _clean_data(cls, df: pd.DataFrame) -> pd.DataFrame:
+        """Alias per retrocompatibilità con i test."""
+        from src.core.processing.giornaliere.steps import NormalizeGiornalieraStep  # noqa: PLC0415
+        return NormalizeGiornalieraStep()._clean_data(df)

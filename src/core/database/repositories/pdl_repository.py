@@ -139,3 +139,56 @@ class PdlRepository:
         except Exception:
             logger.exception("Errore repository PDL save_programming")
             return False
+
+    def get_interventions(self, n_pdl: str, ext_db_path: str) -> list[dict[str, Any]]:
+        """Recupera la cronologia interventi per un PDL da un database esterno."""
+        import sqlite3  # noqa: PLC0415
+
+        query = """
+          SELECT
+            'Report (Validato)' as fonte,
+            data_riferimento_attivita as data,
+            nome_tecnico as tecnico,
+            '' as team,
+            '' as ore_lavoro,
+            testo_report as descrizione
+          FROM report_interventi
+          WHERE pdl = ?
+
+          UNION ALL
+
+          SELECT
+            'Report (In Attesa)' as fonte,
+            data_riferimento_attivita as data,
+            nome_tecnico as tecnico,
+            '' as team,
+            '' as ore_lavoro,
+            testo_report as descrizione
+          FROM report_da_validare
+          WHERE pdl = ?
+
+          UNION ALL
+
+          SELECT
+            'Relazionè as fonte,
+            data_intervento as data,
+            nome_compilatore || ' ' || cognome_compilatore as tecnico,
+            '' as team,
+            '' as ore_lavoro,
+            corpo_relazione as descrizione
+          FROM relazioni
+          WHERE pdl = ?
+
+          ORDER BY data DESC
+        """
+
+        try:
+            with sqlite3.connect(f"file:{ext_db_path}?mode=ro", uri=True) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute(query, (n_pdl, n_pdl, n_pdl))
+                rows = cursor.fetchall()
+                return [dict(r) for r in rows]
+        except Exception:
+            logger.exception(f"Errore recuperòinterventi per PDL {n_pdl} da {ext_db_path}")
+            return []

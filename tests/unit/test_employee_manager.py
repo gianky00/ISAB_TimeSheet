@@ -80,7 +80,11 @@ class TestEmployeeManager:
         assert result is False
 
     def test_update_employee(self, manager):
-        manager.db.execute_query.return_value = None
+        # Mock per il recupero dell'attuale (SELECT *)
+        manager.db.execute_query.side_effect = [
+            [{"id_risorsa": 1, "cognome": "ROSSI", "nome": "MARIO", "badge": "001", "codice_fiscale": "CF123", "data_assunzione": "2020-01-01", "monitoraggio_attivo": 1, "data_nascita": None}],
+            None  # UPDATE
+        ]
 
         result = manager.update_employee(1, {"cognome": "ROSSI UPDATED", "nome": "MARIO"})
 
