@@ -25,7 +25,9 @@ from src.gui.widgets.toast import ToastManager
 from src.gui.workers.oda_io_worker import OdaIOWorker
 from src.utils.helpers import safe_open
 
+from .oda_filter_widget import OdaFilterWidget
 from .utils.oda_adapter import ODAAdapter
+from .widgets.oda_tree import ODATreeView
 
 if TYPE_CHECKING:
     from src.gui.controllers.bot_worker import BotWorker
@@ -131,6 +133,12 @@ class StoricoOdaPanel(QWidget):
         container_layout.setContentsMargins(15, 15, 15, 15)
         container_layout.setSpacing(5)
 
+        self.filters = OdaFilterWidget()
+        self.filters.search_changed.connect(lambda: self.search_timer.start(300))
+        self.filters.update_clicked.connect(self._on_update_clicked)
+        self.filters.import_clicked.connect(self._on_import_clicked)
+        self.filters.export_clicked.connect(self._export_to_excel)
+
         self._setup_toolbar(container_layout)
         self._setup_scroll_area(container_layout)
 
@@ -155,6 +163,46 @@ class StoricoOdaPanel(QWidget):
         self.empty_state.setVisible(not structured_data)
         if structured_data:
             self.empty_state.hide()
+
+    def _setup_toolbar(self, parent_layout: QVBoxLayout) -> None:
+        """Configura la barra dei filtri."""
+        parent_layout.addWidget(self.filters)
+
+    def _setup_scroll_area(self, parent_layout: QVBoxLayout) -> None:
+        """Configura l'area di visualizzazione del tree."""
+        from PySide6.QtWidgets import QScrollArea, QSplitter
+
+        from src.gui.styles.widget_styles import SCROLL_AREA_BORDERED
+        from src.gui.widgets.empty_state import EmptyStateWidget
+
+        from .oda_detail_view import OdaDetailView
+
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+
+        # Tree View
+        self.tree = ODATreeView(self.model)
+        self.tree.selection_changed_custom.connect(self._on_selection_changed)
+        self.tree.context_menu_requested.connect(self._show_context_menu)
+        self.tree.configure_headers()
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.tree)
+        scroll.setStyleSheet(SCROLL_AREA_BORDERED)
+
+        self.splitter.addWidget(scroll)
+
+        # Dettaglio
+        self.detail_view = OdaDetailView()
+        self.detail_view.setVisible(False)
+        self.splitter.addWidget(self.detail_view)
+        self.splitter.setStretchFactor(0, 1)
+
+        parent_layout.addWidget(self.splitter)
+
+        # Empty state
+        self.empty_state = EmptyStateWidget("Nessun ordine trovato.")
+        parent_layout.addWidget(self.empty_state)
 
     def _on_selection_changed(self) -> None:
         """Gestisce il cambiamento di selezione per evidenziare il record padre."""

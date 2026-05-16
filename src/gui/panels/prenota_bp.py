@@ -96,10 +96,16 @@ class PrenotaBPPanel(BaseBotPanel):
 
     def _setup_content(self) -> None:
         """Configura il layout e i widget specifici per la prenotazione BP."""
-        # Sezione Parametri
+        from src.gui.styles.ui_effects import UIEffectsManager
+        from src.gui.styles.widget_styles import CARD_SHADOW_BLUR, CARD_SHADOW_COLOR, CARD_STYLE
+
         params_container = QWidget()
+        params_container.setStyleSheet(CARD_STYLE)
+        UIEffectsManager.apply_shadow(params_container, blur=CARD_SHADOW_BLUR, color=CARD_SHADOW_COLOR)
+        UIEffectsManager.animate_fade(params_container, duration=400)
+
         params_layout = QVBoxLayout(params_container)
-        params_layout.setContentsMargins(0, 0, 0, 0)
+        params_layout.setContentsMargins(15, 15, 15, 15)
         params_layout.setSpacing(5)
 
         # Widget atomico per i parametri

@@ -13,9 +13,13 @@ from src.gui.styles.palette_helpers import hex_to_rgba
 # =============================================================================
 
 
-# =============================================================================
-# SHADOW STYLES
-# =============================================================================
+CARD_STYLE_SIMPLE: Final[str] = f"""
+  QWidget {{
+    background-color: {COLORS["bg_white"]};
+    border-radius: 8px;
+    border: 1px solid {COLORS["border_light"]};
+  }}
+"""
 CARD_SHADOW_COLOR: Final[str] = "#30000000"
 CARD_SHADOW_BLUR: Final[int] = 12
 

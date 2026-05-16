@@ -89,22 +89,17 @@ class ScaricoPDLPanel(BaseBotPanel):
 
     def _setup_content_area(self) -> None:
         """Inizializza il contenuto specifico del pannello: filtri, opzioni stampa e tabella PDL."""
-        self._setup_params_bar()
-        self._setup_table_section()
+        from src.gui.styles.ui_effects import UIEffectsManager
+        from src.gui.styles.widget_styles import CARD_SHADOW_BLUR, CARD_SHADOW_COLOR, CARD_STYLE
 
-    def _setup_params_bar(self) -> None:
-        """Configura la barra dei parametri superiore."""
         self.params_container = QFrame()
-        self.params_container.setObjectName("filterBar")
-        self.params_container.setStyleSheet(f"""
-            QFrame#filterBar {{
-                background: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 12px;
-            }}
-        """)
+        self.params_container.setStyleSheet(CARD_STYLE)
+        UIEffectsManager.apply_shadow(self.params_container, blur=CARD_SHADOW_BLUR, color=CARD_SHADOW_COLOR)
+        UIEffectsManager.animate_fade(self.params_container, duration=400)
+
+        # Usiamo il layout interno del frame per i parametri
         params_lay = QHBoxLayout(self.params_container)
-        params_lay.setContentsMargins(15, 10, 15, 10)
+        params_lay.setContentsMargins(15, 15, 15, 15)
         params_lay.setSpacing(20)
 
         self._setup_print_options(params_lay)
@@ -112,6 +107,8 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         params_lay.addStretch()
         self.content_layout.addWidget(self.params_container)
+
+        self._setup_table_section()
 
     def _setup_print_options(self, layout: QHBoxLayout) -> None:
         """Configura i controlli di stampa."""
@@ -221,6 +218,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             return
 
         from src.core.bots.services import ScaricoPDLService
+
         service = ScaricoPDLService()
         params = {
             "stampa": self.check_stampa.isChecked(),
@@ -269,6 +267,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self._is_loading = True
         try:
             from src.core.bots.services import ScaricoPDLService
+
             service = ScaricoPDLService()
             cfg = service.load_config()
 
@@ -338,6 +337,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
         from src.core.bots.services import ScaricoPDLService
+
         service = ScaricoPDLService()
 
         params = {
@@ -347,10 +347,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         }
 
         bot_params, bot_data = service.prepare_payload(
-            (username, password, account_type),
-            params,
-            bot_data_rows,
-            params_override
+            (username, password, account_type), params, bot_data_rows, params_override
         )
 
         # Inizializza il worker in modo asincrono
@@ -391,6 +388,7 @@ class ScaricoPDLPanel(BaseBotPanel):
                 tg_service = getattr(main_win, "telegram", None) if main_win else None
 
                 from src.core.bots.services import ScaricoPDLService
+
                 service = ScaricoPDLService()
                 service.handle_post_execution(success, bot_instance, tg_service)
 
