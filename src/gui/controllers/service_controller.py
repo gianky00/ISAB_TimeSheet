@@ -8,9 +8,10 @@ Gestisce inoltre l'inoltro automatico delle notifiche critiche al bot Telegram e
 
 import logging
 import os
+import sys
 from contextlib import suppress
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Final
 
 from PySide6.QtCore import QObject, QTimer
 
@@ -19,14 +20,47 @@ from src.core.app_updater import check_for_updates
 from src.core.database.maintenance_worker import DatabaseMaintenanceWorker
 from src.core.notification_manager import NotificationManager
 from src.core.report_service import ReportService
+from src.gui.controllers.bot_queue_manager import BotQueueManager
 
 logger = logging.getLogger(__name__)
 
-# ... (rest of imports)
+# Assicuriamoci che i log siano visibili in console per il debug dell'utente
+if not logger.handlers:
+    _ch = logging.StreamHandler(sys.stdout)
+    _ch.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+    logger.addHandler(_ch)
+    logger.setLevel(logging.INFO)
 
 
 class ServiceController(QObject):
-    # ...
+    """
+    Gestore del ciclo di vita dei servizi asincroni e dei task pianificati (Autopilot).
+    Coordina:
+    - TelegramService per il monitoraggio remoto e l'invio di documenti.
+    - Scheduler dei Bot per lo scarico automatico di timbrature, OdA e PDL.
+    - Generazione e invio automatico dei report email via Outlook.
+    """
+
+    REPORT_WARNING_MIN: Final[int] = 21
+    REPORT_EXPIRED_MIN: Final[int] = 30
+    DEFAULT_INTERVAL_DAYS: Final[int] = 7
+
+    def __init__(self, main_window: Any, telegram_service: Any) -> None:
+        """
+        Inizializza il controller dei servizi e le code di gestione del parallelismo.
+
+        Args:
+          main_window: Riferimento alla MainWindow dell'applicazione.
+          telegram_service: Istanza del servizio Telegram.
+        """
+        super().__init__(main_window)
+        self.mw = main_window
+        self.telegram = telegram_service
+        self.queue_manager = BotQueueManager()
+
+        self.scheduler_timer: QTimer | None = None
+        self._cert_worker: Any = None
+
     def start_all(self) -> None:
         """Avvia la sequenza di attivazione dei servizi di background."""
         QTimer.singleShot(1000, self.telegram.start_service)
