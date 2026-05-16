@@ -8,68 +8,41 @@ Gestisce inoltre l'inoltro automatico delle notifiche critiche al bot Telegram e
 
 import logging
 import os
-import sys
 from contextlib import suppress
 from datetime import UTC, datetime
-from typing import Any, Final
+from typing import Any
 
 from PySide6.QtCore import QObject, QTimer
 
 from src.core import config_manager
 from src.core.app_updater import check_for_updates
+from src.core.database.maintenance_worker import DatabaseMaintenanceWorker
 from src.core.notification_manager import NotificationManager
 from src.core.report_service import ReportService
-from src.gui.controllers.bot_queue_manager import BotQueueManager
 
 logger = logging.getLogger(__name__)
 
-# Assicuriamoci che i log siano visibili in console per il debug dell'utente
-if not logger.handlers:
-    _ch = logging.StreamHandler(sys.stdout)
-    _ch.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-    logger.addHandler(_ch)
-    logger.setLevel(logging.INFO)
+# ... (rest of imports)
 
 
 class ServiceController(QObject):
-    """
-    Gestore del ciclo di vita dei servizi asincroni e dei task pianificati (Autopilot).
-    Coordina:
-    - TelegramService per il monitoraggio remoto e l'invio di documenti.
-    - Scheduler dei Bot per lo scarico automatico di timbrature, OdA e PDL.
-    - Generazione e invio automatico dei report email via Outlook.
-    """
-
-    REPORT_WARNING_MIN: Final[int] = 21
-    REPORT_EXPIRED_MIN: Final[int] = 30
-    DEFAULT_INTERVAL_DAYS: Final[int] = 7
-
-    def __init__(self, main_window: Any, telegram_service: Any) -> None:
-        """
-        Inizializza il controller dei servizi e le code di gestione del parallelismo.
-
-        Args:
-          main_window: Riferimento alla MainWindow dell'applicazione.
-          telegram_service: Istanza del servizio Telegram.
-        """
-        super().__init__(main_window)
-        self.mw = main_window
-        self.telegram = telegram_service
-        self.queue_manager = BotQueueManager()
-
-        self.scheduler_timer: QTimer | None = None
-        self._cert_worker: Any = None
-
+    # ...
     def start_all(self) -> None:
-        """Avvia la sequenza di attivazione dei servizi di background con ritardi differiti per non saturare lo startup."""
+        """Avvia la sequenza di attivazione dei servizi di background."""
         QTimer.singleShot(1000, self.telegram.start_service)
         QTimer.singleShot(3000, self._check_updates)
+        QTimer.singleShot(5000, self._run_db_maintenance)  # Manutenzione DB all'avvio
 
         NotificationManager.instance().notification_added.connect(self._forward_notification_to_telegram)
 
         self.scheduler_timer = QTimer(self)
         self.scheduler_timer.timeout.connect(self._check_scheduled_tasks)
         self.scheduler_timer.start(60000)
+
+    def _run_db_maintenance(self) -> None:
+        """Avvia il worker di manutenzione DB in un thread separato."""
+        worker = DatabaseMaintenanceWorker()
+        worker.start()
 
     def stop_all(self) -> None:
         """Ferma tutti i servizi e i timer attivi."""
@@ -142,7 +115,9 @@ class ServiceController(QObject):
         if now_time != str(config.get("report_email_autopilot_time", "08:00")):
             return
 
-        interval = int(config.get("report_email_autopilot_interval_days", ReportService.DEFAULT_INTERVAL_DAYS))
+        interval = int(
+            config.get("report_email_autopilot_interval_days", ReportService.DEFAULT_INTERVAL_DAYS)
+        )
         last_sent = config.get("report_email_autopilot_last_sent")
 
         should_send = last_sent is None
@@ -279,16 +254,22 @@ class ServiceController(QObject):
             return
 
         from src.core.contabilita_queries import ContabilitaQueries
+
         groups: dict[str, list[tuple[Any, ...]]] = {}
         for r in data:
-            key = str(r[ContabilitaQueries.CERT_IDX_ID_STRUMENTO]).strip() or str(r[ContabilitaQueries.CERT_IDX_MATRICOLA]).strip()
+            key = (
+                str(r[ContabilitaQueries.CERT_IDX_ID_STRUMENTO]).strip()
+                or str(r[ContabilitaQueries.CERT_IDX_MATRICOLA]).strip()
+            )
             if key not in groups:
                 groups[key] = []
             groups[key].append(r)
 
         certs_to_report = []
         for certs in groups.values():
-            latest = sorted(certs, key=lambda x: str(x[ContabilitaQueries.CERT_IDX_EMISSIONE]), reverse=True)[0]
+            latest = sorted(certs, key=lambda x: str(x[ContabilitaQueries.CERT_IDX_EMISSIONE]), reverse=True)[
+                0
+            ]
             matricola = str(latest[ContabilitaQueries.CERT_IDX_MATRICOLA]).strip()
 
             if matricola in engine._exclusions:
@@ -298,13 +279,15 @@ class ServiceController(QObject):
             days, _ = engine.calculate_days_and_status(scadenza)
 
             if days is not None and days <= engine.EXPIRING_THRESHOLD:
-                certs_to_report.append({
-                    "id": latest[ContabilitaQueries.CERT_IDX_ID_STRUMENTO],
-                    "matricola": matricola,
-                    "modello": latest[ContabilitaQueries.CERT_IDX_MODELLO],
-                    "scadenza": scadenza,
-                    "giorni": days
-                })
+                certs_to_report.append(
+                    {
+                        "id": latest[ContabilitaQueries.CERT_IDX_ID_STRUMENTO],
+                        "matricola": matricola,
+                        "modello": latest[ContabilitaQueries.CERT_IDX_MODELLO],
+                        "scadenza": scadenza,
+                        "giorni": days,
+                    }
+                )
 
         if certs_to_report:
             engine.generate_outlook_draft(certs_to_report)
@@ -331,9 +314,7 @@ class ServiceController(QObject):
                 site = "portale_fornitori" if bot_id != "ricerca_pdl" else "safework"
                 if bot_id == "scarico_oda_generale":
                     self._prepare_scarico_oda_generale(panel)
-                self.queue_manager.schedule_bot(
-                    bot_id, panel, site, "Avvio manuale da Autopilot..."
-                )
+                self.queue_manager.schedule_bot(bot_id, panel, site, "Avvio manuale da Autopilot...")
             else:
                 logger.warning(f"Autopilot: Pannello per {bot_id} non trovato o non supportato.")
 
