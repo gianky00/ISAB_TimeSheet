@@ -181,4 +181,8 @@ class AnagraficaController:
 
     def toggle_monitoring(self, id_risorsa: str, enable: bool) -> bool:
         """Attiva/disattiva il monitoraggio tramite repository."""
-        return self.repository.toggle_monitoring(id_risorsa, enable)
+        try:
+            return self.repository.toggle_monitoring(id_risorsa, enable)
+        except Exception:
+            logger.exception("Errore toggle monitoraggio")
+            return False

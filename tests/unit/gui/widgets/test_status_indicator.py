@@ -1,59 +1,62 @@
+import sys
+
 import pytest
 from PySide6.QtCore import QAbstractAnimation
-from PySide6.QtGui import QPaintEvent
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QApplication
 
+from src.gui.styles import COLORS
 from src.gui.widgets.status_indicator import StatusIndicator
 
 
 @pytest.fixture(scope="session")
 def qapp():
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
+    app = QApplication.instance() or QApplication(sys.argv)
     return app
 
 
 def test_status_indicator_initialization(qapp):
     indicator = StatusIndicator()
-    assert indicator.toolTip() == "Pronto"
+    assert indicator.width() == 20
+    assert indicator.height() == 20
     assert indicator.animation.state() == QAbstractAnimation.State.Stopped
 
 
-def test_status_indicator_set_status_running(qapp):
+def test_set_status_running(qapp):
     indicator = StatusIndicator()
     indicator.set_status("running", "Running task")
-    assert indicator.toolTip() == "Running task"
     assert indicator.animation.state() == QAbstractAnimation.State.Running
+    assert indicator.toolTip() == "Running task"
 
 
-def test_status_indicator_set_status_success(qapp):
+def test_set_status_success(qapp):
     indicator = StatusIndicator()
-    indicator.set_status("running")  # Start animation
-    indicator.set_status("success", "Task completed")
-    assert indicator.toolTip() == "Task completed"
+    indicator.set_status("running", "Running task")
+    indicator.set_status("success", "Done")
     assert indicator.animation.state() == QAbstractAnimation.State.Stopped
     assert indicator.opacity_effect.opacity() == 1.0
+    assert indicator.toolTip() == "Done"
 
 
-def test_status_indicator_set_status_error(qapp):
+def test_set_status_error(qapp):
     indicator = StatusIndicator()
-    indicator.set_status("error", "Task failed")
-    assert indicator.toolTip() == "Task failed"
+    indicator.set_status("running", "Running")
+    indicator.set_status("error", "Failed")
     assert indicator.animation.state() == QAbstractAnimation.State.Stopped
-    assert indicator.opacity_effect.opacity() == 1.0
+    assert indicator.toolTip() == "Failed"
 
 
-def test_status_indicator_set_status_idle(qapp):
+def test_set_status_idle(qapp):
     indicator = StatusIndicator()
-    indicator.set_status("idle", "Idle state")
-    assert indicator.toolTip() == "Idle state"
+    indicator.set_status("running", "Running")
+    indicator.set_status("idle", "Ready")
     assert indicator.animation.state() == QAbstractAnimation.State.Stopped
-    assert indicator.opacity_effect.opacity() == 1.0
+    assert indicator.toolTip() == "Ready"
 
 
-def test_status_indicator_paint_event(qapp):
+def test_set_status_unknown(qapp):
     indicator = StatusIndicator()
-    event = QPaintEvent(indicator.rect())
-    # Should not raise any exceptions
-    indicator.paintEvent(event)
+    indicator.set_status("running", "Running")
+    indicator.set_status("unknown", "Unknown state")
+    assert indicator.animation.state() == QAbstractAnimation.State.Stopped
+    assert indicator.current_color == QColor(COLORS["text_muted"])

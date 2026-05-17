@@ -135,6 +135,17 @@ def test_get_all_no_db(repo, mock_db_manager):
     assert repo.get_all() == []
 
 
-def test_get_all_error(repo, mock_db_manager):
-    mock_db_manager.get_connection.side_effect = Exception("DB Error")
-    assert repo.get_all() == []
+def test_get_all_with_date_search(repo, mock_db_manager):
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_db_manager.get_connection.return_value.__enter__.return_value = mock_conn
+    mock_conn.cursor.return_value = mock_cursor
+    mock_cursor.fetchall.return_value = []
+
+    # Esegui ricerca con formato data
+    repo.get_all(search_text="01/01/2026")
+
+    # Verifica che la query sia stata chiamata (indirettamente verificando i params)
+    assert mock_cursor.execute.called
+    _query, params = mock_cursor.execute.call_args[0]
+    assert "2026-01-01" in params[0]

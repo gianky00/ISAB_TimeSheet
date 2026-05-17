@@ -10,7 +10,9 @@ class TestDipendentiPanel:
     @pytest.fixture
     def panel(self, qtbot):
         with (
-            patch("src.core.employees.employee_manager.get_all_employees", return_value=[]),
+            patch(
+                "src.gui.panels.dipendenti_manager_panel.employee_manager.get_all_employees", return_value=[]
+            ),
             patch("src.core.sync_tracker.SyncTracker.get_formatted_status", return_value="N/D"),
         ):
             p = DipendentiManagerPanel()
@@ -86,6 +88,37 @@ class TestDipendentiPanel:
 
         panel._add_employee()
         assert mock_add.called
+
+    @patch("src.gui.panels.dipendenti_manager_panel.ConfirmationDialog.show_warning")
+    @patch("src.gui.panels.dipendenti_manager_panel.EmployeeEditorDialog.exec")
+    @patch("src.gui.panels.dipendenti_manager_panel.EmployeeEditorDialog.get_data")
+    @patch("src.core.employees.employee_manager.add_employee")
+    def test_add_employee_fail(self, mock_add, mock_data, mock_exec, mock_warn, panel):
+        mock_exec.return_value = QDialog.DialogCode.Accepted
+        mock_data.return_value = {"badge": "B3"}
+        mock_add.return_value = False
+
+        panel._add_employee()
+        assert mock_add.called
+        assert mock_warn.called
+
+    @patch("src.gui.panels.dipendenti_manager_panel.EmployeeEditorDialog.exec")
+    @patch("src.gui.panels.dipendenti_manager_panel.EmployeeEditorDialog.get_data")
+    @patch("src.core.employees.employee_manager.update_employee")
+    def test_edit_selected_success(self, mock_update, mock_data, mock_exec, panel):
+        # Setup selection
+        from PySide6.QtWidgets import QTableWidgetItem
+
+        panel.table.setRowCount(1)
+        panel.table.setItem(0, 0, QTableWidgetItem("1"))
+        panel.table.selectRow(0)
+
+        mock_exec.return_value = QDialog.DialogCode.Accepted
+        mock_data.return_value = {"badge": "B1-mod"}
+        mock_update.return_value = True
+
+        panel._edit_selected()
+        assert mock_update.called
 
 
 class TestEmployeeEditorDialog:

@@ -16,13 +16,25 @@ class TestHardeningAuditSecurity:
     def audit_env(self, tmp_path, mocker):
         """Setup isolato per AuditManager modular V2."""
         db_path = tmp_path / "audit_hardening.db"
-        # Patch the real location in AuditDatabase
+
+        # Patch il path nel modulo
         mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_path)
+
+        # Forza reinizializzazione di AuditDatabase
+        from src.core.audit.database import AuditDatabase
+
+        # Inizializzazione esplicita del DB e delle tabelle
+        db = AuditDatabase()
+        db._db_path_override = db_path
+        db._init_db()  # Forza creazione tabelle
+
         # Patch signals
         mocker.patch("src.core.audit.manager.AuditSignals.instance")
 
         with patch("src.core.audit.manager.AuditManager._instance", None):
             manager = AuditManager()
+            # Forza il manager a puntare al DB corretto
+            manager.db.db_path = db_path
             yield manager, db_path
 
     @pytest.fixture

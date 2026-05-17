@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 from openpyxl.styles import Font
 
-from src.core.importers.giornaliere import GiornaliereImporter
 from src.core.importers.scarico_ore import ScaricoOreImporter
 
 
@@ -15,66 +14,94 @@ class TestImportersRobust:
 
     @pytest.fixture
     def mock_giornaliera_df(self):
-        """DataFrame simulato per Giornaliere."""
+        """DataFrame simulato per Giornaliere già normalizzato."""
         data = {
-            "DATA": ["2024-01-01", "2024-01-02", "Totale"],
-            "PERSONALE": ["Rossi", "Bianchi", ""],
-            "DESCRIZIONE ATTIVITA'": ["Lavoro", "Ferie", ""],
-            "TCL": ["T1", "T2", ""],
-            "ODC": [
-                "540012345",
-                "",
-                "",
-            ],  # ODC valido (formato 5400...) per evitare cancellazione
-            "N° PDL": ["123", "456", ""],
-            "INIZIO": ["08:00", "09:00", ""],
-            "FINE": ["17:00", "18:00", ""],
-            "ORE": [8, 8, 16],
-            "consuntivo": ["5400123", "5400456", ""],  # n_prev
+            "data": ["2024-01-01", "2024-01-02"],
+            "personale": ["Rossi", "Bianchi"],
+            "descrizione": ["Lavoro", "Ferie"],
+            "tcl": ["T1", "T2"],
+            "odc": ["540012345", ""],
+            "pdl": ["123", "456"],
+            "inizio": ["08:00", "09:00"],
+            "fine": ["17:00", "18:00"],
+            "ore": [8, 8],
+            "n_prev": ["5400123", "5400456"],
         }
         return pd.DataFrame(data)
 
     def test_process_single_giornaliera_success(self, mock_giornaliera_df, tmp_path):
-        """Test processamento completo singola giornaliera."""
+        """Test processamento completo singola giornaliera usando la pipeline."""
+        from src.core.processing.base import Pipeline
+        from src.core.processing.giornaliere.steps import (
+            EnrichGiornalieraStep,
+            ReadGiornalieraStep,
+        )
+
         path = tmp_path / "Giornaliera_2024.xlsx"
-        path.touch()
 
-        args = (2024, path, {"5400456": "540099999"})  # Mapping verso ODC valido
+        # Setup context
+        context = {
+            "file_path": path,
+            "file_obj": path,
+            "year": 2024,
+            "lookup_map": {"5400456": "540099999"},
+            "success": True,
+        }
 
-        # Mock pandas read_excel
-        with patch(
-            "src.core.importers.giornaliere.GiornaliereImporter._read_giornaliera_sheet",
-            return_value=mock_giornaliera_df,
-        ):
-            year, rows, err = GiornaliereImporter._process_single_giornaliera(args)
+        pipeline = Pipeline()
 
-            assert year == 2024
-            assert err is None
-            assert len(rows) == 2
+        # Mock ReadGiornalieraStep per iniettare il dataframe
+        class MockReadStep(ReadGiornalieraStep):
+            def execute(self, ctx):
+                ctx["df"] = mock_giornaliera_df
+                ctx["success"] = True
 
-            # Verifica mapping ODC
-            # Riga 1: 540012345 (presente e valido)
-            assert rows[0][5] == "540012345"
-            # Riga 2: ODC vuoto, ma n_prev="5400456" -> Mapped to "540099999"
-            assert rows[1][5] == "540099999"
+        pipeline.add_step(MockReadStep())
+        pipeline.add_step(EnrichGiornalieraStep())
+
+        result = pipeline.run(context)
+
+        assert result.get("success") is True
+        rows = result.get("rows", [])
+        assert len(rows) == 2
+
+        # Verifica mapping ODC (colonna 5, indice 5 nel record)
+        # Record: year, data, personale, descrizione, tcl, odc, pdl, inizio, fine, ore, n_prev, nome_file
+        # Indice odc è 5
+        assert rows[0][5] == "540012345"
+        assert rows[1][5] == "540099999"
 
     def test_giornaliera_normalize_columns(self):
-        """Test normalizzazione nomi colonne."""
-        df = pd.DataFrame({"  Data  ": [], "Personale": [], "Unknown": []})
-        norm_df = GiornaliereImporter._normalize_giornaliera_columns(df)
+        """Test normalizzazione nomi colonne tramite step dedicato."""
+        from src.core.processing.giornaliere.steps import NormalizeGiornalieraStep
 
-        assert "data" in norm_df.columns  # Lowercase e strip
+        df = pd.DataFrame({"  Data  ": [], "Personale": [], "Unknown": []})
+        context = {"df": df, "success": True}
+
+        NormalizeGiornalieraStep().execute(context)
+        norm_df = context["df"]
+
+        assert "data" in norm_df.columns
         assert "personale" in norm_df.columns
         assert "Unknown" in norm_df.columns
 
     def test_giornaliera_clean_data(self, mock_giornaliera_df):
-        """Test pulizia dati (rimozione totali)."""
-        # Necessaria normalizzazione prima della pulizia (che si aspetta colonne minuscole)
-        norm_df = GiornaliereImporter._normalize_giornaliera_columns(mock_giornaliera_df)
-        clean_df = GiornaliereImporter._clean_giornaliera_data(norm_df)
+        """Test pulizia dati (rimozione totali) tramite step dedicato."""
+        from src.core.processing.giornaliere.steps import NormalizeGiornalieraStep
 
+        # Aggiungiamo una riga "Totale" esplicita al DF normalizzato per verificare la rimozione
+        df_con_totali = pd.concat(
+            [mock_giornaliera_df, pd.DataFrame([{"data": "Totale", "ore": 16}])], ignore_index=True
+        )
+
+        context = {"df": df_con_totali, "success": True}
+        NormalizeGiornalieraStep().execute(context)
+
+        clean_df = context["df"]
+
+        # Dovrebbero rimanere solo le 2 righe originali
         assert len(clean_df) == 2
-        assert "Totale" not in clean_df["data"].values
+        assert not clean_df["data"].str.contains("Totale", na=False).any()
 
     # --- Scarico Ore Tests (OpenPyXL based) ---
 

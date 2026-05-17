@@ -6,10 +6,12 @@ L'architettura del software prevede un'alta modularità, permettendo la suddivis
 
 ---
 
-## 📊 Obiettivo
-- **Target Coverage:** >= 80% globale
-- **Strumenti:** `pytest`, `pytest-cov`, `unittest.mock`, `tests/run_robust_tests.py`
-- **Requisiti Qualitativi:** Nessun test *flaky*, adozione di Fixtures riutilizzabili (`conftest.py`), no side-effects (isolamento tramite file in-memory o mock di I/O).
+## 📊 Stato Attuale (Aggiornato al 17/05/2026)
+- **Target Coverage:** 80%
+- **Coverage Reale:** **49%** ⚠️
+- **Test Totali:** 1624
+- **Passati:** 1537
+- **Falliti:** 87 ❌ (Necessaria fase di fix)
 
 ---
 
@@ -57,12 +59,14 @@ L'architettura del software prevede un'alta modularità, permettendo la suddivis
 ### 🔵 Stream J: Pannelli Specifici (IN CORSO - Agente Attuale)
 - **Stato:** Inizio implementazione test per i pannelli operativi via `pytest-qt`.
 - **Target:** `src/gui/panels/` (es. `scarico_ore_panel.py`, `carico_ts.py`, `pdl_panel.py`).
-- **Istruzioni:** Mockare i Controller e verificare che i segnali della UI scatenino le azioni corrette.
+- **Gap:** Coverage attuale ~15-20% per modulo.
+
+### 🔴 Stream K: Analisi, KPI e Stabilità (PROSSIMO)
+- **Obiettivo:** Coprire la logica di calcolo avanzata in `src/core/contabilita/stats_service.py` e risolvere i 87 fallimenti attuali.
 
 ---
 
 ## 🔄 Workflow Standard per ogni Agente
-
 1. **Reconnaissance (Ricerca):** Controllare l'output di `pytest --cov=src` per il modulo bersaglio. Verificare se esistono test precedenti in `tests/unit/`.
 2. **Setup:** Se il modulo non ha una sua folder di test dedicata, crearla.
 3. **Execution:** Creare i test utilizzando le classi standard. Implementare Edge Cases.

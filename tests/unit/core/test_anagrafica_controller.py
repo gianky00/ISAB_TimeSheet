@@ -1,54 +1,64 @@
 from unittest.mock import patch
 
+import pytest
+
 from src.core.dipendenti.anagrafica_controller import AnagraficaController
 from src.core.dipendenti.employee_dto import EmployeeDTO
+from src.models.employee import EmployeeRecord
 
 
 class TestAnagraficaController:
-    @patch("src.core.dipendenti.anagrafica_controller.db_manager")
-    def test_get_employees_search_terms_logic(self, mock_db):
-        """Verifica che la ricerca per più termini usi l'operatore AND correttamente."""
-        # Setup: simula risposta DB
-        mock_db.execute_query.return_value = []
-        mock_db.DB_DIPENDENTI = "dip.db"
+    @pytest.fixture
+    def controller(self):
+        with patch("src.core.dipendenti.anagrafica_controller.EmployeeRepository") as mock_repo:
+            ctrl = AnagraficaController()
+            ctrl.repository = mock_repo
+            yield ctrl
 
-        # Esecuzione: cerchiamo due termini
-        AnagraficaController.get_employees("Rossi Mario")
+    def test_get_employees_search_terms_logic(self, controller):
+        """Verifica che la ricerca per più termini."""
+        controller.repository.get_filtered.return_value = []
 
-        # Verifica query prodotta
-        assert mock_db.execute_query.called
-        query = mock_db.execute_query.call_args[0][1]
-        params = mock_db.execute_query.call_args[0][2]
+        controller.get_employees("Rossi Mario")
 
-        # Ogni termine deve apparire nella query (AND) e avere i suoi parametri (4 per termine)
-        assert query.count("AND (cognome LIKE ?") == 2
-        assert len(params) == 8
-        assert "%rossi%" in params
-        assert "%mario%" in params
+        controller.repository.get_filtered.assert_called_once_with(search_text="Rossi Mario", as_objects=True)
 
     @patch("src.core.dipendenti.anagrafica_controller.db_manager")
-    def test_toggle_monitoring_error_handling(self, mock_db):
-        """Verifica che un errore nel DB ritorni False invece di crashare."""
-        mock_db.execute_query.side_effect = Exception("Write Lock")
-        mock_db.DB_DIPENDENTI = "dip.db"
+    def test_toggle_monitoring_error_handling(self, mock_db, controller):
+        """Verifica che un errore nel repository ritorni False."""
+        controller.repository.toggle_monitoring.side_effect = Exception("DB Error")
 
-        success = AnagraficaController.toggle_monitoring("R001", True)
+        # Mock della gestione errore interna al controller se necessaria,
+        # qui il test falliva perché l'eccezione non veniva catturata dal controller stesso.
+        # Il controller dovrebbe avere un try-except.
+        success = controller.toggle_monitoring("R001", True)
         assert success is False
 
-    @patch("src.core.dipendenti.anagrafica_controller.db_manager")
     @patch("src.core.dipendenti.anagrafica_controller.compute_employee_status")
-    def test_process_rows_full_cycle(self, mock_compute, mock_db):
+    @patch("src.core.dipendenti.anagrafica_controller.db_manager")
+    def test_process_rows_full_cycle(self, mock_db, mock_compute, controller):
         """Testa l'intero ciclo di trasformazione in DTO e conteggio."""
-        # Mocking compute_employee_status: (diff_days, cf_warning, ...)
-        mock_compute.return_value = (5, False, None, None, None)
+        # Mocking compute_employee_status: (diff_days, cf_warning)
+        mock_compute.return_value = (5, False)
         mock_db.execute_query.return_value = []  # Timbrature
 
-        raw_rows = [("R001", "ROSSI", "MARIO", "1980", "B001", "2020", None, "RSSMRA80", 1)]
+        record = EmployeeRecord(
+            id_risorsa=1,
+            cognome="ROSSI",
+            nome="MARIO",
+            data_nascita="1980",
+            badge="B001",
+            data_assunzione="2020",
+            codice_fiscale="RSSMRA80",
+            monitoraggio_attivo=1,
+        )
 
-        dtos, counts = AnagraficaController.process_rows(raw_rows)
+        raw_rows = [record]
+
+        dtos, counts = controller.process_rows(raw_rows)
 
         assert len(dtos) == 1
         assert isinstance(dtos[0], EmployeeDTO)
-        assert dtos[0].id_risorsa == "R001"
+        assert dtos[0].id_risorsa == "1"
         assert counts["ok"] == 1
         assert counts["warning"] == 0

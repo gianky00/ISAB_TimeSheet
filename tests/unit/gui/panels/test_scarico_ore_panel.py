@@ -72,12 +72,25 @@ class TestScaricoOrePanel:
         panel.set_search_query("FilterText")
         assert panel.filters.search_input.text() == "FilterText"
 
-    def test_ui_loading_toggle(self, panel, qtbot):
-        panel.show()
-        qtbot.wait_until(lambda: panel.isVisible())
-
+    def test_on_cache_loaded_ui_transition(self, panel, qtbot):
+        """Verifica la transizione UI (shimmer -> tabella) al caricamento dei dati."""
+        # Setup: Inizialmente siamo in loading
         panel._set_ui_loading(True)
-        assert not panel.table_view.isVisible()
+        # Verifica interna dei flag di visibilità (più robusta)
+        assert panel.table_view.isHidden()
+        assert not panel.shimmer.isHidden()
 
-        panel._set_ui_loading(False)
-        assert panel.table_view.isVisible()
+        # Simulazione fine caricamento
+        panel._on_cache_loaded()
+
+        # Attesa esplicita della transizione UI
+        def transition_complete():
+            return not panel.table_view.isHidden() and panel.shimmer.isHidden()
+
+        qtbot.wait_until(transition_complete, timeout=2000)
+        assert panel.filters.status_label.text() == "Pronto"
+
+    def test_loading_progress_updates_label(self, panel):
+        """Verifica che il progresso di caricamento aggiorni la label di stato."""
+        panel._on_loading_progress("Caricamento: 50%")
+        assert panel.filters.status_label.text() == "Caricamento: 50%"

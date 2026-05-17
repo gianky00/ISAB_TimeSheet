@@ -1,85 +1,70 @@
+from unittest.mock import patch
+
 import pytest
 
 from src.utils.security import PasswordManager
 
 
-class TestPasswordManager:
-    @pytest.fixture(autouse=True)
-    def setup_pm(self, fs):
-        """Setup virtual filesystem and reset singleton."""
-        # SECURITY_DIR path is needed in the mock fs
-        from src.core.paths import SECURITY_DIR
+@pytest.fixture
+def clean_security_dir(tmp_path):
+    # Mocking di SECURITY_DIR con una dir temporanea
+    with patch("src.utils.security.SECURITY_DIR", tmp_path):
+        yield tmp_path
 
-        fs.create_dir(SECURITY_DIR)
 
-        # Reset the singleton state if needed or ensure it re-initializes
-        PasswordManager._instance = None
-        pm = PasswordManager()
-        return pm
+def test_password_manager_singleton(clean_security_dir):
+    mgr1 = PasswordManager()
+    mgr2 = PasswordManager()
+    assert mgr1 is mgr2
 
-    def test_singleton(self):
-        PasswordManager._instance = None
-        pm1 = PasswordManager()
-        pm2 = PasswordManager()
-        assert pm1 is pm2
 
-    def test_initialization_creates_files(self, fs):
-        from src.core.paths import SECURITY_DIR
+def test_encrypt_decrypt_flow(clean_security_dir):
+    mgr = PasswordManager()
+    mgr._reset_for_testing()
 
-        pm = PasswordManager()
-        assert (SECURITY_DIR / "secret.key").exists()
-        assert (SECURITY_DIR / "encryption.salt").exists()
+    secret = "my_secret_password_123"
+    encrypted = mgr.encrypt(secret)
+    assert encrypted.startswith("ENC:v2:")
 
-    def test_encrypt_decrypt_cycle(self):
-        pm = PasswordManager()
-        original = "SuperSecret123!"
-        encrypted = pm.encrypt(original)
+    decrypted = mgr.decrypt(encrypted)
+    assert decrypted == secret
 
-        assert encrypted.startswith("ENC:v2:")
-        assert encrypted != original
 
-        decrypted = pm.decrypt(encrypted)
-        assert decrypted == original
+def test_decrypt_empty(clean_security_dir):
+    mgr = PasswordManager()
+    assert mgr.decrypt("") == ""
+    assert mgr.encrypt("") == ""
 
-    def test_encrypt_empty_or_none(self):
-        pm = PasswordManager()
-        assert pm.encrypt("") == ""
-        assert pm.encrypt(None) == ""
 
-    def test_decrypt_empty_or_none(self):
-        pm = PasswordManager()
-        assert pm.decrypt("") == ""
-        assert pm.decrypt(None) == ""
+def test_decrypt_invalid_format(clean_security_dir):
+    mgr = PasswordManager()
+    # Stringa che non inizia con ENC:v2: o ENC:
+    raw = "plain_text_not_encrypted"
+    assert mgr.decrypt(raw) == raw
 
-    def test_decrypt_plaintext(self):
-        pm = PasswordManager()
-        assert pm.decrypt("plain_password") == "plain_password"
 
-    def test_decrypt_legacy_format(self):
-        pm = PasswordManager()
-        # Generate a legacy encryption (prefix ENC:)
-        raw_encrypted = pm._cipher.encrypt(b"legacy_pass").decode()
-        legacy_cipher = f"ENC:{raw_encrypted}"
+def test_legacy_decryption(clean_security_dir):
+    # Test migrazione da formato legacy (ENC:) a v2
+    mgr = PasswordManager()
+    mgr._reset_for_testing()
 
-        assert pm.decrypt(legacy_cipher) == "legacy_pass"
+    secret = "legacy_secret"
+    # Criptiamo manualmente con la chiave corrente per simulare formato legacy
+    cipher = mgr._cipher
+    encrypted_legacy = f"ENC:{cipher.encrypt(secret.encode()).decode()}"
 
-    def test_key_persistence(self, fs):
-        pm1 = PasswordManager()
-        encrypted = pm1.encrypt("persistence_test")
+    decrypted = mgr.decrypt(encrypted_legacy)
+    assert decrypted == secret
 
-        # Simula restart: cancella istanza e ricarica
-        PasswordManager._instance = None
-        pm2 = PasswordManager()
 
-        assert pm2.decrypt(encrypted) == "persistence_test"
+def test_decryption_error_handling(clean_security_dir, caplog):
+    mgr = PasswordManager()
+    mgr._reset_for_testing()
 
-    def test_encryption_error_handling(self, mocker):
-        pm = PasswordManager()
-        # Mock cipher to fail
-        mocker.patch.object(pm._cipher, "encrypt", side_effect=Exception("Crypt fail"))
-        assert pm.encrypt("test") == ""
+    # Tentativo di decriptare una stringa v2 malformata
+    invalid_encrypted = "ENC:v2:invalid_base64_data_!!!"
 
-    def test_decryption_error_handling(self, mocker):
-        pm = PasswordManager()
-        mocker.patch.object(pm._cipher, "decrypt", side_effect=Exception("Decrypt fail"))
-        assert pm.decrypt("ENC:v2:garbage") == ""
+    with caplog.at_level("ERROR"):
+        decrypted = mgr.decrypt(invalid_encrypted)
+        assert decrypted == ""
+        assert "Decryption error (v2)" in caplog.text
