@@ -25,8 +25,10 @@ class TestContabilitaQueries:
         assert years == [2024, 2023]
         assert "UNION" in mock_cursor.execute.call_args[0][0]
 
-    def test_get_available_years_no_file(self):
-        # Path inesistente
+    @patch("src.core.database.db_manager.get_connection")
+    def test_get_available_years_no_file(self, mock_get_conn):
+        # Simula assenza di DB o errore sollevando eccezione che il manager o repo dovrebbe gestire
+        mock_get_conn.side_effect = FileNotFoundError()
         years = ContabilitaQueries.get_available_years(Path("non_existent.db"))
         assert years == []
 

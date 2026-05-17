@@ -92,7 +92,18 @@ class TestEmployeeManager:
     def test_update_employee(self, manager, mock_db):
         """Verifica l'aggiornamento dinamico dei campi."""
         mock_db.execute_query.side_effect = [
-            [(10, "Rossi", "Mario", "B010", "CF10", "2020-01-01", 1, None)],  # SELECT *
+            [
+                {
+                    "id_risorsa": 10,
+                    "cognome": "Rossi",
+                    "nome": "Mario",
+                    "badge": "B010",
+                    "codice_fiscale": "CF10",
+                    "data_assunzione": "2020-01-01",
+                    "monitoraggio_attivo": 1,
+                    "data_nascita": None,
+                }
+            ],  # SELECT *
             None,  # UPDATE
         ]
         data = {"nome": "Paolo", "monitoraggio_attivo": 0}

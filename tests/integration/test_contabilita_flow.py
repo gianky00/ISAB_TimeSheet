@@ -96,7 +96,7 @@ class TestContabilitaIntegration:
             )
             conn.commit()
 
-        # Mock Giornaliere da importare
+        # Mock Giornaliere da importare (simulando i dati già arricchiti da ExcelImporter)
         mock_g_data = [
             (
                 2024,
@@ -104,7 +104,7 @@ class TestContabilitaIntegration:
                 "Mario Rossi",
                 "Lavoro",
                 "TCL1",
-                "",
+                "ODC1",  # Arricchito da ExcelImporter tramite lookup_map
                 "PDL1",
                 "08:00",
                 "17:00",

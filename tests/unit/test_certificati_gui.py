@@ -52,9 +52,10 @@ class TestCertificatiGUI:
         """Testa la formattazione breve del testo giorni nell'Engine.
         Queste stringhe sono fondamentali per il report PDF e la UI.
         """
-        assert "[ROSSO] Scaduto" in CertificatiEngine.format_days_text_short(-10)
-        assert "[ARANCIONE] In scadenza" in CertificatiEngine.format_days_text_short(5)
-        assert "[OK] Attivo" in CertificatiEngine.format_days_text_short(60)
+        assert "Scaduto" in CertificatiEngine.format_days_text_short(-10)
+        assert "10gg fa" in CertificatiEngine.format_days_text_short(-10)
+        assert "In scadenza" in CertificatiEngine.format_days_text_short(5)
+        assert "Attivo" in CertificatiEngine.format_days_text_short(60)
         assert CertificatiEngine.format_days_text_short(None) == "N/D (Senza Scadenza)"
 
     def test_exclusions_engine_io(self, tmp_path):

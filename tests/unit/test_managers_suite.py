@@ -10,15 +10,17 @@ from src.core.stats_manager import StatsManager
 @pytest.fixture
 def temp_audit_db(tmp_path, mocker):
     db_file = tmp_path / "audit_log.db"
-    # Patch the real DB_PATH in AuditDatabase
-    mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_file)
     # Patch signals to avoid PySide6 issues
     mocker.patch("src.core.audit.manager.AuditSignals.instance")
 
     # Force re-initialization for the singleton in test
     AuditManager._instance = None
     manager = AuditManager()
+    # Override db_path sull'istanza AuditDatabase per redirigere tutte le connessioni
+    manager.db._db_path_override = db_file
+    manager.db._init_db()
     yield manager
+    AuditManager._instance = None
 
 
 @pytest.fixture
@@ -52,7 +54,7 @@ class TestAuditManager:
         assert manager.verify_integrity() is True
 
         # Tamper with the DB
-        with sqlite3.connect(manager.DB_PATH) as conn:
+        with sqlite3.connect(manager.db.db_path) as conn:
             conn.execute("UPDATE audit_logs SET action = 'HACKED' WHERE id = 1")
             conn.commit()
 

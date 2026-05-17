@@ -4,32 +4,31 @@ from src.core.oda_manager import OdaManager
 
 
 class TestOdaManager:
-    @patch("src.core.oda_manager.db_manager")
-    def test_get_all_oda_search_date_conversion(self, mock_db):
-        """Verifica la conversione smart delle date nella ricerca OdA."""
-        mock_db.execute_query.return_value = []
+    @patch("src.core.database.repositories.OdaRepository.get_all")
+    def test_get_all_oda_search_date_conversion(self, mock_get_all):
+        """Verifica la delega al repository per la ricerca OdA."""
+        mock_get_all.return_value = []
 
         # Caso 1: Ricerca testuale semplice
         OdaManager.get_all_oda("12345")
-        params = mock_db.execute_query.call_args[0][2]
-        assert "%12345%" in params
+        mock_get_all.assert_called_with("12345", as_objects=False)
 
-        # Caso 2: Ricerca per data italiana (DD/MM/YYYY)
+        # Caso 2: Ricerca per data
         OdaManager.get_all_oda("21/03/2026")
-        query_params = mock_db.execute_query.call_args[0][2]
-        # Deve essere convertita in formato ISO per il DB SQLite
-        assert "%2026-03-21%" in query_params
+        mock_get_all.assert_called_with("21/03/2026", as_objects=False)
 
-    @patch("src.core.oda_manager.StoricoOdaImporter")
-    @patch("src.core.oda_manager.DataSynchronizer")
-    @patch("src.core.sync_tracker.SyncTracker.update_status")
-    def test_import_oda_from_excel_failure(self, mock_tracker, mock_sync, mock_importer):
+    @patch("src.core.oda_manager.Pipeline.run")
+    def test_import_oda_from_excel_failure(self, mock_pipeline_run):
         """Verifica gestione errore se l'importer Excel fallisce."""
-        mock_importer.import_storico_oda.return_value = (False, "File Corrotto", [])
+        mock_pipeline_run.return_value = {
+            "success": False,
+            "message": "File Corrotto",
+            "total_added": 0,
+            "total_removed": 0,
+        }
 
         success, msg, added, _removed = OdaManager.import_oda_from_excel("fake.xlsx")
 
         assert success is False
         assert msg == "File Corrotto"
         assert added == 0
-        mock_sync.sync_storico_oda.assert_not_called()

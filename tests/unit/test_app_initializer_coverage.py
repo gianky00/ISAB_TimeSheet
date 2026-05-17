@@ -13,10 +13,17 @@ class TestAppInitializerCoverage:
     def mock_core_deps(self, mocker):
         """Mock per le dipendenze pesanti di initialize_core."""
         return {
-            "get_status": mocker.patch("src.core.license_validator.get_detailed_license_status"),
-            "run_update": mocker.patch("src.core.license_updater.run_update"),
-            "db_init": mocker.patch("src.core.database.db_manager.init_db"),
+            "get_status": mocker.patch("src.core.app_initializer.get_detailed_license_status"),
+            "run_update": mocker.patch("src.core.app_initializer.run_update"),
+            "db_init": mocker.patch("src.core.app_initializer.db_manager.init_db"),
             "setup_logging": mocker.patch.object(AppInitializer, "_setup_logging"),
+            "ensure_driver": mocker.patch(
+                "src.utils.resource_manager.ResourceManager.ensure_automation_driver"
+            ),
+            "backup": mocker.patch("src.core.app_initializer.DatabaseBackupManager.execute_backup"),
+            "hardware_id": mocker.patch(
+                "src.core.app_initializer.get_hardware_id", return_value="test_hw_id"
+            ),
         }
 
     def test_initialize_core_success(self, mock_core_deps):

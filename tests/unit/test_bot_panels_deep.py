@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -86,15 +86,14 @@ def test_dettagli_oda_panel_deep(qtbot, mock_ui_deps):
     assert panel.data_table.get_data()[0]["numero_oda"] == "999"
 
 
-@patch("src.gui.panels.scarico_ts.BotWorker")
-def test_bot_worker_integration(mock_worker_cls, qtbot, mock_ui_deps):
+def test_bot_worker_integration(qtbot, mock_ui_deps):
+    """Test che il bot_controller viene invocato correttamente."""
     panel = ScaricaTSPanel()
     qtbot.addWidget(panel)
 
     # Setup for start
     panel.data_table.set_data([{"Numero OdA": "123"}])
 
-    with patch.object(panel, "get_bot_instance", return_value=MagicMock()):
+    with patch.object(panel.bot_controller, "start", return_value=True) as mock_start:
         panel._on_start()
-        assert panel.worker is not None
-        mock_worker_cls.assert_called_once()
+        mock_start.assert_called_once()

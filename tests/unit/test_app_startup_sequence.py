@@ -15,12 +15,15 @@ class TestAppInitializer:
 
         # Mocking components to avoid real side effects
         mocker.patch("src.core.app_initializer.AppInitializer._setup_logging")
-        mocker.patch("src.core.database.db_manager.init_db")
-        mocker.patch("src.core.license_updater.run_update")
+        mocker.patch("src.core.app_initializer.db_manager.init_db")
+        mocker.patch("src.core.app_initializer.run_update")
         mocker.patch(
-            "src.core.license_validator.get_detailed_license_status",
+            "src.core.app_initializer.get_detailed_license_status",
             return_value=(LicenseStatus.VALID, "OK"),
         )
+        mocker.patch("src.utils.resource_manager.ResourceManager.ensure_automation_driver")
+        mocker.patch("src.core.app_initializer.DatabaseBackupManager.execute_backup")
+        mocker.patch("src.core.app_initializer.get_hardware_id", return_value="test")
 
         success = AppInitializer.initialize_core()
         assert success is True
@@ -53,18 +56,21 @@ class TestAppInitializer:
         # Verifica che il navigation controller sia stato chiamato per caricare i pannelli
         assert mock_mw.navigation_controller.get_panel.called
 
-    @patch("src.core.database.db_manager.init_db", side_effect=Exception("DB Error"))
+    @patch("src.core.app_initializer.db_manager.init_db", side_effect=Exception("DB Error"))
     def test_initialize_core_failure_handling(self, mock_db_init, mocker):
         """Verifica che un errore nel core sollevi eccezione."""
         import pytest
 
         AppInitializer._core_initialized = False
         mocker.patch("src.core.app_initializer.AppInitializer._setup_logging")
-        mocker.patch("src.core.license_updater.run_update")
+        mocker.patch("src.core.app_initializer.run_update")
         mocker.patch(
-            "src.core.license_validator.get_detailed_license_status",
+            "src.core.app_initializer.get_detailed_license_status",
             return_value=(LicenseStatus.VALID, "OK"),
         )
+        mocker.patch("src.utils.resource_manager.ResourceManager.ensure_automation_driver")
+        mocker.patch("src.core.app_initializer.DatabaseBackupManager.execute_backup")
+        mocker.patch("src.core.app_initializer.get_hardware_id", return_value="test")
 
         with pytest.raises(Exception, match="DB Error"):
             AppInitializer.initialize_core()
