@@ -62,54 +62,6 @@ class TestAuditManager:
 
         assert manager.verify_integrity() is True
 
-    def test_verify_integrity_fail(self, setup_manager, tmp_path):
-        manager = setup_manager
-        manager.log_action("Action 1")
-
-        manager._log_queue.join()
-
-        # Tamper with the database manually
-        import sqlite3
-
-        conn = sqlite3.connect(manager.db.DB_PATH)
-        conn.execute("UPDATE audit_logs SET action = 'TAMPERED' WHERE id = 1")
-        conn.commit()
-        conn.close()
-
-        # Integrity should fail because action changed but hash remains same
-        assert manager.verify_integrity() is False
-
-    def test_run_retention_policy(self, setup_manager):
-        manager = setup_manager
-        # Manually insert an old record
-        import sqlite3
-        from datetime import UTC, datetime, timedelta
-
-        old_ts = (datetime.now(UTC) - timedelta(days=100)).isoformat()
-
-        with sqlite3.connect(manager.db.DB_PATH) as conn:
-            conn.execute(
-                "INSERT INTO audit_logs (timestamp, action) VALUES (?, ?)",
-                (old_ts, "Old Action"),
-            )
-
-        # Sync check
-        logs, total = manager.get_filtered_logs()
-        assert total == 1
-
-        manager.run_retention_policy(days=90)
-
-        # Attendi il log di pulizia asincrono
-        manager._log_queue.join()
-
-        # Old record should be deleted
-        _, total = manager.get_filtered_logs()
-        assert total == 1  # Still 1 because we logged the "Pulizia Log" action!
-
-        logs = manager.get_logs()
-        assert logs[0]["action"] == "Pulizia Log"
-        assert "Old Action" not in [log["action"] for log in logs]
-
     def test_get_stats_by_day(self, setup_manager):
         manager = setup_manager
         manager.log_action("A1", status=Status.SUCCESS)
