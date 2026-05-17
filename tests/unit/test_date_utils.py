@@ -85,3 +85,11 @@ class TestDateUtils:
 
         assert is_same_day(dt1, dt2) is True
         assert is_same_day(dt1, dt3) is False
+
+    def test_get_month_name_it(self):
+        from src.utils.date_utils import get_month_name_it
+
+        assert get_month_name_it(1) == "Gen"
+        assert get_month_name_it(12, full=True) == "Dicembre"
+        assert get_month_name_it(0) == ""
+        assert get_month_name_it(13) == ""

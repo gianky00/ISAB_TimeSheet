@@ -56,7 +56,7 @@ class DettagliOdABot(SeleniumBaseBot):
         """Restituisce la descrizione del bot."""
         return "Scarica dettaglio OdA (o lista generale se OdA vuoto)"
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         username: str | None = None,
         password: str | None = None,

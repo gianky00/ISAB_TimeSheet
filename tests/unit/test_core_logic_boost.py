@@ -2,7 +2,7 @@ import sqlite3
 from unittest.mock import patch
 
 from src.core.audit_manager import AuditManager
-from src.core.contabilita_stats import ContabilitaStats
+from src.core.contabilita.stats_service import ContabilitaStats
 from src.core.excel_importer import ExcelImporter
 
 

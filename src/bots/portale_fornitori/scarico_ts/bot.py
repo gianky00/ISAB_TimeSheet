@@ -66,7 +66,7 @@ class ScaricaTSBot(SeleniumBaseBot):
         """Restituisce la descrizione del bot."""
         return "Scarica i timesheet dal portale ISAB"
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         username: str | None = None,
         password: str | None = None,

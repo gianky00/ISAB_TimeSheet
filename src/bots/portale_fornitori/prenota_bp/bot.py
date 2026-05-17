@@ -46,7 +46,7 @@ class PrenotaBPBot(SeleniumBaseBot):
         """Restituisce la descrizione del bot."""
         return "Prenotazione Badge Provvisori sul portale ISAB"
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         username: str | None = None,
         password: str | None = None,
@@ -98,9 +98,11 @@ class PrenotaBPBot(SeleniumBaseBot):
 
         try:
             self.update_step("nav", StepStatus.RUNNING)
-            page = PrenotaBPPage(self.driver, self.wait)
-            if not page.navigate_to_gestione_bp():
-                self.log("❌ Impossibile raggiungere la sezione Gestione BP")
+            page = PrenotaBPPage(self.driver, self.log)
+            try:
+                page.navigate_to_gestione_bp()
+            except Exception as e:
+                self.log(f"❌ Impossibile raggiungere la sezione Gestione BP: {e}")
                 self.update_step("nav", StepStatus.ERROR)
                 return False
             self.update_step("nav", StepStatus.COMPLETED)
@@ -136,23 +138,32 @@ class PrenotaBPBot(SeleniumBaseBot):
 
         # 1. Filtro
         self.update_step("filter", StepStatus.RUNNING)
-        if not page.filtra_buoni_prelievo(self.fornitore, self.data_da, self.data_a, num_bp):
-            self.log(f"⚠️ Buono {num_bp} non trovato o non disponibile.")
+        try:
+            page.filtra_buoni_prelievo(self.fornitore, num_bp, self.data_da, self.data_a)
+        except Exception as e:
+            self.log(f"⚠️ Buono {num_bp} non trovato o errore filtro: {e}")
             self.update_step("filter", StepStatus.ERROR)
             return False
         self.update_step("filter", StepStatus.COMPLETED)
 
         # 2. Apertura Dettaglio
         self.update_step("details", StepStatus.RUNNING)
-        if not page.apri_dettagli_bp(num_bp):
-            self.log(f"⚠️ Impossibile aprire dettaglio per {num_bp}")
+        try:
+            page.apri_dettagli_bp()
+        except Exception as e:
+            self.log(f"⚠️ Impossibile aprire dettaglio per {num_bp}: {e}")
             self.update_step("details", StepStatus.ERROR)
             return False
         self.update_step("details", StepStatus.COMPLETED)
 
         # 3. Prenotazione
         self.update_step("reserve", StepStatus.RUNNING)
-        success, msg = page.esegui_prenotazione(note)
+        try:
+            page.gestisci_creazione_richiesta(note)
+            success, msg = True, "Prenotazione creata con successo."
+        except Exception as e:
+            success, msg = False, str(e)
+
         if success:
             self.log(f"✅ BP {num_bp} prenotato con successo.")
             self.update_step("reserve", StepStatus.COMPLETED)

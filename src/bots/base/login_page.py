@@ -81,7 +81,7 @@ class LoginPage:
                 opt_el = WebDriverWait(self.driver, 3).until(
                     EC.element_to_be_clickable((By.XPATH, option_xpath))
                 )
-                self.driver.execute_script("arguments[0].click();", opt_el)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].click();", opt_el)
         except Exception as e:
             self.log(f"⚠️ Avviso: Selezione società'{company}' non riuscita, proseguo: {e}")
 
@@ -91,7 +91,7 @@ class LoginPage:
         except (TimeoutException, ElementClickInterceptedException):
             self.log("⚠️ Click standard intercettato o timeout. Tento click JavaScript...")
             accedi_element = self.driver.find_element(*LoginLocators.LOGIN_BUTTON_FALLBACK)
-            self.driver.execute_script("arguments[0].click();", accedi_element)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].click();", accedi_element)
 
         # Gestione popup sessione attiva (immediatamente dopo click)
         self._check_and_handle_session_popup()

@@ -31,7 +31,7 @@ class TimbratureBot(SeleniumBaseBot):
         ("import", "Importazione DB"),
     ]
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         username: str | None = None,
         password: str | None = None,

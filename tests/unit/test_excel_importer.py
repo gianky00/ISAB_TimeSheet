@@ -2,10 +2,12 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
+# Mock DataSynchronizer per tutti i test degli importer
+import pytest
+
 from src.core.excel_importer import ExcelImporter
 
 
-# Mock DataSynchronizer per tutti i test degli importer
 @pytest.fixture(autouse=True)
 def mock_data_synchronizer():
     with (

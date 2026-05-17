@@ -68,7 +68,7 @@ def _validate_currency_integrity(s: str) -> bool:
         return True
 
     # Notazione scientifica semplice
-    if re.search(r"^-?\d*\.?\d+[eE][-+]?\d+$", s.replace(" ", "")):
+    if re.search(r"^-?\d*[.,]?\d+[eE][-+]?\d+$", s.replace(" ", "")):
         return True
 
     # Whitelist

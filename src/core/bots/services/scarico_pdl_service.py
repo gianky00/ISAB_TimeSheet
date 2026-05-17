@@ -7,6 +7,7 @@ from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 class ScaricoPDLService(BaseBotService):
     def __init__(self) -> None:
         super().__init__("scarico_pdl")
@@ -28,20 +29,22 @@ class ScaricoPDLService(BaseBotService):
 
     def save_config(self, params: dict[str, Any], data: list[dict[str, Any]]) -> None:
         config_manager.set_config_value("last_pdl_data", data)
-        config_manager.set_config_value("last_pdl_params", {
-            "stampa": params.get("stampa", False),
-            "stampante": params.get("stampante", ""),
-            "destinazione": params.get("dest_path", ""),
-        })
+        config_manager.set_config_value(
+            "last_pdl_params",
+            {
+                "stampa": params.get("stampa", False),
+                "stampante": params.get("stampante", ""),
+                "destinazione": params.get("dest_path", ""),
+            },
+        )
 
     def prepare_payload(
         self,
         credentials: tuple[str, str, str],
         params: dict[str, Any],
         data: list[dict[str, Any]],
-        overrides: dict[str, Any] | None = None
+        overrides: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
-
         username, password, account_type = credentials
         config = config_manager.load_config()
 
@@ -84,5 +87,5 @@ class ScaricoPDLService(BaseBotService):
                 report_path, caption=f"✅ Scarico PDL completato ({len(downloaded_files)} file)"
             )
             logger.info("Report inviato correttamente a Telegram.")
-        except Exception as e:
-            logger.exception(f"Errore invio Telegram: {e}")
+        except Exception:
+            logger.exception("Errore invio Telegram")

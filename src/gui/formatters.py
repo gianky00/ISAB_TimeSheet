@@ -21,7 +21,7 @@ def format_currency_smart(value: Any) -> str:
         # 1. Pulizia e Conversione
         if isinstance(value, str):
             # Rimuove simboli valuta e spazi
-            clean_val = value.replace("  ", "").strip()
+            clean_val = value.replace("  ", "").replace("€", "").strip()
             # Gestione intelligente formati IT (1.234,56) vs EN (1,234.56)
             if "," in clean_val and "." in clean_val:
                 if clean_val.find(".") < clean_val.find(","):

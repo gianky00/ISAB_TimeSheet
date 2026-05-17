@@ -1,74 +1,79 @@
-from unittest.mock import patch
+from pathlib import Path
 
 import pytest
 
 from src.core import config_manager
-
-
-@pytest.fixture(autouse=True)
-def reset_config_state(tmp_path):
-    """Isolamento totale: reset cache e path temporanei."""
-    from src.core.config_manager import _reset_configuration_for_testing
-
-    _reset_configuration_for_testing()
-
-    config_path = tmp_path / "config.json"
-
-    with (
-        patch("src.core.config_manager.CONFIG_DIR", tmp_path),
-        patch("src.core.config_manager.CONFIG_FILE", config_path),
-    ):
-        yield config_path
-
-    _reset_configuration_for_testing()
+from src.core.config_manager import (
+    _reset_configuration_for_testing,
+    get_config_value,
+    load_config,
+    save_config,
+    set_config_value,
+)
 
 
 class TestConfigManager:
-    def test_load_default_config(self, reset_config_state):
-        config = config_manager.load_config()
-        # Non testiamo valori specifici che potrebbero cambiare,
-        # ma la struttura base
-        assert "browser_timeout" in config
-        assert "accounts" in config
-
-    def test_save_load_config(self, reset_config_state):
-        config = config_manager.load_config()
-        config["browser_timeout"] = 99
-        config_manager.save_config(config)
-
-        from src.core.config_manager import _reset_configuration_for_testing
-
+    @pytest.fixture(autouse=True)
+    def setup_config(self, fs):
+        """Setup del filesystem virtuale e reset cache."""
+        fs.create_dir("/config")
+        _reset_configuration_for_testing()
+        yield
         _reset_configuration_for_testing()
 
-        new_config = config_manager.load_config()
-        assert new_config["browser_timeout"] == 99
+    def test_load_config_default(self, fs):
+        """Testa il caricamento dei default se il file non esiste."""
+        from src.core import paths
 
-    def test_add_remove_account(self, reset_config_state, mocker):
-        # Mock security to avoid real encryption/keyring
-        mocker.patch("src.core.config.account_manager.SecretsManager.is_available", return_value=False)
-        mocker.patch("src.utils.security.password_manager.encrypt", side_effect=lambda x: f"enc_{x}")
+        # pyfakefs usa 'contents'
+        fs.create_file(paths.CONFIG_FILE, contents="{}")
 
-        # Nuova firma: add_account(bot_type, account_data)
-        config_manager.add_account("isab", {"username": "user1", "password": "pass1", "is_default": True})
-        config_manager.add_account("isab", {"username": "user2", "password": "pass2", "is_default": False})
+        config = load_config()
+        assert isinstance(config, dict)
+        assert "browser_headless" in config
 
-        accounts = config_manager.get_config_value("accounts")
-        assert len(accounts) == 2
+    def test_save_and_load_config(self, fs):
+        """Testa il salvataggio e rilettura della configurazione."""
+        from src.core import paths
 
-        config_manager.set_default_account("isab", "user2")
-        assert config_manager.get_default_account("isab")["username"] == "user2"
+        config = {"test_key": "test_value"}
 
-        config_manager.remove_account("isab", "user1")
-        assert len(config_manager.get_config_value("accounts")) == 1
+        success = save_config(config)
+        assert success is True
+        assert Path(paths.CONFIG_FILE).exists()
 
-    def test_get_download_path(self, reset_config_state, tmp_path):
-        config_manager.set_config_value("download_path", str(tmp_path))
-        assert config_manager.get_download_path() == str(tmp_path)
+        # Ricarica e verifica
+        new_config = load_config()
+        assert new_config["test_key"] == "test_value"
 
-    def test_get_data_path(self, reset_config_state, tmp_path):
-        # get_data_path è ora in src.core.paths
-        from src.core.paths import get_data_path
+    def test_get_set_config_value(self, fs):
+        """Testa getter e setter atomici."""
+        set_config_value("api_key", "secret123")
+        assert get_config_value("api_key") == "secret123"
+        # Se chiedo una chiave che non c'è, deve ridare default
+        assert get_config_value("non_existent_key", "my_default") == "my_default"
 
-        with patch("src.core.paths.DB_DIR", tmp_path):
-            path = get_data_path()
-            assert str(tmp_path) in str(path)
+    def test_get_download_path(self, fs):
+        """Testa il recupero del path di download."""
+        # Se non impostato, usa home / Downloads
+        path = config_manager.get_download_path()
+        assert "Downloads" in path
+
+        # Se impostato e esistente
+        fs.create_dir("/custom/downloads")
+        set_config_value("download_path", "/custom/downloads")
+        assert config_manager.get_download_path() == "/custom/downloads"
+
+    def test_reset_to_defaults(self, fs):
+        """Testa il reset ai default."""
+        set_config_value("custom_key", "custom_val")
+        config_manager.reset_to_defaults()
+        assert get_config_value("custom_key") is None
+        assert "browser_headless" in load_config()
+
+    def test_atomic_write_failure(self, fs, mocker):
+        """Testa il fallimento della scrittura atomica."""
+        # Mock open per lanciare errore
+        mocker.patch("pathlib.Path.open", side_effect=OSError("Disk full"))
+        success = config_manager._atomic_write_json(Path("/fake.json"), {})
+        assert success is False

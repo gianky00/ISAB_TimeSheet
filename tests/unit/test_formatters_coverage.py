@@ -48,7 +48,7 @@ class TestFastTableModel:
             def column(self):
                 return self._c
 
-            def isValid(self):
+            def isValid(self):  # noqa: N802
                 return self._valid
 
         idx = MockIndex(0, 1)
@@ -74,7 +74,7 @@ class TestFastTableModel:
             def column(self):
                 return self._c
 
-            def isValid(self):
+            def isValid(self):  # noqa: N802
                 return True
 
         idx = MockIndex(0, 0)

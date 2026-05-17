@@ -1,7 +1,7 @@
 from pathlib import Path
 from unittest.mock import patch
 
-from src.core.contabilita_stats import ContabilitaStats
+from src.core.contabilita.stats_service import ContabilitaStats
 
 
 class TestContabilitaStats:
