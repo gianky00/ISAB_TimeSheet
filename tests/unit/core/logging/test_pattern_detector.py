@@ -21,7 +21,7 @@ class TestPatternDetector:
         detector = PatternDetector(viewer=mock_viewer)
         mock_viewer.get_error_summary.return_value = [
             {"message": "Timeout", "count": 10},
-            {"message": "Low count", "count": 1}
+            {"message": "Low count", "count": 1},
         ]
 
         patterns = detector.find_repeated_errors(min_count=3)
@@ -32,9 +32,7 @@ class TestPatternDetector:
 
     def test_detect_all_integration(self, mock_viewer):
         detector = PatternDetector(viewer=mock_viewer)
-        mock_viewer.get_error_summary.return_value = [
-            {"message": "Error A", "count": 5}
-        ]
+        mock_viewer.get_error_summary.return_value = [{"message": "Error A", "count": 5}]
 
         patterns = detector.detect_all()
         assert len(patterns) == 1

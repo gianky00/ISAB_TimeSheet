@@ -20,10 +20,23 @@ class TestContabilitaSyncEngine:
         return p
 
     def test_sync_giornaliere_update_logic(self, db_path):
-        cols = ["year", "data", "personale", "descrizione", "tcl", "odc", "pdl", "inizio", "fine", "ore", "n_prev", "nome_file"]
+        cols = [
+            "year",
+            "data",
+            "personale",
+            "descrizione",
+            "tcl",
+            "odc",
+            "pdl",
+            "inizio",
+            "fine",
+            "ore",
+            "n_prev",
+            "nome_file",
+        ]
         new_rows = [
-            (2024, '2024-01-01', 'Rossi', '', '', '', '', '', '', 8.0, '', 'file1'),
-            (2024, '2024-01-02', 'Verdi', '', '', '', '', '', '', 8.0, '', 'file1'),
+            (2024, "2024-01-01", "Rossi", "", "", "", "", "", "", 8.0, "", "file1"),
+            (2024, "2024-01-02", "Verdi", "", "", "", "", "", "", 8.0, "", "file1"),
         ]
 
         added, _removed = ContabilitaSyncEngine.sync_giornaliere(db_path, new_rows, [2024], cols)
@@ -46,7 +59,7 @@ class TestContabilitaSyncEngine:
         with sqlite3.connect(db_path) as conn:
             cursor = conn.cursor()
             cols = ["year", "personale", "ore"]
-            new_data = [(2024, 'Rossi', 8.0), (2024, 'Nuovo', 4.0)]
+            new_data = [(2024, "Rossi", 8.0), (2024, "Nuovo", 4.0)]
 
             from src.core.sync.base import PartitionConfig
 

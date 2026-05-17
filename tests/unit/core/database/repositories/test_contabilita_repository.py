@@ -14,6 +14,7 @@ def repo():
     db_mgr.DB_CONTABILITA = Path("fake.db")
     return ContabilitaRepository(db_manager_instance=db_mgr)
 
+
 def test_get_available_years(repo):
     # Mock del cursore per restituire anni
     mock_conn = MagicMock()
@@ -26,6 +27,7 @@ def test_get_available_years(repo):
         years = repo.get_available_years()
         assert 2026 in years
         assert 2025 in years
+
 
 def test_get_data_by_year_legacy(repo):
     # Mock del cursore per il flusso legacy (as_objects=False)

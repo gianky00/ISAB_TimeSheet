@@ -1,4 +1,3 @@
-
 from src.gui.widgets.info_widgets import KPIBigCard
 
 

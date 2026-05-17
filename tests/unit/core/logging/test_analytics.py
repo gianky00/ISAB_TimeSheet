@@ -36,9 +36,7 @@ class TestAnomalyDetector:
 
     def test_detect_slow_operations_high(self, mock_viewer):
         detector = AnomalyDetector(viewer=mock_viewer)
-        mock_viewer.get_slow_operations.return_value = [
-            {"duration_ms": 35000, "operation": "test_op"}
-        ]
+        mock_viewer.get_slow_operations.return_value = [{"duration_ms": 35000, "operation": "test_op"}]
 
         anomalies = detector.detect_slow_operations()
         assert len(anomalies) == 1

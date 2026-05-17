@@ -9,6 +9,7 @@ from src.core.data_synchronizer import DataSynchronizer
 def db_path(tmp_path):
     return tmp_path / "test.db"
 
+
 def test_sync_storico_oda(db_path):
     # Setup mock per SmartSyncEngine.sync_upsert_smart
     with patch("src.core.data_synchronizer.SmartSyncEngine.sync_upsert_smart") as mock_sync:
@@ -20,6 +21,7 @@ def test_sync_storico_oda(db_path):
         assert added == 5
         assert deleted == 2
         mock_sync.assert_called_once()
+
 
 def test_sync_attivita_programmate(db_path):
     # Setup mock per SmartSyncEngine.sync_full_replace_with_metadata

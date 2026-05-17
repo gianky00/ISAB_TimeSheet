@@ -43,11 +43,12 @@ def nav_controller(mock_mw, mocker):
 class TestNavigationControllerRobust:
     def test_get_panel_already_initialized(self, nav_controller, mock_mw):
         """Test recupero pannello già inizializzato."""
+
         class CustomPanel(QWidget):
             pass
 
         custom_panel = CustomPanel()
-        
+
         # Sostituiamo il placeholder all'indice 0 con CustomPanel
         placeholder = nav_controller.stack.widget(0)
         nav_controller.stack.removeWidget(placeholder)
@@ -85,7 +86,7 @@ class TestNavigationControllerRobust:
         """Test navigazione sulla stessa pagina attiva."""
         # Selezioniamo prima l'indice 0
         nav_controller.stack.setCurrentIndex(0)
-        
+
         # Chiamata al metodo. Dovrebbe comunque completare senza crash
         nav_controller.navigate_to(0)
         assert nav_controller.stack.currentIndex() == 0
@@ -120,7 +121,7 @@ class TestNavigationControllerRobust:
     def test_navigate_to_panel_bot(self, nav_controller, mock_mw):
         """Test navigazione verso pannello bot annidato."""
         automazioni_idx = int(PageIndex.AUTOMAZIONI)
-        
+
         # Sostituiamo il widget all'indice PageIndex.AUTOMAZIONI
         old_w = nav_controller.stack.widget(automazioni_idx)
         nav_controller.stack.removeWidget(old_w)
@@ -129,7 +130,7 @@ class TestNavigationControllerRobust:
 
         with patch.object(nav_controller, "_ensure_panel_initialized"):
             nav_controller.navigate_to_panel("dettagli_oda")
-            
+
             # Verifica che sia stato impostato l'indice corretto
             assert nav_controller.stack.currentIndex() == automazioni_idx
             # dettagli_oda corrisponde a (0, 0)
