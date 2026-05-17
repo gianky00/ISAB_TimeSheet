@@ -13,6 +13,7 @@ from src.gui.widgets.core_widgets import SortableTableWidgetItem
 
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QTableWidget
+
     Base = QTableWidget
 else:
     Base = object

@@ -45,7 +45,9 @@ class ODAController:
                     "stato": first.stato,
                     "rilascio": first.indicatore_rilascio,
                     # Manteniamo le posizioni come tuple per ora per compatibilità con ODAAdapter.create_child_row
-                    "positions": [tuple(vars(p).values())[:-1] for p in positions], # Rimuoviamo id se presente alla fine
+                    "positions": [
+                        tuple(vars(p).values())[:-1] for p in positions
+                    ],  # Rimuoviamo id se presente alla fine
                     "raw_first": tuple(vars(first).values())[:-1],
                 }
             )

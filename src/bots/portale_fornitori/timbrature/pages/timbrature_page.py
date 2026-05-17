@@ -123,6 +123,18 @@ class TimbraturePage:
         else:
             return True
 
+    def download_timbrature(self, fornitore: str, data_da: str, data_a: str, download_path: str = "") -> str:
+        """
+        Metodo high-level per gestire l'intero flusso: filtri -> download.
+        """
+        if download_path:
+            self.download_path = download_path
+
+        if not self.set_filters(fornitore, data_da, data_a):
+            return ""
+
+        return self.download_excel()
+
     def _select_supplier(self, fornitore: str) -> None:
         """Seleziona il fornitore dal menu a tendina."""
         self.log(f"Seleziono fornitore: {fornitore}")
@@ -145,7 +157,7 @@ class TimbraturePage:
                         try:
                             ActionChains(self.driver).move_to_element(arrow_element).click().perform()
                         except Exception:
-                            self.driver.execute_script("arguments[0].click();", arrow_element)  # type: ignore[no-untyped-call]
+                            self.driver.execute_script("arguments[0].click();", arrow_element)
                         break
                 except Exception:
                     with suppress(Exception):
@@ -159,12 +171,12 @@ class TimbraturePage:
                 EC.presence_of_element_located((By.XPATH, option_xpath))
             )
 
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
 
             try:
                 option.click()
             except (ElementClickInterceptedException, Exception):
-                self.driver.execute_script("arguments[0].click();", option)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].click();", option)
             self._wait_for_overlay()
 
         except Exception as e:
@@ -189,13 +201,13 @@ class TimbraturePage:
                 f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() in allowed_ext
             }
 
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", excel_btn)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", excel_btn)
 
             self.log("Clicco su Excel...")
             try:
                 excel_btn.click()
             except Exception:
-                self.driver.execute_script("arguments[0].click();", excel_btn)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].click();", excel_btn)
 
             self.log("Attendo download...")
 

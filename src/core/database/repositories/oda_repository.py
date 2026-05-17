@@ -15,23 +15,51 @@ class OdaRepository:
     def __init__(self, db_manager_instance: Any = None) -> None:
         self.db = db_manager_instance or db_manager
         self.columns = [
-            "org_acq", "data_oda", "oda", "pos_oda", "stato", "cat_contab",
-            "descrizione", "qta", "uom", "data_consegna", "valore_netto_pos",
-            "valore_residuo", "valore_netto_oda", "divisione", "destinatario",
-            "nome_destinatario", "codice_fornitore", "descrizione_fornitore",
-            "emittente_fattura", "desc_emittente_fattura", "contract_card",
-            "contratto", "posizione_contratto", "gruppo_acquisti",
-            "indicatore_rilascio", "stato_rilascio", "attivita", "num_riga",
-            "quantita", "unita_mis", "prezzo_lordo", "testo_breve"
+            "org_acq",
+            "data_oda",
+            "oda",
+            "pos_oda",
+            "stato",
+            "cat_contab",
+            "descrizione",
+            "qta",
+            "uom",
+            "data_consegna",
+            "valore_netto_pos",
+            "valore_residuo",
+            "valore_netto_oda",
+            "divisione",
+            "destinatario",
+            "nome_destinatario",
+            "codice_fornitore",
+            "descrizione_fornitore",
+            "emittente_fattura",
+            "desc_emittente_fattura",
+            "contract_card",
+            "contratto",
+            "posizione_contratto",
+            "gruppo_acquisti",
+            "indicatore_rilascio",
+            "stato_rilascio",
+            "attivita",
+            "num_riga",
+            "quantita",
+            "unita_mis",
+            "prezzo_lordo",
+            "testo_breve",
         ]
 
     @overload
     def get_all(self, search_text: str | None = ..., as_objects: Literal[True] = ...) -> list[OdaRecord]: ...
 
     @overload
-    def get_all(self, search_text: str | None = ..., as_objects: Literal[False] = ...) -> list[tuple[Any, ...]]: ...
+    def get_all(
+        self, search_text: str | None = ..., as_objects: Literal[False] = ...
+    ) -> list[tuple[Any, ...]]: ...
 
-    def get_all(self, search_text: str | None = None, as_objects: bool = True) -> list[OdaRecord] | list[tuple[Any, ...]]:
+    def get_all(
+        self, search_text: str | None = None, as_objects: bool = True
+    ) -> list[OdaRecord] | list[tuple[Any, ...]]:
         """Recupera tutti gli OdA, opzionalmente filtrati per testo."""
         db_path = self.db.DB_STORICO_ODA
         if not db_path.exists():

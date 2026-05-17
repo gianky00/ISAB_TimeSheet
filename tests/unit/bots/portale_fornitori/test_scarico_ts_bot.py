@@ -19,7 +19,7 @@ class TestScaricaTSBot:
 
     def test_validate_data_success(self):
         bot = ScaricaTSBot(username="u", password="p", fornitore="COEMI")
-        valid, msg = bot.validate_data([{"numero_oda": "123"}])
+        valid, _msg = bot.validate_data([{"numero_oda": "123"}])
         assert valid is True
 
     @patch("src.bots.portale_fornitori.scarico_ts.bot.ScaricaTSBot._setup_timesheet_view")

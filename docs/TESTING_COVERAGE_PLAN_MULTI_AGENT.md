@@ -21,50 +21,56 @@ L'architettura del software prevede un'alta modularità, permettendo la suddivis
 
 ### ✅ Stream B: Accesso Dati e Repository (COMPLETATO)
 - **Stato:** Copertura dei repository e del database manager.
-- **Target raggiunto:** `src/core/database/repositories/`, `src/core/database/manager.py`, `src/core/audit/`.
+- **Target raggiunto:** `src/core/database/repositories/`, `src/core/database/manager.py`.
 
 ### ✅ Stream C: Logica di Business Core (COMPLETATO)
 - **Stato:** Coverage estesa su Importers, Configurazione e Boot.
 - **File testati:**
-  - `src/core/importers/*` (Giornaliere, Attività, Certificati, OdA, Contabilità, Scarico Ore, PDL Sync).
-  - `src/core/config_manager.py` e `src/core/config/*` (Accounts, Migration, Security).
+  - `src/core/importers/*` (tutti gli importatori Excel/CSV).
+  - `src/core/config_manager.py` e `src/core/config/*`.
   - `src/core/app_initializer.py`.
 
 ### ✅ Stream D: Automazione Browser (Bots) & Web Scraping (COMPLETATO)
 - **Stato:** Copertura delle classi base e dei bot principali.
-- **File testati:**
-  - `src/bots/base/*` (BaseBot, PlaywrightBase, StepManager, ExecutionGuard).
-  - `src/bots/portale_fornitori/scarico_ts/bot.py`.
-  - `src/bots/portale_fornitori/prenota_bp/bot.py`.
-  - `src/bots/portale_fornitori/timbrature/bot.py` e `storage.py`.
+- **File testati:** `src/bots/base/*`, `src/bots/portale_fornitori/*`.
 
 ### ✅ Stream E: Interfaccia Grafica - Design & Styles (COMPLETATO)
 - **Stato:** Copertura del sistema di design e degli helper di stile.
-- **File testati:**
-  - `src/gui/design/*` (Colors, Spacing).
-  - `src/gui/styles/*` (ThemeManager, PaletteHelpers, WidgetStyles, UIEffects).
-  - `src/gui/formatters.py`.
+- **File testati:** `src/gui/design/*`, `src/gui/styles/*`, `src/gui/formatters.py`.
 
-### 🔵 Stream F: Telegram Bridge & Messaging (IN CORSO - Agente Attuale)
-- **Stato:** Inizio analisi `src/core/telegram/`.
-- **Target:** `src/core/telegram/service.py`, `src/core/telegram/bridge/`.
-- **Istruzioni:** Mockare le API di Telegram (`python-telegram-bot`) e testare la gestione degli intenti e dei comandi.
+### ✅ Stream F: Telegram Bridge & Messaging (COMPLETATO)
+- **Stato:** Copertura completa del controllo remoto.
+- **File testati:** `src/core/telegram/*`.
+
+### ✅ Stream G: Sistemi Critici di Integrità e Sicurezza (COMPLETATO)
+- **Stato:** Messi in sicurezza i componenti vitali.
+- **File testati:** `license_validator.py`, `security.py`, `audit/*`, `bug_reporter.py`, `auth_monitor.py`, `updater/engine.py`.
+
+### ✅ Stream H: Widget Grafici Complessi (COMPLETATO)
+- **Stato:** Testati i widget custom e le basi dei pannelli.
+- **File testati:** `src/gui/widgets/`, `src/gui/panels/base.py`.
+
+### ✅ Stream I: Orchestrazione e Manager (COMPLETATO)
+- **Stato:** Copertura di tutte le classi "Manager" che coordinano i flussi di dati.
+- **File testati:** `src/core/contabilita_manager.py`, `src/core/oda_manager.py`, `src/core/stats_manager.py`, `src/core/notification_manager.py`, `src/core/sync_tracker.py`.
+
+### 🔵 Stream J: Pannelli Specifici (IN CORSO - Agente Attuale)
+- **Stato:** Inizio implementazione test per i pannelli operativi via `pytest-qt`.
+- **Target:** `src/gui/panels/` (es. `scarico_ore_panel.py`, `carico_ts.py`, `pdl_panel.py`).
+- **Istruzioni:** Mockare i Controller e verificare che i segnali della UI scatenino le azioni corrette.
 
 ---
 
 ## 🔄 Workflow Standard per ogni Agente
 
 1. **Reconnaissance (Ricerca):** Controllare l'output di `pytest --cov=src` per il modulo bersaglio. Verificare se esistono test precedenti in `tests/unit/`.
-2. **Setup:** Se il modulo non ha una sua folder di test dedicata, crearla (es: `tests/unit/core/database/`).
-3. **Execution:** Creare i test utilizzando le classi standard (es: `class TestMyClass:`). Implementare Edge Cases (None, stringhe vuote, tipi incorretti).
-4. **Validation:** Eseguire:
-   ```bash
-   # Usa il custom runner per validazione rapida del singolo file
-   python tests/run_robust_tests.py tests/unit/<percorso_nuovo_test>.py
-   ```
-5. **Report & Passaggio:** Fornire all'utente il report del coverage raggiunto sul singolo file tramite `--cov=src.<percorso> --cov-report=term-missing`.
+2. **Setup:** Se il modulo non ha una sua folder di test dedicata, crearla.
+3. **Execution:** Creare i test utilizzando le classi standard. Implementare Edge Cases.
+4. **Validation:** Eseguire `tests/run_robust_tests.py`.
+5. **Report & Passaggio:** Fornire all'utente il report del coverage raggiunto.
 
 ---
 
-## ⚡ Prossimi Passi (Immediati)
-- **Agente Attuale:** Focus su `src/core/telegram/service.py`. Implementazione test per l'invio messaggi e gestione bot.
+## ⚡ Prossimi Passi (Consigliati)
+- **Stream K: Analisi e KPI:** Coprire la logica di calcolo avanzata in `src/core/contabilita/stats_service.py` e i relativi pannelli grafici.
+- **Stream L: Integrazione End-to-End:** Test di integrazione che simulano il caricamento di un file e la sincronizzazione verso il database reale/temporaneo.

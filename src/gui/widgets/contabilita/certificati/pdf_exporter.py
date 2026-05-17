@@ -135,9 +135,7 @@ class CertificatiPdfExporter:
 
         return ""
 
-    def _draw_footer(
-        self, painter: QPainter, current: int, total: int, width: float, height: float
-    ) -> None:
+    def _draw_footer(self, painter: QPainter, current: int, total: int, width: float, height: float) -> None:
         """Disegna il footer con la numerazione delle pagine."""
         painter.save()
         font = painter.font()
@@ -147,14 +145,10 @@ class CertificatiPdfExporter:
 
         page_text = f"Pagina {current} / {total}"
         footer_rect = QRectF(0, height - 20, width - 15, 20)
-        painter.drawText(
-            footer_rect, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, page_text
-        )
+        painter.drawText(footer_rect, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, page_text)
         painter.restore()
 
-    def _build_paginated_html(
-        self, doc: QTextDocument, width_pt: float, height_pt: float
-    ) -> list[str]:
+    def _build_paginated_html(self, doc: QTextDocument, width_pt: float, height_pt: float) -> list[str]:
         """Costruisce i blocchi HTML divisi per pagina calcolandone l'altezza dinamicamente."""
         all_parents, raw_data_for_stats = self._gather_and_sort_data()
         stats = CertificatiEngine.get_statistics(raw_data_for_stats)
@@ -191,11 +185,7 @@ class CertificatiPdfExporter:
             group_est_height = 35 + (len(group_html_blocks) - 1) * 22
             if current_page_height + group_est_height > available_height and current_rows:
                 pages_html.append(
-                    style_html
-                    + summary_html
-                    + page_header_html
-                    + "".join(current_rows)
-                    + page_footer_html
+                    style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html
                 )
                 current_rows = []
                 current_page_height = 0
@@ -205,11 +195,7 @@ class CertificatiPdfExporter:
 
         if current_rows:
             pages_html.append(
-                style_html
-                + summary_html
-                + page_header_html
-                + "".join(current_rows)
-                + page_footer_html
+                style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html
             )
 
         return pages_html
@@ -332,17 +318,17 @@ class CertificatiPdfExporter:
         stato_display = stato_display.strip()
 
         if stato_display.startswith(StatoCertificatoLabel.SCADUTO):
-            return stato_display.replace(
-                f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>"
-            ).replace("gg fa)", " giorni")
+            return stato_display.replace(f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>").replace(
+                "gg fa)", " giorni"
+            )
         if stato_display.startswith(StatoCertificatoLabel.ATTIVO):
-            return stato_display.replace(
-                f"{StatoCertificatoLabel.ATTIVO} (", "Attivo per<br>"
-            ).replace("gg rim.)", " giorni")
+            return stato_display.replace(f"{StatoCertificatoLabel.ATTIVO} (", "Attivo per<br>").replace(
+                "gg rim.)", " giorni"
+            )
         if stato_display.startswith(StatoCertificatoLabel.IN_SCADENZA):
-            return stato_display.replace(
-                f"{StatoCertificatoLabel.IN_SCADENZA} (", "In scadenza<br>"
-            ).replace("gg)", " giorni<br>rimanenti")
+            return stato_display.replace(f"{StatoCertificatoLabel.IN_SCADENZA} (", "In scadenza<br>").replace(
+                "gg)", " giorni<br>rimanenti"
+            )
         if StatoCertificatoLabel.SENZA_SCADENZA in stato_display:
             return "N/D"
         return stato_display
@@ -371,13 +357,9 @@ class CertificatiPdfExporter:
         """Formatta l'ubicazione per andare a capo se necessario."""
         raw = text.strip()
         if UbicazioneStrumenti.TECNICO.value in raw:
-            ubicazione = raw.replace(
-                f"{UbicazioneStrumenti.TECNICO.value} ", "ASSEGNATO<br>AL TECNICO<br>"
-            )
+            ubicazione = raw.replace(f"{UbicazioneStrumenti.TECNICO.value} ", "ASSEGNATO<br>AL TECNICO<br>")
             if ubicazione == raw:
-                ubicazione = raw.replace(
-                    UbicazioneStrumenti.TECNICO.value, "ASSEGNATO<br>AL TECNICO"
-                )
+                ubicazione = raw.replace(UbicazioneStrumenti.TECNICO.value, "ASSEGNATO<br>AL TECNICO")
             return ubicazione
         return raw
 
@@ -446,15 +428,15 @@ class CertificatiPdfExporter:
                                         <td style="width: 60%; text-align: left; border: none; padding-right: 5px;">
                                             <div style="font-size: 5pt;">
                                                 <b>Prossime tarature:</b><br>
-                                                &bull; Entro 30gg: <b>{s['prossime_tarature']['30']}</b><br>
-                                                &bull; 31-60gg: <b>{s['prossime_tarature']['60']}</b><br>
-                                                &bull; 61-90gg: <b>{s['prossime_tarature']['90']}</b><br>
-                                                &bull; Oltre 90gg: <b>{s['prossime_tarature']['oltre']}</b>
+                                                &bull; Entro 30gg: <b>{s["prossime_tarature"]["30"]}</b><br>
+                                                &bull; 31-60gg: <b>{s["prossime_tarature"]["60"]}</b><br>
+                                                &bull; 61-90gg: <b>{s["prossime_tarature"]["90"]}</b><br>
+                                                &bull; Oltre 90gg: <b>{s["prossime_tarature"]["oltre"]}</b>
                                             </div>
                                         </td>
                                         <td style="width: 40%; text-align: center; border: none; border-left: 0.5pt solid #cbd5e1; vertical-align: middle;">
                                             Totale Strumenti<br>
-                                            <span style="font-size: 9pt; font-weight: bold;">{s['totale']}</span>
+                                            <span style="font-size: 9pt; font-weight: bold;">{s["totale"]}</span>
                                             {picco_html}
                                         </td>
                                     </tr>
@@ -463,19 +445,19 @@ class CertificatiPdfExporter:
                         </tr>
                         <tr>
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                <span style="color: #15803d;">&#11044;</span> Attivi: <b>{s['attivi']}</b><br>
-                                <span style="color: #d97706;">&#11044;</span> In Scadenza: <b>{s['in_scadenza']}</b><br>
-                                <span style="color: #b91c1c;">&#11044;</span> Scaduti: <b>{s['scaduti']}</b><br>
-                                <span style="color: #64748b;">&#11044;</span> Senza Scadenza: <b>{s['senza_data']}</b><br>
-                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{s['guasti']}</b>
+                                <span style="color: #15803d;">&#11044;</span> Attivi: <b>{s["attivi"]}</b><br>
+                                <span style="color: #d97706;">&#11044;</span> In Scadenza: <b>{s["in_scadenza"]}</b><br>
+                                <span style="color: #b91c1c;">&#11044;</span> Scaduti: <b>{s["scaduti"]}</b><br>
+                                <span style="color: #64748b;">&#11044;</span> Senza Scadenza: <b>{s["senza_data"]}</b><br>
+                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{s["guasti"]}</b>
                             </td>
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                &#127970; {UbicazioneStrumenti.UFFICIO_STRU.value}: <b>{s['ufficio_stru']}</b><br>
-                                &#128203; {UbicazioneStrumenti.UFFICIO_CC.value}: <b>{s['ufficio_cc']}</b><br>
-                                &#128736; {UbicazioneStrumenti.OFFICINA.value}: <b>{s['officina']}</b><br>
-                                &#127984; {UbicazioneStrumenti.SEDE.value}: <b>{s['sede']}</b><br>
-                                &#128119; {UbicazioneStrumenti.TECNICO.value}: <b>{s['tecnico']}</b><br>
-                                &#10060; {UbicazioneStrumenti.ASSENTE.value}: <b>{s['assenti']}</b>
+                                &#127970; {UbicazioneStrumenti.UFFICIO_STRU.value}: <b>{s["ufficio_stru"]}</b><br>
+                                &#128203; {UbicazioneStrumenti.UFFICIO_CC.value}: <b>{s["ufficio_cc"]}</b><br>
+                                &#128736; {UbicazioneStrumenti.OFFICINA.value}: <b>{s["officina"]}</b><br>
+                                &#127984; {UbicazioneStrumenti.SEDE.value}: <b>{s["sede"]}</b><br>
+                                &#128119; {UbicazioneStrumenti.TECNICO.value}: <b>{s["tecnico"]}</b><br>
+                                &#10060; {UbicazioneStrumenti.ASSENTE.value}: <b>{s["assenti"]}</b>
                             </td>
                         </tr>
                     </table>

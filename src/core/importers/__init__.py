@@ -18,6 +18,7 @@ class ExcelImporter:
 
     # --- Contabilità ---
     COLUMNS_MAPPING = ContabilitaImporter.COLUMNS_MAPPING
+    CONTABILITA_COLS = ContabilitaImporter.CONTABILITA_COLS
 
     @staticmethod
     def import_contabilita_dati(
@@ -34,6 +35,7 @@ class ExcelImporter:
 
     # --- Giornaliere ---
     GIORNALIERE_MAPPING = GiornaliereImporter.GIORNALIERE_MAPPING
+    GIORNALIERE_COLS = GiornaliereImporter.GIORNALIERE_COLS
 
     @staticmethod
     def import_giornaliere(

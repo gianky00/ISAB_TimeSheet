@@ -35,6 +35,8 @@ class ContabilitaImporter(BaseImporter):
         "NOME FILE": "nome_file",
     }
 
+    CONTABILITA_COLS: ClassVar[list[str]] = ["year", *list(COLUMNS_MAPPING.values())]
+
     @classmethod
     def scan_sheets(cls, file_path: str) -> int:
         """Conta i fogli validi nell'Excel principale (metodo veloce)."""

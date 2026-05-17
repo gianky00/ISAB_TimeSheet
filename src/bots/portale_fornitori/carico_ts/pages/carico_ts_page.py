@@ -66,8 +66,8 @@ class CaricoTSPage:
 
             opt_xpath = f"//li[contains(text(), '{supplier}')]"
             opt = WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, opt_xpath)))
-            self.driver.execute_script("arguments[0].scrollIntoView({block:'nearest'});", opt)  # type: ignore[no-untyped-call]
-            self.driver.execute_script("arguments[0].click();", opt)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].scrollIntoView({block:'nearest'});", opt)
+            self.driver.execute_script("arguments[0].click();", opt)
             self._wait_overlay()
         except Exception as e:
             self.log(f"Errore fornitore: {e}")
@@ -89,7 +89,7 @@ class CaricoTSPage:
             inp = self.wait.until(EC.presence_of_element_located(CaricoTSLocators.ODA_INPUT))
 
             # JS Click to focus/activate
-            self.driver.execute_script("arguments[0].click();", inp)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].click();", inp)
             js = """
       var el = arguments[0];
       el.value = arguments[1];
@@ -97,7 +97,7 @@ class CaricoTSPage:
       el.dispatchEvent(new Event('change', {bubbles:true}));
       el.dispatchEvent(new Event('blur', {bubbles:true}));
       """
-            self.driver.execute_script(js, inp, oda)  # type: ignore[no-untyped-call]
+            self.driver.execute_script(js, inp, oda)
 
             # Click Extract
             btn = self.wait.until(EC.element_to_be_clickable(CaricoTSLocators.EXTRACT_BUTTON))

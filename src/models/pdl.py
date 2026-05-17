@@ -4,6 +4,7 @@ from dataclasses import dataclass
 @dataclass
 class PdlRecord:
     """Modello per un record di Permesso di Lavoro (PDL)."""
+
     id: int | None
     n_pdl: str
     data_creazione: str
@@ -30,6 +31,7 @@ class PdlRecord:
 @dataclass
 class PdlProgrammazioneRecord:
     """Modello per un record di programmazione PDL settimanale."""
+
     id: int | None
     richiedente: str
     n_pdl: str

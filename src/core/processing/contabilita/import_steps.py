@@ -10,7 +10,9 @@ from src.core.processing.base import ProcessingStep
 class ExcelReadStep(ProcessingStep):
     """Passaggio per la lettura dei dati dal file Excel."""
 
-    def __init__(self, progress_callback: Callable[[int, int], None] | None = None, importer: Any = None) -> None:
+    def __init__(
+        self, progress_callback: Callable[[int, int], None] | None = None, importer: Any = None
+    ) -> None:
         self.progress_callback = progress_callback
         self.importer = importer or ContabilitaImporter
 
@@ -27,6 +29,7 @@ class ExcelReadStep(ProcessingStep):
         context["message"] = message
         context["imported_rows"] = imported_rows
         context["imported_years"] = imported_years
+
 
 class DatabaseSyncStep(ProcessingStep):
     """Passaggio per la sincronizzazione dei dati con il database."""

@@ -231,7 +231,7 @@ def poll_for_file(  # noqa: PLR0913
             timeout=timeout,
             poll_interval=poll_interval,
             min_age=min_age,
-            exclude_patterns=exclude_patterns,
+            exclude_patterns=exclude_patterns or [],
         )
 
     directory_path = Path(params.directory)
@@ -352,7 +352,7 @@ def poll_for_new_file(
         files_before = actual_files_before
 
     directory_path = Path(config.directory)
-    snapshot_map = _create_snapshot_map(directory_path, files_before)
+    snapshot_map = _create_snapshot_map(directory_path, files_before or [])
     patterns = [config.pattern] if isinstance(config.pattern, str) else config.pattern
 
     start_time = time.time()

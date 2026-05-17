@@ -10,7 +10,7 @@ class TestExecutionGuard:
         """Testa il successo del pre-check."""
         mock_verify.return_value = (True, "")
 
-        ok, msg = ExecutionGuard.check_environment()
+        ok, _msg = ExecutionGuard.check_environment()
         assert ok is True
         assert mock_update.called
 
@@ -40,5 +40,5 @@ class TestExecutionGuard:
         mock_update.side_effect = Exception("Network timeout")
         mock_verify.return_value = (True, "")
 
-        ok, msg = ExecutionGuard.check_environment()
+        ok, _msg = ExecutionGuard.check_environment()
         assert ok is True  # Continua se non è revoca

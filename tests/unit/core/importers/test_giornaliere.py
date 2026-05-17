@@ -51,7 +51,7 @@ class TestGiornaliereImporter:
         mock_path.return_value = mock_root
         mock_root.exists.return_value = False
 
-        success, msg, rows, years = GiornaliereImporter.import_giornaliere("/fake", {})
+        success, msg, _rows, _years = GiornaliereImporter.import_giornaliere("/fake", {})
         assert success is False
         assert "non trovata" in msg
 

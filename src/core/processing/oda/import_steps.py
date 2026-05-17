@@ -10,7 +10,9 @@ from src.core.processing.base import ProcessingStep
 class OdaExcelReadStep(ProcessingStep):
     """Passaggio per la lettura dei dati OdA dal file Excel."""
 
-    def __init__(self, progress_callback: Callable[[int, int], None] | None = None, importer: Any = None) -> None:
+    def __init__(
+        self, progress_callback: Callable[[int, int], None] | None = None, importer: Any = None
+    ) -> None:
         self.progress_callback = progress_callback
         self.importer = importer or StoricoOdaImporter
 
@@ -19,13 +21,12 @@ class OdaExcelReadStep(ProcessingStep):
         if not file_path:
             raise ValueError("file_path mancante nel contesto")
 
-        success, message, imported_rows = self.importer.import_storico_oda(
-            file_path, self.progress_callback
-        )
+        success, message, imported_rows = self.importer.import_storico_oda(file_path, self.progress_callback)
 
         context["success"] = success
         context["message"] = message
         context["imported_rows"] = imported_rows
+
 
 class OdaDatabaseSyncStep(ProcessingStep):
     """Passaggio per la sincronizzazione dei dati OdA con il database."""

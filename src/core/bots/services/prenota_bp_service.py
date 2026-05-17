@@ -36,9 +36,8 @@ class PrenotaBPService(BaseBotService):
         credentials: tuple[str, str, str],
         params: dict[str, Any],
         data: list[dict[str, Any]],
-        overrides: dict[str, Any] | None = None
+        overrides: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
-
         username, password, _ = credentials
         config = config_manager.load_config()
 

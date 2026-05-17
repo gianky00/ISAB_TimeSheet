@@ -62,7 +62,7 @@ class PdlRowDTO:
             contratto=m.contratto,
             ordine=m.ordine,
             sito=m.sito,
-            importato_il=m.importato_il
+            importato_il=m.importato_il,
         )
 
     @classmethod

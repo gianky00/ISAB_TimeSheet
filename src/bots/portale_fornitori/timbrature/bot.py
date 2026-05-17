@@ -75,10 +75,14 @@ class TimbratureBot(SeleniumBaseBot):
         """
         self.update_step("login", StepStatus.COMPLETED)
 
+        if not self.driver:
+            self.log("❌ Driver non inizializzato")
+            return False
+
         try:
             # 1. Navigazione
             self.update_step("nav", StepStatus.RUNNING)
-            page = TimbraturePage(self.driver, self.wait)
+            page = TimbraturePage(self.driver, self.log)
             if not page.navigate_to_timbrature():
                 self.log("❌ Impossibile raggiungere la sezione Timbrature")
                 self.update_step("nav", StepStatus.ERROR)
@@ -101,21 +105,23 @@ class TimbratureBot(SeleniumBaseBot):
             # 3. Importazione DB
             self.update_step("import", StepStatus.RUNNING)
             self.log(f"   Importazione dati da: {Path(excel_path).name}")
-            success, msg = self.storage.import_excel(excel_path, self.log)
+            success = self.storage.import_excel(excel_path, self.log)
 
-            if success:
-                self.log(f"✅ {msg}")
-                self.update_step("import", StepStatus.COMPLETED)
-                with suppress(Exception):
-                    Path(excel_path).unlink()
-                return True
+            if not success:
+                self.log("⚠️ Importazione fallita (nessun dato o errore)")
+                self.update_step("import", StepStatus.ERROR)
+                return False
+
+            self.log("✅ Importazione completata con successo")
+            self.update_step("import", StepStatus.COMPLETED)
+            with suppress(Exception):
+                Path(excel_path).unlink()
+
         except Exception as e:
-            self.log(f"❌ Errore fatale bot: {e}")
+            self.log(f"❌ Errore imprevisto bot: {e}")
             return False
         else:
-            self.log(f"⚠️ {msg}")
-            self.update_step("import", StepStatus.ERROR)
-            return False
+            return True
 
     @staticmethod
     def import_to_db_static(excel_path: str, db_path: Path, log_callback: Any = None) -> Any:

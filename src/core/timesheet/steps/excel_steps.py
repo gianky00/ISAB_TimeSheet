@@ -17,6 +17,7 @@ class LoadWorkbookStep(ProcessingStep):
         context["wb"] = wb
         context["ws"] = wb["Timesheet"]
 
+
 class TransformSheetStep(ProcessingStep):
     def execute(self, context: dict[str, Any]) -> None:
         ws = context["ws"]
@@ -29,9 +30,17 @@ class TransformSheetStep(ProcessingStep):
 
         # Logica di trasformazione (da vecchio processor)
         headers = {
-            "B1": "POS", "C1": "Data", "N1": "Ing", "O1": "Usc",
-            "P1": "Tot", "Q1": "Pre", "R1": "ORE_C", "S1": "ORE_M",
-            "T1": "ORE_ST_NOT", "U1": "ORE_ST_DIU", "V1": "ORE_FEST_NOT",
+            "B1": "POS",
+            "C1": "Data",
+            "N1": "Ing",
+            "O1": "Usc",
+            "P1": "Tot",
+            "Q1": "Pre",
+            "R1": "ORE_C",
+            "S1": "ORE_M",
+            "T1": "ORE_ST_NOT",
+            "U1": "ORE_ST_DIU",
+            "V1": "ORE_FEST_NOT",
             "W1": "ORE_FEST_DIU",
         }
         for cell_coord, val in headers.items():
@@ -43,6 +52,7 @@ class TransformSheetStep(ProcessingStep):
             ws.delete_cols(idx)
 
             ws.delete_cols(idx)
+
 
 class SaveWorkbookStep(ProcessingStep):
     def execute(self, context: dict[str, Any]) -> None:
@@ -59,6 +69,7 @@ class SaveWorkbookStep(ProcessingStep):
         wb.save(dest_path)
         context["dest_path"] = dest_path
         wb.close()
+
 
 class CleanupStep(ProcessingStep):
     def execute(self, context: dict[str, Any]) -> None:

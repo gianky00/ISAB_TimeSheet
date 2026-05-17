@@ -22,4 +22,3 @@ class TimesheetPipeline(Pipeline):
         context: dict[str, Any] = {"file_path": file_path, "dest_dir": dest_dir}
         result_context = super().run(context)
         return cast("Path", result_context["dest_path"])
-

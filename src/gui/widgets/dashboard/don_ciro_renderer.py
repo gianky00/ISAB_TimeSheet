@@ -25,12 +25,15 @@ from src.core.mascot.don_ciro_engine import DonState, WeatherCond
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+
 @dataclass
 class RenderItem:
     """Elemento della coda di rendering 3D con ordinamento Z."""
+
     z_depth: float
     draw_func: "Callable[..., None]"
     args: tuple[Any, ...]
+
 
 class DonCiroRenderer:
     """Motore di rendering per Don Ciro."""
@@ -91,9 +94,7 @@ class DonCiroRenderer:
 
         # 1. Calcoli Geometria Base
         sq = 1.0 - 0.03 * max(0.0, math.sin(f * 2)) if engine.state == DonState.WALKING else 1.0
-        by = (
-            -68 - (abs(math.sin(f * 2)) * 6 if engine.state == DonState.WALKING else 0)
-        ) * engine.scale
+        by = (-68 - (abs(math.sin(f * 2)) * 6 if engine.state == DonState.WALKING else 0)) * engine.scale
         ln = (0.08 if engine.state == DonState.WALKING else 0.0) * cos_y
 
         sy = by - 42 * engine.scale * sq
@@ -114,10 +115,14 @@ class DonCiroRenderer:
 
         rq = [
             RenderItem(
-                -wo * cos_y, self._draw_leg, ((r_hp, kn_r, QPointF(r_hp.x() + frx, fry)), wo * cos_y, cos_y, engine)
+                -wo * cos_y,
+                self._draw_leg,
+                ((r_hp, kn_r, QPointF(r_hp.x() + frx, fry)), wo * cos_y, cos_y, engine),
             ),
             RenderItem(
-                wo * cos_y, self._draw_leg, ((l_hp, kn_l, QPointF(l_hp.x() + flx, fly)), -wo * cos_y, cos_y, engine)
+                wo * cos_y,
+                self._draw_leg,
+                ((l_hp, kn_l, QPointF(l_hp.x() + flx, fly)), -wo * cos_y, cos_y, engine),
             ),
             RenderItem(-wo * cos_y, self._draw_arm, (r_sh, ar_p, wo * cos_y, True, engine)),
             RenderItem(wo * cos_y, self._draw_arm, (l_sh, al_p, -wo * cos_y, False, engine)),
@@ -133,7 +138,9 @@ class DonCiroRenderer:
             i.draw_func(p, *i.args)
         p.restore()
 
-    def _calculate_legs_ik(self, f: float, by: float, angles: tuple[float, float], engine: Any) -> tuple[Any, ...]:
+    def _calculate_legs_ik(
+        self, f: float, by: float, angles: tuple[float, float], engine: Any
+    ) -> tuple[Any, ...]:
         """Calcola la cinematica inversa delle gambe."""
         cos_y, sin_y = angles
         if engine.state == DonState.WALKING:
@@ -152,7 +159,14 @@ class DonCiroRenderer:
         return kn_r, kn_l, frx, fry, flx, fly
 
     def _calculate_arms_pos(  # noqa: PLR0913
-        self, f: float, sy: float, sc: QPointF, hd_p: QPointF, angles: tuple[float, float], widget: Any, engine: Any
+        self,
+        f: float,
+        sy: float,
+        sc: QPointF,
+        hd_p: QPointF,
+        angles: tuple[float, float],
+        widget: Any,
+        engine: Any,
     ) -> tuple[Any, ...]:
         """Calcola la posizione delle braccia in base allo stato."""
         cos_y, sin_y = angles
@@ -182,7 +196,9 @@ class DonCiroRenderer:
 
         return ar_p, al_p
 
-    def _draw_leg(self, p: QPainter, pts: tuple[QPointF, QPointF, QPointF], z: float, cy: float, engine: Any) -> None:
+    def _draw_leg(
+        self, p: QPainter, pts: tuple[QPointF, QPointF, QPointF], z: float, cy: float, engine: Any
+    ) -> None:
         """Disegna una gamba raggruppando i punti IK."""
         h, k, f = pts
         p.setOpacity(0.8 if z < 0 else 1.0)
@@ -219,7 +235,9 @@ class DonCiroRenderer:
         p.drawPath(path)
         p.restore()
 
-    def _draw_arm(self, p: QPainter, sh: QPointF, hand: QPointF, z: float, is_right: bool, engine: Any) -> None:  # noqa: PLR0913
+    def _draw_arm(  # noqa: PLR0913
+        self, p: QPainter, sh: QPointF, hand: QPointF, z: float, is_right: bool, engine: Any
+    ) -> None:
         """Disegna un braccio."""
         p.setOpacity(0.8 if z < 0 else 1.0)
         p.setPen(
@@ -255,7 +273,9 @@ class DonCiroRenderer:
             p.restore()
         p.setOpacity(1.0)
 
-    def _draw_torso(self, p: QPainter, hp: QPointF, sh: QPointF, angles: tuple[float, float], engine: Any) -> None:
+    def _draw_torso(
+        self, p: QPainter, hp: QPointF, sh: QPointF, angles: tuple[float, float], engine: Any
+    ) -> None:
         """Disegna il busto scomponendo le logiche (SRP)."""
         cos_y, sy = angles
         s = engine.scale
@@ -335,7 +355,9 @@ class DonCiroRenderer:
         p.drawPath(tie)
         p.restore()
 
-    def _draw_head(self, p: QPainter, pos: QPointF, angles: tuple[float, float], widget: Any, engine: Any) -> None:
+    def _draw_head(
+        self, p: QPainter, pos: QPointF, angles: tuple[float, float], widget: Any, engine: Any
+    ) -> None:
         """Disegna la testa."""
         cy, sy = angles
         s = engine.scale

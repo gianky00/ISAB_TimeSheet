@@ -12,7 +12,7 @@ class TestPrenotaBPBot:
 
     def test_validate_data_success(self):
         bot = PrenotaBPBot(username="u", password="p")
-        valid, msg = bot.validate_data([{"numero_bp": "BP001"}])
+        valid, _msg = bot.validate_data([{"numero_bp": "BP001"}])
         assert valid is True
 
     @patch("src.bots.portale_fornitori.prenota_bp.bot.PrenotaBPPage")

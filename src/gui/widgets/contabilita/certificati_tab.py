@@ -621,6 +621,7 @@ class CertificatiCampioneTab(QWidget):
         # Creiamo il dialogo ma invece di mostrarlo invochiamo direttamente l'email
         dialog = ScadenzeAnalysisDialog(certs_data, self._show_excluded, self, self.tree, self.engine)
         dialog._send_email()
+
     def _export_pdf(self) -> None:
         """Esporta la lista dei certificati in un PDF formattato professionalmente."""
         from src.gui.widgets.contabilita.certificati.pdf_exporter import (
@@ -656,4 +657,3 @@ class CertificatiCampioneTab(QWidget):
             NotificationManager.instance().add_notification(
                 title="Errore esportazione", message=message, level="error", show_toast=True
             )
-

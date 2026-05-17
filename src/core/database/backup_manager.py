@@ -57,7 +57,7 @@ class DatabaseBackupManager:
                     category="sistema",
                     entity="DatabaseBackupManager",
                     params={"count": success_count, "path": str(session_dir)},
-                    severity="low"
+                    severity="low",
                 )
                 return True
 
@@ -78,7 +78,7 @@ class DatabaseBackupManager:
             # Metodo 1: SQLite Online Backup (consistente anche se il DB è aperto)
             with sqlite3.connect(src) as conn:
                 conn.execute(f"VACUUM INTO '{dst.as_posix()}'")
-        except sqlite3.OperationalError as e:
+        except (sqlite3.OperationalError, sqlite3.DatabaseError) as e:
             # Fallback se VACUUM INTO non è supportato o fallisce (es. db molto vecchio o corrotto)
             logger.warning(f"VACUUM INTO fallito per {src.name} ({e}), provo copia standard")
             try:
@@ -101,11 +101,11 @@ class DatabaseBackupManager:
             backups = sorted(
                 [d for d in cls.BACKUP_DIR.iterdir() if d.is_dir()],
                 key=lambda d: d.stat().st_mtime,
-                reverse=True
+                reverse=True,
             )
 
             if len(backups) > cls.MAX_BACKUPS:
-                for old_dir in backups[cls.MAX_BACKUPS:]:
+                for old_dir in backups[cls.MAX_BACKUPS :]:
                     logger.info(f"Rimozione vecchio backup database: {old_dir}")
                     shutil.rmtree(old_dir, ignore_errors=True)
         except Exception:
@@ -117,7 +117,5 @@ class DatabaseBackupManager:
         if not cls.BACKUP_DIR.exists():
             return []
         return sorted(
-            [d for d in cls.BACKUP_DIR.iterdir() if d.is_dir()],
-            key=lambda d: d.stat().st_mtime,
-            reverse=True
+            [d for d in cls.BACKUP_DIR.iterdir() if d.is_dir()], key=lambda d: d.stat().st_mtime, reverse=True
         )

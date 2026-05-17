@@ -14,7 +14,7 @@ class TestAttivitaImporter:
         mock_instance = mock_path.return_value
         mock_instance.exists.return_value = False
 
-        success, msg, rows = AttivitaImporter.import_attivita_programmate("/invalid/path")
+        success, msg, _rows = AttivitaImporter.import_attivita_programmate("/invalid/path")
         assert success is False
         assert "non trovato" in msg
 
@@ -25,7 +25,7 @@ class TestAttivitaImporter:
         mock_path.return_value.exists.return_value = True
         mock_read.return_value = None
 
-        success, msg, rows = AttivitaImporter.import_attivita_programmate("/fake/path")
+        success, msg, _rows = AttivitaImporter.import_attivita_programmate("/fake/path")
         assert success is False
         assert "Riepilog" in msg
 

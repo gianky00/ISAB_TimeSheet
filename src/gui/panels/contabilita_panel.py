@@ -51,8 +51,6 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 logger = logging.getLogger(__name__)
 
 
-
-
 class ContabilitaPanel(QWidget):
     """
     Pannello principale dell'interfaccia di contabilità.
@@ -350,6 +348,7 @@ class ContabilitaPanel(QWidget):
             # Se richiesto e siamo nel tab certificati, lancia email
             if auto_email and self.main_tabs.currentIndex() == 3:
                 from PySide6.QtCore import QTimer
+
                 QTimer.singleShot(1000, self.certificati_widget._run_analysis_and_send_email)
 
         # Riapplica il filtro di ricerca se presente

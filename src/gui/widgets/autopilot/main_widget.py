@@ -117,10 +117,14 @@ class AutopilotWidget(QWidget):
 
         self.live_dot = QLabel()
         self.live_dot.setFixedSize(8, 8)
-        self.live_dot.setStyleSheet(f"background-color: {COLORS['success_green']}; border-radius: 4px; border: 1px solid {COLORS['success_dark']};")
+        self.live_dot.setStyleSheet(
+            f"background-color: {COLORS['success_green']}; border-radius: 4px; border: 1px solid {COLORS['success_dark']};"
+        )
 
         self.live_text = QLabel("LIVE")
-        self.live_text.setStyleSheet(f"color: {COLORS['success_green']}; font-size: 10px; font-weight: 800; letter-spacing: 1px;")
+        self.live_text.setStyleSheet(
+            f"color: {COLORS['success_green']}; font-size: 10px; font-weight: 800; letter-spacing: 1px;"
+        )
 
         live_layout.addWidget(self.live_dot)
         live_layout.addWidget(self.live_text)
@@ -298,50 +302,60 @@ class AutopilotWidget(QWidget):
         """Ritorna la lista degli eventi abilitati dalla configurazione."""
         events: list[EventInfo] = []
         if config.get("timbrature_autopilot_enabled", False):
-            events.append({
-                "id": "timbrature",
-                "module_id": "timbrature",
-                "name": "Timbrature Automatiche",
-                "time": config.get("timbrature_autopilot_time", "09:00"),
-                "icon": Icons.CLOCK,
-                "color": COLORS["warning_orange"],
-            })
+            events.append(
+                {
+                    "id": "timbrature",
+                    "module_id": "timbrature",
+                    "name": "Timbrature Automatiche",
+                    "time": config.get("timbrature_autopilot_time", "09:00"),
+                    "icon": Icons.CLOCK,
+                    "color": COLORS["warning_orange"],
+                }
+            )
         if config.get("scarico_oda_generale_autopilot_enabled", False):
-            events.append({
-                "id": "scarico_oda_generale",
-                "module_id": "oda",
-                "name": "Scarico OdA Generale",
-                "time": config.get("scarico_oda_generale_autopilot_time", "09:00"),
-                "icon": Icons.DOWNLOAD,
-                "color": COLORS["primary_dark"],
-            })
+            events.append(
+                {
+                    "id": "scarico_oda_generale",
+                    "module_id": "oda",
+                    "name": "Scarico OdA Generale",
+                    "time": config.get("scarico_oda_generale_autopilot_time", "09:00"),
+                    "icon": Icons.DOWNLOAD,
+                    "color": COLORS["primary_dark"],
+                }
+            )
         if config.get("ricerca_pdl_autopilot_enabled", False):
-            events.append({
-                "id": "ricerca_pdl",
-                "module_id": "pdl",
-                "name": "Ricerca PDL",
-                "time": config.get("ricerca_pdl_autopilot_time", "09:00"),
-                "icon": Icons.SEARCH,
-                "color": COLORS["success_dark"],
-            })
+            events.append(
+                {
+                    "id": "ricerca_pdl",
+                    "module_id": "pdl",
+                    "name": "Ricerca PDL",
+                    "time": config.get("ricerca_pdl_autopilot_time", "09:00"),
+                    "icon": Icons.SEARCH,
+                    "color": COLORS["success_dark"],
+                }
+            )
         if config.get("report_email_autopilot_enabled", False):
-            events.append({
-                "id": "report_email",
-                "module_id": "none",
-                "name": f"Report Email (ogni {config.get('report_email_autopilot_interval_days', 7)}gg)",
-                "time": config.get("report_email_autopilot_time", "08:00"),
-                "icon": Icons.SEND,
-                "color": COLORS["purple"],
-            })
+            events.append(
+                {
+                    "id": "report_email",
+                    "module_id": "none",
+                    "name": f"Report Email (ogni {config.get('report_email_autopilot_interval_days', 7)}gg)",
+                    "time": config.get("report_email_autopilot_time", "08:00"),
+                    "icon": Icons.SEND,
+                    "color": COLORS["purple"],
+                }
+            )
         if config.get("certificati_autopilot_enabled", False):
-            events.append({
-                "id": "certificati",
-                "module_id": "contabilita",
-                "name": f"Certificati Campione (ogni {config.get('certificati_autopilot_interval_days', 1)}gg)",
-                "time": config.get("certificati_autopilot_time", "08:30"),
-                "icon": Icons.FILE_TEXT,
-                "color": COLORS["teal_accent"],
-            })
+            events.append(
+                {
+                    "id": "certificati",
+                    "module_id": "contabilita",
+                    "name": f"Certificati Campione (ogni {config.get('certificati_autopilot_interval_days', 1)}gg)",
+                    "time": config.get("certificati_autopilot_time", "08:30"),
+                    "icon": Icons.FILE_TEXT,
+                    "color": COLORS["teal_accent"],
+                }
+            )
         return events
 
     def _show_empty_message(self) -> None:
@@ -359,21 +373,46 @@ class AutopilotWidget(QWidget):
         self._clear_layout(self.config_layout)
 
         bots: list[BotVisualInfo] = [
-            {"bot_id": "timbrature", "bot_name": "Timbrature Automatiche", "icon_path": Icons.CLOCK, "color": COLORS["warning_orange"]},
-            {"bot_id": "scarico_oda_generale", "bot_name": "Scarico OdA Generale", "icon_path": Icons.DOWNLOAD, "color": COLORS["primary_dark"]},
-            {"bot_id": "ricerca_pdl", "bot_name": "Ricerca PDL", "icon_path": Icons.SEARCH, "color": COLORS["success_dark"]},
+            {
+                "bot_id": "timbrature",
+                "bot_name": "Timbrature Automatiche",
+                "icon_path": Icons.CLOCK,
+                "color": COLORS["warning_orange"],
+            },
+            {
+                "bot_id": "scarico_oda_generale",
+                "bot_name": "Scarico OdA Generale",
+                "icon_path": Icons.DOWNLOAD,
+                "color": COLORS["primary_dark"],
+            },
+            {
+                "bot_id": "ricerca_pdl",
+                "bot_name": "Ricerca PDL",
+                "icon_path": Icons.SEARCH,
+                "color": COLORS["success_dark"],
+            },
         ]
         interval_tasks: list[BotVisualInfo] = [
-            {"bot_id": "report_email", "bot_name": "Report Email ISAB", "icon_path": Icons.SEND, "color": COLORS["purple"]},
-            {"bot_id": "certificati", "bot_name": "Certificati Campione", "icon_path": Icons.FILE_TEXT, "color": COLORS["teal_accent"]},
+            {
+                "bot_id": "report_email",
+                "bot_name": "Report Email ISAB",
+                "icon_path": Icons.SEND,
+                "color": COLORS["purple"],
+            },
+            {
+                "bot_id": "certificati",
+                "bot_name": "Certificati Campione",
+                "icon_path": Icons.FILE_TEXT,
+                "color": COLORS["teal_accent"],
+            },
         ]
 
         idx = 0
         for bot in bots:
-            card = AutopilotConfigCard(bot, self)
+            card = AutopilotConfigCard(bot, parent=self)
             self.config_layout.addWidget(card, idx // 2, idx % 2)
             idx += 1
         for task in interval_tasks:
-            card_with_interval = AutopilotConfigCardWithInterval(task, self)
+            card_with_interval = AutopilotConfigCardWithInterval(task, parent=self)
             self.config_layout.addWidget(card_with_interval, idx // 2, idx % 2)
             idx += 1

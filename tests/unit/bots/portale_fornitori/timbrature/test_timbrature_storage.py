@@ -79,7 +79,7 @@ class TestTimbratureStorage:
 
         storage.update_employee_details("Mario", "Rossi", reparto="R2")
 
-        args, kwargs = mock_set.call_args
+        args, _kwargs = mock_set.call_args
         assert args[0] == "employee_mappings"
         assert args[1]["Mario|Rossi"]["reparto"] == "R2"
 

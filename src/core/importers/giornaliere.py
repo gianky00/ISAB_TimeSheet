@@ -40,6 +40,21 @@ class GiornaliereImporter(BaseImporter):
         "consuntivo": "n_prev",
     }
 
+    GIORNALIERE_COLS: ClassVar[list[str]] = [
+        "year",
+        "data",
+        "personale",
+        "descrizione",
+        "tcl",
+        "odc",
+        "pdl",
+        "inizio",
+        "fine",
+        "ore",
+        "n_prev",
+        "nome_file",
+    ]
+
     @classmethod
     def scan_files(cls, giornaliere_path: str) -> int:
         """Conta i file validi nelle cartelle giornaliere (solo anni >= MIN_IMPORT_YEAR)."""
@@ -188,11 +203,13 @@ class GiornaliereImporter(BaseImporter):
     @classmethod
     def _normalize_giornaliera_columns(cls, df: pd.DataFrame) -> pd.DataFrame:
         """Alias per retrocompatibilità con i test."""
+        from typing import cast  # noqa: PLC0415
+
         from src.core.processing.giornaliere.steps import NormalizeGiornalieraStep  # noqa: PLC0415
 
         context = {"df": df, "success": True}
         NormalizeGiornalieraStep().execute(context)
-        return context["df"]
+        return cast("pd.DataFrame", context["df"])
 
     @classmethod
     def _clean_data(cls, df: pd.DataFrame) -> pd.DataFrame:

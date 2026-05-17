@@ -40,7 +40,7 @@ class EmployeeCsvReadStep(ProcessingStep):
                         codice_fiscale=row.get("Codice_fiscale", "").upper(),
                         badge=row.get("Badge", ""),
                         data_assunzione=row.get("Data_assunzione"),
-                        monitoraggio_attivo=1
+                        monitoraggio_attivo=1,
                     )
                     employees_to_sync.append(emp)
 
@@ -49,6 +49,7 @@ class EmployeeCsvReadStep(ProcessingStep):
         except Exception as e:
             context["success"] = False
             context["message"] = f"Errore lettura CSV: {e}"
+
 
 class EmployeeDatabaseSyncStep(ProcessingStep):
     """Passaggio per la sincronizzazione dei dipendenti con il database."""

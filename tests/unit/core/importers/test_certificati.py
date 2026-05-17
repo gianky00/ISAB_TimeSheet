@@ -10,7 +10,7 @@ class TestCertificatiImporter:
         mock_instance = mock_path.return_value
         mock_instance.exists.return_value = False
 
-        success, msg, rows = CertificatiImporter.import_certificati_campione("/invalid/path")
+        success, msg, _rows = CertificatiImporter.import_certificati_campione("/invalid/path")
         assert success is False
         assert "File non trovato" in msg
 
@@ -42,7 +42,7 @@ class TestCertificatiImporter:
         mock_pipeline = mock_pipeline_class.return_value
         mock_pipeline.run.side_effect = Exception("Crash")
 
-        success, msg, rows = CertificatiImporter.import_certificati_campione("/fake/path")
+        success, msg, _rows = CertificatiImporter.import_certificati_campione("/fake/path")
         assert success is False
         assert "Errore importazione" in msg
         assert "Crash" in msg

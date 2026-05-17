@@ -58,10 +58,7 @@ class ContabilitaController(QObject):
         path_certificati = get_config_value("certificati_campione_path", "")
 
         self.worker = ContabilitaWorker(
-            path_contabilita,
-            path_giornaliere,
-            path_programmate,
-            path_certificati
+            path_contabilita, path_giornaliere, path_programmate, path_certificati
         )
 
         # Connessione segnali worker
@@ -76,7 +73,9 @@ class ContabilitaController(QObject):
         self._last_status_html = message
         self.status_updated.emit(message)
 
-    def _handle_worker_finished(self, success: bool, message: str, added: int, removed: int, duration: float) -> None:
+    def _handle_worker_finished(
+        self, success: bool, message: str, added: int, removed: int, duration: float
+    ) -> None:
         """Gestisce la chiusura del worker."""
         self.import_finished.emit(success, message)
         if success:

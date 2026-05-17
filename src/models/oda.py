@@ -4,6 +4,7 @@ from dataclasses import dataclass
 @dataclass
 class OdaRecord:
     """Modello per un record di Ordine di Acquisto (Storico OdA)."""
+
     org_acq: str
     data_oda: str
     oda: str

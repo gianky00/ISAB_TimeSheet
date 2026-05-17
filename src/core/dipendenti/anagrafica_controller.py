@@ -46,8 +46,15 @@ class AnagraficaController:
             # Adattiamo record a riga per compatibilità con compute_employee_status se necessario
             # o aggiorniamo i componenti a valle. Per ora facciamo un cast leggero.
             row = (
-                record.id_risorsa, record.cognome, record.nome, record.data_nascita,
-                record.badge, record.data_assunzione, None, record.codice_fiscale, record.monitoraggio_attivo
+                record.id_risorsa,
+                record.cognome,
+                record.nome,
+                record.data_nascita,
+                record.badge,
+                record.data_assunzione,
+                None,
+                record.codice_fiscale,
+                record.monitoraggio_attivo,
             )
 
             is_monitored = bool(record.monitoraggio_attivo)
@@ -58,9 +65,7 @@ class AnagraficaController:
             self._update_status_counts(counts, is_monitored, diff_days)
 
             # 2. Filter Logic
-            if current_filter and self._should_skip_row(
-                is_monitored, diff_days, current_filter
-            ):
+            if current_filter and self._should_skip_row(is_monitored, diff_days, current_filter):
                 continue
 
             # 3. Create DTO
@@ -75,7 +80,9 @@ class AnagraficaController:
         accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
         return build_timbrature_maps(accessi)
 
-    def _update_status_counts(self, counts: dict[str, int], is_monitored: bool, diff_days: int | None) -> None:
+    def _update_status_counts(
+        self, counts: dict[str, int], is_monitored: bool, diff_days: int | None
+    ) -> None:
         """Aggiorna il dizionario dei conteggi basandosi sullo stato del dipendente."""
         if not is_monitored:
             counts["excluded"] += 1

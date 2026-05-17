@@ -96,6 +96,10 @@ class PrenotaBPBot(SeleniumBaseBot):
         """Esegue il workflow di prenotazione BP."""
         self.update_step("login", StepStatus.COMPLETED)
 
+        if not self.driver:
+            self.log("❌ Driver non inizializzato")
+            return False
+
         try:
             self.update_step("nav", StepStatus.RUNNING)
             page = PrenotaBPPage(self.driver, self.log)

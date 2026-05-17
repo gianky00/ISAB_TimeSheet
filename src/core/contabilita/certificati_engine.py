@@ -287,7 +287,7 @@ class CertificatiEngine:
             days = c.get("giorni")
             # Soglie colori coerenti con CertificatiEngine
             if days is None:
-                color = "#757575" # Grigio per N/D
+                color = "#757575"  # Grigio per N/D
                 status = "DATA NON DISPONIBILE"
             elif days < 0:
                 color = "#C62828"
@@ -301,10 +301,10 @@ class CertificatiEngine:
 
             rows += f"""
                 <tr>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>{c['id']}</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>{c['modello']}</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>{c['matricola']}</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>{c['scadenza']}</td>
+                    <td style='border: 1px solid #ddd; padding: 8px;'>{c["id"]}</td>
+                    <td style='border: 1px solid #ddd; padding: 8px;'>{c["modello"]}</td>
+                    <td style='border: 1px solid #ddd; padding: 8px;'>{c["matricola"]}</td>
+                    <td style='border: 1px solid #ddd; padding: 8px;'>{c["scadenza"]}</td>
                     <td style='border: 1px solid #ddd; padding: 8px; color: {color}; font-weight: bold;'>{status}</td>
                 </tr>
             """
@@ -313,7 +313,7 @@ class CertificatiEngine:
             <html>
             <body style='font-family: Segoe UI, Arial, sans-serif;'>
                 <h2 style='color: #2c3e50;'>Report Scadenze Certificati Campione</h2>
-                <p>Generato automaticamente da SyncroJob il {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
+                <p>Generato automaticamente da SyncroJob il {datetime.now().strftime("%d/%m/%Y %H:%M")}</p>
                 <p>Di seguito l'elenco degli strumenti scaduti o in scadenza entro i {self.EXPIRING_THRESHOLD} giorni.</p>
                 <table style='border-collapse: collapse; width: 100%;'>
                     <thead>
@@ -339,6 +339,7 @@ class CertificatiEngine:
 
         try:
             import win32com.client  # noqa: PLC0415
+
             outlook = win32com.client.Dispatch("Outlook.Application")
             mail = outlook.CreateItem(0)
             mail.Subject = f"REPORT SCADENZE CERTIFICATI CAMPIONE - {datetime.now().strftime('%d/%m/%Y')}"

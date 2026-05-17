@@ -10,6 +10,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 class BotQueueManager:
     """Gestisce l'accodamento e l'esecuzione sequenziale dei bot per sito."""
 
@@ -25,9 +26,7 @@ class BotQueueManager:
         if self.running_bots_by_site.get(site):
             self.pending_bots_by_site[site].append((bot_id, panel, log_message))
             if hasattr(panel, "log_widget"):
-                panel.log_widget.append(
-                    f"    Bot in coda. Sito {site.replace('_', ' ').title()} occupato."
-                )
+                panel.log_widget.append(f"    Bot in coda. Sito {site.replace('_', ' ').title()} occupato.")
             logger.info(f"Bot {bot_id} accodato per il sito {site}.")
         else:
             self._start_bot(bot_id, panel, site, log_message)

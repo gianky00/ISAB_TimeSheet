@@ -151,6 +151,9 @@ class DownloadWorker(QThread):
 
                 self._stream_download(response, setup_path, downloaded, total_size)
 
+                # Re-check actual file size to avoid useless retry loop
+                downloaded = Path(setup_path).stat().st_size if Path(setup_path).exists() else 0
+
                 if not self._is_cancelled and total_size > 0 and downloaded >= total_size:
                     self.finished_download.emit(setup_path)
                     return

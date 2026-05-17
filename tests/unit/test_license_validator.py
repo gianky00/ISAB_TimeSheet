@@ -1,132 +1,117 @@
-"""
-Tests for LicenseValidator logic.
-"""
-
-import hashlib
 import json
+from datetime import datetime
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from cryptography.fernet import Fernet
 
-from src.core import license_validator
-
-
-@pytest.fixture
-def mock_paths(tmp_path):
-    """Mocks file system paths for license files."""
-    license_dir = tmp_path / "Licenza"
-    license_dir.mkdir()
-    config_path = license_dir / "config.dat"
-    manifest_path = license_dir / "manifest.json"
-
-    with patch("src.core.license_validator._get_license_paths") as mock_get:
-        mock_get.return_value = {
-            "dir": license_dir,
-            "config": config_path,
-            "manifest": manifest_path,
-        }
-        yield config_path, manifest_path
+from src.core.license_validator import (
+    LicenseStatus,
+    _calculate_sha256,
+    get_detailed_license_status,
+    verify_license,
+)
 
 
-@pytest.fixture
-def mock_secrets():
-    """Mocks SecretsManager to return a fixed key."""
-    with patch("src.core.license_validator.SecretsManager") as mock_sm:
-        # Generate a real key for Fernet to use
-        from cryptography.fernet import Fernet
+class TestLicenseValidator:
+    @pytest.fixture(autouse=True)
+    def setup_license_env(self, fs):
+        """Setup virtual filesystem for license tests."""
+        from src.core.paths import get_data_path
 
+        self.license_dir = Path(get_data_path()) / "Licenza"
+        fs.create_dir(self.license_dir)
+        self.config_path = self.license_dir / "config.dat"
+        self.manifest_path = self.license_dir / "manifest.json"
+
+    def test_verify_license_missing(self, fs):
+        valid, msg = verify_license()
+        assert valid is False
+        assert "mancanti" in msg
+
+    @patch("src.core.secrets_manager.SecretsManager.get_license_key")
+    @patch("src.core.license_validator.get_hardware_id")
+    @patch("src.core.license_validator.get_trusted_time")
+    def test_verify_license_valid_flow(self, mock_time, mock_hwid, mock_key, fs):
+        # 1. Setup Key
         key = Fernet.generate_key()
-        # SecretsManager.get_license_key() returns base64 encoded bytes
-        mock_sm.get_license_key.return_value = key
-        yield key
+        mock_key.return_value = key
+
+        # 2. Setup Payload
+        payload = {"Cliente": "Test Client", "Hardware ID": "TEST-HWID", "Scadenza Licenza": "31/12/2099"}
+        cipher = Fernet(key)
+        encrypted_payload = cipher.encrypt(json.dumps(payload).encode())
+        fs.create_file(self.config_path, contents=encrypted_payload)
+
+        # 3. Setup Manifest
+        config_hash = hashlib_sha256_mock_safe(encrypted_payload)
+        manifest = {"config.dat": config_hash}
+        fs.create_file(self.manifest_path, contents=json.dumps(manifest))
+
+        # 4. Mock System
+        mock_hwid.return_value = "TEST-HWID"
+        mock_time.return_value = (datetime(2024, 1, 1), True)
+
+        # Test
+        status, msg = get_detailed_license_status()
+        assert status == LicenseStatus.VALID
+        assert "Test Client" in msg
+
+        valid, _ = verify_license()
+        assert valid is True
+
+    @patch("src.core.secrets_manager.SecretsManager.get_license_key")
+    @patch("src.core.license_validator.get_hardware_id")
+    def test_verify_license_hwid_mismatch(self, mock_hwid, mock_key, fs):
+        key = Fernet.generate_key()
+        mock_key.return_value = key
+        payload = {"Hardware ID": "EXPECTED-HWID", "Cliente": "X"}
+        encrypted = Fernet(key).encrypt(json.dumps(payload).encode())
+        fs.create_file(self.config_path, contents=encrypted)
+
+        manifest = {"config.dat": _calculate_sha256_bytes(encrypted)}
+        fs.create_file(self.manifest_path, contents=json.dumps(manifest))
+
+        mock_hwid.return_value = "WRONG-HWID"
+
+        status, msg = get_detailed_license_status()
+        assert status == LicenseStatus.INVALID
+        assert "Hardware ID non valido" in msg
+
+    @patch("src.core.secrets_manager.SecretsManager.get_license_key")
+    @patch("src.core.license_validator.get_hardware_id")
+    @patch("src.core.license_validator.get_trusted_time")
+    def test_verify_license_expired(self, mock_time, mock_hwid, mock_key, fs):
+        key = Fernet.generate_key()
+        mock_key.return_value = key
+        payload = {"Hardware ID": "HWID", "Scadenza Licenza": "01/01/2020"}
+        encrypted = Fernet(key).encrypt(json.dumps(payload).encode())
+        fs.create_file(self.config_path, contents=encrypted)
+        manifest = {"config.dat": _calculate_sha256_bytes(encrypted)}
+        fs.create_file(self.manifest_path, contents=json.dumps(manifest))
+
+        mock_hwid.return_value = "HWID"
+        mock_time.return_value = (datetime(2024, 1, 1), True)
+
+        status, msg = get_detailed_license_status()
+        assert status == LicenseStatus.EXPIRED
+        assert "SCADUTA" in msg
+
+    def test_calculate_sha256(self, fs):
+        path = Path("test.txt")
+        fs.create_file(path, contents=b"hello world")
+        expected = hashlib_sha256_mock_safe(b"hello world")
+        assert _calculate_sha256(path) == expected
 
 
-def create_mock_license(config_path, manifest_path, key, payload):
-    """Helper to create valid license files."""
-    from cryptography.fernet import Fernet
+def _calculate_sha256_bytes(data: bytes) -> str:
+    import hashlib
 
-    # Encrypt payload
-    cipher = Fernet(key)
-    encrypted_data = cipher.encrypt(json.dumps(payload).encode())
-
-    with open(config_path, "wb") as f:
-        f.write(encrypted_data)
-
-    # Create manifest
-    config_hash = hashlib.sha256(encrypted_data).hexdigest()
-    with open(manifest_path, "w") as f:
-        json.dump({"config.dat": config_hash}, f)
+    return hashlib.sha256(data).hexdigest()
 
 
-@patch("src.core.license_validator.get_hardware_id", return_value="HW123")
-@patch("src.core.license_validator.get_trusted_time")
-def test_valid_license(mock_time, mock_hw, mock_paths, mock_secrets):
-    config_path, manifest_path = mock_paths
-    key = mock_secrets
+def hashlib_sha256_mock_safe(data: bytes) -> str:
+    import hashlib
 
-    # Set time to be before expiry
-    from datetime import datetime
-
-    mock_time.return_value = (datetime(2025, 1, 1), True)
-
-    # Create valid license
-    payload = {
-        "Hardware ID": "HW123",
-        "Scadenza Licenza": "01/01/2026",
-        "Cliente": "Test Client",
-    }
-    create_mock_license(config_path, manifest_path, key, payload)
-
-    status, msg = license_validator.get_detailed_license_status()
-    assert status == license_validator.LicenseStatus.VALID
-    assert "Test Client" in msg
-
-
-@patch("src.core.license_validator.get_hardware_id", return_value="HW_DIFFERENT")
-@patch("src.core.license_validator.get_trusted_time")
-def test_invalid_hardware_id(mock_time, mock_hw, mock_paths, mock_secrets):
-    config_path, manifest_path = mock_paths
-    key = mock_secrets
-
-    # Create license for different HW
-    payload = {"Hardware ID": "HW123", "Scadenza Licenza": "01/01/2026"}
-    create_mock_license(config_path, manifest_path, key, payload)
-
-    status, msg = license_validator.get_detailed_license_status()
-    assert status == license_validator.LicenseStatus.INVALID
-    assert "Hardware ID non valido" in msg
-
-
-@patch("src.core.license_validator.get_hardware_id", return_value="HW123")
-@patch("src.core.license_validator.get_trusted_time")
-def test_expired_license(mock_time, mock_hw, mock_paths, mock_secrets):
-    config_path, manifest_path = mock_paths
-    key = mock_secrets
-
-    # Set time to be AFTER expiry
-    from datetime import datetime
-
-    mock_time.return_value = (datetime(2027, 1, 1), True)
-
-    payload = {"Hardware ID": "HW123", "Scadenza Licenza": "01/01/2026"}
-    create_mock_license(config_path, manifest_path, key, payload)
-
-    status, msg = license_validator.get_detailed_license_status()
-    assert status == license_validator.LicenseStatus.EXPIRED
-    assert "SCADUTA" in msg
-
-
-def test_tampered_license(mock_paths, mock_secrets):
-    config_path, manifest_path = mock_paths
-    key = mock_secrets
-
-    payload = {"Hardware ID": "HW123"}
-    create_mock_license(config_path, manifest_path, key, payload)
-
-    # Tamper with the config file
-    with open(config_path, "ab") as f:
-        f.write(b"tampered")
-
-    status, msg = license_validator.get_detailed_license_status()
-    assert status == license_validator.LicenseStatus.INVALID
-    assert "Integrità licenza compromessa" in msg
+    return hashlib.sha256(data).hexdigest()

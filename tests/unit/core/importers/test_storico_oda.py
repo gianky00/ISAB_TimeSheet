@@ -11,7 +11,7 @@ class TestStoricoOdaImporter:
     def test_import_storico_oda_not_found(self, mock_path):
         """Testa import_storico_oda con file inesistente."""
         mock_path.return_value.exists.return_value = False
-        success, msg, data = StoricoOdaImporter.import_storico_oda("/invalid/path")
+        success, msg, _data = StoricoOdaImporter.import_storico_oda("/invalid/path")
         assert success is False
         assert "File non trovato" in msg
 
@@ -21,7 +21,7 @@ class TestStoricoOdaImporter:
         """Testa import_storico_oda con foglio vuoto."""
         mock_path.return_value.exists.return_value = True
         mock_read.return_value = pd.DataFrame()
-        success, msg, data = StoricoOdaImporter.import_storico_oda("/fake/path")
+        success, msg, _data = StoricoOdaImporter.import_storico_oda("/fake/path")
         assert success is False
         assert "Foglio vuoto" in msg
 

@@ -24,6 +24,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+
 class ReportService:
     """Gestisce la generazione e l'invio di report analitici."""
 

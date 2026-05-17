@@ -180,15 +180,14 @@ class CertificatiTreeWidget(StandardTreeWidget):
       QTreeWidget::branch:has-children:!has-siblings:closed,
       QTreeWidget::branch:closed:has-children:has-siblings {{
         border-image: none;
-        image: url("{get_asset_path(Icons.CHEVRON_RIGHT).replace('\\', '/')}");
+        image: url("{get_asset_path(Icons.CHEVRON_RIGHT).replace("\\", "/")}");
       }}
       QTreeWidget::branch:open:has-children:!has-siblings,
       QTreeWidget::branch:open:has-children:has-siblings {{
         border-image: none;
-        image: url("{get_asset_path(Icons.CHEVRON_DOWN).replace('\\', '/')}");
+        image: url("{get_asset_path(Icons.CHEVRON_DOWN).replace("\\", "/")}");
       }}
     """)
-
 
     def apply_current_certificate_styling(
         self, item: SortableTreeWidgetItem, days_to_expiry: int | None, status_dot_icon: str

@@ -73,9 +73,9 @@ class TestTimesheetModels:
             ore_fest_diu="0",
         )
 
-        with pytest.raises(Exception):  # dataclasses.FrozenInstanceError inherits from Exception
+        with pytest.raises(Exception):  # noqa: B017 - dataclasses.FrozenInstanceError inherits from Exception
             record.pos = "20"
 
         meta = TimesheetMetadata(odc="ODC-123", pos_values={"10"}, first_pos_cleaned="10")
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             meta.odc = "ODC-456"

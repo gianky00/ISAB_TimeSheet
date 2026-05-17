@@ -18,6 +18,7 @@ class MockMainWindow(QObject):
         self.monitoring_controller = MagicMock()
         self.timbrature_bot_panel = MagicMock()
 
+
 class TestServiceControllerRobust:
     @pytest.fixture
     def mw(self, qtbot):
@@ -51,7 +52,10 @@ class TestServiceControllerRobust:
         with patch("src.gui.controllers.service_controller.datetime") as mock_dt:
             mock_dt.now.return_value = fixed_now
 
-            mock_load.return_value = {"timbrature_autopilot_enabled": True, "timbrature_autopilot_time": "09:00"}
+            mock_load.return_value = {
+                "timbrature_autopilot_enabled": True,
+                "timbrature_autopilot_time": "09:00",
+            }
             mw.timbrature_bot_panel.start_btn.isEnabled.return_value = True
 
             controller._check_scheduled_tasks()
@@ -67,7 +71,9 @@ class TestServiceControllerRobust:
             "report_email_autopilot_last_sent": "2020-01-01T00:00:00+00:00",
         }
 
-        with patch("src.gui.controllers.service_controller.ReportService.send_scheduled_report_email") as mock_send:
+        with patch(
+            "src.gui.controllers.service_controller.ReportService.send_scheduled_report_email"
+        ) as mock_send:
             controller._check_report_email_schedule(config, "08:00")
             assert mock_send.called
 

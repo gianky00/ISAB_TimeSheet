@@ -63,12 +63,7 @@ class OdaManager:
                 duration = time.time() - start_time
                 SyncTracker.update_status("oda", total_added, total_removed, duration)
 
-            return (
-                success,
-                result.get("message", ""),
-                total_added,
-                total_removed
-            )
+            return (success, result.get("message", ""), total_added, total_removed)
         except Exception:
             logger.exception("Errore nella pipeline di importazione OdA")
             return False, "Errore critico pipeline", 0, 0

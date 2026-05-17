@@ -18,10 +18,14 @@ class TestEmployeeArchitecture:
 
         # Mock row that matches EmployeeRecord fields
         mock_row = {
-            "id_risorsa": 1, "cognome": "ROSSI", "nome": "MARIO",
-            "badge": "123", "codice_fiscale": "RSSMRA...",
-            "data_assunzione": "2024-01-01", "monitoraggio_attivo": 1,
-            "data_nascita": "1990-01-01"
+            "id_risorsa": 1,
+            "cognome": "ROSSI",
+            "nome": "MARIO",
+            "badge": "123",
+            "codice_fiscale": "RSSMRA...",
+            "data_assunzione": "2024-01-01",
+            "monitoraggio_attivo": 1,
+            "data_nascita": "1990-01-01",
         }
 
         mock_db_manager.execute_query.return_value = [mock_row]
@@ -34,9 +38,12 @@ class TestEmployeeArchitecture:
     def test_repository_save_insert(self, mock_db_manager):
         repo = EmployeeRepository(db_manager_instance=mock_db_manager)
         emp = EmployeeRecord(
-            id_risorsa=None, cognome="VERDI", nome="LUIGI",
-            badge="456", codice_fiscale="VRDLGU...",
-            data_assunzione="2024-02-01"
+            id_risorsa=None,
+            cognome="VERDI",
+            nome="LUIGI",
+            badge="456",
+            codice_fiscale="VRDLGU...",
+            data_assunzione="2024-02-01",
         )
 
         success = repo.save(emp)

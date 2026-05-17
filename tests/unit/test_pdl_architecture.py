@@ -18,13 +18,27 @@ class TestPdlArchitecture:
         repo = PdlRepository(db_manager_instance=mock_db_manager)
 
         mock_row = {
-            "id": 1, "n_pdl": "PDL1", "data_creazione": "13/05/2026",
-            "area": "AREA1", "unita": "UNIT1", "ditta": "DITTA1",
-            "descrizione_lavoro": "DESC", "tipologia": "TIP1", "stato": "APERTO",
-            "apparecchiatura": "APP1", "richiedente": "RICH1", "data_richiesta": "12/05/2026",
-            "emittente": "EMI1", "data_emissione": "12/05/2026", "aprente": "APR1",
-            "data_apertura": "12/05/2026", "priorita": "ALTA", "contratto": "CON1",
-            "ordine": "ORD1", "sito": "SITO1", "importato_il": "2026-05-13"
+            "id": 1,
+            "n_pdl": "PDL1",
+            "data_creazione": "13/05/2026",
+            "area": "AREA1",
+            "unita": "UNIT1",
+            "ditta": "DITTA1",
+            "descrizione_lavoro": "DESC",
+            "tipologia": "TIP1",
+            "stato": "APERTO",
+            "apparecchiatura": "APP1",
+            "richiedente": "RICH1",
+            "data_richiesta": "12/05/2026",
+            "emittente": "EMI1",
+            "data_emissione": "12/05/2026",
+            "aprente": "APR1",
+            "data_apertura": "12/05/2026",
+            "priorita": "ALTA",
+            "contratto": "CON1",
+            "ordine": "ORD1",
+            "sito": "SITO1",
+            "importato_il": "2026-05-13",
         }
 
         mock_db_manager.execute_query.return_value = [mock_row]
@@ -37,13 +51,27 @@ class TestPdlArchitecture:
     def test_controller_data_loading(self, mock_db_manager):
         with patch("src.core.database.repositories.pdl_repository.PdlRepository.get_filtered") as mock_get:
             record = PdlRecord(
-                id=1, n_pdl="PDL1", data_creazione="13/05/2026",
-                area="AREA1", unita="UNIT1", ditta="DITTA1",
-                descrizione_lavoro="DESC", tipologia="TIP1", stato="APERTO",
-                apparecchiatura="APP1", richiedente="RICH1", data_richiesta="12/05/2026",
-                emittente="EMI1", data_emissione="12/05/2026", aprente="APR1",
-                data_apertura="12/05/2026", priorita="ALTA", contratto="CON1",
-                ordine="ORD1", sito="SITO1", importato_il="2026-05-13"
+                id=1,
+                n_pdl="PDL1",
+                data_creazione="13/05/2026",
+                area="AREA1",
+                unita="UNIT1",
+                ditta="DITTA1",
+                descrizione_lavoro="DESC",
+                tipologia="TIP1",
+                stato="APERTO",
+                apparecchiatura="APP1",
+                richiedente="RICH1",
+                data_richiesta="12/05/2026",
+                emittente="EMI1",
+                data_emissione="12/05/2026",
+                aprente="APR1",
+                data_apertura="12/05/2026",
+                priorita="ALTA",
+                contratto="CON1",
+                ordine="ORD1",
+                sito="SITO1",
+                importato_il="2026-05-13",
             )
             mock_get.return_value = [record]
 

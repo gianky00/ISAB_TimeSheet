@@ -12,7 +12,7 @@ class TestContabilitaImporter:
         mock_instance = mock_path.return_value
         mock_instance.exists.return_value = False
 
-        success, msg, rows, years = ContabilitaImporter.import_contabilita_dati("/invalid/path")
+        success, msg, _rows, _years = ContabilitaImporter.import_contabilita_dati("/invalid/path")
         assert success is False
         assert "non trovato" in msg
 
@@ -28,7 +28,7 @@ class TestContabilitaImporter:
         mock_xls.sheet_names = ["Sheet1", "OldData"]
         mock_get_excel.return_value = mock_xls
 
-        success, msg, rows, years = ContabilitaImporter.import_contabilita_dati("/fake/path")
+        success, msg, _rows, _years = ContabilitaImporter.import_contabilita_dati("/fake/path")
         assert success is False
         assert "Nessun anno importato" in msg
 

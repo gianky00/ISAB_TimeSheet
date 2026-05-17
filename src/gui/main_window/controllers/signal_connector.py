@@ -40,6 +40,7 @@ class SignalConnector(QObject):
     def connect_autopilot_signals(self) -> None:
         """Collega i segnali del widget Autopilot al ServiceController."""
         from src.gui.main_window.page_index import PageIndex
+
         dashboard = self.main_window.navigation_controller.get_panel(PageIndex.DASHBOARD)
         if dashboard and hasattr(dashboard, "autopilot_widget"):
             dashboard.autopilot_widget.bot_sync_requested.connect(

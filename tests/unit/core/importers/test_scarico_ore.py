@@ -10,7 +10,7 @@ class TestScaricoOreImporter:
         mock_instance = mock_path.return_value
         mock_instance.exists.return_value = False
 
-        success, msg, rows = ScaricoOreImporter.import_scarico_ore("/invalid/path")
+        success, msg, _rows = ScaricoOreImporter.import_scarico_ore("/invalid/path")
         assert success is False
         assert "non trovato" in msg
 
