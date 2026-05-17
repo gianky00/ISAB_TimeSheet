@@ -1,6 +1,9 @@
 import sqlite3
+
 import pytest
+
 from src.core.sync.contabilita_sync import ContabilitaSyncEngine
+
 
 class TestContabilitaSyncEngine:
     @pytest.fixture
@@ -23,11 +26,11 @@ class TestContabilitaSyncEngine:
             (2024, '2024-01-02', 'Verdi', '', '', '', '', '', '', 8.0, '', 'file1'),
         ]
 
-        added, removed = ContabilitaSyncEngine.sync_giornaliere(db_path, new_rows, [2024], cols)
+        added, _removed = ContabilitaSyncEngine.sync_giornaliere(db_path, new_rows, [2024], cols)
 
         # La logica di sync aggiorna i record.
         assert added >= 1
-        
+
         with sqlite3.connect(db_path) as conn:
             count = conn.execute("SELECT COUNT(*) FROM giornaliere WHERE year=2024").fetchone()[0]
             assert count == 2
@@ -46,9 +49,9 @@ class TestContabilitaSyncEngine:
             new_data = [(2024, 'Rossi', 8.0), (2024, 'Nuovo', 4.0)]
 
             from src.core.sync.base import PartitionConfig
-            
+
             # Sync tramite interfaccia pubblica
-            added, removed = ContabilitaSyncEngine.sync_partitioned_data(
+            added, _removed = ContabilitaSyncEngine.sync_partitioned_data(
                 cursor, "giornaliere", cols, new_data, PartitionConfig(column="year", values=[2024])
             )
 

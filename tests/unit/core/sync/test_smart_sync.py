@@ -1,8 +1,11 @@
-import pytest
-from unittest.mock import MagicMock, patch
-from src.core.sync.smart_sync import SmartSyncEngine
-from src.core.sync.base import SyncTarget
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from src.core.sync.base import SyncTarget
+from src.core.sync.smart_sync import SmartSyncEngine
+
 
 @pytest.fixture
 def mock_target():
@@ -21,15 +24,15 @@ def test_sync_upsert_smart_logic(mock_db, mock_target):
     mock_cursor = MagicMock()
     mock_db.get_connection.return_value.__enter__.return_value = mock_conn
     mock_conn.cursor.return_value = mock_cursor
-    
+
     # Mocking execution of internal methods
     with patch.object(SmartSyncEngine, "_create_temp_table", return_value="tmp_table"), \
          patch.object(SmartSyncEngine, "_populate_temp_table"), \
          patch.object(SmartSyncEngine, "_calculate_diff", return_value=5), \
          patch.object(SmartSyncEngine, "_execute_upsert"):
-        
+
         inserted, deleted = SmartSyncEngine.sync_upsert_smart(mock_target, [("val1", "val2")])
-        
+
         assert inserted == 5
         assert deleted == 0
         mock_conn.commit.assert_called_once()

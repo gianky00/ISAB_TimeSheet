@@ -1,7 +1,10 @@
-import pytest
-from unittest.mock import MagicMock, patch
-from src.core.database.repositories.contabilita_repository import ContabilitaRepository
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from src.core.database.repositories.contabilita_repository import ContabilitaRepository
+
 
 @pytest.fixture
 def repo():
@@ -18,7 +21,7 @@ def test_get_available_years(repo):
     repo.db.get_connection.return_value.__enter__.return_value = mock_conn
     mock_conn.cursor.return_value = mock_cursor
     mock_cursor.fetchall.return_value = [(2026,), (2025,)]
-    
+
     with patch("pathlib.Path.exists", return_value=True):
         years = repo.get_available_years()
         assert 2026 in years
@@ -32,7 +35,7 @@ def test_get_data_by_year_legacy(repo):
     mock_conn.cursor.return_value = mock_cursor
     # Mocka il ritorno di 1 record (tupla)
     mock_cursor.fetchall.return_value = [("P1", "Desc", "2026-05-17", 100.0, "T1", "O1")]
-    
+
     with patch("pathlib.Path.exists", return_value=True):
         # Patch dell'importo per evitare problemi di importazione
         with patch("src.core.excel_importer.ExcelImporter.COLUMNS_MAPPING", {"n": "n_prev"}):

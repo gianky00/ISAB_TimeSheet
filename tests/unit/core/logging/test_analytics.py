@@ -1,6 +1,9 @@
-import pytest
 from unittest.mock import MagicMock
-from src.core.logging.analytics import AnomalyDetector, Anomaly, AnomalyDetector
+
+import pytest
+
+from src.core.logging.analytics import AnomalyDetector
+
 
 class TestAnomalyDetector:
     @pytest.fixture
@@ -10,14 +13,14 @@ class TestAnomalyDetector:
     def test_detect_error_rate_spike_low(self, mock_viewer):
         detector = AnomalyDetector(viewer=mock_viewer)
         mock_viewer.generate_health_report.return_value = {"error_rate_percent": 2.0}
-        
+
         anomalies = detector.detect_error_rate_spike()
         assert len(anomalies) == 0
 
     def test_detect_error_rate_spike_medium(self, mock_viewer):
         detector = AnomalyDetector(viewer=mock_viewer)
         mock_viewer.generate_health_report.return_value = {"error_rate_percent": 6.0}
-        
+
         anomalies = detector.detect_error_rate_spike()
         assert len(anomalies) == 1
         assert anomalies[0].severity == "medium"
@@ -26,7 +29,7 @@ class TestAnomalyDetector:
     def test_detect_error_rate_spike_critical(self, mock_viewer):
         detector = AnomalyDetector(viewer=mock_viewer)
         mock_viewer.generate_health_report.return_value = {"error_rate_percent": 30.0}
-        
+
         anomalies = detector.detect_error_rate_spike()
         assert len(anomalies) == 1
         assert anomalies[0].severity == "critical"
@@ -36,7 +39,7 @@ class TestAnomalyDetector:
         mock_viewer.get_slow_operations.return_value = [
             {"duration_ms": 35000, "operation": "test_op"}
         ]
-        
+
         anomalies = detector.detect_slow_operations()
         assert len(anomalies) == 1
         assert anomalies[0].severity == "high"
