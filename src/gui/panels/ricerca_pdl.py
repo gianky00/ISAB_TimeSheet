@@ -168,6 +168,10 @@ class RicercaPDLPanel(BaseBotPanel):
 
     def _save_data(self) -> None:
         """Salva i filtri di ricerca correnti nella configurazione."""
+        from PySide6.QtWidgets import QApplication
+
+        if QApplication.closingDown():
+            return
         if getattr(self, "_is_loading", False):
             return
         config_manager.set_config_value("pdl_search_exclude_closed", self.exclude_closed_check.isChecked())

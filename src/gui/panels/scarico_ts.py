@@ -225,6 +225,10 @@ class ScaricaTSPanel(BaseBotPanel):
 
     def _save_data(self) -> None:
         """Salva i dati correnti."""
+        from PySide6.QtWidgets import QApplication
+
+        if QApplication.closingDown():
+            return
         if getattr(self, "_is_loading", False) or not hasattr(self, "params_widget"):
             return
 

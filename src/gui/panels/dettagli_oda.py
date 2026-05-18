@@ -248,6 +248,10 @@ class DettagliOdAPanel(BaseBotPanel):
 
     def _save_data(self) -> None:
         """Persiste i parametri attuali nella configurazione globale (Batch optimization)."""
+        from PySide6.QtWidgets import QApplication
+
+        if QApplication.closingDown():
+            return
         if getattr(self, "_is_loading", False) or not hasattr(self, "params_widget"):
             return
         date_da, date_a = self.params_widget.get_dates()

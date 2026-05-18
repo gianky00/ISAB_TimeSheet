@@ -130,6 +130,10 @@ class CaricoTSPanel(BaseBotPanel):
 
     def _save_data(self) -> None:
         """Salva i dati della tabella nella configurazione globale."""
+        from PySide6.QtWidgets import QApplication
+
+        if QApplication.closingDown():
+            return
         if getattr(self, "_is_loading", False):
             return
         config_manager.set_config_value("last_carico_ts_data", self.data_table.get_data())

@@ -126,6 +126,10 @@ class TimbratureBotPanel(BaseBotPanel):
 
     def _save_data(self) -> None:
         """Salva i parametri correnti nella configurazione globale (solo se non in fase di caricamento)."""
+        from PySide6.QtWidgets import QApplication
+
+        if QApplication.closingDown():
+            return
         if getattr(self, "_is_loading", False) or not hasattr(self, "params_widget"):
             return
         date_da, date_a = self.params_widget.get_dates()

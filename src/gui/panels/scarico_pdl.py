@@ -212,6 +212,10 @@ class ScaricoPDLPanel(BaseBotPanel):
 
     def _save_data(self) -> None:
         """Salva i dati e i parametri correnti nella configurazione persistente."""
+        from PySide6.QtWidgets import QApplication
+
+        if QApplication.closingDown():
+            return
         if getattr(self, "_is_loading", False):
             return
         if not hasattr(self, "data_table") or not hasattr(self, "check_stampa"):
@@ -260,10 +264,6 @@ class ScaricoPDLPanel(BaseBotPanel):
 
     def _load_saved_data(self) -> None:
         """Ripristina i dati e i parametri dell'ultima sessione dalla configurazione locale."""
-        if self.data_table.table.rowCount() > 0:
-            logger.debug("Salto caricamento dati salvati: tabella già popolata.")
-            return
-
         self._is_loading = True
         try:
             from src.core.bots.services import ScaricoPDLService
@@ -271,13 +271,18 @@ class ScaricoPDLPanel(BaseBotPanel):
             service = ScaricoPDLService()
             cfg = service.load_config()
 
-            if cfg["data"]:
-                self.data_table.set_data(cfg["data"])
-
+            # Ripristina sempre le impostazioni di stampa e destinazione
             self.check_stampa.setChecked(cfg["stampa"])
             if cfg["stampante"]:
                 self.combo_stampanti.setCurrentText(cfg["stampante"])
             self.edit_dest.setText(cfg["dest_path"])
+
+            # Ripristina i dati in tabella solo se questa è attualmente vuota
+            if self.data_table.table.rowCount() == 0:
+                if cfg["data"]:
+                    self.data_table.set_data(cfg["data"])
+            else:
+                logger.debug("Salto caricamento dati salvati in tabella: già popolata.")
 
             self._update_status_list()
         finally:
