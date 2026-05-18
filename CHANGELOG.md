@@ -1,5 +1,44 @@
 ## Unreleased
 
+### Feat
+
+- implement button elevation effect
+- apply Modern Card restyling to all bot panels
+- apply Modern Card style to Storico OdA panel
+- apply Modern Card style and animations to KPI Panel
+- implement modern UI effects and card styles
+- implement centralized design system typography constants
+- implement self-cleaning logic in maintenance worker
+- implement database maintenance worker and background optimization
+
+### Fix
+
+- **core**: remove blocking run_update() from BotWorker to prevent getaddrinfo GIL freeze
+- **bots/db**: corretti errori di sintassi XPath in locators e query SQL nel repository PDL
+- **bots**: corretto errore sintassi XPath nei locators del portale fornitori
+- **gui**: risolto ripristino parametri all'avvio e prevenuto salvataggio spurio allo spegnimento
+- risoluzione errori linter pre-commit e stabilità finale
+- risoluzione finale bug database, mock test e importazione certificati
+- ripristino icone certificati, sincronizzazione ubicazione e pulizia QA totale
+
+### Refactor
+
+- **core**: allineamento suite di test alla nuova architettura SRP e fix MyPy
+- **bots**: hardening pass dati, gestione sessione attiva, timesheet vuoti, race condition e click nativo cerca
+- reach zero Ruff/MyPy reports and fix bot logic type safety
+- complete SRP decomposition & industrial-grade standardization (final stability batch)
+- code quality cleanup (zero MyPy errors & Ruff optimization)
+
+### Perf
+
+- **core**: aggiunge riscaldamento WMI/psutil nello splashscreen per eliminare il blocco GIL causato dall'iterazione dei processi al primo avvio
+- **core**: pre-carica i moduli pesanti (Playwright, PDF, Excel) nello splashscreen per eliminare lag al primo avvio
+- **gui**: elimina freeze GIL al primo avvio centralizzando i log con QApplication.processEvents
+- **bots**: elimina timeout chiusura Playwright tramite rimozione page.close ridondanti e cleanup forzato dei processi
+- **gui**: elimina freeze GUI al termine del bot tramite QThread asincroni
+
+## v1.46.3 (2026-05-13)
+
 ### Fix
 
 - risoluzione violazioni Ruff e 80 segnalazioni Mypy
