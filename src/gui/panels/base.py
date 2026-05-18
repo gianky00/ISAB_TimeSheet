@@ -287,8 +287,9 @@ class BaseBotPanel(QWidget):
     # --- Compatibility Methods for Subclasses and Tests ---
 
     def _on_log(self, message: str) -> None:
-        """Bridge per il widget log."""
+        """Bridge per il widget log con elaborazione eventi per prevenire freeze."""
         self.log_widget.append(message)
+        QApplication.processEvents()
 
     def validate_ready(self) -> tuple[bool, str]:
         """Metodo legacy richiesto da alcuni bot."""

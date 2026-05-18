@@ -65,7 +65,7 @@ class ScaricaTSPanel(BaseBotPanel):
 
     def _setup_controller_connections(self) -> None:
         """Connette i segnali del controller agli slot del pannello."""
-        self.bot_controller.log_received.connect(self.log_widget.append)
+        self.bot_controller.log_received.connect(self._on_log)
         self.bot_controller.execution_finished.connect(self._on_worker_finished)
         self.bot_controller.row_status_updated.connect(self.on_step_completed)
         self.bot_controller.step_changed.connect(self.activity_timeline.on_step_changed)
