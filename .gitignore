@@ -71,6 +71,8 @@ full_ruff_report.txt
 refurb_report.txt
 vulture_report.txt
 vulture_raw.txt
+mypy_report*
+mypy_final_report.txt
 
 # Database
 *.db
