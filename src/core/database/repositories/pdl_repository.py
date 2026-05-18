@@ -239,7 +239,7 @@ class PdlRepository:
           UNION ALL
 
           SELECT
-            'Relazionè as fonte,
+            'Relazione' as fonte,
             data_intervento as data,
             nome_compilatore || ' ' || cognome_compilatore as tecnico,
             '' as team,
@@ -259,5 +259,5 @@ class PdlRepository:
                 rows = cursor.fetchall()
                 return [dict(r) for r in rows]
         except Exception:
-            logger.exception(f"Errore recuperòinterventi per PDL {n_pdl} da {ext_db_path}")
+            logger.exception(f"Errore recupero interventi per PDL {n_pdl} da {ext_db_path}")
             return []

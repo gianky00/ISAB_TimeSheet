@@ -20,7 +20,7 @@ class ScaricoTSLocators:
     """Voce di menu Timesheet sotto Report."""
 
     # Filters
-    SUPPLIER_INPUT = (By.XPATH, "//input[@name='CodiceFornitorè or @name='Fornitore']")
+    SUPPLIER_INPUT = (By.XPATH, "//input[@name='CodiceFornitore' or @name='Fornitore']")
     """Campo input del fornitore (supporta nomi multipli ExtJS)."""
 
     SUPPLIER_DROPDOWN_ARROW = (
@@ -42,7 +42,7 @@ class ScaricoTSLocators:
     # Actions
     SEARCH_BUTTON = (
         By.XPATH,
-        "//a[contains(@class, 'x-btn') and @role='button'][.//span[normalize-space(text())='Cercà and contains(@class, 'x-btn-inner')]]",
+        "//a[contains(@class, 'x-btn') and @role='button'][.//span[normalize-space(text())='Cerca' and contains(@class, 'x-btn-inner')]]",
     )
     """Pulsante Cerca per applicare i filtri."""
 
