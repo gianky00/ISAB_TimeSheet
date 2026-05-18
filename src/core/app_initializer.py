@@ -225,9 +225,33 @@ class AppInitializer:
                 PlaywrightScaricaTSBot,  # noqa: F401
             )
 
-            logger.info("[INIT CORE] Pre-caricamento moduli completato con successo.")
+            # 3. Riscaldamento preventivo Playwright e Chromium (Antivirus Warming)
+            logger.info("[INIT CORE] Riscaldamento motori di automazione (Antivirus Warming)...")
+            import os  # noqa: PLC0415
+            from pathlib import Path  # noqa: PLC0415
+
+            if getattr(sys, "frozen", False):
+                bundle_dir = Path(sys._MEIPASS) if hasattr(sys, "_MEIPASS") else Path(sys.executable).parent
+                drivers_pw_path = bundle_dir / "drivers" / "ms-playwright"
+                if drivers_pw_path.exists():
+                    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(drivers_pw_path)
+
+            # 4. Riscaldamento WMI (psutil) e Pulizia Preventiva
+            logger.info("[INIT CORE] Riscaldamento sottosistema processi (WMI/psutil)...")
+            from src.utils.helpers import cleanup_bot_processes  # noqa: PLC0415
+            cleanup_bot_processes()
+
+            from playwright.sync_api import sync_playwright  # noqa: PLC0415
+            pw = sync_playwright().start()
+            try:
+                browser = pw.chromium.launch(headless=True)
+                browser.close()
+            finally:
+                pw.stop()
+
+            logger.info("[INIT CORE] Pre-caricamento e riscaldamento completati con successo.")
         except Exception as e:
-            logger.warning(f"[INIT CORE] Avvertimento nel pre-caricamento moduli: {e}")
+            logger.warning(f"[INIT CORE] Avvertimento nel pre-caricamento/riscaldamento moduli: {e}")
 
     @staticmethod
     def _setup_logging() -> None:
