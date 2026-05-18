@@ -35,7 +35,7 @@ class CommonLocators:
     # Popups
     POPUP_SESSION_YES = (
         By.XPATH,
-        "//span[normalize-space(text())='Sì' and contains(@class, 'x-btn-inner')]",
+        "//span[(normalize-space(text())='Sì' or normalize-space(text())='Si') and contains(@class, 'x-btn-inner')]",
     )
 
     # Logout

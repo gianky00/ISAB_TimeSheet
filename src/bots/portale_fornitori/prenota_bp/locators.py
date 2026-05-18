@@ -15,7 +15,7 @@ class PrenotaBPLocators:
     LOGIN_BUTTON = (By.XPATH, "//a[.//span[text()='Accedi']] | //span[text()='Accedi']")
     BT_SI_SESSIONE_ATTIVA = (
         By.XPATH,
-        "//span[normalize-space(text())='Sì or normalize-space(text())='Sì']/ancestor::a",
+        "//span[(normalize-space(text())='Sì' or normalize-space(text())='Si')]/ancestor::a",
     )
     USER_INFO_PANEL = (By.ID, "user-info-panel")
 

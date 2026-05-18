@@ -30,6 +30,9 @@ class TimesheetProcessor:
             # Esecuzione della Pipeline
             context = pipeline.execute(file_path, dest_dir)
 
+            if context.get("is_empty", False):
+                return False, "EMPTY: Nessun dato registrato nel Timesheet per l'ODC inserito."
+
             dest_path = context.get("dest_path")
             if not dest_path:
                 return False, "Errore durante il salvataggio del file."

@@ -44,7 +44,20 @@ class ExtractMetadataStep(ProcessingStep):
         # ODC
         odc = str(ws["A2"].value).strip() if ws["A2"].value else ""
         if not odc:
-            raise ValueError("Valore ODC (cella A2) mancante.")
+            odc = self._deduce_odc_from_filename(context["file_path"])
+            if not odc:
+                raise ValueError("Valore ODC (cella A2) mancante.")
+
+        # Controlla se il foglio ha righe di dati valide
+        if self._is_sheet_empty(ws):
+            context["is_empty"] = True
+            context["metadata"] = TimesheetMetadata(
+                odc=odc, pos_values=set(), first_pos_cleaned=""
+            )
+            logger.info("File Timesheet privo di record di dati.")
+            return
+
+        context["is_empty"] = False
 
         # POS
         pos_values: set[str] = set()
@@ -68,11 +81,33 @@ class ExtractMetadataStep(ProcessingStep):
                 return str(int(float(val)))
         return val
 
+    def _deduce_odc_from_filename(self, file_path_str: str | Path) -> str:
+        """Deduce l'ODC dal nome del file sorgente."""
+        file_path = Path(file_path_str)
+        name_parts = file_path.stem.split("_")
+        min_parts_len = 2
+        if len(name_parts) >= min_parts_len:
+            return name_parts[1].split("-")[0].strip()
+        return ""
+
+    def _is_sheet_empty(self, ws: Worksheet) -> bool:
+        """Verifica se il foglio Excel non contiene righe di dati valide."""
+        min_rows_with_data = 2
+        if ws.max_row < min_rows_with_data:
+            return True
+        # Controlla se c'è almeno un valore non-None nelle prime 15 colonne della riga 2
+        max_cols_to_check = 15
+        return all(ws.cell(row=2, column=col).value is None for col in range(1, max_cols_to_check + 1))
+
 
 class TransformSheetStep(ProcessingStep):
     """Passaggio per applicare le trasformazioni strutturali."""
 
     def execute(self, context: dict[str, Any]) -> None:
+        if context.get("is_empty", False):
+            logger.info("Salto trasformazione foglio vuoto.")
+            return
+
         ws: Worksheet = context["worksheet"]
 
         # 1. Rinomina Intestazioni
@@ -134,6 +169,15 @@ class SaveWorkbookStep(ProcessingStep):
         wb: Workbook = context["workbook"]
         dest_dir = Path(context["dest_dir"])
         metadata: TimesheetMetadata = context["metadata"]
+
+        if context.get("is_empty", False):
+            # Rimuove il file temporaneo sorgente per non lasciare residui
+            file_path = Path(context["file_path"])
+            with suppress(Exception):
+                file_path.unlink()
+            context["dest_path"] = None
+            logger.info("Rimosso file temporaneo Timesheet vuoto.")
+            return
 
         base = (
             f"{metadata.odc}_TS"

@@ -50,7 +50,7 @@ class BotExecutionController(QObject):
     def start(
         self,
         bot_params: dict[str, Any],
-        data: list[dict[str, Any]],
+        data: list[dict[str, Any]] | dict[str, Any],
         telegram_service: Any | None = None,
     ) -> bool:
         """

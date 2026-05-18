@@ -295,10 +295,8 @@ class PrenotaBPPanel(BaseBotPanel):
         self.log_widget.clear()
         self.log_widget.append("Preparazione Bot Prenota BP...")
 
-        # BotWorker aspetta list[dict] nel parametro data
-        # prepare_payload restituisce (params, data_dict)
-        # Assicuriamoci che bot_data sia una lista
-        bot_data = [bot_payload] if isinstance(bot_payload, dict) else bot_payload
+        # Passa direttamente bot_payload (dizionario strutturato con chiave 'rows')
+        bot_data = bot_payload
 
         # Delega l'avvio al controller universale
         if self.bot_controller.start(bot_params, bot_data, tg_service):

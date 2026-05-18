@@ -246,7 +246,7 @@ class BaseBot(ABC):
     #    Orchestrazione Esecuzione
 
     @measure_time(threshold_ms=5000)
-    def execute(self, data: list[dict[str, Any]]) -> bool:
+    def execute(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """
         Orchestratore principale dell'esecuzione.
         Delegata la sicurezza a ExecutionGuard e il progresso a BotStepManager.
@@ -309,5 +309,5 @@ class BaseBot(ABC):
             return result
 
     @abstractmethod
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Logica operativa specifica del bot."""
