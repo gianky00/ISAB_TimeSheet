@@ -71,6 +71,9 @@ class AppInitializer:
             AppInitializer._verify_license(step)
             AppInitializer._init_databases(step)
 
+            step("Ottimizzazione motori di automazione (Playwright/PDF/Excel)...", 38)
+            AppInitializer._preload_heavy_modules()
+
             AppInitializer._core_initialized = True
             step("Nucleo Sistema Operativo", 40)
         except Exception as e:
@@ -204,6 +207,27 @@ class AppInitializer:
             QTimer.singleShot(0, _force_shutdown)
         except Exception:
             sys.exit(1)
+
+    @staticmethod
+    def _preload_heavy_modules() -> None:
+        """Pre-carica in memoria i moduli e le librerie esterne più pesanti per garantire prestazioni istantanee a runtime."""
+        logger.info("[INIT CORE] Pre-caricamento moduli pesanti per prestazioni Zero-Lag...")
+        try:
+            # 1. Motori di automazione ed I/O
+            import fitz  # noqa: F401, PLC0415
+            import openpyxl  # noqa: F401, PLC0415
+            import playwright.sync_api  # noqa: F401, PLC0415
+            import psutil  # noqa: F401, PLC0415
+
+            # 2. Moduli core del bot scarico TS
+            from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot  # noqa: F401, PLC0415
+            from src.bots.portale_fornitori.scarico_ts.playwright_bot import (  # noqa: PLC0415
+                PlaywrightScaricaTSBot,  # noqa: F401
+            )
+
+            logger.info("[INIT CORE] Pre-caricamento moduli completato con successo.")
+        except Exception as e:
+            logger.warning(f"[INIT CORE] Avvertimento nel pre-caricamento moduli: {e}")
 
     @staticmethod
     def _setup_logging() -> None:
