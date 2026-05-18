@@ -69,7 +69,7 @@ class TimbratureBot(SeleniumBaseBot):
         """Restituisce le colonne richieste (nessuna)."""
         return []
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """
         Workflow principale per lo scarico delle timbrature.
         """

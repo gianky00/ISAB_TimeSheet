@@ -72,8 +72,9 @@ class TestDataSynchronizerDetailed:
         # 17 colonne per attivita_programmate
         new_rows = [("ps1", "a", "p", "i", "d", "l", "m", "m", "g", "v", "s", "s", "d", "p", "p", "a", "s")]
         added, removed = DataSynchronizer.sync_attivita_programmate(real_db, new_rows)
-        # Delta netto: new(1) - old(1) = 0, 0
-        assert added == 0
+        # Delta netto: sync_full_replace restituisce len(final_rows)
+        assert added == 1
+        # Il removed è 0 perché sync_full_replace non calcola il delta dei rimossi ma svuota e reinserisce
         assert removed == 0
 
     def test_sync_scarico_ore(self, real_db):

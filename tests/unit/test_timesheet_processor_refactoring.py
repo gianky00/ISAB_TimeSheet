@@ -52,7 +52,7 @@ def test_process_and_move_missing_sheet(tmp_path):
 
 
 def test_process_and_move_missing_odc(tmp_path):
-    path = tmp_path / "no_odc.xlsx"
+    path = tmp_path / "testsource.xlsx"
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Timesheet"
@@ -61,7 +61,6 @@ def test_process_and_move_missing_odc(tmp_path):
     success, msg = TimesheetProcessor.process_and_move(path, tmp_path / "dest")
     assert success is False
     assert "mancante" in msg
-
 
 def test_process_and_move_success_single_pos(sample_timesheet, tmp_path):
     dest_dir = tmp_path / "dest"

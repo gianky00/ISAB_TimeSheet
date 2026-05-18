@@ -65,23 +65,26 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
         """Rilascia le risorse del bot."""
         super().cleanup()
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Esegue il workflow principale del bot."""
         self.update_step("login", StepStatus.COMPLETED)
 
+        # Normalizzazione input: i bot SafeWork lavorano solitamente su una lista di righe
+        rows = data if isinstance(data, list) else [data] if data else []
+
         success_count = 0
-        total = len(data)
+        total = len(rows)
         self.downloaded_files = []
         all_pdl_paths: list[str] = []
 
         self.log(f"[AVVIO] Inizio elaborazione (PW) di {total} PDL...")
 
-        for index, item in enumerate(data):
+        for index, item in enumerate(rows):
             if self._process_single_pdl(index, total, item, all_pdl_paths):
                 success_count += 1
 
         self.update_step("session", StepStatus.RUNNING)
-        self._handle_session_merge(data, all_pdl_paths)
+        self._handle_session_merge(rows, all_pdl_paths)
         self.update_step("session", StepStatus.COMPLETED)
 
         return success_count == total

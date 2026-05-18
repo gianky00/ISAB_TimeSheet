@@ -88,5 +88,5 @@ class TestSearchControllerCoverage(unittest.TestCase):
 
         self.controller._add_oda_matches.assert_called()
         # "No results" should NOT be added
-        self.assertFalse(any("Nessun risultato" in str(call) for call in mock_menu.addAction.mock_calls))
-        mock_menu.exec.assert_called()
+        self.assertFalse(any("Nessun risultato" in str(call) for call in mock_menu_obj.addAction.mock_calls))
+        mock_menu_obj.exec.assert_called()

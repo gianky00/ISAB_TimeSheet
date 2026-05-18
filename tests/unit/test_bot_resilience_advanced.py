@@ -57,6 +57,8 @@ class TestBotResilienceAdvanced:
     def bot(self, tmp_path, mocker):
         """Setup del bot con percorsi mockati."""
         mocker.patch("src.core.paths.get_logs_path", return_value=str(tmp_path / "logs"))
+        # Mocking ExecutionGuard to avoid license issues
+        mocker.patch("src.bots.base.base_bot.ExecutionGuard.check_environment", return_value=(True, "OK"))
         bot = MockBot("user", "pass")
         bot.signals = MagicMock()
         bot.driver = None  # FIX: Inizializza attributo driver

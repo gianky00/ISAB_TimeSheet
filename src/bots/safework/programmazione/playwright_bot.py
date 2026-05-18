@@ -60,11 +60,11 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
         """Nessuna tabella input: i filtri arrivano dai parametri del pannello."""
         return []
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Esegue il monitoraggio settimanale e aggiorna i risultati aggregati."""
         self.update_step("login", StepStatus.COMPLETED)
 
-        params = data[0] if data else {}
+        params = data[0] if isinstance(data, list) and data else data if isinstance(data, dict) else {}
         requesters = params.get("requesters", [])
         date_start = params.get("date_start")
         date_end = params.get("date_end")

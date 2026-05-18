@@ -81,7 +81,7 @@ class TestImportersLogic:
         }
         df = pd.DataFrame(data)
 
-        cleaned = GiornaliereImporter._clean_giornaliera_data(df)
+        cleaned = GiornaliereImporter._clean_data(df)
 
         assert len(cleaned) == 2
         assert "Totale" not in cleaned["personale"].values

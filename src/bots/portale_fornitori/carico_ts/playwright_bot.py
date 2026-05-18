@@ -77,11 +77,15 @@ class PlaywrightCaricoTSBot(PlaywrightBaseBot):
 
         return True, ""
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Esegue il workflow principale di caricamento TS con Playwright."""
         self.update_step("login", StepStatus.COMPLETED)
 
         rows = data if isinstance(data, list) else data.get("rows", [])
+        if not rows:
+            self.log("Nessun dato valido trovato per l'elaborazione.", "ERROR")
+            return False
+
         row = rows[0]
         oda = str(row.get("numero_oda", "")).strip()
 

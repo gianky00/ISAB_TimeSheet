@@ -61,7 +61,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         """Restituisce le colonne richieste (nessuna)."""
         return []
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """
         Esegue il download del report Excel.
 
@@ -73,7 +73,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         """
         self.update_step("login", StepStatus.COMPLETED)
 
-        params = data[0] if data else {}
+        params = data[0] if isinstance(data, list) and data else data if isinstance(data, dict) else {}
         requesters = params.get("requesters", [])
         date_start = params.get("date_start")
         date_end = params.get("date_end")

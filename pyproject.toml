@@ -286,6 +286,8 @@ module = [
     "email_validator.*",
     "jaraco.*",
     "playwright.*",
+    "coverage",
+    "coverage.*",
 ]
 ignore_missing_imports = true
 

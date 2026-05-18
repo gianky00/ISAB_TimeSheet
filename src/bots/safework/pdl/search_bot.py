@@ -70,7 +70,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         """Restituisce le colonne richieste (nessuna)."""
         return []
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """
         Esegue la pipeline di ricerca ed esportazione dei PDL.
 
@@ -85,7 +85,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         if not self.driver or not self.wait:
             return False
 
-        params = data[0] if data else {}
+        params = data[0] if isinstance(data, list) and data else data if isinstance(data, dict) else {}
 
         # 1. Navigazione a Ricerca
         self.update_step("nav", StepStatus.RUNNING)

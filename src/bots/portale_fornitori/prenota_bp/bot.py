@@ -92,10 +92,11 @@ class PrenotaBPBot(SeleniumBaseBot):
 
         return True, ""
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Esegue il workflow di prenotazione BP."""
         self.update_step("login", StepStatus.COMPLETED)
 
+        rows = data.get("rows", []) if isinstance(data, dict) else data
         if not self.driver:
             self.log("❌ Driver non inizializzato")
             return False
@@ -113,7 +114,7 @@ class PrenotaBPBot(SeleniumBaseBot):
 
             # 2. Ciclo di prenotazione per ogni riga
             success_count = 0
-            for i, row in enumerate(data):
+            for i, row in enumerate(rows):
                 self._check_stop()
                 try:
                     if self._process_single_bp(page, row, i):
@@ -124,9 +125,9 @@ class PrenotaBPBot(SeleniumBaseBot):
                         callback(i, False, str(e))
 
             self.update_step("cleanup", StepStatus.RUNNING)
-            self.log(f"ℹ️ Fine: {success_count}/{len(data)} BP processati.")
+            self.log(f"ℹ️ Fine: {success_count}/{len(rows)} BP processati.")
             self.update_step("cleanup", StepStatus.COMPLETED)
-            return success_count == len(data)
+            return success_count == len(rows)
 
         except Exception as e:
             self.log(f"❌ Errore fatale Prenota BP: {e}")

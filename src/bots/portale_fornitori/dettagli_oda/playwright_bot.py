@@ -79,7 +79,7 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
             return False, "Fornitore non specificato."
         return True, ""
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Esegue il ciclo di scarico dettagli con Playwright."""
         self.update_step("login", StepStatus.COMPLETED)
 

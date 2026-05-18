@@ -86,7 +86,7 @@ class DettagliOdABot(SeleniumBaseBot):
         # Il bot pu  partire anche se data  vuoto (per la lista generale)
         return True, ""
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Esegue lo scarico dei dettagli per ogni Ordine di Acquisto fornito."""
         self.update_step("login", StepStatus.COMPLETED)
 

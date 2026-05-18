@@ -156,11 +156,9 @@ class TestDatabaseAdvanced:
         # sqlite3.OperationalError viene catturata se sollevata dal blocco 'with self.get_connection'
 
         mock_conn = mocker.MagicMock(spec=sqlite3.Connection)
-        mock_cursor = mocker.MagicMock()
-        mock_conn.cursor.return_value = mock_cursor
 
         # La prima esecuzione fallisce, la seconda passa
-        mock_cursor.execute.side_effect = [
+        mock_conn.execute.side_effect = [
             sqlite3.OperationalError("database is locked"),
             mocker.MagicMock(),  # Successo
         ]
@@ -177,4 +175,4 @@ class TestDatabaseAdvanced:
 
         # Verifica: deve aver chiamato get_connection 2 volte a causa del retry
         assert mock_get_conn.call_count == 2
-        assert mock_cursor.execute.call_count == 2
+        assert mock_conn.execute.call_count == 2

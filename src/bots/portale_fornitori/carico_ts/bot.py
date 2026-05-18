@@ -99,7 +99,7 @@ class CaricoTSBot(SeleniumBaseBot):
 
         return True, ""
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """
         Esegue il workflow principale di caricamento TS.
 
@@ -113,6 +113,9 @@ class CaricoTSBot(SeleniumBaseBot):
 
         # Il driver  garantito da execute()
         rows = data if isinstance(data, list) else data.get("rows", [])
+        if not rows:
+            self.log("Nessun dato valido trovato per l'elaborazione.", "ERROR")
+            return False
 
         # Original logic: process ONLY the first row
         row = rows[0]

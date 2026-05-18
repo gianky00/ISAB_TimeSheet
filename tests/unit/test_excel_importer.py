@@ -86,12 +86,12 @@ class TestExcelImporter:
         """Test prioritario: Importazione giornaliere da directory strutturata."""
         root = tmp_path / "Giornaliere"
         root.mkdir()
-        folder2024 = root / "Giornaliere 2024"
-        folder2024.mkdir()
+        folder2025 = root / "Giornaliere 2025"
+        folder2025.mkdir()
 
         df = pd.DataFrame(
             {
-                "DATA": ["01/01/2024"],
+                "DATA": ["01/01/2025"],
                 "PERSONALE": ["Mario Rossi"],
                 "DESCRIZIONE ATTIVITÀ": ["Manutenzione 22/123"],
                 "TCL": ["T1"],
@@ -104,7 +104,7 @@ class TestExcelImporter:
             }
         ).astype(str)
 
-        file_path = folder2024 / "test_giornaliera.xlsx"
+        file_path = folder2025 / "test_giornaliera.xlsx"
         with pd.ExcelWriter(file_path, engine="openpyxl") as writer:
             df.to_excel(writer, sheet_name="RIASSUNTO", index=False)
 
@@ -120,11 +120,11 @@ class TestExcelImporter:
         ):
             mock_page_index.DASHBOARD = 0
             mock_proc.return_value = (
-                2024,
+                2025,
                 [
                     (
-                        2024,
-                        "01/01/2024",
+                        2025,
+                        "01/01/2025",
                         "Mario Rossi",
                         "Manutenzione",
                         "T1",
@@ -147,7 +147,7 @@ class TestExcelImporter:
                 str(root), lookup_map, progress_callback=mock_cb
             )
             assert success is True
-            assert 2024 in years
+            assert 2025 in years
             assert len(rows) > 0
             assert rows[0][5] == "5400999"
             assert rows[0][11] == "test_giornaliera.xlsx"

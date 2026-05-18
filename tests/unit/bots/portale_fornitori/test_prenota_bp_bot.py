@@ -19,6 +19,7 @@ class TestPrenotaBPBot:
     def test_run_success_flow(self, mock_page_class):
         bot = PrenotaBPBot(username="u", password="p")
         bot.update_step = MagicMock()
+        bot.driver = MagicMock() # FIX: Inizializza driver
 
         mock_page = mock_page_class.return_value
         data = [{"numero_bp": "BP1"}]
@@ -26,8 +27,9 @@ class TestPrenotaBPBot:
         res = bot.run(data)
 
         assert res is True
-        assert mock_page.navigate_to_gestione_bp.called
-        assert mock_page.filtra_buoni_prelievo.called
+        mock_page.navigate_to_gestione_bp.assert_called_once()
+        mock_page.filtra_buoni_prelievo.assert_called_once()
+
         assert mock_page.apri_dettagli_bp.called
         assert mock_page.gestisci_creazione_richiesta.called
 

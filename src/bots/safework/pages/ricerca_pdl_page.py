@@ -35,7 +35,7 @@ class RicercaPDLPage:
             if checkbox.is_selected() != exclude_closed:
                 self.log(f"[CLICK] Impostazione 'Escludi chiusì: {exclude_closed}")
                 # Uso JS click come nel branch main per evitare problemi di intercettazione
-                self.driver.execute_script("arguments[0].click();", checkbox)
+                self.driver.execute_script("arguments[0].click();", checkbox)  # type: ignore[no-untyped-call]
         except Exception as e:
             self.log(f"⚠️ Errore configurazione flag 'Escludi chiusì: {e}")
 
