@@ -52,7 +52,7 @@ class CertificatiPdfExporter:
             width_pt = paint_rect_pt.width()
             doc.setTextWidth(width_pt)
 
-            pages_html = self._build_paginated_html(doc, width_pt, paint_rect_pt.height())
+            pages_html, has_nd = self._build_paginated_html(doc, width_pt, paint_rect_pt.height())
             if not pages_html:
                 return False, "Nessun dato da esportare."
 
@@ -76,8 +76,8 @@ class CertificatiPdfExporter:
                 doc.drawContents(painter)
                 painter.restore()
 
-                # Footer (Pagina X / Y)
-                self._draw_footer(painter, page_idx + 1, total_pages, width_pt, paint_rect_pt.height())
+                # Footer (Pagina X / Y) con eventuale postilla
+                self._draw_footer(painter, page_idx + 1, total_pages, width_pt, paint_rect_pt.height(), has_nd)
 
             painter.end()
         except Exception as e:
@@ -135,23 +135,37 @@ class CertificatiPdfExporter:
 
         return ""
 
-    def _draw_footer(self, painter: QPainter, current: int, total: int, width: float, height: float) -> None:
-        """Disegna il footer con la numerazione delle pagine."""
+    def _draw_footer(self, painter: QPainter, current: int, total: int, width: float, height: float, has_nd: bool = False) -> None:
+        """Disegna il footer con la numerazione delle pagine e l'eventuale postilla."""
         painter.save()
         font = painter.font()
         font.setPixelSize(8)
         painter.setFont(font)
         painter.setPen(Qt.GlobalColor.darkGray)
 
+        # Postilla Audit (Angolo in basso a sinistra)
+        if has_nd:
+            disclaimer = "(*) La dicitura 'Senza scadenza' identifica la strumentazione con certificazione in fase di aggiornamento documentale, attualmente esclusa dall'impiego operativo. Tutti gli apparati in elenco sono regolarmente tracciati e gestiti in piena conformità alle procedure di controllo qualità vigenti."
+            font.setPixelSize(6)  # Testo piccolo per la postilla
+            painter.setFont(font)
+            disclaimer_rect = QRectF(15, height - 20, width - 100, 20)
+            painter.drawText(disclaimer_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, disclaimer)
+            
+            # Ripristina font per la numerazione
+            font.setPixelSize(8)
+            painter.setFont(font)
+
+        # Numerazione Pagine (Angolo in basso a destra)
         page_text = f"Pagina {current} / {total}"
         footer_rect = QRectF(0, height - 20, width - 15, 20)
         painter.drawText(footer_rect, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, page_text)
         painter.restore()
 
-    def _build_paginated_html(self, doc: QTextDocument, width_pt: float, height_pt: float) -> list[str]:
-        """Costruisce i blocchi HTML divisi per pagina calcolandone l'altezza dinamicamente."""
+    def _build_paginated_html(self, doc: QTextDocument, width_pt: float, height_pt: float) -> tuple[list[str], bool]:
+        """Costruisce i blocchi HTML divisi per pagina e segnala se ci sono strumenti N/D."""
         all_parents, raw_data_for_stats = self._gather_and_sort_data()
         stats = CertificatiEngine.get_statistics(raw_data_for_stats)
+        has_nd = stats.get("senza_data", 0) > 0
         cert_links_cache: dict[str, str] = {}
 
         def get_cached_cert_link(c_name: str) -> str:
@@ -330,7 +344,7 @@ class CertificatiPdfExporter:
                 "gg)", " giorni<br>rimanenti"
             )
         if StatoCertificatoLabel.SENZA_SCADENZA in stato_display:
-            return "N/D"
+            return "N/D *"
         return stato_display
 
     def _get_status_row_class(self, days: int | None) -> str:
@@ -448,7 +462,7 @@ class CertificatiPdfExporter:
                                 <span style="color: #15803d;">&#11044;</span> Attivi: <b>{s["attivi"]}</b><br>
                                 <span style="color: #d97706;">&#11044;</span> In Scadenza: <b>{s["in_scadenza"]}</b><br>
                                 <span style="color: #b91c1c;">&#11044;</span> Scaduti: <b>{s["scaduti"]}</b><br>
-                                <span style="color: #64748b;">&#11044;</span> Senza Scadenza: <b>{s["senza_data"]}</b><br>
+                                <span style="color: #64748b;">&#11044;</span> Senza Scadenza *: <b>{s["senza_data"]}</b><br>
                                 <span style="color: #000000;">&#11044;</span> Guasti: <b>{s["guasti"]}</b>
                             </td>
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
