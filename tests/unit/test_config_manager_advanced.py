@@ -71,4 +71,4 @@ class TestConfigManagerAdvanced:
 
         config = _load_base_config()
         # Should return defaults due to suppress(json.JSONDecodeError)
-        assert config["browser_timeout"] == 30
+        assert config["browser_timeout"] == 300

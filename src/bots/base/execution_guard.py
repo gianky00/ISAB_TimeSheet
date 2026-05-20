@@ -23,16 +23,11 @@ class ExecutionGuard:
           Tuple (esito, messaggio_errore).
         """
         try:
-            from src.core.license_updater import run_update
             from src.core.license_validator import verify_license
-
-            # 1. Verifica/Esegue aggiornamenti licenza silenti
-            run_update()
+            # Rimosso run_update() sincrono: la risoluzione DNS (getaddrinfo) blocca il GIL su Windows
+            # e causa il freeze della GUI. L'aggiornamento viene già gestito in background da AppInitializer.
         except Exception as e:
-            if "REVOCATA" in str(e):
-                logger.exception("Licenza revocata rilevata durante pre-check.")
-                return False, f"ACCESSO NEGATO: {e}"
-            logger.warning(f"Errore silente durante run_update: {e}")
+            logger.warning(f"Errore caricamento validatore: {e}")
 
         # 2. Validazione licenza reale
         valid, msg = verify_license()

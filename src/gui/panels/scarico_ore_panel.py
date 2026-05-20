@@ -87,7 +87,7 @@ class ScaricoOrePanel(QWidget):
 
         # Shimmer Loading
         self.shimmer = ShimmerSkeleton(rows=10)
-        self.shimmer.setParent(self.table_view)
+        self.shimmer.setParent(self)  # Parent indipendente
         self.shimmer.hide()
 
         self.tabs.addTab(
@@ -96,6 +96,9 @@ class ScaricoOrePanel(QWidget):
             "Dati Scaricati",
         )
         layout.addWidget(self.tabs)
+
+        # Assicuriamo che il layout gestisca la sovrapposizione correttamente (usando un stacked layout o posizionamento assoluto se necessario)
+        # Per ora manteniamo il posizionamento indipendente
 
     def _perform_search(self, text: str) -> None:
         """
@@ -224,12 +227,12 @@ class ScaricoOrePanel(QWidget):
         )
 
         if loading:
-            self.table_view.hide()
-            self.shimmer.show()
+            self.table_view.setVisible(False)
+            self.shimmer.setVisible(True)
             self.shimmer.resize(self.table_view.size())
         else:
-            self.shimmer.hide()
-            self.table_view.show()
+            self.shimmer.setVisible(False)
+            self.table_view.setVisible(True)
 
         self.table_view.setDisabled(loading)
 

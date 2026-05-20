@@ -22,12 +22,7 @@ from PySide6.QtWidgets import (
 
 from src.core import config_manager
 from src.core.app_updater import (
-    get_local_setup_path,
-    get_pending_installer_path,
-    has_pending_update,
-    perform_auto_update,
     run_pending_installer,
-    show_install_prompt,
 )
 from src.core.audit_manager import AuditManager
 from src.core.license_updater import run_update
@@ -35,10 +30,12 @@ from src.core.telegram_bridge import TelegramUIBridge
 from src.core.telegram_manager import TelegramService
 from src.core.version import __version__ as VERSION  # noqa: N812
 from src.gui.components.animated_stack import SlidingStackedWidget
+from src.gui.controllers.app_status_controller import AppStatusController
 from src.gui.controllers.bot_controller import BotController
 from src.gui.controllers.navigation_controller import NavigationController
 from src.gui.controllers.search_controller import SearchController
 from src.gui.controllers.service_controller import ServiceController
+from src.gui.controllers.update_controller import UpdateController
 from src.gui.dialogs.bug_report_dialog import BugReportDialog
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import apply_theme
@@ -120,6 +117,8 @@ class MainWindow(QMainWindow):
         self.monitoring_controller = MonitoringController(self)
         self.app_event_handler = AppEventHandler(self)
         self.telegram_bridge = TelegramUIBridge(self)
+        self.update_controller = UpdateController(self)
+        self.app_status_controller = AppStatusController(self)
 
     def _init_ui_final(self) -> None:
         """Wiring finale, shortcuts e avvio servizi."""
@@ -178,7 +177,7 @@ class MainWindow(QMainWindow):
                 logger.warning("System tray non disponibile su questo sistema.")
 
             # Check for updates on startup
-            QTimer.singleShot(5000, self._check_updates_startup)
+            QTimer.singleShot(5000, self.update_controller.check_updates_startup)
 
         except Exception:
             logger.exception("Errore durante la finalizzazione dell'interfaccia")
@@ -225,51 +224,24 @@ class MainWindow(QMainWindow):
         dialog.exec()
 
     def _check_updates_startup(self) -> None:
-        """Controlla se ci sono aggiornamenti pendenti o nuovi al boot."""
-        if has_pending_update():
-            path = get_pending_installer_path()
-            if path:
-                show_install_prompt(path, self)
+        """Controlla se ci sono aggiornamenti pendenti o nuovi al boot (Delegato)."""
+        self.update_controller.check_updates_startup()
 
     def _show_update_banner(self, version_info: dict[str, Any]) -> None:
-        """Mostra il banner di aggiornamento nella toolbar."""
-        if hasattr(self, "tool_bar_component") and self.tool_bar_component.update_banner:
-            # Allineamento firma show_update(download_url, version_str)
-            download_url = version_info.get("url", "")
-            version_str = version_info.get("version", "")
-            if download_url and version_str:
-                self.update_banner.show_update(version_str, download_url)
+        """Mostra il banner di aggiornamento nella toolbar (Delegato)."""
+        self.update_controller.show_update_banner(version_info)
 
     def _on_download_update_clicked(self, download_url: str) -> None:
-        """Avvia il processo di download dell'aggiornamento con protezione da eccezioni."""
-        try:
-            # Se il banner indica che è già completo, mostra direttamente la prompt di installazione
-            if hasattr(self, "update_banner") and getattr(self.update_banner, "_is_complete", False):
-                setup_path = get_local_setup_path(download_url)
-                show_install_prompt(setup_path, self)
-                return
-
-            perform_auto_update(download_url, self)
-        except Exception as e:
-            logger.exception("Inizializzazione download fallita")
-            ToastManager.instance().show(f"Errore inizializzazione update: {e}", "error")
+        """Avvia il processo di download dell'aggiornamento (Delegato)."""
+        self.update_controller.handle_download_update(download_url)
 
     def _on_update_error(self, message: str) -> None:
-        """Gestisce errori durante lo scaricamento dell'aggiornamento."""
-        if hasattr(self, "update_banner"):
-            self.update_banner.show_error(message)
-        ToastManager.instance().show(f"Errore download: {message}", "error")
+        """Gestisce errori durante lo scaricamento dell'aggiornamento (Delegato)."""
+        self.update_controller.handle_update_error(message)
 
     def _on_update_downloaded(self, setup_path: str) -> None:
-        """Gestisce il completamento del download dell'aggiornamento."""
-        if hasattr(self, "update_banner"):
-            self.update_banner._is_complete = True
-            self.update_banner.update_label.setText("Aggiornamento Pronto!")
-            self.update_banner.download_btn.setText("Installa Ora")
-            self.update_banner.download_btn.setVisible(True)
-            self.update_banner.progress_container.setVisible(False)
-
-        show_install_prompt(setup_path, self)
+        """Gestisce il completamento del download dell'aggiornamento (Delegato)."""
+        self.update_controller.handle_update_downloaded(setup_path)
 
     def show_background_notification(self, title: str, message: str, is_error: bool = False) -> None:
         """Mostra una notifica balloon se l'app è in background."""
@@ -277,45 +249,16 @@ class MainWindow(QMainWindow):
             self.tray_icon_component.show_background_notification(title, message, is_error)
 
     def _switch_account(self, bot_type: str) -> None:
-        """Ruota l'account attivo per il portale specificato."""
-        if config_manager.switch_default_account(bot_type):
-            self.status_bar_component.show_operational_state()
-            if hasattr(self.status_bar_component, "footer_left") and hasattr(
-                self.status_bar_component.footer_left, "refresh_accounts"
-            ):
-                self.status_bar_component.footer_left.refresh_accounts()
-            ToastManager.instance().show(f"Account {bot_type.upper()} ruotate con successo.", "success")
-        else:
-            ToastManager.instance().show(f"Impossibile ruotare account {bot_type.upper()}.", "warning")
+        """Ruota l'account attivo per il portale specificato (Delegato)."""
+        self.app_status_controller.rotate_account(bot_type)
 
     def _switch_engine(self) -> None:
-        """Ruota il motore di automazione attivo tra Selenium e Playwright."""
-        current = config_manager.get_config_value("automation_engine", "selenium").lower()
-        new_engine = "playwright" if current == "selenium" else "selenium"
-
-        if config_manager.set_config_value("automation_engine", new_engine):
-            if hasattr(self.status_bar_component, "footer_left") and hasattr(
-                self.status_bar_component.footer_left, "refresh_accounts"
-            ):
-                self.status_bar_component.footer_left.refresh_accounts()
-            ToastManager.instance().show(f"Motore automazione: {new_engine.upper()}", "success")
-        else:
-            ToastManager.instance().show("Errore cambio motore.", "error")
+        """Ruota il motore di automazione attivo (Delegato)."""
+        self.app_status_controller.switch_engine()
 
     def _switch_headless(self) -> None:
-        """Ruota la modalità browser tra visibile e nascosta (headless)."""
-        current = config_manager.get_config_value("browser_headless", False)
-        new_state = not current
-
-        if config_manager.set_config_value("browser_headless", new_state):
-            if hasattr(self.status_bar_component, "footer_left") and hasattr(
-                self.status_bar_component.footer_left, "refresh_accounts"
-            ):
-                self.status_bar_component.footer_left.refresh_accounts()
-            mode = "NASCOSTO" if new_state else "VISIBILE"
-            ToastManager.instance().show(f"Browser: {mode}", "success")
-        else:
-            ToastManager.instance().show("Errore cambio modalità browser.", "error")
+        """Ruota la modalità browser tra visibile e nascosta (Delegato)."""
+        self.app_status_controller.switch_headless()
 
     def show_toast(self, message: str, level: str = "info") -> None:
         """

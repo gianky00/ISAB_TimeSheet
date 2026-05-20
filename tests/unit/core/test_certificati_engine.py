@@ -1,4 +1,3 @@
-
 import pytest
 
 from src.core.contabilita.certificati_engine import CertificatiEngine

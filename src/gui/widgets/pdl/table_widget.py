@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.database.pdl_queries import PDLQueries
+from src.core.pdl.pdl_service import PDLService
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import StandardTable
 from src.gui.widgets.pdl.status_bar_widget import ProgrammingStatusWidget
@@ -81,7 +81,7 @@ class ProgrammazioneTableWidget(StandardTable):
 
         self.insertRow(next_row)
         try:
-            interventions = PDLQueries.get_pdl_interventions(pdl_code)
+            interventions = PDLService.get_pdl_interventions(pdl_code)
         except Exception:
             logger.exception(f"Errore timeline PDL {pdl_code}")
             interventions = []

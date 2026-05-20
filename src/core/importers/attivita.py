@@ -80,17 +80,19 @@ class AttivitaImporter(BaseImporter):
 
     @classmethod
     def _normalize_attivita_columns(cls, df: pd.DataFrame) -> pd.DataFrame | None:
+        """Normalizza le colonne gestendo newline, spazi e variazioni di caratteri (es. A' vs À)."""
         df.columns = df.columns.astype(str).str.strip()
         rename_map = {}
 
+        def _clean_str(s: str) -> str:
+            return s.upper().replace("\n", " ").replace("'", " ").replace("À", "A").strip()
+
         for excel_col, db_col in cls.ATTIVITA_PROGRAMMATE_MAPPING.items():
-            if excel_col in df.columns:
-                rename_map[excel_col] = db_col
-            else:
-                for col in df.columns:
-                    if excel_col.replace("\n", " ").strip() == col.replace("\n", " ").strip():
-                        rename_map[col] = db_col
-                        break
+            excel_clean = _clean_str(excel_col)
+            for col in df.columns:
+                if _clean_str(col) == excel_clean:
+                    rename_map[col] = db_col
+                    break
 
         if not rename_map:
             return None

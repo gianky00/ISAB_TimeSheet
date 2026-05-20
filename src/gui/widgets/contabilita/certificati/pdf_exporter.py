@@ -1,4 +1,3 @@
-
 import os
 import re
 from datetime import datetime
@@ -7,7 +6,7 @@ from typing import Any
 
 from PySide6.QtCore import QMarginsF, QRectF, Qt
 from PySide6.QtGui import QPageLayout, QPageSize, QPainter, QPdfWriter, QTextDocument
-from PySide6.QtWidgets import QTreeWidget
+from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
 from src.core.constants import StatoCertificatoLabel, UbicazioneStrumenti
 from src.core.contabilita.certificati_engine import CertificatiEngine
@@ -29,6 +28,10 @@ class CertificatiPdfExporter:
         self.include_history = include_history
         self.print_exclusions = print_exclusions or set()
 
+    def _get_tree(self) -> Any:
+        """Helper per accedere al tree come Any per evitare errori di attributi non definiti su QTreeWidget."""
+        return self.tree
+
     def export(self, file_path: str) -> tuple[bool, str]:
         """Esporta il TreeWidget in un file PDF con paginazione intelligente."""
         try:
@@ -49,7 +52,7 @@ class CertificatiPdfExporter:
             width_pt = paint_rect_pt.width()
             doc.setTextWidth(width_pt)
 
-            pages_html = self._build_paginated_html(doc, width_pt, paint_rect_pt.height())
+            pages_html, has_nd = self._build_paginated_html(doc, width_pt, paint_rect_pt.height())
             if not pages_html:
                 return False, "Nessun dato da esportare."
 
@@ -73,8 +76,8 @@ class CertificatiPdfExporter:
                 doc.drawContents(painter)
                 painter.restore()
 
-                # Footer (Pagina X / Y)
-                self._draw_footer(painter, page_idx + 1, total_pages, width_pt, paint_rect_pt.height())
+                # Footer (Pagina X / Y) con eventuale postilla
+                self._draw_footer(painter, page_idx + 1, total_pages, width_pt, paint_rect_pt.height(), has_nd)
 
             painter.end()
         except Exception as e:
@@ -132,29 +135,37 @@ class CertificatiPdfExporter:
 
         return ""
 
-    def _draw_footer(
-        self, painter: QPainter, current: int, total: int, width: float, height: float
-    ) -> None:
-        """Disegna il footer con la numerazione delle pagine."""
+    def _draw_footer(self, painter: QPainter, current: int, total: int, width: float, height: float, has_nd: bool = False) -> None:
+        """Disegna il footer con la numerazione delle pagine e l'eventuale postilla."""
         painter.save()
         font = painter.font()
         font.setPixelSize(8)
         painter.setFont(font)
         painter.setPen(Qt.GlobalColor.darkGray)
 
+        # Postilla Audit (Angolo in basso a sinistra)
+        if has_nd:
+            disclaimer = "(*) La dicitura 'Senza scadenza' identifica la strumentazione con certificazione in fase di aggiornamento documentale, attualmente esclusa dall'impiego operativo. Tutti gli apparati in elenco sono regolarmente tracciati e gestiti in piena conformità alle procedure di controllo qualità vigenti."
+            font.setPixelSize(6)  # Testo piccolo per la postilla
+            painter.setFont(font)
+            disclaimer_rect = QRectF(15, height - 20, width - 100, 20)
+            painter.drawText(disclaimer_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, disclaimer)
+            
+            # Ripristina font per la numerazione
+            font.setPixelSize(8)
+            painter.setFont(font)
+
+        # Numerazione Pagine (Angolo in basso a destra)
         page_text = f"Pagina {current} / {total}"
         footer_rect = QRectF(0, height - 20, width - 15, 20)
-        painter.drawText(
-            footer_rect, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, page_text
-        )
+        painter.drawText(footer_rect, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, page_text)
         painter.restore()
 
-    def _build_paginated_html(
-        self, doc: QTextDocument, width_pt: float, height_pt: float
-    ) -> list[str]:
-        """Costruisce i blocchi HTML divisi per pagina calcolandone l'altezza dinamicamente."""
+    def _build_paginated_html(self, doc: QTextDocument, width_pt: float, height_pt: float) -> tuple[list[str], bool]:
+        """Costruisce i blocchi HTML divisi per pagina e segnala se ci sono strumenti N/D."""
         all_parents, raw_data_for_stats = self._gather_and_sort_data()
         stats = CertificatiEngine.get_statistics(raw_data_for_stats)
+        has_nd = stats.get("senza_data", 0) > 0
         cert_links_cache: dict[str, str] = {}
 
         def get_cached_cert_link(c_name: str) -> str:
@@ -174,24 +185,21 @@ class CertificatiPdfExporter:
 
         for parent in all_parents:
             group_html_blocks = []
-            for j in range(parent.childCount()):
-                if not self.include_history and j > 0:
-                    break
-                child = parent.child(j)
-                if not child:
-                    continue
+            if parent:
+                for j in range(parent.childCount()):
+                    if not self.include_history and j > 0:
+                        break
+                    child = parent.child(j)
+                    if not child:
+                        continue
 
-                row_html = self._build_row_html(child, j == 0, get_cached_cert_link)
-                group_html_blocks.append(row_html)
+                    row_html = self._build_row_html(child, j == 0, get_cached_cert_link)
+                    group_html_blocks.append(row_html)
 
             group_est_height = 35 + (len(group_html_blocks) - 1) * 22
             if current_page_height + group_est_height > available_height and current_rows:
                 pages_html.append(
-                    style_html
-                    + summary_html
-                    + page_header_html
-                    + "".join(current_rows)
-                    + page_footer_html
+                    style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html
                 )
                 current_rows = []
                 current_page_height = 0
@@ -201,23 +209,19 @@ class CertificatiPdfExporter:
 
         if current_rows:
             pages_html.append(
-                style_html
-                + summary_html
-                + page_header_html
-                + "".join(current_rows)
-                + page_footer_html
+                style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html
             )
 
         return pages_html
 
-    def _gather_and_sort_data(self) -> tuple[list[Any], list[tuple[str, ...]]]:
+    def _gather_and_sort_data(self) -> tuple[list[QTreeWidgetItem], list[tuple[str, ...]]]:
         """Raccoglie e ordina i dati dal TreeWidget."""
         all_parents = []
         raw_data_for_stats = []
 
         for i in range(self.tree.topLevelItemCount()):
             parent = self.tree.topLevelItem(i)
-            if self._should_skip_parent(parent):
+            if parent is None or self._should_skip_parent(parent):
                 continue
 
             all_parents.append(parent)
@@ -230,9 +234,9 @@ class CertificatiPdfExporter:
         all_parents.sort(key=self._get_sort_key)
         return all_parents, raw_data_for_stats
 
-    def _should_skip_parent(self, parent: Any) -> bool:
+    def _should_skip_parent(self, parent: QTreeWidgetItem) -> bool:
         """Determina se un nodo padre deve essere saltato."""
-        if not parent or parent.isHidden():
+        if parent.isHidden():
             return True
 
         label_text = parent.text(0)
@@ -249,7 +253,7 @@ class CertificatiPdfExporter:
 
         return bool(matricola in self.print_exclusions)
 
-    def _get_sort_key(self, parent: Any) -> list[Any]:
+    def _get_sort_key(self, parent: QTreeWidgetItem) -> list[Any]:
         """Restituisce la chiave di ordinamento naturale basata su ID COEMI."""
         id_coemi = ""
         if parent.childCount() > 0:
@@ -260,9 +264,10 @@ class CertificatiPdfExporter:
         parts = re.split(r"(\d+)", id_coemi)
         return [(True, int(c)) if c.isdigit() else (False, c.lower()) for c in parts if c]
 
-    def _build_row_html(self, child: Any, is_current: bool, get_link_fn: Any) -> str:
+    def _build_row_html(self, child: QTreeWidgetItem, is_current: bool, get_link_fn: Any) -> str:
         """Costruisce l'HTML per una singola riga (corrente o storica)."""
-        scadenza_str = child.text(self.tree.IDX_SCADENZA)
+        tree_any = self._get_tree()
+        scadenza_str = child.text(tree_any.IDX_SCADENZA)
         days, _ = CertificatiEngine.calculate_days_and_status(scadenza_str)
 
         if is_current:
@@ -272,10 +277,10 @@ class CertificatiPdfExporter:
             stato_display = "STORICO"
             row_class = "historical-row"
 
-        modello = self._format_modello(child.text(self.tree.IDX_MODELLO))
-        ubicazione = self._format_ubicazione(child.text(self.tree.IDX_UBICAZIONE))
+        modello = self._format_modello(child.text(tree_any.IDX_MODELLO))
+        ubicazione = self._format_ubicazione(child.text(tree_any.IDX_UBICAZIONE))
 
-        cert_name = child.text(self.tree.IDX_CERTIFICATO)
+        cert_name = child.text(tree_any.IDX_CERTIFICATO)
         cert_link = get_link_fn(cert_name)
         cert_display = (
             f"<a href='{cert_link}' style='color: #2563eb; text-decoration: underline;'>{cert_name}</a>"
@@ -290,18 +295,18 @@ class CertificatiPdfExporter:
 
         row_html = f"<tr class='{row_class}'>"
         if is_current:
-            row_html += f"<td class='text-center'>{child.text(self.tree.IDX_ID_STRUMENTO)}</td>"
+            row_html += f"<td class='text-center'>{child.text(tree_any.IDX_ID_STRUMENTO)}</td>"
             row_html += f"<td>{cert_display}</td>"
             row_html += f"<td>{modello}</td>"
-            row_html += f"<td>{child.text(self.tree.IDX_COSTRUTTORE)}</td>"
-            row_html += f"<td>{child.text(self.tree.IDX_MATRICOLA)}</td>"
-            row_html += f"<td>{child.text(self.tree.IDX_RANGE)}</td>"
-            row_html += f"<td class='text-center col-err'>{child.text(self.tree.IDX_ERRORE)}</td>"
-            row_html += f"<td>{child.text(self.tree.IDX_EMISSIONE)}</td>"
-            row_html += f"<td>{child.text(self.tree.IDX_SCADENZA)}</td>"
+            row_html += f"<td>{child.text(tree_any.IDX_COSTRUTTORE)}</td>"
+            row_html += f"<td>{child.text(tree_any.IDX_MATRICOLA)}</td>"
+            row_html += f"<td>{child.text(tree_any.IDX_RANGE)}</td>"
+            row_html += f"<td class='text-center col-err'>{child.text(tree_any.IDX_ERRORE)}</td>"
+            row_html += f"<td>{child.text(tree_any.IDX_EMISSIONE)}</td>"
+            row_html += f"<td>{child.text(tree_any.IDX_SCADENZA)}</td>"
             row_html += f"<td class='col-stato'>{stato_display}</td>"
             row_html += f"<td>{ubicazione}</td>"
-            row_html += f"<td>{child.text(self.tree.IDX_ANNOTAZIONI)}</td>"
+            row_html += f"<td>{child.text(tree_any.IDX_ANNOTAZIONI)}</td>"
         else:
             row_html += "<td></td>"
             row_html += f"<td>{storico_display}</td>"
@@ -310,8 +315,8 @@ class CertificatiPdfExporter:
             row_html += "<td></td>"
             row_html += "<td></td>"
             row_html += "<td></td>"
-            row_html += f"<td>{child.text(self.tree.IDX_EMISSIONE)}</td>"
-            row_html += f"<td>{child.text(self.tree.IDX_SCADENZA)}</td>"
+            row_html += f"<td>{child.text(tree_any.IDX_EMISSIONE)}</td>"
+            row_html += f"<td>{child.text(tree_any.IDX_SCADENZA)}</td>"
             row_html += f"<td class='col-stato'>{stato_display}</td>"
             row_html += "<td></td>"
             row_html += "<td></td>"
@@ -327,19 +332,19 @@ class CertificatiPdfExporter:
         stato_display = stato_display.strip()
 
         if stato_display.startswith(StatoCertificatoLabel.SCADUTO):
-            return stato_display.replace(
-                f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>"
-            ).replace("gg fa)", " giorni")
+            return stato_display.replace(f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>").replace(
+                "gg fa)", " giorni"
+            )
         if stato_display.startswith(StatoCertificatoLabel.ATTIVO):
-            return stato_display.replace(
-                f"{StatoCertificatoLabel.ATTIVO} (", "Attivo per<br>"
-            ).replace("gg rim.)", " giorni")
+            return stato_display.replace(f"{StatoCertificatoLabel.ATTIVO} (", "Attivo per<br>").replace(
+                "gg rim.)", " giorni"
+            )
         if stato_display.startswith(StatoCertificatoLabel.IN_SCADENZA):
-            return stato_display.replace(
-                f"{StatoCertificatoLabel.IN_SCADENZA} (", "In scadenza<br>"
-            ).replace("gg)", " giorni<br>rimanenti")
+            return stato_display.replace(f"{StatoCertificatoLabel.IN_SCADENZA} (", "In scadenza<br>").replace(
+                "gg)", " giorni<br>rimanenti"
+            )
         if StatoCertificatoLabel.SENZA_SCADENZA in stato_display:
-            return "N/D"
+            return "N/D *"
         return stato_display
 
     def _get_status_row_class(self, days: int | None) -> str:
@@ -366,13 +371,9 @@ class CertificatiPdfExporter:
         """Formatta l'ubicazione per andare a capo se necessario."""
         raw = text.strip()
         if UbicazioneStrumenti.TECNICO.value in raw:
-            ubicazione = raw.replace(
-                f"{UbicazioneStrumenti.TECNICO.value} ", "ASSEGNATO<br>AL TECNICO<br>"
-            )
+            ubicazione = raw.replace(f"{UbicazioneStrumenti.TECNICO.value} ", "ASSEGNATO<br>AL TECNICO<br>")
             if ubicazione == raw:
-                ubicazione = raw.replace(
-                    UbicazioneStrumenti.TECNICO.value, "ASSEGNATO<br>AL TECNICO"
-                )
+                ubicazione = raw.replace(UbicazioneStrumenti.TECNICO.value, "ASSEGNATO<br>AL TECNICO")
             return ubicazione
         return raw
 
@@ -441,15 +442,15 @@ class CertificatiPdfExporter:
                                         <td style="width: 60%; text-align: left; border: none; padding-right: 5px;">
                                             <div style="font-size: 5pt;">
                                                 <b>Prossime tarature:</b><br>
-                                                &bull; Entro 30gg: <b>{s['prossime_tarature']['30']}</b><br>
-                                                &bull; 31-60gg: <b>{s['prossime_tarature']['60']}</b><br>
-                                                &bull; 61-90gg: <b>{s['prossime_tarature']['90']}</b><br>
-                                                &bull; Oltre 90gg: <b>{s['prossime_tarature']['oltre']}</b>
+                                                &bull; Entro 30gg: <b>{s["prossime_tarature"]["30"]}</b><br>
+                                                &bull; 31-60gg: <b>{s["prossime_tarature"]["60"]}</b><br>
+                                                &bull; 61-90gg: <b>{s["prossime_tarature"]["90"]}</b><br>
+                                                &bull; Oltre 90gg: <b>{s["prossime_tarature"]["oltre"]}</b>
                                             </div>
                                         </td>
                                         <td style="width: 40%; text-align: center; border: none; border-left: 0.5pt solid #cbd5e1; vertical-align: middle;">
                                             Totale Strumenti<br>
-                                            <span style="font-size: 9pt; font-weight: bold;">{s['totale']}</span>
+                                            <span style="font-size: 9pt; font-weight: bold;">{s["totale"]}</span>
                                             {picco_html}
                                         </td>
                                     </tr>
@@ -458,19 +459,19 @@ class CertificatiPdfExporter:
                         </tr>
                         <tr>
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                <span style="color: #15803d;">&#11044;</span> Attivi: <b>{s['attivi']}</b><br>
-                                <span style="color: #d97706;">&#11044;</span> In Scadenza: <b>{s['in_scadenza']}</b><br>
-                                <span style="color: #b91c1c;">&#11044;</span> Scaduti: <b>{s['scaduti']}</b><br>
-                                <span style="color: #64748b;">&#11044;</span> Senza Scadenza: <b>{s['senza_data']}</b><br>
-                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{s['guasti']}</b>
+                                <span style="color: #15803d;">&#11044;</span> Attivi: <b>{s["attivi"]}</b><br>
+                                <span style="color: #d97706;">&#11044;</span> In Scadenza: <b>{s["in_scadenza"]}</b><br>
+                                <span style="color: #b91c1c;">&#11044;</span> Scaduti: <b>{s["scaduti"]}</b><br>
+                                <span style="color: #64748b;">&#11044;</span> Senza Scadenza *: <b>{s["senza_data"]}</b><br>
+                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{s["guasti"]}</b>
                             </td>
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                &#127970; {UbicazioneStrumenti.UFFICIO_STRU.value}: <b>{s['ufficio_stru']}</b><br>
-                                &#128203; {UbicazioneStrumenti.UFFICIO_CC.value}: <b>{s['ufficio_cc']}</b><br>
-                                &#128736; {UbicazioneStrumenti.OFFICINA.value}: <b>{s['officina']}</b><br>
-                                &#127984; {UbicazioneStrumenti.SEDE.value}: <b>{s['sede']}</b><br>
-                                &#128119; {UbicazioneStrumenti.TECNICO.value}: <b>{s['tecnico']}</b><br>
-                                &#10060; {UbicazioneStrumenti.ASSENTE.value}: <b>{s['assenti']}</b>
+                                &#127970; {UbicazioneStrumenti.UFFICIO_STRU.value}: <b>{s["ufficio_stru"]}</b><br>
+                                &#128203; {UbicazioneStrumenti.UFFICIO_CC.value}: <b>{s["ufficio_cc"]}</b><br>
+                                &#128736; {UbicazioneStrumenti.OFFICINA.value}: <b>{s["officina"]}</b><br>
+                                &#127984; {UbicazioneStrumenti.SEDE.value}: <b>{s["sede"]}</b><br>
+                                &#128119; {UbicazioneStrumenti.TECNICO.value}: <b>{s["tecnico"]}</b><br>
+                                &#10060; {UbicazioneStrumenti.ASSENTE.value}: <b>{s["assenti"]}</b>
                             </td>
                         </tr>
                     </table>

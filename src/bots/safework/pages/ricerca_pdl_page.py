@@ -11,7 +11,7 @@ from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.wait import WebDriverWait
 
 from src.bots.safework.common.locators import SafeWorkLocators
 
@@ -35,7 +35,7 @@ class RicercaPDLPage:
             if checkbox.is_selected() != exclude_closed:
                 self.log(f"[CLICK] Impostazione 'Escludi chiusì: {exclude_closed}")
                 # Uso JS click come nel branch main per evitare problemi di intercettazione
-                self.driver.execute_script("arguments[0].click();", checkbox)
+                self.driver.execute_script("arguments[0].click();", checkbox)  # type: ignore[no-untyped-call]
         except Exception as e:
             self.log(f"⚠️ Errore configurazione flag 'Escludi chiusì: {e}")
 

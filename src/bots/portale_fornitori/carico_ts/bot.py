@@ -32,11 +32,13 @@ class CaricoTSBot(SeleniumBaseBot):
 
     def __init__(
         self,
-        config: SeleniumBotConfig,
+        username: str | None = None,
+        password: str | None = None,
+        config: SeleniumBotConfig | None = None,
         **kwargs: Any,
     ) -> None:
         """Inizializza il bot Carico TS."""
-        super().__init__(config=config)
+        super().__init__(username, password, config)
 
     @staticmethod
     def get_description() -> str:
@@ -97,7 +99,7 @@ class CaricoTSBot(SeleniumBaseBot):
 
         return True, ""
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """
         Esegue il workflow principale di caricamento TS.
 
@@ -111,6 +113,9 @@ class CaricoTSBot(SeleniumBaseBot):
 
         # Il driver  garantito da execute()
         rows = data if isinstance(data, list) else data.get("rows", [])
+        if not rows:
+            self.log("Nessun dato valido trovato per l'elaborazione.", "ERROR")
+            return False
 
         # Original logic: process ONLY the first row
         row = rows[0]

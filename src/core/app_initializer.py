@@ -71,6 +71,9 @@ class AppInitializer:
             AppInitializer._verify_license(step)
             AppInitializer._init_databases(step)
 
+            step("Ottimizzazione motori di automazione (Playwright/PDF/Excel)...", 38)
+            AppInitializer._preload_heavy_modules()
+
             AppInitializer._core_initialized = True
             step("Nucleo Sistema Operativo", 40)
         except Exception as e:
@@ -204,6 +207,51 @@ class AppInitializer:
             QTimer.singleShot(0, _force_shutdown)
         except Exception:
             sys.exit(1)
+
+    @staticmethod
+    def _preload_heavy_modules() -> None:
+        """Pre-carica in memoria i moduli e le librerie esterne più pesanti per garantire prestazioni istantanee a runtime."""
+        logger.info("[INIT CORE] Pre-caricamento moduli pesanti per prestazioni Zero-Lag...")
+        try:
+            # 1. Motori di automazione ed I/O
+            import fitz  # noqa: F401, PLC0415
+            import openpyxl  # noqa: F401, PLC0415
+            import playwright.sync_api  # noqa: F401, PLC0415
+            import psutil  # noqa: F401, PLC0415
+
+            # 2. Moduli core del bot scarico TS
+            from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot  # noqa: F401, PLC0415
+            from src.bots.portale_fornitori.scarico_ts.playwright_bot import (  # noqa: PLC0415
+                PlaywrightScaricaTSBot,  # noqa: F401
+            )
+
+            # 3. Riscaldamento preventivo Playwright e Chromium (Antivirus Warming)
+            logger.info("[INIT CORE] Riscaldamento motori di automazione (Antivirus Warming)...")
+            import os  # noqa: PLC0415
+            from pathlib import Path  # noqa: PLC0415
+
+            if getattr(sys, "frozen", False):
+                bundle_dir = Path(sys._MEIPASS) if hasattr(sys, "_MEIPASS") else Path(sys.executable).parent
+                drivers_pw_path = bundle_dir / "drivers" / "ms-playwright"
+                if drivers_pw_path.exists():
+                    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(drivers_pw_path)
+
+            # 4. Riscaldamento WMI (psutil) e Pulizia Preventiva
+            logger.info("[INIT CORE] Riscaldamento sottosistema processi (WMI/psutil)...")
+            from src.utils.helpers import cleanup_bot_processes  # noqa: PLC0415
+            cleanup_bot_processes()
+
+            from playwright.sync_api import sync_playwright  # noqa: PLC0415
+            pw = sync_playwright().start()
+            try:
+                browser = pw.chromium.launch(headless=True)
+                browser.close()
+            finally:
+                pw.stop()
+
+            logger.info("[INIT CORE] Pre-caricamento e riscaldamento completati con successo.")
+        except Exception as e:
+            logger.warning(f"[INIT CORE] Avvertimento nel pre-caricamento/riscaldamento moduli: {e}")
 
     @staticmethod
     def _setup_logging() -> None:

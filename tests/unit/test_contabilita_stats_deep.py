@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from src.core.contabilita_stats import ContabilitaStats
+from src.core.contabilita.stats_service import ContabilitaStats
 
 
 class TestContabilitaStatsDeep:

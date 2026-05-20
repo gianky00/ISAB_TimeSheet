@@ -106,7 +106,7 @@ class TestSafeWorkPDLBotComprehensive:
 
     def test_scarica_parte_prima_success(self, bot, mocker):
         """Test scarico P1 con mock rename."""
-        mocker.patch("src.bots.base.wait_helpers.poll_for_new_file", return_value="fake.pdf")
+        mocker.patch("src.bots.safework.pdl.bot.poll_for_new_file", return_value="fake.pdf")
         mocker.patch.object(bot, "_clean_pdf")
         mocker.patch("time.sleep")
         mocker.patch("src.bots.safework.pdl.bot.Path.rename")
@@ -116,7 +116,7 @@ class TestSafeWorkPDLBotComprehensive:
 
     def test_scarica_parte_seconda_accordion_strategies(self, bot, mocker):
         """Test scarico P2."""
-        mocker.patch("src.bots.base.wait_helpers.poll_for_new_file", return_value="fake.pdf")
+        mocker.patch("src.bots.safework.pdl.bot.poll_for_new_file", return_value="fake.pdf")
         mocker.patch.object(bot, "_espandi_parte_seconda", return_value=True)
         mocker.patch("src.bots.safework.pdl.bot.Path.rename")
 

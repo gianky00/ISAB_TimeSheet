@@ -20,7 +20,7 @@ from src.bots.base.selenium_bot_config import SeleniumBotConfig
 from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
 from src.core import config_manager
 from src.core.constants import Icons
-from src.core.database.pdl_queries import PDLQueries
+from src.core.pdl.pdl_service import PDLService
 from src.core.pdl.period_manager import PDLPeriodManager
 from src.gui.controllers.bot_worker import BotWorker
 from src.gui.styles import COLORS
@@ -156,7 +156,7 @@ class ProgrammazioneTab(QWidget):
 
     def _load_requesters(self) -> None:
         try:
-            reqs = PDLQueries.get_unique_requesters()
+            reqs = PDLService.get_unique_requesters()
             self.req_filter.set_items(reqs)
             saved = config_manager.get_config_value("selected_programming_requesters", [])
             self.req_filter.set_selected(saved)
@@ -171,7 +171,7 @@ class ProgrammazioneTab(QWidget):
 
     def _load_persisted_data(self) -> None:
         s, e, _ = PDLPeriodManager.get_week_range(self.week_selector.currentIndex())
-        self.last_results = PDLQueries.get_programming_results_by_week(s, e)
+        self.last_results = PDLService.get_programming_results_by_week(s, e)
         self._update_tables()
 
     def _on_group_mode_changed(self, mode: str) -> None:
@@ -333,7 +333,7 @@ class ProgrammazioneTab(QWidget):
         if success and self.worker:
             results = getattr(self.worker.bot, "results", [])
             start_date, end_date, _ = PDLPeriodManager.get_week_range(self.week_selector.currentIndex())
-            PDLQueries.save_programming_results(results, start_date, end_date)
+            PDLService.save_programming_results(results, start_date, end_date)
             self.log_widget.append(
                 f"✅ Controllo completato. Trovati {len(results)} PDL aggiornati.", "SUCCESS"
             )

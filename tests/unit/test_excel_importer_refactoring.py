@@ -13,7 +13,17 @@ import pytest
 from src.core.excel_importer import ExcelImporter
 from src.core.importers.contabilita import ContabilitaImporter
 from src.core.importers.giornaliere import GiornaliereImporter
-from src.core.importers.scarico_ore import ScaricoOreImporter
+
+
+# Mock DataSynchronizer per tutti i test degli importer
+@pytest.fixture(autouse=True)
+def mock_data_synchronizer():
+    with (
+        patch("src.core.data_synchronizer.DataSynchronizer.sync_certificati_campione", return_value=(1, 0)),
+        patch("src.core.data_synchronizer.DataSynchronizer.sync_scarico_ore", return_value=(1, 0)),
+        patch("src.core.data_synchronizer.DataSynchronizer.sync_giornaliere", return_value=(1, 0)),
+    ):
+        yield
 
 
 @pytest.fixture
@@ -258,7 +268,8 @@ def test_process_single_giornaliera_invalid_sheet(tmp_path):
     args = (2025, Path(file_path), {})
     _year, rows, err = GiornaliereImporter._process_single_giornaliera(args)
     assert rows == []
-    assert err is None
+    assert "Impossibile leggere" in err
+    assert "Impossibile leggere" in err
 
 
 def test_import_scarico_ore_success(tmp_path):
@@ -338,6 +349,9 @@ def test_import_scarico_ore_missing_sheet(tmp_path):
 
 def test_process_scarico_ore_row_validation():
     """Test casi limite validazione riga scarico ore."""
+    from src.core.processing.scarico_ore.steps import ProcessScaricoOreRowsStep
+
+    step = ProcessScaricoOreRowsStep()
 
     # Mocking cell objects from openpyxl
     class MockCell:
@@ -345,20 +359,6 @@ def test_process_scarico_ore_row_validation():
             self.value = value
             self.font = font
             self.fill = fill
-
-    col_keys = [
-        "data",
-        "pers1",
-        "pers2",
-        "odc",
-        "pos",
-        "dalle",
-        "alle",
-        "totale_ore",
-        "descrizione",
-        "finito",
-        "commessa",
-    ]
 
     # 1. Row with 0 as ODC (should be treated as empty)
     row_0_odc = [
@@ -374,7 +374,7 @@ def test_process_scarico_ore_row_validation():
         MockCell(""),
         MockCell(""),
     ]
-    res = ScaricoOreImporter._process_scarico_ore_row(row_0_odc, col_keys)
+    res = step._process_scarico_ore_row(row_0_odc)
     assert res is None  # ODC is empty string now
 
     # 2. Row with no personnel
@@ -391,7 +391,7 @@ def test_process_scarico_ore_row_validation():
         MockCell(""),
         MockCell(""),
     ]
-    res = ScaricoOreImporter._process_scarico_ore_row(row_no_pers, col_keys)
+    res = step._process_scarico_ore_row(row_no_pers)
     assert res is None
 
     # 3. Row with only partial required (missing pos)
@@ -408,7 +408,7 @@ def test_process_scarico_ore_row_validation():
         MockCell(""),
         MockCell(""),
     ]
-    res = ScaricoOreImporter._process_scarico_ore_row(row_no_pos, col_keys)
+    res = step._process_scarico_ore_row(row_no_pos)
     assert res is None
 
 
@@ -422,7 +422,7 @@ def test_import_attivita_programmate_success(tmp_path):
             "AREA": ["Sud"],
             "PdL": ["PDL1"],
             "IMP.": ["X"],
-            "DESCRIZIONE\nATTIVITA'": ["Pulizia"],
+            "DESCRIZIONE\nATTIVITÀ": ["Pulizia"],
             "LUN": ["1"],
             "MAR": ["0"],
             "MER": ["1"],

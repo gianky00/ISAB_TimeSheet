@@ -2,7 +2,8 @@ import sqlite3
 
 import pytest
 
-from src.core.sync.base import BaseSyncEngine
+from src.core.exceptions import ValidationError
+from src.core.sync.base import BaseSyncEngine, SyncTarget
 from src.core.sync.smart_sync import SmartSyncEngine
 
 
@@ -19,16 +20,16 @@ class TestDataSynchronizerSmart:
         conn.close()
         return path
 
-    def test_sync_upsert_smart_calculation(self, db_path):
+    def test_sync_upsert_smart_calculation(self, db_path, mocker):
         """Verifica che vengano contati solo i record effettivamente diversi."""
-        # 1. '1', 'new', '10.5'  -> MODIFICATO (contato)
-        # 2. '2', 'same', '20.0' -> IDENTICO (non contato)
-        # 3. '3', 'fresh', '30.0' -> AGGIUNTO (contato)
+        mocker.patch(
+            "src.core.sync.smart_sync.db_manager.get_connection", return_value=sqlite3.connect(db_path)
+        )
         new_data = [("1", "new", "10.5"), ("2", "same", "20.0"), ("3", "fresh", "30.0")]
         columns = ["id", "val", "num"]
+        target = SyncTarget(db_path=db_path, table_name="test_table", columns=columns)
 
-        # Chiamata diretta all'engine V9.0
-        added, removed = SmartSyncEngine.sync_upsert_smart(db_path, "test_table", columns, new_data)
+        added, removed = SmartSyncEngine.sync_upsert_smart(target, new_data)
 
         assert added == 2
         assert removed == 0
@@ -41,18 +42,22 @@ class TestDataSynchronizerSmart:
         assert res_count == 3
         conn.close()
 
-    def test_sync_upsert_smart_empty(self, db_path):
-        added, removed = SmartSyncEngine.sync_upsert_smart(db_path, "test_table", ["id"], [])
+    def test_sync_upsert_smart_empty(self, db_path, mocker):
+        mocker.patch(
+            "src.core.sync.smart_sync.db_manager.get_connection", return_value=sqlite3.connect(db_path)
+        )
+        target = SyncTarget(db_path=db_path, table_name="test_table", columns=["id"])
+        added, removed = SmartSyncEngine.sync_upsert_smart(target, [])
         assert added == 0
         assert removed == 0
 
     def test_validate_identifier_security(self):
         """Verifica la protezione da SQL Injection via BaseSyncEngine."""
         assert BaseSyncEngine._validate_identifier("my_table") == "my_table"
-        with pytest.raises(ValueError):
+        with pytest.raises(ValidationError):
             BaseSyncEngine._validate_identifier("table; DROP")
 
-    def test_sync_upsert_with_extra_columns(self, tmp_path):
+    def test_sync_upsert_with_extra_columns(self, tmp_path, mocker):
         """Verifica che le colonne extra non presenti nel sync vengano preservate via conflict_cols."""
         db_path = tmp_path / "extra_cols.db"
         conn = sqlite3.connect(db_path)
@@ -61,14 +66,16 @@ class TestDataSynchronizerSmart:
         conn.commit()
         conn.close()
 
-        # Nuovo dato (solo id e sync_val)
+        mocker.patch(
+            "src.core.sync.smart_sync.db_manager.get_connection", return_value=sqlite3.connect(db_path)
+        )
+
         new_data = [("1", "new")]
         columns = ["id", "sync_val"]
+        target = SyncTarget(db_path=db_path, table_name="t", columns=columns)
 
-        # Esegui sync con conflict_cols
-        SmartSyncEngine.sync_upsert_smart(db_path, "t", columns, new_data, conflict_cols=["id"])
+        SmartSyncEngine.sync_upsert_smart(target, new_data, conflict_cols=["id"])
 
-        # Verifica
         conn = sqlite3.connect(db_path)
         row = conn.execute("SELECT sync_val, extra_val FROM t WHERE id='1'").fetchone()
         assert row[0] == "new"

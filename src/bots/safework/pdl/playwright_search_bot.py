@@ -58,7 +58,7 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
         """Nessun input tabellare richiesto per la ricerca massiva PDL."""
         return []
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Esegue la pipeline di ricerca con Playwright."""
         self.update_step("login", StepStatus.COMPLETED)
 
@@ -66,7 +66,7 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
             return False
 
         self.ricerca_pdl_page = PlaywrightRicercaPDLPage(self.page, self.log)
-        params = data[0] if data else {}
+        params = data[0] if isinstance(data, list) and data else data if isinstance(data, dict) else {}
 
         # 1. Navigazione
         self.update_step("nav", StepStatus.RUNNING)

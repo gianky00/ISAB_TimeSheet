@@ -14,6 +14,27 @@ from pathlib import Path
 from typing import Any, cast
 
 from src.core.paths import BASE_DIR, CONFIG_DIR, CONFIG_FILE
+
+__all__ = [
+    "BASE_DIR",
+    "CONFIG_DIR",
+    "CONFIG_FILE",
+    "add_account",
+    "ensure_config_dir",
+    "get_config_value",
+    "get_default_account",
+    "get_download_path",
+    "import_config_from_file",
+    "invalidate_config_cache",
+    "load_config",
+    "remove_account",
+    "reset_to_defaults",
+    "save_config",
+    "set_config_value",
+    "set_config_values",
+    "set_default_account",
+    "switch_default_account",
+]
 from src.core.version import __version__
 
 # Modular imports

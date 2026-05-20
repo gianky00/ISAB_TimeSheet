@@ -22,9 +22,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
-    QTableWidget,
     QTabWidget,
-    QTreeWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -34,12 +32,14 @@ from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.contabilita_worker import ContabilitaWorker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
+from src.gui.controllers.contabilita_controller import ContabilitaController
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.contabilita_kpi import ContabilitaKPIPanel
 from src.gui.styles import COLORS, LABEL_MUTED, LINEEDIT_STYLE
 from src.gui.widgets.contabilita.attivita_tab import AttivitaProgrammateTab
 from src.gui.widgets.contabilita.certificati_tab import CertificatiCampioneTab
 from src.gui.widgets.contabilita.giornaliere_tab import GiornaliereYearTab
+from src.gui.widgets.contabilita.stats_helper import ContabilitaStatsHelper
 from src.gui.widgets.contabilita.year_tab import ContabilitaYearTab
 from src.gui.widgets.core_widgets import (
     SearchInput,
@@ -71,10 +71,9 @@ class ContabilitaPanel(QWidget):
           parent: Widget genitore opzionale.
         """
         super().__init__(parent)
-        self.worker: ContabilitaWorker | None = None
+        self.controller = ContabilitaController(self)
         self.status_labels: list[QLabel] = []
         self.update_buttons: list[ModernButton] = []
-        self._last_status_html = "Pronto"
 
         # UI Elements
         self.toolbar_card: ModernCard
@@ -89,10 +88,22 @@ class ContabilitaPanel(QWidget):
         self.attivita_widget: AttivitaProgrammateTab
         self.certificati_widget: CertificatiCampioneTab
         self.kpi_panel: ContabilitaKPIPanel
+        self.worker: ContabilitaWorker | None = None
 
         self._first_refresh_done = False
         self._setup_ui()
-        # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
+        self._connect_controller()
+
+    def _connect_controller(self) -> None:
+        """Collega i segnali del controller alla UI."""
+        self.controller.status_updated.connect(self.status_lbl.setText)
+        self.controller.import_finished.connect(self._on_import_finished_from_controller)
+        self.controller.data_refreshed.connect(self.refresh_tabs)
+
+    def _on_import_finished_from_controller(self, success: bool, message: str) -> None:
+        """Gestisce la fine dell'importazione dal controller."""
+        if not success:
+            logger.error(f"Importazione fallita dal controller: {message}")
 
     def showEvent(self, event: QShowEvent) -> None:
         """Esegue il primo refresh solo quando il pannello diventa visibile."""
@@ -193,7 +204,7 @@ class ContabilitaPanel(QWidget):
         self.search_input.setClearButtonEnabled(True)
         self.search_input.setMinimumWidth(300)
         self.search_input.setStyleSheet(LINEEDIT_STYLE)
-        self.search_input.textChanged.connect(self._on_search_changed)
+        self.search_input.textChanged.connect(self.controller.handle_search)
         search_v.addWidget(lbl_search)
         search_v.addWidget(self.search_input)
         layout.addLayout(search_v)
@@ -214,7 +225,7 @@ class ContabilitaPanel(QWidget):
             size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.REFRESH),
         )
-        self.update_btn.clicked.connect(self.start_import_process)
+        self.update_btn.clicked.connect(self.controller.start_import_process)
 
         btn_h = QHBoxLayout()
         btn_h.setSpacing(5)
@@ -337,6 +348,7 @@ class ContabilitaPanel(QWidget):
             # Se richiesto e siamo nel tab certificati, lancia email
             if auto_email and self.main_tabs.currentIndex() == 3:
                 from PySide6.QtCore import QTimer
+
                 QTimer.singleShot(1000, self.certificati_widget._run_analysis_and_send_email)
 
         # Riapplica il filtro di ricerca se presente
@@ -402,81 +414,10 @@ class ContabilitaPanel(QWidget):
                     tree.itemSelectionChanged.connect(lambda: self._update_selection_total(tree))
 
     def _update_selection_total(self, widget: QWidget) -> None:
-        """Esegue il calcolo granulare delle ore selezionate filtrando le righe nascoste."""
-        with suppress(Exception):
-            if isinstance(widget, QTreeWidget):
-                self._update_tree_selection(widget)
-                return
-
-            if not isinstance(widget, QTableWidget):
-                return
-
-            self._update_table_selection(widget)
-
-    def _update_tree_selection(self, tree: QTreeWidget) -> None:
-        """Aggiorna i conteggi per un QTreeWidget."""
-        self.selection_count_label.setText(str(len(tree.selectedItems())))
-        self.selection_sum_label.setText("")
-
-    def _update_table_selection(self, table: QTableWidget) -> None:
-        """Aggiorna i conteggi e il totale ore per un QTableWidget."""
-        model = table.selectionModel()
-        if not model:
-            return
-
-        indexes = model.selectedIndexes()
-        if not indexes:
-            self.selection_count_label.setText("0")
-            self.selection_sum_label.setText("0")
-            return
-
-        target_col = self._find_ore_column(table)
-        selected_rows = self._get_unique_visible_rows(table, indexes)
-        total_ore = self._calculate_total_hours(table, selected_rows, target_col)
-
-        fmt_ore = self._format_hours(total_ore)
-
-        self.selection_count_label.setText(str(len(selected_rows)))
-        self.selection_sum_label.setText(fmt_ore)
-
-    def _get_unique_visible_rows(self, table: QTableWidget, indexes: list[Any]) -> set[int]:
-        """Filtra gli indici per ottenere righe uniche, visibili e non di totale."""
-        selected_rows = set()
-        for idx in indexes:
-            row = idx.row()
-            item_0 = table.item(row, 0)
-            is_total_row = item_0 and item_0.text() == "TOTALI"
-            if not table.isRowHidden(row) and not is_total_row:
-                selected_rows.add(row)
-        return selected_rows
-
-    def _calculate_total_hours(self, table: QTableWidget, rows: set[int], col: int) -> float:
-        """Somma le ore nelle righe e colonna specificate."""
-        total = 0.0
-        if col == -1:
-            return total
-
-        for row in rows:
-            if it := table.item(row, col):
-                with suppress(Exception):
-                    clean = str(it.text()).replace(".", "").replace(",", ".").strip()
-                    if clean:
-                        total += float(clean)
-        return total
-
-    def _format_hours(self, total: float) -> str:
-        """Formatta il totale ore per la visualizzazione IT."""
-        if total % 1 != 0:
-            return f"{total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-        return str(int(total))
-
-    def _find_ore_column(self, table: QTableWidget) -> int:
-        """Individua l'indice della colonna contenente le ore in base all'header."""
-        for c in range(table.columnCount()):
-            h = table.horizontalHeaderItem(c)
-            if h and ("ORE SP" in h.text().upper() or h.text().upper() == "ORE"):
-                return c
-        return -1
+        """Aggiorna le label statistiche basandosi sulla selezione corrente."""
+        count, hours = ContabilitaStatsHelper.calculate_selection_stats(widget)
+        self.selection_count_label.setText(str(count))
+        self.selection_sum_label.setText(hours)
 
     def start_import_process(self) -> None:
         """Avvia il worker asincrono per l'importazione dei file Excel definiti nei path configurati."""

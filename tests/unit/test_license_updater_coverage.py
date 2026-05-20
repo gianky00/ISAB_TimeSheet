@@ -74,7 +74,14 @@ class TestLicenseUpdater:
             check_grace_period()
 
     def test_emergency_grace_activation(self, mock_paths):
-        success, _msg, days = check_emergency_grace_period()
-        assert success is True
-        assert (mock_paths / "emergency_grace.token").exists()
-        assert days == 3
+        from datetime import datetime
+        token_path = mock_paths / "emergency_grace.token"
+        with (
+            patch("src.core.license_updater.time_manager.get_trusted_time", return_value=(datetime.now(), True)),
+            patch("src.core.license_updater.SecretsManager.get_grace_period_key", return_value=b'6h4_H9_z8z8H9Z9H9z8z8H9Z9H9z8z8H9Z9H9z8z8H9='),
+            patch("src.core.license_updater._get_emergency_grace_token_path", return_value=token_path),
+        ):
+            success, _msg, days = check_emergency_grace_period()
+            assert success is True
+            assert token_path.exists()
+            assert days == 3

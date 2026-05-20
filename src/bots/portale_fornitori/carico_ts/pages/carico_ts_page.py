@@ -10,7 +10,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.wait import WebDriverWait
 
 from src.bots.portale_fornitori.carico_ts.locators import CaricoTSLocators
 from src.core.constants import Timeouts
@@ -66,8 +66,8 @@ class CaricoTSPage:
 
             opt_xpath = f"//li[contains(text(), '{supplier}')]"
             opt = WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, opt_xpath)))
-            self.driver.execute_script("arguments[0].scrollIntoView({block:'nearest'});", opt)
-            self.driver.execute_script("arguments[0].click();", opt)
+            self.driver.execute_script("arguments[0].scrollIntoView({block:'nearest'});", opt)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].click();", opt)  # type: ignore[no-untyped-call]
             self._wait_overlay()
         except Exception as e:
             self.log(f"Errore fornitore: {e}")
@@ -89,7 +89,7 @@ class CaricoTSPage:
             inp = self.wait.until(EC.presence_of_element_located(CaricoTSLocators.ODA_INPUT))
 
             # JS Click to focus/activate
-            self.driver.execute_script("arguments[0].click();", inp)
+            self.driver.execute_script("arguments[0].click();", inp)  # type: ignore[no-untyped-call]
             js = """
       var el = arguments[0];
       el.value = arguments[1];
@@ -97,7 +97,7 @@ class CaricoTSPage:
       el.dispatchEvent(new Event('change', {bubbles:true}));
       el.dispatchEvent(new Event('blur', {bubbles:true}));
       """
-            self.driver.execute_script(js, inp, oda)
+            self.driver.execute_script(js, inp, oda)  # type: ignore[no-untyped-call]
 
             # Click Extract
             btn = self.wait.until(EC.element_to_be_clickable(CaricoTSLocators.EXTRACT_BUTTON))

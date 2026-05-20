@@ -28,13 +28,34 @@ class AutopilotConfigCard(QFrame):
     Card per configurare un bot programmato.
     """
 
-    def __init__(self, info: BotVisualInfo, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        info: BotVisualInfo | str,
+        bot_name: str | None = None,
+        icon_path: str | None = None,
+        color: str | None = None,
+        parent: QWidget | None = None,
+    ) -> None:
+        """
+        Inizializza la card di configurazione.
+        Supporta sia il nuovo pattern (info: BotVisualInfo) che quello legacy (bot_id, bot_name, icon, color).
+        """
         super().__init__(parent)
-        self.bot_id = info["bot_id"]
-        self.bot_name = info["bot_name"]
-        self.icon_path = info["icon_path"]
-        self.color = info["color"]
-        self.parent_widget = parent
+
+        if isinstance(info, dict):
+            # Nuovo pattern (TypedDict)
+            self.bot_id = info["bot_id"]
+            self.bot_name = info["bot_name"]
+            self.icon_path = info["icon_path"]
+            self.color = info["color"]
+            self.parent_widget = parent
+        else:
+            # Pattern legacy (Parametri posizionali)
+            self.bot_id = info
+            self.bot_name = bot_name or ""
+            self.icon_path = icon_path or ""
+            self.color = color or COLORS["primary_blue"]
+            self.parent_widget = parent
 
         self._setup_style()
         self._setup_ui()
@@ -73,13 +94,19 @@ class AutopilotConfigCard(QFrame):
 
         icon_label = QLabel()
         icon_label.setFixedSize(28, 28)
-        icon_label.setPixmap(get_colored_icon(get_asset_path(self.icon_path), COLORS["bg_white"]).pixmap(18, 18))
+        icon_label.setPixmap(
+            get_colored_icon(get_asset_path(self.icon_path), COLORS["bg_white"]).pixmap(18, 18)
+        )
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        icon_label.setStyleSheet(f"QLabel {{ background-color: {self.color}; border-radius: 14px; border: none; padding: 5px; }}")
+        icon_label.setStyleSheet(
+            f"QLabel {{ background-color: {self.color}; border-radius: 14px; border: none; padding: 5px; }}"
+        )
         header_layout.addWidget(icon_label)
 
         name_lbl = QLabel(self.bot_name)
-        name_lbl.setStyleSheet(f"QLabel {{ font-weight: 600; font-size: 14px; color: {COLORS['text_dark']}; border: none; background: transparent; }}")
+        name_lbl.setStyleSheet(
+            f"QLabel {{ font-weight: 600; font-size: 14px; color: {COLORS['text_dark']}; border: none; background: transparent; }}"
+        )
         header_layout.addWidget(name_lbl)
         header_layout.addStretch()
 
@@ -165,13 +192,34 @@ class AutopilotConfigCardWithInterval(QFrame):
     Usato per report email e altri task non giornalieri.
     """
 
-    def __init__(self, info: BotVisualInfo, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        info: BotVisualInfo | str,
+        bot_name: str | None = None,
+        icon_path: str | None = None,
+        color: str | None = None,
+        parent: QWidget | None = None,
+    ) -> None:
+        """
+        Inizializza la card di configurazione con intervallo.
+        Supporta sia il nuovo pattern (info: BotVisualInfo) che quello legacy (bot_id, bot_name, icon, color).
+        """
         super().__init__(parent)
-        self.bot_id = info["bot_id"]
-        self.bot_name = info["bot_name"]
-        self.icon_path = info["icon_path"]
-        self.color = info["color"]
-        self.parent_widget = parent
+
+        if isinstance(info, dict):
+            # Nuovo pattern (TypedDict)
+            self.bot_id = info["bot_id"]
+            self.bot_name = info["bot_name"]
+            self.icon_path = info["icon_path"]
+            self.color = info["color"]
+            self.parent_widget = parent
+        else:
+            # Pattern legacy (Parametri posizionali)
+            self.bot_id = info
+            self.bot_name = bot_name or ""
+            self.icon_path = icon_path or ""
+            self.color = color or COLORS["success_dark"]
+            self.parent_widget = parent
 
         self._setup_style()
         self._setup_ui()
@@ -210,13 +258,19 @@ class AutopilotConfigCardWithInterval(QFrame):
 
         icon_label = QLabel()
         icon_label.setFixedSize(28, 28)
-        icon_label.setPixmap(get_colored_icon(get_asset_path(self.icon_path), COLORS["bg_white"]).pixmap(18, 18))
+        icon_label.setPixmap(
+            get_colored_icon(get_asset_path(self.icon_path), COLORS["bg_white"]).pixmap(18, 18)
+        )
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        icon_label.setStyleSheet(f"QLabel {{ background-color: {self.color}; border-radius: 14px; border: none; padding: 5px; }}")
+        icon_label.setStyleSheet(
+            f"QLabel {{ background-color: {self.color}; border-radius: 14px; border: none; padding: 5px; }}"
+        )
         header_layout.addWidget(icon_label)
 
         name_lbl = QLabel(self.bot_name)
-        name_lbl.setStyleSheet(f"QLabel {{ font-weight: 600; font-size: 14px; color: {COLORS['text_dark']}; border: none; background: transparent; }}")
+        name_lbl.setStyleSheet(
+            f"QLabel {{ font-weight: 600; font-size: 14px; color: {COLORS['text_dark']}; border: none; background: transparent; }}"
+        )
         header_layout.addWidget(name_lbl)
         header_layout.addStretch()
 

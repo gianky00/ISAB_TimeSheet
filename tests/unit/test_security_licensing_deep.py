@@ -1,12 +1,11 @@
 import base64
 from unittest.mock import MagicMock, patch
 
+from src.core.license_hwid import _get_windows_hardware_id, get_hardware_id
 from src.core.license_validator import (
     LicenseStatus,
     _calculate_sha256,
-    _get_windows_hardware_id,
     get_detailed_license_status,
-    get_hardware_id,
 )
 from src.core.secrets_manager import SecretsManager
 
@@ -47,7 +46,7 @@ class TestSecretsManagerDeep:
 class TestHardwareFingerprinting:
     @patch("platform.system", return_value="Windows")
     @patch(
-        "src.core.license_validator._get_windows_hardware_id",
+        "src.core.license_hwid._get_windows_hardware_id",
         return_value="WIN-SERIAL-123",
     )
     def test_get_hardware_id_windows(self, mock_win, mock_sys):

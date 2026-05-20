@@ -95,7 +95,7 @@ class TestTimesheetProcessorRobust:
 
     def test_missing_odc(self, tmp_path, dest_dir):
         """Test ODC mancante in cella A2."""
-        file_path = tmp_path / "no_odc.xlsx"
+        file_path = tmp_path / "testsource.xlsx"
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Timesheet"

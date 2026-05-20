@@ -53,6 +53,7 @@ class BugReporter:
         include_audit: bool = True,
         trace_id: str | None = None,
         hours: int = 24,
+        **kwargs: Any,
     ) -> tuple[Path | None, str, list[str]]:
         """
         Raccoglie tutti i file diagnostici e crea un archivio ZIP.
@@ -67,6 +68,10 @@ class BugReporter:
         Returns:
           Tuple[Path, str, List[str]]: (Path ZIP, messaggio, lista file inclusi)
         """
+        # Supporto retrocompatibilità
+        if "include_enterprise_logs" in kwargs:
+            include_structured_logs = kwargs["include_enterprise_logs"]
+
         included_files: list[str] = []
 
         try:

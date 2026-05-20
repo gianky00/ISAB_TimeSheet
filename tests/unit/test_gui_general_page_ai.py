@@ -13,7 +13,7 @@ class TestGeneralPage:
     def test_initial_state(self, page):
         """Verifica lo stato iniziale dei widget."""
         assert not page.headless_check.isChecked()
-        assert page.timeout_spin.value() == 30
+        assert page.timeout_spin.value() == 300
 
     def test_load_from_config(self, page):
         """Verifica il caricamento dei valori dalla configurazione."""

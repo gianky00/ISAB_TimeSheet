@@ -38,7 +38,7 @@ class SmartLogTranslator:
     FIXED_MAPPING: ClassVar[dict[str, str]] = {
         "avvio automazione": "[AVVIO] Avvio automazione in corso...",
         "inizializzazione browser": "   Inizializzazione browser...",
-        "inserimento credenziali": "   Inserimento credenziali...",
+        "inserimento credenziali": "🔐 Inserimento credenziali...",
         "attendo un attimo": "[ATTESA] Attesa operativa...",
         "aspetto che il sito risponda": "[ATTESA] In attesa di risposta dal server...",
         "spinner scomparso": "✅ Caricamento completato.",
@@ -47,10 +47,10 @@ class SmartLogTranslator:
         "mi metto alla ricerca": "[CERCA] Ricerca in corso...",
         "analizzo il database": "[CERCA] Analisi dati in corso...",
         "scarico i file": "[DOWNLOAD] Scarico file in corso...",
-        "missione compiuta": "ℹ️ Missione completata con successo!",
+        "missione compiuta": "[INFO] Missione completata con successo!",
         "completato con successo": "✅ Operazione conclusa.",
         "fatto! tutto perfetto": "✅ Operazione conclusa.",
-        "errore critico": "❌ Errore critico rilevato!",
+        "errore critico": "[ERRORE] Errore critico rilevato!",
     }
 
     @staticmethod

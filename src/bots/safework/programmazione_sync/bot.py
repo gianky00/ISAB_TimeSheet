@@ -16,7 +16,7 @@ from src.bots.safework.base import SafeworkBaseBot
 
 class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
     """
-    Bot per scaricare il report Excel delle attivitàda SafeWork.
+    Bot per scaricare il report Excel delle attività da SafeWork.
     Automatizza la navigazione alla sezione 'Visualizza Attività' ed esporta il report periodico.
     """
 
@@ -29,17 +29,16 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
 
     def __init__(
         self,
-        config: SeleniumBotConfig,
+        username: str | None = None,
+        password: str | None = None,
+        config: SeleniumBotConfig | None = None,
         account_type: str = "Esecutore",
+        **kwargs: Any,
     ) -> None:
         """
         Inizializza il bot di sincronizzazione programmazione.
-
-        Args:
-          config: Configurazione standardizzata del bot.
-          account_type: Tipo di account (Esecutore/ISAB).
         """
-        super().__init__(config, account_type=account_type)
+        super().__init__(username, password, config, account_type=account_type)
         self.downloaded_file: str | None = None
 
     @staticmethod
@@ -62,7 +61,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         """Restituisce le colonne richieste (nessuna)."""
         return []
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """
         Esegue il download del report Excel.
 
@@ -70,11 +69,11 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
           data: Parametri della sessione (richiedenti, date).
 
         Returns:
-          bool: True se il report  stato scaricato correttamente.
+          bool: True se il report stato scaricato correttamente.
         """
         self.update_step("login", StepStatus.COMPLETED)
 
-        params = data[0] if data else {}
+        params = data[0] if isinstance(data, list) and data else data if isinstance(data, dict) else {}
         requesters = params.get("requesters", [])
         date_start = params.get("date_start")
         date_end = params.get("date_end")
@@ -100,7 +99,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         # 2. Setup Filtri
         self.update_step("filter", StepStatus.RUNNING)
         if not self.attivita_page:
-            self.log("❌ Pagina Attivitànon inizializzata.")
+            self.log("❌ Pagina Attività non inizializzata.")
             self.update_step("filter", StepStatus.ERROR)
             return False
         self.attivita_page.pulisci_pdl()

@@ -1,6 +1,6 @@
 """
 SyncroJob - Bot Controller
-Orchestratore per il coordinamento delle attivitàdei bot Selenium e l'aggiornamento dinamico della UI.
+Orchestratore per il coordinamento delle attività dei bot Selenium e l'aggiornamento dinamico della UI.
 Gestisce il bridge tra i segnali emessi dai pannelli bot, il servizio di messaggistica Telegram
 e le card di stato globali presenti nel footer della MainWindow.
 """
@@ -16,7 +16,7 @@ from PySide6.QtWidgets import QWidget
 class BotController(QObject):
     """
     Controller centrale per il monitoraggio e la notifica dello stato delle automazioni.
-    Sìoccupa di:
+    Si occupa di:
     - Collegare i segnali di stato di ogni pannello bot alle card informative (Portale/SafeWork).
     - Inoltrare i file prodotti dai bot (es. PDF dei PDL) direttamente sul canale Telegram.
     - Identificare il pannello bot attualmente attivo per operazioni contestuali.

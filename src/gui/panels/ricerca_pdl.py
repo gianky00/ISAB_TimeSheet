@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.core import config_manager
-from src.gui.controllers.bot_worker import BotWorker
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel
 from src.gui.styles import COLORS, STATUS_COLORS
 from src.gui.widgets.core_widgets import (
@@ -52,12 +52,25 @@ class RicercaPDLPanel(BaseBotPanel):
         )
         self.sync_module_id = "pdl"
 
+        from src.gui.controllers.bot_execution_controller import BotExecutionController
+
+        self.bot_controller = BotExecutionController("ricerca_pdl", self)
+        self._setup_controller_connections()
+
         self.exclude_closed_check: StandardCheckBox
         self.site_combo: FilterComboBox
 
         self._setup_content()
         self._data_loaded = False
         # Il caricamento dati viene differito a showEvent
+
+    def _setup_controller_connections(self) -> None:
+        """Connette i segnali del controller agli slot del pannello."""
+        self.bot_controller.log_received.connect(self._on_log)
+        self.bot_controller.execution_finished.connect(self._on_worker_finished)
+        self.bot_controller.step_changed.connect(self.activity_timeline.on_step_changed)
+        self.bot_controller.critical_error.connect(lambda t, m: ConfirmationDialog.show_error(self, t, m))
+        self.bot_controller.input_requested.connect(self._ask_user_input)
 
     def showEvent(self, event: Any) -> None:
         """Esegue il primo caricamento dati solo quando il pannello diventa visibile."""
@@ -74,16 +87,21 @@ class RicercaPDLPanel(BaseBotPanel):
 
     def _setup_content(self) -> None:
         """Inizializza e posiziona i componenti UI di filtraggio e ricerca con design Modern Card."""
+        from src.gui.styles.ui_effects import UIEffectsManager
+        from src.gui.styles.widget_styles import CARD_SHADOW_BLUR, CARD_SHADOW_COLOR
+
         # Sezione Parametri (Design Modern Card Uniformato)
-        params_container = QFrame()
+        params_container = QWidget()
         params_container.setObjectName("filterBar")
         params_container.setStyleSheet(f"""
-      QFrame#filterBar {{
-        background-color: {COLORS["bg_white"]};
-        border: 1px solid {COLORS["border_light"]};
-        border-radius: 12px;
-      }}
-    """)
+            QWidget#filterBar {{
+                background-color: {COLORS["bg_white"]};
+                border-radius: 12px;
+                border: 1px solid {COLORS["border_light"]};
+            }}
+        """)
+        UIEffectsManager.apply_shadow(params_container, blur=CARD_SHADOW_BLUR, color=CARD_SHADOW_COLOR)
+        UIEffectsManager.animate_fade(params_container, duration=400)
 
         params_layout = QHBoxLayout(params_container)
         params_layout.setContentsMargins(15, 10, 15, 10)
@@ -150,6 +168,10 @@ class RicercaPDLPanel(BaseBotPanel):
 
     def _save_data(self) -> None:
         """Salva i filtri di ricerca correnti nella configurazione."""
+        from PySide6.QtWidgets import QApplication
+
+        if QApplication.closingDown():
+            return
         if getattr(self, "_is_loading", False):
             return
         config_manager.set_config_value("pdl_search_exclude_closed", self.exclude_closed_check.isChecked())
@@ -171,7 +193,6 @@ class RicercaPDLPanel(BaseBotPanel):
                 "La Ricerca PDL massiva richiede solitamente un account <b>Esecutore</b> per funzionare correttamente.<br><br>"
                 f"Vuoi passare all'account Esecutore <b>{esecutore_acc.get('username')}</b> e proseguire?"
             )
-            from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 
             if ConfirmationDialog.confirm(self, "Tipo Account Incompatibile", msg, is_rich_text=True):
                 if config_manager.set_default_account("safework", esecutore_acc.get("username", "")):
@@ -188,8 +209,6 @@ class RicercaPDLPanel(BaseBotPanel):
                     )
                 ToastManager.instance().show("Errore durante lo switch dell'account.", "error")
         else:
-            from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
-
             ConfirmationDialog.show_warning(
                 self,
                 "Account non idoneo",
@@ -225,7 +244,7 @@ class RicercaPDLPanel(BaseBotPanel):
             self.stop_btn.setEnabled(False)
 
     def _start_bot_worker(self, user: str, pwd: str, acc_type: str) -> None:
-        """Inizializza e avvia il worker per il bot."""
+        """Inizializza e avvia il worker per il bot tramite controller."""
         bot_data = {
             "exclude_closed": self.exclude_closed_check.isChecked(),
             "site_selection": self.site_combo.currentText(),
@@ -244,21 +263,25 @@ class RicercaPDLPanel(BaseBotPanel):
         main_win: Any = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-        worker = BotWorker(
-            bot_id="ricerca_pdl", bot_params=bot_params, data=[bot_data], telegram_service=tg_service
-        )
-        self.worker = worker
-        self._setup_worker_connections(worker)
-
         if self.start_btn:
             self.start_btn.setEnabled(False)
         if self.stop_btn:
             self.stop_btn.setEnabled(True)
         if self.log_widget:
             self.log_widget.clear()
-            self.log_widget.append("Avvio Ricerca PDL SafeWork...")
-        worker.start()
-        self.bot_started.emit()
+            self.log_widget.append("Preparazione Ricerca PDL SafeWork...")
+
+        if self.bot_controller.start(bot_params, [bot_data], tg_service):
+            self.bot_started.emit()
+        else:
+            if self.log_widget:
+                self.log_widget.append("❌ Errore: Il bot è già in esecuzione.")
+            self._reset_buttons()
+
+    def _on_stop(self) -> None:
+        """Gestisce la richiesta di stop."""
+        self.bot_controller.stop()
+        super()._on_stop()
 
     def get_safework_credentials(self) -> tuple[str, str, str]:
         """Recupera le credenziali SafeWork configurate. Ritorna (user, pass, tipo)."""

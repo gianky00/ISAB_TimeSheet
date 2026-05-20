@@ -193,4 +193,6 @@ class TestBotTimingSequences:
 
             # Verifica che il polling sia stato chiamato
             assert mock_poll.called
-            assert mock_poll.call_args[1]["directory"] == source_dir.resolve()
+            # PollConfig è passato come primo argomento posizionale
+            config = mock_poll.call_args[0][0]
+            assert config.directory == source_dir.resolve()

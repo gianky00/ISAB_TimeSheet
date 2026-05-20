@@ -21,10 +21,10 @@ class PriorityBadge(QWidget):
     pulse_scale_changed = Signal(float)
 
     COLOR_MAP: ClassVar[dict[str, str]] = {
-        "alta": COLORS["danger"],
-        "media": COLORS["warning"],
-        "bassa": COLORS["info"],
-        "completato": COLORS["success"],
+        "alta": COLORS["error_red"],
+        "media": COLORS["warning_orange"],
+        "bassa": COLORS["info_blue"],
+        "completato": COLORS["success_green"],
     }
 
     def __init__(self, priority: str = "media", parent: QWidget | None = None) -> None:
@@ -39,7 +39,7 @@ class PriorityBadge(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.dot = QLabel()
-        color = self.COLOR_MAP.get(self.priority, COLORS["info"])
+        color = self.COLOR_MAP.get(self.priority, COLORS["info_blue"])
         self.dot.setStyleSheet(
             f"background-color: {color}; border-radius: 4px; min-width: 8px; min-height: 8px;"
         )
@@ -57,7 +57,7 @@ class PriorityBadge(QWidget):
     def set_priority(self, priority: str) -> None:
         """Aggiorna il colore del badge in base alla priorità."""
         self.priority = priority.lower()
-        color = self.COLOR_MAP.get(self.priority, COLORS["info"])
+        color = self.COLOR_MAP.get(self.priority, COLORS["info_blue"])
         self.dot.setStyleSheet(
             f"background-color: {color}; border-radius: 4px; min-width: 8px; min-height: 8px;"
         )

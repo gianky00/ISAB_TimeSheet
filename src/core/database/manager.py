@@ -95,6 +95,9 @@ class DatabaseManager:
     DB_PDL = DB_DIR / FileNames.DB_PDL
     DB_STORICO_ODA = DB_DIR / FileNames.DB_STORICO_ODA
     DB_DIPENDENTI = DB_DIR / FileNames.DB_DIPENDENTI
+    DB_CERTIFICATI = DB_DIR / FileNames.DB_CERTIFICATI
+    DB_SCARICO_ORE = DB_DIR / FileNames.DB_SCARICO_ORE
+    DB_GIORNALIERE = DB_DIR / FileNames.DB_GIORNALIERE
     DB_AUDIT = DB_DIR / FileNames.DB_AUDIT_LOG
 
     def __new__(cls) -> "DatabaseManager":
@@ -120,10 +123,13 @@ class DatabaseManager:
 
         conn.row_factory = sqlite3.Row
         try:
-            conn.execute("PRAGMA journal_mode=WAL")
-            conn.execute("PRAGMA synchronous=NORMAL")
+            conn.execute("PRAGMA foreign_keys=ON")
+            if not read_only:
+                conn.execute("PRAGMA journal_mode=WAL")
+                conn.execute("PRAGMA synchronous=NORMAL")
             yield conn
-            conn.commit()
+            if not read_only:
+                conn.commit()
         except Exception:
             conn.rollback()
             raise

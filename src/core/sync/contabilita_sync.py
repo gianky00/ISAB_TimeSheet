@@ -30,7 +30,7 @@ class ContabilitaSyncEngine(BaseSyncEngine):
                     "giornaliere",
                     columns,
                     new_data,
-                    PartitionConfig(column="anno", values=years),
+                    PartitionConfig(column="year", values=years),
                 )
                 conn.commit()
                 return int(res[0]), int(res[1])
@@ -56,7 +56,7 @@ class ContabilitaSyncEngine(BaseSyncEngine):
                     "contabilita",
                     columns,
                     new_data,
-                    PartitionConfig(column="anno", values=years),
+                    PartitionConfig(column="year", values=years),
                 )
                 conn.commit()
                 return int(res[0]), int(res[1])

@@ -1,6 +1,7 @@
 import openpyxl
 import pytest
 
+from src.core.processing.timesheet.steps import ExtractMetadataStep, SaveWorkbookStep
 from src.core.timesheet_processor import TimesheetProcessor
 
 
@@ -43,37 +44,54 @@ class TestTimesheetProcessor:
         # Verifica trasformazioni
         wb = openpyxl.load_workbook(dest_path)
         ws = wb["Timesheet"]
-        assert ws["B1"].value == "Data"  # Colonna C originale spostata in B dopo eliminazione A
-        assert ws["A1"].value == "POS"  # Colonna B originale spostata in A dopo eliminazione A
-        # Nota: l'eliminazione colonne cambia gli indici. Testiamo i valori finali.
+        # Dopo eliminazione colonne:
+        # Orig B (POS) -> A
+        # Orig C (Data) -> B
+        assert ws["B1"].value == "Data"
+        assert ws["A1"].value == "POS"
 
     def test_analyze_pos_column_logic(self):
-        """Verifica il conteggio dei POS univoci."""
+        """Verifica il conteggio dei POS univoci tramite ExtractMetadataStep."""
         wb = openpyxl.Workbook()
         ws = wb.active
         ws["B2"] = "10"
         ws["B3"] = "20"
         ws["B4"] = "10.0"
 
-        pos_values, first_cleaned = TimesheetProcessor._analyze_pos_column(ws)
+        step = ExtractMetadataStep()
+        context = {"worksheet": ws}
+        # Aggiungiamo ODC per non far fallire lo step
+        ws["A2"] = "123"
 
-        # 10, 20, 10.0 (stringhe) -> 3 valori univoci se non normalizzati prima del set
-        # Ma nel codice: val = str(row[0].value).strip()
-        assert len(pos_values) == 3
-        assert first_cleaned == "10"
+        step.execute(context)
+        metadata = context["metadata"]
+
+        assert len(metadata.pos_values) == 3
+        assert metadata.first_pos_cleaned == "10"
 
     def test_clean_pos_value(self):
-        assert TimesheetProcessor._clean_pos_value("10.0") == "10"
-        assert TimesheetProcessor._clean_pos_value("5") == "5"
-        assert TimesheetProcessor._clean_pos_value("abc") == "abc"
+        step = ExtractMetadataStep()
+        assert step._clean_pos_value("10.0") == "10"
+        assert step._clean_pos_value("5") == "5"
+        assert step._clean_pos_value("abc") == "abc"
 
-    def test_get_destination_path_conflict(self, tmp_path):
-        """Verifica la gestione del conflitto se il file esiste già."""
+    def test_save_workbook_logic_conflict(self, tmp_path):
+        """Verifica la gestione del conflitto tramite SaveWorkbookStep."""
+        from src.models.timesheet import TimesheetMetadata
+
         dest_dir = tmp_path
         odc = "5400123"
         (dest_dir / f"{odc}_TS.xlsx").touch()
 
-        path = TimesheetProcessor._get_destination_path(dest_dir, odc, {"10", "20"}, "10")
+        wb = openpyxl.Workbook()
+        metadata = TimesheetMetadata(odc=odc, pos_values={"10", "20"}, first_pos_cleaned="10")
+
+        step = SaveWorkbookStep()
+        context = {"workbook": wb, "dest_dir": dest_dir, "metadata": metadata}
+
+        step.execute(context)
+        path = context["dest_path"]
 
         assert path.name.startswith(f"{odc}_TS_")
         assert path.suffix == ".xlsx"
+        assert path.exists()

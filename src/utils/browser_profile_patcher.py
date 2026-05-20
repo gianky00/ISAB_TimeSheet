@@ -27,7 +27,6 @@ def patch_browser_profile(user_data_dir: Path | str, download_dir: Path | str | 
     preferences_paths = [
         preferred_path,
         user_data_path / "Preferences",
-        user_data_path / "Local State",  # Alcune impostazioni sono globali
     ]
 
     # Se nessuno dei due file di preferenze esiste, forziamo la creazione di quello standard

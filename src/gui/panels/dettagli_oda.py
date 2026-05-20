@@ -83,9 +83,16 @@ class DettagliOdAPanel(BaseBotPanel):
 
     def _setup_content(self) -> None:
         """Costruisce il layout specifico con widget parametri e tabella dati editabile."""
+        from src.gui.styles.ui_effects import UIEffectsManager
+        from src.gui.styles.widget_styles import CARD_SHADOW_BLUR, CARD_SHADOW_COLOR, CARD_STYLE
+
         params_container = QWidget()
+        params_container.setStyleSheet(CARD_STYLE)
+        UIEffectsManager.apply_shadow(params_container, blur=CARD_SHADOW_BLUR, color=CARD_SHADOW_COLOR)
+        UIEffectsManager.animate_fade(params_container, duration=400)
+
         self.params_layout = QVBoxLayout(params_container)
-        self.params_layout.setContentsMargins(0, 0, 0, 0)
+        self.params_layout.setContentsMargins(15, 15, 15, 15)
         self.params_layout.setSpacing(5)
 
         self._setup_params_section()
@@ -241,6 +248,10 @@ class DettagliOdAPanel(BaseBotPanel):
 
     def _save_data(self) -> None:
         """Persiste i parametri attuali nella configurazione globale (Batch optimization)."""
+        from PySide6.QtWidgets import QApplication
+
+        if QApplication.closingDown():
+            return
         if getattr(self, "_is_loading", False) or not hasattr(self, "params_widget"):
             return
         date_da, date_a = self.params_widget.get_dates()

@@ -11,7 +11,7 @@ from typing import Any
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.wait import WebDriverWait
 
 from src.bots.safework.common.locators import SafeWorkLocators
 
@@ -35,8 +35,8 @@ class VisualizzaAttivitaPage:
     def imposta_date(self, data_dal: str, data_al: str) -> None:
         """Imposta il range date."""
         try:
-            self.driver.execute_script(f"document.getElementById('programmazioneDal').value = '{data_dal}';")
-            self.driver.execute_script(f"document.getElementById('programmazioneAl').value = '{data_al}';")
+            self.driver.execute_script(f"document.getElementById('programmazioneDal').value = '{data_dal}';")  # type: ignore[no-untyped-call]
+            self.driver.execute_script(f"document.getElementById('programmazioneAl').value = '{data_al}';")  # type: ignore[no-untyped-call]
         except Exception as e:
             self.log(f"⚠️ Errore impostazione date JS: {e}")
 

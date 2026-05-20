@@ -3,7 +3,7 @@ from contextlib import suppress
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.wait import WebDriverWait
 
 from src.bots.base.selenium_base_bot import SeleniumBaseBot
 from src.bots.base.selenium_bot_config import SeleniumBotConfig
@@ -24,10 +24,12 @@ class SafeworkBaseBot(SeleniumBaseBot):
 
     def __init__(
         self,
-        config: SeleniumBotConfig,
+        username: str | None = None,
+        password: str | None = None,
+        config: SeleniumBotConfig | None = None,
         account_type: str = "Esecutore",
     ) -> None:
-        super().__init__(config)
+        super().__init__(username, password, config)
         self.account_type = account_type
         self.safework_login_page: SafeWorkLoginPage | None = None
         self.ricerca_pdl_page: RicercaPDLPage | None = None
@@ -69,7 +71,7 @@ class SafeworkBaseBot(SeleniumBaseBot):
             # Fallback JS click
             try:
                 el = self.driver.find_element(*locator)
-                self.driver.execute_script("arguments[0].click();", el)
+                self.driver.execute_script("arguments[0].click();", el)  # type: ignore[no-untyped-call]
             except Exception as e:
                 self.log(f"❌ Errore click su {label or locator}: {e}")
                 raise

@@ -4,7 +4,6 @@ Verifies thread safety, WAL mode, and migration logic.
 """
 
 import sqlite3
-import time
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -30,44 +29,28 @@ class TestDatabaseManagerHardened:
             assert mode.lower() == "wal"
 
     def test_write_serialization(self, manager, db_path):
-        """Verifica che execute_query usi il lock per le scritture."""
-        # Creiamo la tabella
-        manager.execute_query(db_path, "CREATE TABLE test (val TEXT)")
-
-        # Simula una scrittura lenta per testare il lock (patchando _write_lock)
+        """Verifica che get_write_connection usi il lock per le scritture."""
+        # Simula l'acquisizione del lock
         with patch.object(manager, "_write_lock") as mock_lock:
-            manager.execute_query(db_path, "INSERT INTO test VALUES ('a')")
-            assert mock_lock.acquire.called
-            assert mock_lock.release.called
+            with manager.get_write_connection(db_path) as conn:
+                conn.execute("CREATE TABLE test (val TEXT)")
+            assert mock_lock.__enter__.called
+            assert mock_lock.__exit__.called
 
     def test_retry_logic_on_locked(self, manager, db_path):
         """Verifica che il manager riprovi se il database è occupato."""
-        # 1. Blocca il DB con una connessione esterna
-        conn_ext = sqlite3.connect(db_path)
-        conn_ext.execute("CREATE TABLE test (id INTEGER)")
-        conn_ext.execute("BEGIN EXCLUSIVE TRANSACTION")
 
-        # 2. Tenta di scrivere tramite manager
-        # Usiamo un timeout brevissimo per get_connection altrimenti attende 30s per ogni tentativo
-        original_get_conn = manager.get_connection
+        # Patchiamo get_connection in modo che sollevi OperationalError
+        with patch.object(
+            manager, "get_connection", side_effect=sqlite3.OperationalError("database is locked")
+        ):
+            # Patchiamo anche sleep per non aspettare davvero
+            with patch("src.core.database.manager.time.sleep") as mock_sleep:
+                with pytest.raises(sqlite3.OperationalError):
+                    manager.execute_query(db_path, "INSERT INTO test VALUES (1)", retry_count=2)
 
-        def mock_get_conn(path, read_only=False, timeout=0.1):
-            return original_get_conn(path, read_only=read_only, timeout=timeout)
-
-        with patch.object(manager, "get_connection", side_effect=mock_get_conn):
-            start_time = time.time()
-            with pytest.raises(sqlite3.OperationalError):
-                manager.execute_query(db_path, "INSERT INTO test VALUES (1)", retry_count=2)
-            end_time = time.time()
-
-            # Verifica che abbia fatto i retry (almeno due tentativi con sleep crescenti)
-            # Tentativo 0: fail -> sleep 0.1
-            # Tentativo 1: fail -> sleep 0.2
-            # Totale attesa minima ~0.3s
-            assert end_time - start_time >= 0.3
-
-        conn_ext.rollback()
-        conn_ext.close()
+                # Deve aver dormito 2 volte (i=0 e i=1)
+                assert mock_sleep.call_count == 2
 
     def test_migration_sequence(self, manager, db_path):
         """Verifica l'esecuzione sequenziale delle migrazioni."""

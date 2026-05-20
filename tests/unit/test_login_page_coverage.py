@@ -34,7 +34,7 @@ class TestLoginPageCoverage(unittest.TestCase):
             mock_wait_instance.until.side_effect = TimeoutException()
             res = self.page._attendi_scomparsa_overlay(5)
             self.assertFalse(res)
-            self.logger_mock.assert_any_call("⚠ Timeout (5s) attesa overlay. Proseguo con cautela.")
+            self.logger_mock.assert_any_call("  Scomparsa overlay non rilevata (proseguo...)")
 
     def test_perform_login_form_action_success(self):
         mock_user = MagicMock()
@@ -84,7 +84,7 @@ class TestLoginPageCoverage(unittest.TestCase):
                 self.page._check_and_handle_session_popup()
                 mock_yes.click.assert_called()
                 self.logger_mock.assert_any_call(
-                    "[ATTENZIONE] Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso."
+                    "⚠️ Rilevata sessione precedente. Clicco su 'Sì per forzare l'accesso."
                 )
 
     def test_verify_logged_in_via_ui_false(self):

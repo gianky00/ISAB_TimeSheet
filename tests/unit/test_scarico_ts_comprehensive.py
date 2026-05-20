@@ -249,7 +249,10 @@ class TestScaricoTSComprehensive:
         mocker.patch.object(page, "_resolve_unique_path", return_value=download_dir / "final.xlsx")
         # Mocking click per evitare chiamate driver reali
         mocker.patch.object(page, "_wait_for_overlay")
-        mock_cleanup = mocker.patch("src.utils.helpers.cleanup_chrome_temp_files", return_value=["marker"])
+        mock_cleanup = mocker.patch(
+            "src.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page.cleanup_chrome_temp_files",
+            return_value=["marker"],
+        )
 
         # Mock driver.find_element e wait.until per tutti i bottoni/campi
         mock_el = MagicMock(spec=WebElement)

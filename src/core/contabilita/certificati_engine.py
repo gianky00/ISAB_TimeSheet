@@ -5,13 +5,16 @@ Motore di business per il calcolo delle scadenze, ricerca file e gestione esclus
 
 import json
 import os
+from collections import defaultdict
+from collections.abc import Sequence
 from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Final, TypedDict
 
-from src.core import config_manager
+from src.core.config_manager import get_config_value
 from src.core.constants import Icons, StatoCertificatoLabel, UbicazioneStrumenti
+from src.core.contabilita_queries import ContabilitaQueries
 from src.core.paths import DB_DIR
 from src.core.version import __version__
 
@@ -284,7 +287,7 @@ class CertificatiEngine:
             days = c.get("giorni")
             # Soglie colori coerenti con CertificatiEngine
             if days is None:
-                color = "#757575" # Grigio per N/D
+                color = "#757575"  # Grigio per N/D
                 status = "DATA NON DISPONIBILE"
             elif days < 0:
                 color = "#C62828"
@@ -298,10 +301,10 @@ class CertificatiEngine:
 
             rows += f"""
                 <tr>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>{c['id']}</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>{c['modello']}</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>{c['matricola']}</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>{c['scadenza']}</td>
+                    <td style='border: 1px solid #ddd; padding: 8px;'>{c["id"]}</td>
+                    <td style='border: 1px solid #ddd; padding: 8px;'>{c["modello"]}</td>
+                    <td style='border: 1px solid #ddd; padding: 8px;'>{c["matricola"]}</td>
+                    <td style='border: 1px solid #ddd; padding: 8px;'>{c["scadenza"]}</td>
                     <td style='border: 1px solid #ddd; padding: 8px; color: {color}; font-weight: bold;'>{status}</td>
                 </tr>
             """
@@ -310,7 +313,7 @@ class CertificatiEngine:
             <html>
             <body style='font-family: Segoe UI, Arial, sans-serif;'>
                 <h2 style='color: #2c3e50;'>Report Scadenze Certificati Campione</h2>
-                <p>Generato automaticamente da SyncroJob il {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
+                <p>Generato automaticamente da SyncroJob il {datetime.now().strftime("%d/%m/%Y %H:%M")}</p>
                 <p>Di seguito l'elenco degli strumenti scaduti o in scadenza entro i {self.EXPIRING_THRESHOLD} giorni.</p>
                 <table style='border-collapse: collapse; width: 100%;'>
                     <thead>
@@ -336,6 +339,7 @@ class CertificatiEngine:
 
         try:
             import win32com.client  # noqa: PLC0415
+
             outlook = win32com.client.Dispatch("Outlook.Application")
             mail = outlook.CreateItem(0)
             mail.Subject = f"REPORT SCADENZE CERTIFICATI CAMPIONE - {datetime.now().strftime('%d/%m/%Y')}"
@@ -363,7 +367,7 @@ class CertificatiEngine:
     @staticmethod
     def find_certificate_path(cert_number: str) -> str | None:
         """Cerca il file PDF del certificato nel server in modo ricorsivo."""
-        cert_root = config_manager.get_config_value("certificati_root_path", "")
+        cert_root = get_config_value("certificati_root_path", "")
         if not cert_root or not Path(cert_root).exists():
             return None
 
@@ -439,3 +443,75 @@ class CertificatiEngine:
             if len(parts) > idx_range and "Digital" in parts[idx_mod]
             else "",
         }
+
+    def group_data_by_id_coemi(self, data: Sequence[Sequence[Any]]) -> dict[str, list[tuple[Any, ...]]]:
+        """Raggruppa le righe del DB per ID COEMI o fallback (Matricola)."""
+
+        idx_id_coemi = ContabilitaQueries.CERT_IDX_ID_STRUMENTO
+        idx_matricola = ContabilitaQueries.CERT_IDX_MATRICOLA
+
+        groups = defaultdict(list)
+        for r in data:
+            key = (
+                str(r[idx_id_coemi]).strip()
+                if len(r) > idx_id_coemi and r[idx_id_coemi]
+                else str(r[idx_matricola]).strip()
+                if len(r) > idx_matricola and r[idx_matricola]
+                else "Sconosciuto"
+            )
+            groups[key].append(tuple(r))
+        return dict(groups)
+
+    def prepare_groups_with_priority(self, groups: dict[str, list[tuple[Any, ...]]]) -> list[dict[str, Any]]:
+        """Calcola stati e priorità per ogni gruppo di certificati."""
+
+        processed_groups = []
+        for group_key, certificates in groups.items():
+            certs_sorted = sorted(certificates, key=self._parse_emission_date, reverse=True)
+            latest = certs_sorted[0]
+
+            scadenza = (
+                latest[ContabilitaQueries.CERT_IDX_SCADENZA]
+                if len(latest) > ContabilitaQueries.CERT_IDX_SCADENZA
+                else ""
+            )
+            days, icon = self.calculate_days_and_status(scadenza)
+
+            processed_groups.append(
+                {
+                    "group_key": group_key,
+                    "id_coemi": self.get_col_safe(latest, ContabilitaQueries.CERT_IDX_ID_STRUMENTO),
+                    "matricola": self.get_col_safe(latest, ContabilitaQueries.CERT_IDX_MATRICOLA) or "N/D",
+                    "costruttore": self.get_col_safe(latest, ContabilitaQueries.CERT_IDX_COSTRUTTORE)
+                    or "N/D",
+                    "modello": self.get_col_safe(latest, ContabilitaQueries.CERT_IDX_MODELLO) or "N/D",
+                    "range_strumento": self.get_col_safe(latest, ContabilitaQueries.CERT_IDX_RANGE),
+                    "certificates": certs_sorted,
+                    "days": days,
+                    "icon": icon,
+                    "priority": days if days is not None else 9999,
+                }
+            )
+        return processed_groups
+
+    def _parse_emission_date(self, row: tuple[Any, ...]) -> datetime:
+        """Helper per il parsing sicuro della data di emissione per l'ordinamento."""
+
+        idx = ContabilitaQueries.CERT_IDX_EMISSIONE
+        if len(row) <= idx:
+            return datetime.min.replace(tzinfo=UTC)
+
+        d = row[idx] or ""
+        try:
+            return (
+                datetime.strptime(d, "%d/%m/%Y").replace(tzinfo=UTC)
+                if "/" in d
+                else datetime.min.replace(tzinfo=UTC)
+            )
+        except Exception:
+            return datetime.min.replace(tzinfo=UTC)
+
+    @staticmethod
+    def get_col_safe(row: Sequence[Any], idx: int) -> str:
+        """Ritorna il valore della colonna in modo sicuro."""
+        return str(row[idx]).strip() if len(row) > idx and row[idx] is not None else ""

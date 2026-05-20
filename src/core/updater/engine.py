@@ -151,6 +151,9 @@ class DownloadWorker(QThread):
 
                 self._stream_download(response, setup_path, downloaded, total_size)
 
+                # Re-check actual file size to avoid useless retry loop
+                downloaded = Path(setup_path).stat().st_size if Path(setup_path).exists() else 0
+
                 if not self._is_cancelled and total_size > 0 and downloaded >= total_size:
                     self.finished_download.emit(setup_path)
                     return
@@ -243,13 +246,29 @@ class DownloadWorker(QThread):
 def run_installer_and_exit(setup_path: str) -> None:
     """Executes the installer and terminates the process (Fix B603)."""
     if Path(setup_path).exists():
-        # Usa DETACHED_PROCESS su Windows per garantire che l'installer sopravviva alla chiusura dell'app
-        flags = subprocess.DETACHED_PROCESS if os.name == "nt" else 0
-        subprocess.Popen(
-            [setup_path, "/CLOSEAPPLICATIONS", "/RESTARTAPPLICATIONS"],
-            creationflags=flags,
-            close_fds=True,
-        )
+        logger.info("Avvio installer e chiusura app: %s", setup_path)
+        try:
+            # Usa DETACHED_PROCESS su Windows per garantire che l'installer sopravviva alla chiusura dell'app
+            flags = subprocess.DETACHED_PROCESS if os.name == "nt" else 0
+
+            if os.name == "nt":
+                # Avvio tramite cmd per il timeout, garantisce che l'app corrente sia chiusa prima che l'installer agisca
+                args = [
+                    "cmd.exe",
+                    "/c",
+                    f'timeout /t 2 /nobreak > NUL && "{setup_path}" /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS',
+                ]
+                subprocess.Popen(
+                    args, shell=False, creationflags=flags, close_fds=True, stdin=subprocess.DEVNULL
+                )
+            else:
+                subprocess.Popen(
+                    [setup_path, "/CLOSEAPPLICATIONS", "/RESTARTAPPLICATIONS"],
+                    close_fds=True,
+                )
+        except Exception:
+            logger.exception("Errore durante l'avvio dell'installer")
+
         sys.exit(0)
 
 
@@ -257,15 +276,19 @@ def run_pending_installer() -> None:
     """Executes the installer stored at app closure in a separate process."""
     global _pending_installer_path  # noqa: PLW0602
     if _pending_installer_path and Path(_pending_installer_path).exists():
-        # Usa DETACHED_PROCESS per slegarsi dal ciclo di vita dell'app corrente
-        flags = subprocess.DETACHED_PROCESS if os.name == "nt" else 0
-        # Avvio tramite cmd per il timeout, ma con quoting rinforzato
-        args = [
-            "cmd.exe",
-            "/c",
-            f'timeout /t 3 /nobreak > NUL && "{_pending_installer_path}" /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS',
-        ]
-        subprocess.Popen(args, shell=False, creationflags=flags, close_fds=True, stdin=subprocess.DEVNULL)
+        logger.info("Esecuzione installer pendente: %s", _pending_installer_path)
+        try:
+            # Usa DETACHED_PROCESS per slegarsi dal ciclo di vita dell'app corrente
+            flags = subprocess.DETACHED_PROCESS if os.name == "nt" else 0
+            # Avvio tramite cmd per il timeout, ma con quoting rinforzato
+            args = [
+                "cmd.exe",
+                "/c",
+                f'timeout /t 3 /nobreak > NUL && "{_pending_installer_path}" /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS',
+            ]
+            subprocess.Popen(args, shell=False, creationflags=flags, close_fds=True, stdin=subprocess.DEVNULL)
+        except Exception:
+            logger.exception("Errore durante l'avvio dell'installer pendente")
 
 
 def set_pending_installer(path: str) -> None:

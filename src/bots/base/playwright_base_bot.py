@@ -229,14 +229,14 @@ class PlaywrightBaseBot(BaseBot, ABC):
         """Ferma Playwright internamente senza loggare errori se già fermo."""
         if self.context:
             with suppress(Exception):
-                # Chiude tutte le pagine prima del contesto
-                for page in self.context.pages:
-                    with suppress(Exception):
-                        page.close()
                 self.context.close()
         if self.playwright:
             with suppress(Exception):
                 self.playwright.stop()
+
+        # Pulisce i processi orfani di Chrome/Node per rilasciare istantaneamente i lock sul filesystem
+        with suppress(Exception):
+            cleanup_bot_processes()
 
         self.page = None
         self.context = None

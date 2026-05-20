@@ -28,6 +28,9 @@ class FileNames:
     DB_PDL = "pdl.db"
     DB_STORICO_ODA = "storico_oda.db"
     DB_DIPENDENTI = "anagrafica_dipendenti.db"
+    DB_CERTIFICATI = "certificati_campione.db"
+    DB_SCARICO_ORE = "scarico_ore.db"
+    DB_GIORNALIERE = "giornaliere.db"
     DB_AUDIT_LOG = "audit_log.db"
 
     # Configuration & State

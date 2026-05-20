@@ -56,15 +56,17 @@ class DettagliOdABot(SeleniumBaseBot):
         """Restituisce la descrizione del bot."""
         return "Scarica dettaglio OdA (o lista generale se OdA vuoto)"
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
-        config: SeleniumBotConfig,
+        username: str | None = None,
+        password: str | None = None,
+        config: SeleniumBotConfig | None = None,
         data_da: str | None = None,
         data_a: str | None = None,
         fornitore: str | None = None,
         **kwargs: Any,
     ) -> None:
-        super().__init__(config=config)
+        super().__init__(username, password, config)
         current_year = datetime.now(UTC).astimezone().year
 
         self.data_da = data_da or f"01.01.{current_year}"
@@ -84,7 +86,7 @@ class DettagliOdABot(SeleniumBaseBot):
         # Il bot pu  partire anche se data  vuoto (per la lista generale)
         return True, ""
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Esegue lo scarico dei dettagli per ogni Ordine di Acquisto fornito."""
         self.update_step("login", StepStatus.COMPLETED)
 

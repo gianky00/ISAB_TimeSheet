@@ -11,9 +11,7 @@ from typing import TYPE_CHECKING, Any
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
-from src.core import config_manager
 from src.core.constants import Icons
-from src.gui.controllers.bot_worker import BotWorker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel
 from src.gui.widgets import BotParametersWidget, EditableDataTable
@@ -45,6 +43,11 @@ class ScaricaTSPanel(BaseBotPanel):
             parent=parent,
         )
 
+        from src.gui.controllers.bot_execution_controller import BotExecutionController
+
+        self.bot_controller = BotExecutionController("scarico_ts", self)
+        self._setup_controller_connections()
+
         self.params_widget: BotParametersWidget
         self.elabora_ts_check: StandardCheckBox
         self.clear_btn: ModernButton
@@ -59,6 +62,15 @@ class ScaricaTSPanel(BaseBotPanel):
 
         self._data_loaded = False
         # Il caricamento dati viene differito a showEvent
+
+    def _setup_controller_connections(self) -> None:
+        """Connette i segnali del controller agli slot del pannello."""
+        self.bot_controller.log_received.connect(self._on_log)
+        self.bot_controller.execution_finished.connect(self._on_worker_finished)
+        self.bot_controller.row_status_updated.connect(self.on_step_completed)
+        self.bot_controller.step_changed.connect(self.activity_timeline.on_step_changed)
+        self.bot_controller.critical_error.connect(lambda t, m: ConfirmationDialog.show_error(self, t, m))
+        self.bot_controller.input_requested.connect(self._ask_user_input)
 
     def showEvent(self, event: Any) -> None:
         """Esegue il primo caricamento dati solo quando il pannello diventa visibile."""
@@ -85,9 +97,17 @@ class ScaricaTSPanel(BaseBotPanel):
 
     def _setup_content(self) -> None:
         """Inizializza e posiziona i componenti UI specifici del pannello."""
+        from src.gui.styles.ui_effects import UIEffectsManager
+        from src.gui.styles.widget_styles import CARD_SHADOW_BLUR, CARD_SHADOW_COLOR
+
         params_container = QWidget()
+        # Card style wrap
+        params_container.setStyleSheet("background: white; border-radius: 12px; border: 1px solid #dee2e6;")
+        UIEffectsManager.apply_shadow(params_container, blur=CARD_SHADOW_BLUR, color=CARD_SHADOW_COLOR)
+        UIEffectsManager.animate_fade(params_container, duration=400)
+
         self.params_layout = QVBoxLayout(params_container)
-        self.params_layout.setContentsMargins(0, 0, 0, 0)
+        self.params_layout.setContentsMargins(15, 15, 15, 15)
         self.params_layout.setSpacing(5)
 
         self._setup_params_section()
@@ -185,16 +205,19 @@ class ScaricaTSPanel(BaseBotPanel):
         """Carica i dati salvati."""
         self._is_loading = True
         try:
-            config = config_manager.load_config()
-            self.refresh_fornitori()
-            self.params_widget.set_societa(config.get("last_scarico_ts_societa", "ISAB"))
-            self.params_widget.set_fornitore(config.get("last_scarico_ts_fornitore", ""))
-            self.params_widget.set_dest_path(config.get("path_scarico_ts", ""))
-            self.elabora_ts_check.setChecked(config.get("last_scarico_ts_elabora", True))
+            from src.core.bots.services import ScaricoTSService
 
-            saved_data = config.get("last_scarico_ts_data", [])
-            if saved_data:
-                self.data_table.set_data(saved_data)
+            service = ScaricoTSService()
+            cfg = service.load_config()
+
+            self.refresh_fornitori()
+            self.params_widget.set_societa(cfg["societa"])
+            self.params_widget.set_fornitore(cfg["fornitore"])
+            self.params_widget.set_dest_path(cfg["dest_path"])
+            self.elabora_ts_check.setChecked(cfg["elabora_ts"])
+
+            if cfg["data"]:
+                self.data_table.set_data(cfg["data"])
 
             self._update_status_list()
         finally:
@@ -202,13 +225,25 @@ class ScaricaTSPanel(BaseBotPanel):
 
     def _save_data(self) -> None:
         """Salva i dati correnti."""
+        from PySide6.QtWidgets import QApplication
+
+        if QApplication.closingDown():
+            return
         if getattr(self, "_is_loading", False) or not hasattr(self, "params_widget"):
             return
-        config_manager.set_config_value("last_scarico_ts_data", self.data_table.get_data())
-        config_manager.set_config_value("last_scarico_ts_societa", self.params_widget.get_societa())
-        config_manager.set_config_value("last_scarico_ts_fornitore", self.params_widget.get_fornitore())
-        config_manager.set_config_value("path_scarico_ts", self.params_widget.get_dest_path())
-        config_manager.set_config_value("last_scarico_ts_elabora", self.elabora_ts_check.isChecked())
+
+        from src.core.bots.services import ScaricoTSService
+
+        service = ScaricoTSService()
+
+        params = {
+            "societa": self.params_widget.get_societa(),
+            "fornitore": self.params_widget.get_fornitore(),
+            "dest_path": self.params_widget.get_dest_path(),
+            "elabora_ts": self.elabora_ts_check.isChecked(),
+        }
+
+        service.save_config(params, self.data_table.get_data())
 
     def _clear_table(self) -> None:
         """Svuota la tabella."""
@@ -229,81 +264,52 @@ class ScaricaTSPanel(BaseBotPanel):
 
     def _on_start(self, params_override: dict[str, Any] | None = None) -> None:
         """
-        Avvia l'esecuzione del bot Scarico TS gestendo il worker e i segnali.
+        Avvia l'esecuzione del bot Scarico TS gestendo il controller.
 
         Args:
             params_override: Parametri opzionali per sovrascrivere l'UI.
         """
         super()._on_start(params_override)
 
-        username, password = self.get_credentials()
-        data = self.data_table.get_data()
-        societa = self.params_widget.get_societa()
-        fornitore = self.params_widget.get_fornitore()
-        data_da, _ = self.params_widget.get_dates()
-        download_path = self.params_widget.get_dest_path() or config_manager.get_download_path()
-        elabora_ts = self.elabora_ts_check.isChecked()
-
-        # Handle Overrides
-        if params_override:
-            if "data_da" in params_override:
-                data_da = params_override["data_da"]
-                self.log_widget.append(f"ℹ️ Override Data Inizio: {data_da}")
-
-            if "single_item" in params_override:
-                item = params_override["single_item"]
-                if item:
-                    data = [item]
-                    self.log_widget.append(f"ℹ️ Esecuzione singola per: {item.get('Numero OdA', 'N/D')}")
-
         if not params_override:
             self._save_data()
 
-        from src.core.config_manager import load_config
+        from src.core.bots.services import ScaricoTSService
 
-        config = load_config()
+        service = ScaricoTSService()
 
+        data_da, _ = self.params_widget.get_dates()
+        params = {
+            "societa": self.params_widget.get_societa(),
+            "fornitore": self.params_widget.get_fornitore(),
+            "dest_path": self.params_widget.get_dest_path(),
+            "elabora_ts": self.elabora_ts_check.isChecked(),
+            "data_da": data_da,
+        }
+
+        username, password = self.get_credentials()
+        bot_params, bot_payload = service.prepare_payload(
+            (username, password, ""), params, self.data_table.get_data(), params_override
+        )
         main_win: Any = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-        # Configura i parametri per le bot (nessuna istanza bot qui)
-        bot_params = {
-            "username": username,
-            "password": password,
-            "headless": config.get("browser_headless", False),
-            "timeout": config.get("browser_timeout", 30),
-            "download_path": download_path,
-            "data_da": data_da,
-            "fornitore": fornitore,
-            "company": societa,
-            "elabora_ts": elabora_ts,
-        }
-
-        # Dati da elaborare
-        bot_data = {
-            "rows": data,
-            "data_da": data_da,
-            "fornitore": fornitore,
-            "company": societa,
-            "elabora_ts": elabora_ts,
-        }
-
-        # Inizializza il worker (avvio asincrono)
-        self.worker = BotWorker(
-            bot_id="scarico_ts",
-            bot_params=bot_params,
-            data=bot_data,
-            telegram_service=tg_service,
-        )
-
-        self._setup_worker_connections(self.worker)
-
-        self.start_btn.setEnabled(False)
-        self.stop_btn.setEnabled(True)
+        # Delega l'avvio al controller
         self.log_widget.clear()
-        self.log_widget.append("Avvio bot Scarico TS...")
-        self.worker.start()
-        self.bot_started.emit()
+        self.log_widget.append("Preparazione Bot Scarico TS...")
+
+        # Passa direttamente bot_payload (dizionario strutturato con chiave 'rows')
+        bot_data = bot_payload
+
+        if self.bot_controller.start(bot_params, bot_data, tg_service):
+            self.bot_started.emit()
+        else:
+            self.log_widget.append("❌ Errore: Il bot è già in esecuzione.")
+
+    def _on_stop(self) -> None:
+        """Gestisce la richiesta di stop."""
+        self.bot_controller.stop()
+        super()._on_stop()
 
     def _on_worker_finished(self, success: bool) -> None:
         """Chiamato al termine del bot."""

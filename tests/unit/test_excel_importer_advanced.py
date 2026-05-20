@@ -9,7 +9,6 @@ import pytest
 from src.core.excel_importer import ExcelImporter
 from src.core.importers.contabilita import ContabilitaImporter
 from src.core.importers.giornaliere import GiornaliereImporter
-from src.core.importers.scarico_ore import ScaricoOreImporter
 
 
 class TestExcelImporterAdvanced:
@@ -73,10 +72,10 @@ class TestExcelImporterAdvanced:
             {
                 "DATA": ["01/01/2026", "02/01/2026", "TOTALE", ""],
                 "PERSONALE": ["Mario Rossi", "Luigi Bianchi", "Totale", ""],
-                "DESCRIZIONE ATTIVITA'": ["D1", "D2", "DT", ""],
+                "DESCRIZIONE ATTIVITÀ": ["D1", "D2", "DT", ""],
                 "TCL": ["", "", "", ""],
                 "ODC": ["ODC1", "NaN", "", ""],
-                "N° PDL": ["", "", "", ""],
+                "N  PDL": ["", "", "", ""],
                 "INIZIO": ["", "", "", ""],
                 "FINE": ["", "", "", ""],
                 "ORE": ["8", "4", "12", ""],
@@ -84,7 +83,10 @@ class TestExcelImporterAdvanced:
             }
         )
 
-        with patch("src.core.importers.giornaliere.pd.read_excel", return_value=df_giorn):
+        with (
+            patch("src.core.processing.giornaliere.steps.pd.read_excel", return_value=df_giorn),
+            patch("src.core.importers.giornaliere.SyncGiornaliereStep.execute", return_value=None)
+        ):
             _year, rows, err = GiornaliereImporter._process_single_giornaliera((2026, Path("test.xlsx"), {}))
             assert err is None
             assert len(rows) == 2
@@ -96,10 +98,10 @@ class TestExcelImporterAdvanced:
             {
                 "DATA": ["01/01/2026", "Footer"],
                 "PERSONALE": ["User", "F"],
-                "DESCRIZIONE ATTIVITA'": ["Descrizione", "F"],
+                "DESCRIZIONE ATTIVITÀ": ["Descrizione", "F"],
                 "TCL": ["", ""],
                 "ODC": ["", ""],
-                "N° PDL": ["", ""],
+                "N  PDL": ["", ""],
                 "INIZIO": ["", ""],
                 "FINE": ["", ""],
                 "ORE": ["8", ""],
@@ -109,7 +111,10 @@ class TestExcelImporterAdvanced:
         # L'ODC deve iniziare con 5400 per passare il filtro mask_standard nel sorgente
         lookup = {"P999": "54001234"}
 
-        with patch("src.core.importers.giornaliere.pd.read_excel", return_value=df):
+        with (
+            patch("src.core.processing.giornaliere.steps.pd.read_excel", return_value=df),
+            patch("src.core.importers.giornaliere.SyncGiornaliereStep.execute", return_value=None)
+        ):
             _year, rows, _err = GiornaliereImporter._process_single_giornaliera(
                 (2026, Path("f.xlsx"), lookup)
             )
@@ -121,11 +126,15 @@ class TestExcelImporterAdvanced:
 
     def test_process_scarico_ore_row_with_styles(self):
         """Test: Estrazione stili (colori) da una riga scarico ore."""
+        from src.core.processing.scarico_ore.steps import ProcessScaricoOreRowsStep
+
         mock_row = []
         # data, pers1, pers2, odc, pos, dalle, alle, totale_ore, descrizione, finito, commessa
         for i in range(11):
             cell = MagicMock()
             cell.value = f"val_{i}"
+            if i in {3, 4, 7}: # odc, pos, tot non devono essere zero/vuoti per passare validazione
+                cell.value = "10"
 
             # Setup font color
             cell.font.color.type = "rgb"
@@ -138,27 +147,14 @@ class TestExcelImporterAdvanced:
 
             mock_row.append(cell)
 
-        col_keys = [
-            "data",
-            "pers1",
-            "pers2",
-            "odc",
-            "pos",
-            "dalle",
-            "alle",
-            "totale_ore",
-            "descrizione",
-            "finito",
-            "commessa",
-        ]
-
-        res = ScaricoOreImporter._process_scarico_ore_row(mock_row, col_keys)
+        step = ProcessScaricoOreRowsStep()
+        res = step._process_scarico_ore_row(mock_row)
 
         assert res is not None
         styles_json = res[-1]
         styles = json.loads(styles_json)
 
-        # Check first key 'data'
+        # Check key 'data' (first column)
         assert styles["data"]["fg"] == "#FF0000"
         assert styles["data"]["bg"] == "#00FF00"
 

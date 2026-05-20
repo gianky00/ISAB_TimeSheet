@@ -13,6 +13,8 @@ from src.core.config_manager import get_config_value
 from src.core.database import db_manager
 from src.core.schemas import ROIMetrics
 
+__all__ = ["ROIEngine", "ROIMetrics"]
+
 logger = logging.getLogger(__name__)
 
 

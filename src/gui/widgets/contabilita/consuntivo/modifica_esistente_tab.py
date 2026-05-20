@@ -199,7 +199,6 @@ class ModificaEsistenteTab(QWidget):
         self.log_widget.setMinimumHeight(160)
         layout.addWidget(self.log_widget)
 
-
     def _get_dynamic_dir(self) -> str:
         year = self.anno_combo.currentText()
         base = config_manager.get_config_value(
@@ -360,7 +359,11 @@ class ModificaEsistenteTab(QWidget):
 
     def _fill_description_lines(self, sheet: Any) -> None:
         """Legge le righe della descrizione lavoro (A11:A21)."""
-        lines = [self._get_cell_value(sheet, f"A{r}") for r in range(11, 22) if self._get_cell_value(sheet, f"A{r}")]
+        lines = [
+            self._get_cell_value(sheet, f"A{r}")
+            for r in range(11, 22)
+            if self._get_cell_value(sheet, f"A{r}")
+        ]
         self._desc_lavoro_display.setPlainText("\n".join(lines))
 
     def _update_status_success(self, count: int) -> None:
@@ -377,6 +380,7 @@ class ModificaEsistenteTab(QWidget):
 
         try:
             import openpyxl
+
             wb = openpyxl.load_workbook(self.loaded_file, keep_vba=True)
             sheet = self._find_data_sheet(wb)
             if sheet is None:
@@ -426,7 +430,9 @@ class ModificaEsistenteTab(QWidget):
         self._status_label.setText("Modifiche salvate nel file Excel")
         self._status_label.setStyleSheet("color: #2E7D32; font-size: 12px; font-weight: 600; border: none;")
         ConfirmationDialog.show_info(
-            self, "Salvato", f"Le modifiche sono state salvate in:\n{os.path.basename(self.loaded_file or '')}"
+            self,
+            "Salvato",
+            f"Le modifiche sono state salvate in:\n{os.path.basename(self.loaded_file or '')}",
         )
         self._last_scan_time = 0  # Forza refresh scansione
 

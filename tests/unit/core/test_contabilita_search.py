@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.contabilita_search import ContabilitaSearch
+from src.core.contabilita.search_service import ContabilitaSearch
 
 
 class TestContabilitaSearch:

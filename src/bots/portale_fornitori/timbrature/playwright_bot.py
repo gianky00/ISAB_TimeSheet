@@ -77,15 +77,20 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
 
         return True, ""
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Esegue il workflow completo di recuperòe importazione delle timbrature."""
         self.update_step("login", StepStatus.COMPLETED)
 
-        if data and isinstance(data, list):
-            row = data[0]
+        rows = data if isinstance(data, list) else data.get("rows", [])
+        if rows:
+            row = rows[0]
             self.data_da = row.get("data_da", self.data_da)
             self.data_a = row.get("data_a", self.data_a)
             self.fornitore = row.get("fornitore", self.fornitore)
+        elif isinstance(data, dict):
+            self.data_da = data.get("data_da", self.data_da)
+            self.data_a = data.get("data_a", self.data_a)
+            self.fornitore = data.get("fornitore", self.fornitore)
 
         self.log(
             f"[AVVIO] Inizio recuperòtimbrature (PW) per {self.fornitore} ({self.data_da} - {self.data_a})..."

@@ -2,14 +2,14 @@ from pathlib import Path
 
 import pytest
 
-from src.core.contabilita_stats import ContabilitaStats
+from src.core.contabilita.stats_service import ContabilitaStats
 
 
 class TestBusinessIntelligenceKPI:
     @pytest.fixture
     def mock_queries(self, mocker):
         """Mock per ContabilitaQueries."""
-        return mocker.patch("src.core.contabilita_stats.ContabilitaQueries")
+        return mocker.patch("src.core.contabilita.stats_service.ContabilitaQueries")
 
     def test_get_year_stats_calculation(self, mock_queries):
         """Test: Calcolo corretto delle statistiche annuali con dati misti."""

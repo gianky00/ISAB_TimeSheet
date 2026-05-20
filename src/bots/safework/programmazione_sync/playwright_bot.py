@@ -52,11 +52,11 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
         """Nessun input a righe: il bot usa solo i filtri data/richiedenti."""
         return []
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Esegue download massivo report e sincronizzazione sul database locale."""
         self.update_step("login", StepStatus.COMPLETED)
 
-        params = data[0] if data else {}
+        params = data[0] if isinstance(data, list) and data else data if isinstance(data, dict) else {}
         requesters = params.get("requesters", [])
         date_start = params.get("date_start")
         date_end = params.get("date_end")

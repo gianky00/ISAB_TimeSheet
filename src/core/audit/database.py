@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 class AuditDatabase:
     """Gestisce il database SQLite per l'Audit Log."""
 
+    DB_PATH: Path = db_manager.DB_AUDIT
     _db_path_override: Path | None = None
 
     @property

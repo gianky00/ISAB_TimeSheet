@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 
 from src.bots.base.playwright_base_bot import PlaywrightBaseBot
 from src.bots.base.playwright_utils import get_playwright_selector
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
 
 
 class ConcretePlaywrightBot(PlaywrightBaseBot):
@@ -38,7 +39,8 @@ def test_get_playwright_selector():
 @patch("src.utils.helpers.cleanup_bot_processes")
 def test_playwright_base_bot_init(mock_cleanup, mock_sync):
     """Verifica l'inizializzazione del driver Playwright."""
-    bot = ConcretePlaywrightBot("user", "pass", headless=True)
+    config = SeleniumBotConfig(username="user", password="pass", headless=True)
+    bot = ConcretePlaywrightBot(config)
 
     # Setup mock chain
     mock_pw_context = MagicMock()
@@ -61,7 +63,8 @@ def test_playwright_base_bot_init(mock_cleanup, mock_sync):
 
 def test_playwright_base_bot_cleanup():
     """Verifica la chiusura corretta delle risorse."""
-    bot = ConcretePlaywrightBot("user", "pass")
+    config = SeleniumBotConfig(username="user", password="pass")
+    bot = ConcretePlaywrightBot(config)
     mock_context = MagicMock()
     mock_pw = MagicMock()
 

@@ -376,9 +376,12 @@ class BugReportDialog(QDialog):
             cliente_info = self._get_client_info()
 
             from src.core.constants import Emails
+
             mail = outlook.CreateItem(0)
             mail.To = Emails.SUPPORT
-            mail.Subject = f"[Segnalazione Bug] SyncroJob v{metadata['version']} - {metadata['subject_suffix']}"
+            mail.Subject = (
+                f"[Segnalazione Bug] SyncroJob v{metadata['version']} - {metadata['subject_suffix']}"
+            )
             mail.HTMLBody = self._generate_html_body(description, metadata, cliente_info)
 
             if Path(final_zip_path).exists():
@@ -404,7 +407,7 @@ class BugReportDialog(QDialog):
             "date_display": now.strftime("%d/%m/%Y %H:%M"),
             "date_file": now.strftime("%d-%m-%Y_%H-%M"),
             "subject_suffix": f"{now.strftime('%d/%m/%Y %H:%M')} {ticket_id}",
-            "full_ticket_file": f"{now.strftime('%d-%m-%Y_%H-%M')}_{ticket_id}"
+            "full_ticket_file": f"{now.strftime('%d-%m-%Y_%H-%M')}_{ticket_id}",
         }
 
     def _get_client_info(self) -> str:
@@ -412,6 +415,7 @@ class BugReportDialog(QDialog):
         cliente_info = "ISAB S.R.L."
         with suppress(Exception):
             from src.core.license_validator import get_license_info
+
             lic_data = get_license_info()
             if lic_data and "Cliente" in lic_data:
                 cliente_info = lic_data["Cliente"]
@@ -431,7 +435,9 @@ class BugReportDialog(QDialog):
     def _generate_html_body(self, description: str, meta: dict[str, Any], cliente: str) -> str:
         """Genera il corpo HTML professionale per la mail di Outlook."""
         palette = get_palette()
-        css_cell = f"padding: 8px 12px; border-bottom: 1px solid {palette.border}; color: {palette.on_surface};"
+        css_cell = (
+            f"padding: 8px 12px; border-bottom: 1px solid {palette.border}; color: {palette.on_surface};"
+        )
         css_header = f"padding: 8px 12px; border-bottom: 2px solid {palette.primary}; font-weight: 600; color: {palette.primary};"
 
         return f"""
@@ -442,15 +448,15 @@ class BugReportDialog(QDialog):
               <td style="width: 320px; vertical-align: top;">
                 <table style="width: 100%; font-size: 13px;">
                   <tr><th style="{css_header}" colspan="2">DETTAGLI SISTEMA</th></tr>
-                  <tr><td style="{css_cell} font-weight:600;">Ticket ID</td><td style="{css_cell}">{meta['ticket_id']}</td></tr>
-                  <tr><td style="{css_cell} font-weight:600;">Versione</td><td style="{css_cell}">{meta['version']}</td></tr>
-                  <tr><td style="{css_cell} font-weight:600;">Utente</td><td style="{css_cell}">{meta['user']}</td></tr>
+                  <tr><td style="{css_cell} font-weight:600;">Ticket ID</td><td style="{css_cell}">{meta["ticket_id"]}</td></tr>
+                  <tr><td style="{css_cell} font-weight:600;">Versione</td><td style="{css_cell}">{meta["version"]}</td></tr>
+                  <tr><td style="{css_cell} font-weight:600;">Utente</td><td style="{css_cell}">{meta["user"]}</td></tr>
                   <tr><td style="{css_cell} font-weight:600;">Cliente</td><td style="{css_cell}">{cliente}</td></tr>
                 </table>
               </td>
               <td style="vertical-align: top; padding-left: 20px;">
                 <h3 style="border-bottom: 2px solid {palette.border};">Descrizione Problema</h3>
-                <div style="line-height: 1.6;">{description.replace(chr(10), '<br>')}</div>
+                <div style="line-height: 1.6;">{description.replace(chr(10), "<br>")}</div>
               </td>
             </tr>
           </table>

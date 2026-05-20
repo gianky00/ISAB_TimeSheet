@@ -201,7 +201,9 @@ class BaseBotPanel(QWidget):
         self._notify_system(success)
 
         if self.worker:
-            self.worker.wait()
+            # Impostiamo il riferimento a None senza chiamare wait() bloccante.
+            # Il thread terminerà in background in modo asincrono senza congelare la GUI,
+            # e verrà pulito in modo sicuro tramite il flusso asincrono dei thread.
             self.worker = None
 
     def _on_bot_finished(self, success: bool) -> None:
@@ -253,6 +255,13 @@ class BaseBotPanel(QWidget):
 
     def _setup_worker_connections(self, worker: BotWorker) -> None:
         """Cablaggio segnali worker -> UI."""
+        if not hasattr(self, "_active_workers"):
+            self._active_workers: list[BotWorker] = []
+        self._active_workers.append(worker)
+
+        # Connette il segnale di fine nativo del thread per la pulizia e auto-distruzione asincrona
+        worker.finished.connect(lambda: self._async_cleanup_worker(worker))
+
         worker.log_signal.connect(self._on_log)
         worker.finished_signal.connect(self._on_worker_finished)
         worker.step_changed_signal.connect(self.activity_timeline.on_step_changed)
@@ -264,6 +273,12 @@ class BaseBotPanel(QWidget):
 
         worker.finished_signal.connect(lambda s: self.data_updated.emit() if s else None)
 
+    def _async_cleanup_worker(self, worker: BotWorker) -> None:
+        """Rimuove in modo sicuro e asincrono il worker e lo distrugge."""
+        if hasattr(self, "_active_workers") and worker in self._active_workers:
+            self._active_workers.remove(worker)
+        worker.deleteLater()
+
     def _ask_user_input(self, prompt: str, result: dict[str, Any], event: threading.Event) -> None:
         text, ok = StandardInputDialog.get_input(self, "Richiesta Input", prompt)
         result["value"] = text if ok else ""
@@ -272,8 +287,9 @@ class BaseBotPanel(QWidget):
     # --- Compatibility Methods for Subclasses and Tests ---
 
     def _on_log(self, message: str) -> None:
-        """Bridge per il widget log."""
+        """Bridge per il widget log con elaborazione eventi per prevenire freeze."""
         self.log_widget.append(message)
+        QApplication.processEvents()
 
     def validate_ready(self) -> tuple[bool, str]:
         """Metodo legacy richiesto da alcuni bot."""

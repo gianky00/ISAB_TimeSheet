@@ -90,8 +90,7 @@ class BotWorker(QThread):
                 self.bot.set_progress_callback(self.row_status_signal.emit)
 
             # 3. Esecuzione
-            # Assicuriamoci che i dati siano nel formato atteso list[dict]
-            exec_data = self.data if isinstance(self.data, list) else []
+            exec_data: list[dict[str, Any]] | dict[str, Any] = self.data if self.data is not None else []
 
             result = self.bot.execute(exec_data)
             self.finished_signal.emit(result)

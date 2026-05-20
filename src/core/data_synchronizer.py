@@ -72,13 +72,15 @@ class DataSynchronizer:
     @classmethod
     def sync_attivita_programmate(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
         """Sincronizza le attivitàprogrammate preservando gli stili."""
-        target = SyncTarget(db_path, "attivita_programmate", getattr(AttivitaImporter, "ATTIVITA_PROGRAMMATE_COLS", []))
+        target = SyncTarget(
+            db_path, "attivita_programmate", getattr(AttivitaImporter, "ATTIVITA_PROGRAMMATE_COLS", [])
+        )
         # Usiamo full_replace_with_metadata perché non abbiamo vincoli UNIQUE
         # e vogliamo mantenere gli stili calcolati.
         res = SmartSyncEngine.sync_full_replace_with_metadata(
             target,
             rows,
-            key_cols=["ps", "area", "descrizione"], # Chiave euristica
+            key_cols=["ps", "area", "descrizione"],  # Chiave euristica
             metadata_cols=["styles"],
         )
         return int(res[0]), int(res[1])
@@ -91,7 +93,7 @@ class DataSynchronizer:
         res = SmartSyncEngine.sync_full_replace_with_metadata(
             target,
             rows,
-            key_cols=["data", "pers1", "odc", "pos"], # Chiave euristica
+            key_cols=["data", "pers1", "odc", "pos"],  # Chiave euristica
             metadata_cols=["styles"],
         )
         return int(res[0]), int(res[1])

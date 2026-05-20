@@ -375,17 +375,6 @@ def _worker_task(
     """Funzione stand-alone per il pool di processi (SHOTGUN)."""
     env = _build_env()
 
-    # FIX: Isolamento totale (Config + Coverage) su Windows
-    # Usiamo una directory dedicata per worker per evitare conflitti e PermissionError
-    worker_id = f"{os.getpid()}_{int(time.time() * 1000)}"
-    temp_config_dir = Path(tempfile.gettempdir()) / f"syncrojob_test_{worker_id}"
-    temp_config_dir.mkdir(parents=True, exist_ok=True)
-
-    env["SYNCROJOB_CONFIG_DIR"] = str(temp_config_dir)
-
-    if with_cov:
-        env["COVERAGE_FILE"] = f".coverage.worker.{worker_id}"
-
     # In AI mode: --tb=long per traceback completi, altrimenti --tb=short
     tb_style = "long" if ai_mode else "short"
     cmd = [

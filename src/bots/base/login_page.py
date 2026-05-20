@@ -14,7 +14,7 @@ from selenium.common.exceptions import (
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.wait import WebDriverWait
 
 from src.bots.portale_fornitori.common.locators import CommonLocators, LoginLocators
 from src.core.constants import Timeouts
@@ -50,7 +50,7 @@ class LoginPage:
             self.log(" -> Overlay di caricamento scomparso.")
             time.sleep(0.3)
         except TimeoutException:
-            self.log(f"  Timeout ({timeout_secondi}s) attesa overlay. Proseguo con cautela.")
+            self.log("  Scomparsa overlay non rilevata (proseguo...)")
             return False
         else:
             return True
@@ -81,7 +81,7 @@ class LoginPage:
                 opt_el = WebDriverWait(self.driver, 3).until(
                     EC.element_to_be_clickable((By.XPATH, option_xpath))
                 )
-                self.driver.execute_script("arguments[0].click();", opt_el)
+                self.driver.execute_script("arguments[0].click();", opt_el)  # type: ignore[no-untyped-call]
         except Exception as e:
             self.log(f"⚠️ Avviso: Selezione società'{company}' non riuscita, proseguo: {e}")
 
@@ -91,7 +91,7 @@ class LoginPage:
         except (TimeoutException, ElementClickInterceptedException):
             self.log("⚠️ Click standard intercettato o timeout. Tento click JavaScript...")
             accedi_element = self.driver.find_element(*LoginLocators.LOGIN_BUTTON_FALLBACK)
-            self.driver.execute_script("arguments[0].click();", accedi_element)
+            self.driver.execute_script("arguments[0].click();", accedi_element)  # type: ignore[no-untyped-call]
 
         # Gestione popup sessione attiva (immediatamente dopo click)
         self._check_and_handle_session_popup()
@@ -135,7 +135,7 @@ class LoginPage:
             self.driver.get(self.isab_url)
 
             if "Proxy Error" in self.driver.title or "Proxy Error" in self.driver.page_source:
-                self.log("  Rilevato 'Proxy Error' durante l'accesso iniziale.")
+                self.log("⚠ Rilevato 'Proxy Error' durante l'accesso iniziale.")
                 return False
 
             self.log("Tentativo di login...")
@@ -150,7 +150,7 @@ class LoginPage:
             except TimeoutException:
                 # 2. Se il form non c' , controlla se siamo già loggati (fast-skip)
                 if self._verify_logged_in_via_ui():
-                    self.log("  Rilevata sessione attiva (skip login).")
+                    self.log("✓ Rilevata sessione attiva (skip login).")
                     return True
 
                 self.log("⚠️ Username assente e sessione invalida/scaduta.")
@@ -170,7 +170,7 @@ class LoginPage:
             self.log("  Timeout durante il login")
             return False
         except Exception as e:
-            self.log(f"  Errore login: {e}")
+            self.log(f"✗ Errore login: {e}")
             return False
         else:
             self.log("  Login completato con successo")

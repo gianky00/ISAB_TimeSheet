@@ -77,10 +77,17 @@ class TimbratureBotPanel(BaseBotPanel):
 
     def _setup_content(self) -> None:
         """Costruisce il layout dei parametri con supporto al range di date."""
-        # Sezione Parametri (Senza QGroupBox per favorire il design Floating Card)
+        from src.gui.styles.ui_effects import UIEffectsManager
+        from src.gui.styles.widget_styles import CARD_SHADOW_BLUR, CARD_SHADOW_COLOR, CARD_STYLE
+
+        # Sezione Parametri
         params_container = QWidget()
+        params_container.setStyleSheet(CARD_STYLE)
+        UIEffectsManager.apply_shadow(params_container, blur=CARD_SHADOW_BLUR, color=CARD_SHADOW_COLOR)
+        UIEffectsManager.animate_fade(params_container, duration=400)
+
         params_layout = QVBoxLayout(params_container)
-        params_layout.setContentsMargins(0, 0, 0, 0)
+        params_layout.setContentsMargins(15, 15, 15, 15)
 
         self.params_widget = BotParametersWidget(show_date_range=True, show_dest_path=False)
         self.params_widget.settings_requested.connect(self._open_settings)
@@ -119,6 +126,10 @@ class TimbratureBotPanel(BaseBotPanel):
 
     def _save_data(self) -> None:
         """Salva i parametri correnti nella configurazione globale (solo se non in fase di caricamento)."""
+        from PySide6.QtWidgets import QApplication
+
+        if QApplication.closingDown():
+            return
         if getattr(self, "_is_loading", False) or not hasattr(self, "params_widget"):
             return
         date_da, date_a = self.params_widget.get_dates()

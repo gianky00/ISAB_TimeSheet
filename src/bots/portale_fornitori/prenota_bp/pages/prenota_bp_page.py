@@ -12,7 +12,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.wait import WebDriverWait
 
 from src.core.constants import Timeouts
 
@@ -65,12 +65,13 @@ class PrenotaBPPage:
                 )
 
                 # Scroll al centro
-                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", el)
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", el)  # type: ignore[no-untyped-call]
                 try:
                     el.click()
-                except Exception:
+                except Exception as e:
                     # Backup click via Javascript
-                    self.driver.execute_script("arguments[0].click();", el)
+                    self.log(f"   Click standard fallito ({e}), uso JS fallback.")
+                    self.driver.execute_script("arguments[0].click();", el)  # type: ignore[no-untyped-call]
             except (TimeoutException, AttributeError, Exception) as e:
                 if attempt == max_attempts - 1:  # Ultimo tentativo fallito
                     self.log(f"  Errore definitivo click su {locator}: {e}")
@@ -125,13 +126,13 @@ class PrenotaBPPage:
                 EC.visibility_of_element_located(PrenotaBPLocators.SUBMENU_GESTIONE_BP)
             )
             self.log("Voce menu visibile, click diretto.")
-            self.driver.execute_script("arguments[0].click();", submenu)
-        except Exception:
+            self.driver.execute_script("arguments[0].click();", submenu)  # type: ignore[no-untyped-call]
+        except Exception as e:
             # Espansione menu principale
-            self.log("Espansione menu 'Buono di Prelievo'...")
+            self.log(f"Menu non cliccabile ({e}), espansione menu 'Buono di Prelievo'...")
             self.wait_and_click(PrenotaBPLocators.MENU_BUONO_PRELIEVO)
             submenu = self.wait.until(EC.element_to_be_clickable(PrenotaBPLocators.SUBMENU_GESTIONE_BP))
-            self.driver.execute_script("arguments[0].click();", submenu)
+            self.driver.execute_script("arguments[0].click();", submenu)  # type: ignore[no-untyped-call]
 
         self._wait_for_overlay()
 
@@ -161,8 +162,8 @@ class PrenotaBPPage:
                     EC.presence_of_element_located((By.XPATH, option_xpath))
                 )
 
-                self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
-                self.driver.execute_script("arguments[0].click();", option)
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].click();", option)  # type: ignore[no-untyped-call]
                 self._wait_for_overlay()
             except Exception as e:
                 self.log(f"   Avviso: Selezione fornitore fallita ({e}), tento inserimento manuale.")
@@ -294,8 +295,8 @@ class PrenotaBPPage:
                     row.find_element(*PrenotaBPLocators.CELL_MATERIALE_DISPONIBILE)
                     indices.append(i)
             return indices, len(data_rows)
-        except Exception:
-            self.log("  Nessuna riga trovata per la richiesta.")
+        except Exception as e:
+            self.log(f"  Errore analisi disponibilità: {e}")
             return [], 0
 
     def _esegui_selezione(self, available_indices: list[int], total_rows: int) -> bool:
@@ -353,7 +354,7 @@ class PrenotaBPPage:
     def _click_safe(self, element: Any) -> None:
         """Esegue un click sicuro tramite scroll e JS fallback."""
         try:
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)  # type: ignore[no-untyped-call]
             element.click()
         except Exception:
-            self.driver.execute_script("arguments[0].click();", element)
+            self.driver.execute_script("arguments[0].click();", element)  # type: ignore[no-untyped-call]

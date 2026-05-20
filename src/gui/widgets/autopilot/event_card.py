@@ -27,6 +27,7 @@ class EventInfo(TypedDict):
     color: str
     module_id: str | None
 
+
 # Stile forzato per i tooltip in Light Mode
 TOOLTIP_CSS = """
 QToolTip {
@@ -144,13 +145,17 @@ class AutopilotEventCard(QFrame):
         name_h.addWidget(self.status_dot)
 
         name_lbl = QLabel(self.bot_name)
-        name_lbl.setStyleSheet(f"font-weight: 600; font-size: 13px; color: {COLORS['text_dark']}; background: transparent;")
+        name_lbl.setStyleSheet(
+            f"font-weight: 600; font-size: 13px; color: {COLORS['text_dark']}; background: transparent;"
+        )
         name_h.addWidget(name_lbl)
         name_h.addStretch()
         text_layout.addLayout(name_h)
 
         self.countdown_lbl = QLabel()
-        self.countdown_lbl.setStyleSheet(f"font-size: 11px; color: {COLORS['text_muted']}; background: transparent; font-weight: 500;")
+        self.countdown_lbl.setStyleSheet(
+            f"font-size: 11px; color: {COLORS['text_muted']}; background: transparent; font-weight: 500;"
+        )
         text_layout.addWidget(self.countdown_lbl)
         return text_layout
 

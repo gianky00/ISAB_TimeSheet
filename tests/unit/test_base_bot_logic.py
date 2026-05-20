@@ -60,7 +60,9 @@ class TestBaseBotLogic:
 
         try:
             # Simulate failure
-            def _raise(): raise WebDriverException("Crash")  # noqa: TRY301
+            def _raise():
+                raise WebDriverException("Crash")  # noqa: TRY301
+
             _raise()
         except WebDriverException:
             mock_driver.save_screenshot(str(screenshot_path))

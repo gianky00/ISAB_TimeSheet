@@ -77,9 +77,9 @@ class TestEmployeeManager:
         # Verifica normalizzazione UPPER
         args = mock_db.execute_query.call_args
         params = args[0][2]
-        assert params[1] == "ROSSI"
-        assert params[2] == "MARIO"
-        assert params[4] == "RSSMRA"
+        assert params[0] == "ROSSI"
+        assert params[1] == "MARIO"
+        assert params[3] == "RSSMRA"
 
     def test_add_employee_integrity_error(self, manager, mock_db):
         """Verifica la gestione di errori di integrità (es. badge duplicato)."""
@@ -91,6 +91,21 @@ class TestEmployeeManager:
 
     def test_update_employee(self, manager, mock_db):
         """Verifica l'aggiornamento dinamico dei campi."""
+        mock_db.execute_query.side_effect = [
+            [
+                {
+                    "id_risorsa": 10,
+                    "cognome": "Rossi",
+                    "nome": "Mario",
+                    "badge": "B010",
+                    "codice_fiscale": "CF10",
+                    "data_assunzione": "2020-01-01",
+                    "monitoraggio_attivo": 1,
+                    "data_nascita": None,
+                }
+            ],  # SELECT *
+            None,  # UPDATE
+        ]
         data = {"nome": "Paolo", "monitoraggio_attivo": 0}
         success = manager.update_employee(10, data)
 
@@ -101,7 +116,11 @@ class TestEmployeeManager:
 
         assert "nome = ?" in query
         assert "monitoraggio_attivo = ?" in query
-        assert params == ("Paolo", 0, 10)
+
+        # Repository: cognome, nome, badge, codice_fiscale, data_assunzione, monitoraggio_attivo, data_nascita, id_risorsa
+        assert params[1] == "PAOLO"
+        assert params[5] == 0
+        assert params[-1] == 10
 
     def test_import_from_csv_new_and_update(self, manager, mock_db, tmp_path):
         """Verifica l'importazione mista (nuovi + aggiornamenti) da CSV."""

@@ -138,9 +138,7 @@ class ProgrammingStatusWidget(QWidget):
         path.closeSubpath()
         return path
 
-    def _draw_status_indicators(
-        self, painter: QPainter, path: QPainterPath, rect: QRectF, r: float
-    ) -> None:
+    def _draw_status_indicators(self, painter: QPainter, path: QPainterPath, rect: QRectF, r: float) -> None:
         """Disegna i colori verde o arancione in base allo stato TCL/TGO."""
         green_color = QColor(COLORS["success_dark"])
         orange_color = QColor(COLORS["warning_orange"])

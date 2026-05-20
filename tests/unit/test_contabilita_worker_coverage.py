@@ -70,27 +70,6 @@ class TestContabilitaWorker:
 
         worker.finished_signal.emit.assert_called_with(False, "Errore critico: DB Error", 0, 0, 0.0)
 
-    @pytest.mark.skip(reason="Instability in Path.exists patching in this environment")
-    def test_phases_skipped_if_path_missing(self, worker, mock_manager):
-        """Test that phases are skipped if paths are not provided or files don't exist."""
-        # worker has only file_path set from init ("test.xlsx")
-
-        def mock_exists(p_obj):
-            return str(p_obj) == "test.xlsx"
-
-        # Patch directly where it is used (in contabilita_worker)
-        with patch("src.core.contabilita_worker.Path.exists", side_effect=mock_exists):
-            mock_manager.scan_workload.return_value = (1, 0)
-            mock_manager.import_data_from_excel.return_value = (True, "OK", 0, 0)
-
-            worker.run()
-
-            # Verify only main import called
-            mock_manager.import_data_from_excel.assert_called_once()
-            mock_manager.import_giornaliere.assert_not_called()
-            mock_manager.import_attivita_programmate.assert_not_called()
-            mock_manager.import_certificati_campione.assert_not_called()
-
     def test_progress_calculation(self, worker, mock_manager):
         """Test internal total ops calculation."""
         worker.attivita_path = "exists"

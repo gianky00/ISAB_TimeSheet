@@ -22,8 +22,14 @@ CONFIG_DIR = PATHS_CONFIG_DIR
 def deep_update_paths(data: Any, old_path: str, new_path: str) -> Any:
     """Sostituisce ricorsivamente i puntamenti ai vecchi percorsi nelle stringhe."""
     if isinstance(data, str):
-        updated = data.replace(old_path.replace("/", ""), new_path.replace("/", ""))
-        return updated.replace(old_path.replace("", "/"), new_path.replace("", "/"))
+        # Normalizziamo i path per il confronto (entrambi con /)
+        old_norm = old_path.replace("\\", "/")
+        new_norm = new_path.replace("\\", "/")
+        data_norm = data.replace("\\", "/")
+
+        if old_norm in data_norm:
+            return data_norm.replace(old_norm, new_norm)
+        return data
     if isinstance(data, dict):
         return {k: deep_update_paths(v, old_path, new_path) for k, v in data.items()}
     if isinstance(data, list):

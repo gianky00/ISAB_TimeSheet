@@ -45,10 +45,6 @@ class TestTelegramBridge:
         with patch("src.core.telegram_bridge.QObject.__init__"):
             return TelegramUIBridge(mw)
 
-    @pytest.mark.skip(reason="Incompatibilità mock asincrono modulare in ambiente headless V9.0.")
-    def test_intent_processing_pdl(self, bridge):
-        pass
-
     def test_handle_command_run_ts(self, bridge):
         """Verifica il dispatch del comando run_ts isolando ui_commands."""
         with patch.object(bridge.ui_commands, "run_ts_bot") as mock_run:

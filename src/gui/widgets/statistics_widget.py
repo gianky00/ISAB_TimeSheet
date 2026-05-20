@@ -18,9 +18,9 @@ from src.core.stats_manager import StatsManager
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import (
     PrimaryButton,
+    SortableTableWidgetItem,
     StandardTable,
 )
-from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 

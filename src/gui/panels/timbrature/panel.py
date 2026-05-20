@@ -136,7 +136,9 @@ class TimbratureDBPanel(QWidget):
         """Configura la barra degli strumenti superiore con filtri e ricerca."""
         self.toolbar_container = QFrame()
         self.toolbar_container.setObjectName("filterBar")
-        self.toolbar_container.setStyleSheet(f"QFrame#filterBar {{ background-color: {COLORS['bg_white']}; border: 1px solid {COLORS['border_light']}; border-radius: 12px; }}")
+        self.toolbar_container.setStyleSheet(
+            f"QFrame#filterBar {{ background-color: {COLORS['bg_white']}; border: 1px solid {COLORS['border_light']}; border-radius: 12px; }}"
+        )
 
         toolbar_layout = QHBoxLayout(self.toolbar_container)
         toolbar_layout.setContentsMargins(15, 10, 15, 10)
@@ -152,6 +154,7 @@ class TimbratureDBPanel(QWidget):
     def _setup_search_section(self, layout: QHBoxLayout) -> None:
         """Configura la sezione di ricerca libera."""
         from src.gui.styles import LABEL_MUTED, LINEEDIT_STYLE
+
         search_v = QVBoxLayout()
         search_v.setSpacing(4)
 
@@ -179,6 +182,7 @@ class TimbratureDBPanel(QWidget):
     def _setup_filters_section(self, layout: QHBoxLayout) -> None:
         """Configura i selettori di reparto e cantiere."""
         from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED
+
         filters_h = QHBoxLayout()
         filters_h.setSpacing(12)
 
@@ -214,6 +218,7 @@ class TimbratureDBPanel(QWidget):
     def _setup_action_buttons(self, layout: QHBoxLayout) -> None:
         """Aggiunge i pulsanti di azione (es. Importa)."""
         from src.gui.widgets.modern_button import ModernButton
+
         import_btn = ModernButton(
             "IMPORTA EXCEL",
             variant=ModernButton.Variant.PRIMARY,

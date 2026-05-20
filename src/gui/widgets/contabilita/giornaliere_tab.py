@@ -23,7 +23,7 @@ from src.core.utils.formatters import format_date_it
 from src.gui.formatters import format_number_smart
 from src.gui.styles import COLORS
 from src.gui.widgets import ExcelTableWidget
-from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
+from src.gui.widgets.core_widgets import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 if TYPE_CHECKING:

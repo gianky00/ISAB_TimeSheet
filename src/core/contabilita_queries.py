@@ -1,17 +1,19 @@
 """
 Bot TS - Contabilita Queries
 Gestisce tutte le query di lettura per i dati della Contabilità Strumentale.
+Delegato al ContabilitaRepository per l'accesso ai dati.
 """
 
 from pathlib import Path
 from typing import Any
 
-from src.core.database import db_manager
-from src.core.excel_importer import ExcelImporter  # Per accedere ai COLUMNS_MAPPING
+from src.core.database.repositories import ContabilitaRepository
 
 
 class ContabilitaQueries:
     """Gestore per le query di lettura del database della Contabilità Strumentale."""
+
+    _repo = ContabilitaRepository()
 
     # Indici Colonne Certificati (Allineati a get_certificati_campione_data)
     CERT_IDX_ID_STRUMENTO = 0
@@ -30,108 +32,31 @@ class ContabilitaQueries:
 
     @classmethod
     def get_available_years(cls, db_path: Path) -> list[int]:
-        """Restituisce la lista degli anni presenti nel DB (unione di Dati e Giornaliere)."""
-        if not db_path.exists():
-            return []
-        try:
-            with db_manager.get_connection(db_path, read_only=True) as conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT DISTINCT year FROM contabilita UNION SELECT DISTINCT year FROM giornaliere ORDER BY 1 DESC"
-                )
-                return [row[0] for row in cursor.fetchall()]
-        except Exception:
-            return []
+        """Restituisce la lista degli anni presenti nel DB."""
+        return cls._repo.get_available_years()
 
     @classmethod
     def get_data_by_year(cls, db_path: Path, year: int) -> list[tuple[Any, ...]]:
         """Restituisce i dati tabella Dati per un anno specifico."""
-        if not db_path.exists():
-            return []
-        try:
-            with db_manager.get_connection(db_path, read_only=True) as conn:
-                cursor = conn.cursor()
-                cols = list(ExcelImporter.COLUMNS_MAPPING.values())
-                query = (
-                    f"SELECT {', '.join(cols)} FROM contabilita WHERE year = ? ORDER BY n_prev DESC, id DESC"  # nosec B608
-                )
-                cursor.execute(query, (year,))
-                return cursor.fetchall()
-        except Exception:
-            return []
+        # Restituiamo tuple per compatibilità con FastTableModel
+        return cls._repo.get_data_by_year(year, as_objects=False)
 
     @classmethod
     def get_giornaliere_by_year(cls, db_path: Path, year: int) -> list[tuple[Any, ...]]:
         """Restituisce i dati Giornaliere per un anno specifico."""
-        if not db_path.exists():
-            return []
-        try:
-            with db_manager.get_connection(db_path, read_only=True) as conn:
-                cursor = conn.cursor()
-                cols = [
-                    "data",
-                    "personale",
-                    "tcl",
-                    "descrizione",
-                    "n_prev",
-                    "odc",
-                    "pdl",
-                    "inizio",
-                    "fine",
-                    "ore",
-                    "nome_file",
-                ]
-                query = (
-                    f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"  # nosec B608
-                )
-                cursor.execute(query, (year,))
-                return cursor.fetchall()
-        except Exception:
-            return []
+        return cls._repo.get_giornaliere_by_year(year, as_objects=False)
 
     @classmethod
     def get_attivita_programmate_data(cls, db_path: Path) -> list[tuple[Any, ...]]:
-        """Restituisce i dati Attività Programmate (inclusi stili)."""
-        if not db_path.exists():
-            return []
-        try:
-            with db_manager.get_connection(db_path, read_only=True) as conn:
-                cursor = conn.cursor()
-                cols = ExcelImporter.ATTIVITA_PROGRAMMATE_COLS
-                query = f"SELECT {', '.join(cols)} FROM attivita_programmate ORDER BY id ASC"  # nosec B608
-                cursor.execute(query)
-                return cursor.fetchall()
-        except Exception:
-            return []
+        """Restituisce i dati Attività Programmate."""
+        return cls._repo.get_attivita_programmate(as_objects=False)
 
     @classmethod
     def get_certificati_campione_data(cls, db_path: Path) -> list[tuple[Any, ...]]:
         """Restituisce i dati Certificati Campione."""
-        if not db_path.exists():
-            return []
-        try:
-            with db_manager.get_connection(db_path, read_only=True) as conn:
-                cursor = conn.cursor()
-                cols = ExcelImporter.CERTIFICATI_CAMPIONE_COLS
-                cols_str = ", ".join(cols)
-                # Includiamo anche annotazioni, ubicazione e id (che serve per l'aggiornamento)
-                query = f"SELECT {cols_str}, annotazioni, ubicazione, id FROM certificati_campione ORDER BY id ASC"  # nosec B608
-                cursor.execute(query)
-                return cursor.fetchall()
-        except Exception:
-            return []
+        return cls._repo.get_certificati_campione(as_objects=False)
 
     @classmethod
     def get_scarico_ore_data(cls, db_path: Path) -> list[tuple[Any, ...]]:
-        """Restituisce tutti i dati della tabella scarico_ore inclusi gli stili."""
-        if not db_path.exists():
-            return []
-        try:
-            with db_manager.get_connection(db_path, read_only=True) as conn:
-                cursor = conn.cursor()
-                cols = ExcelImporter.SCARICO_ORE_COLS
-                query = f"SELECT {', '.join(cols)} FROM scarico_ore ORDER BY id DESC"  # nosec B608
-                cursor.execute(query)
-                return cursor.fetchall()
-        except Exception:
-            return []
+        """Restituisce tutti i dati della tabella scarico_ore."""
+        return cls._repo.get_scarico_ore(as_objects=False)

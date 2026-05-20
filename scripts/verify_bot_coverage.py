@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-import coverage  # type: ignore[import-untyped]
+import coverage
 import pytest
 
 

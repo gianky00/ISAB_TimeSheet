@@ -255,17 +255,39 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             num_oda_sel = self._get_selector(ScaricoTSLocators.ODA_NUMBER_FIELD)
             pos_oda_sel = self._get_selector(ScaricoTSLocators.ODA_POSITION_FIELD)
 
-            # Inserimento via JS per robustezza (come Selenium) per bypassare controlli di visibilit  restrittivi
+            # Inserimento via JS per robustezza (come Selenium) per bypassare controlli di visibilità restrittivi
             js_script = "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); }"
 
             self.page.locator(num_oda_sel).evaluate(js_script, numero_oda)
             self.page.locator(pos_oda_sel).evaluate(js_script, posizione_oda)
 
             xpath_cerca = "xpath=//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Cerca']]"
-            el_cerca = self.page.wait_for_selector(xpath_cerca, state="attached")
+            # Utilizza state="visible" e click nativo per simulare fedelmente l'interazione umana (allineato a Selenium)
+            el_cerca = self.page.wait_for_selector(xpath_cerca, state="visible", timeout=5000)
             if el_cerca:
-                el_cerca.evaluate("el => el.click()")
+                el_cerca.click()
+
+            # --- ATTESA ROBUSTA DEL CARICAMENTO ASINCRONO ---
+            # 1. Attesa di cortesia per far partire la richiesta e far apparire l'overlay
+            self.page.wait_for_timeout(500)
+
+            # 2. Attesa della scomparsa dell'overlay
             self._wait_for_overlay()
+
+            # 3. Attesa dinamica del rendering della griglia (vuota o con risultati)
+            xpath_rows_or_empty = (
+                "xpath=//div[contains(@class, 'x-grid-empty')] | "
+                "//table[contains(@class, 'x-grid-item')] | "
+                "//tr[contains(@class, 'x-grid-row')]"
+            )
+            try:
+                self.page.wait_for_selector(xpath_rows_or_empty, state="attached", timeout=5000)
+            except Exception:
+                self.log("⚠️ Timeout attesa caricamento griglia risultati, procedo comunque.")
+
+            # Ulteriore attesa per stabilità del repaint grafico ExtJS
+            self.page.wait_for_timeout(500)
+            # -------------------------------------------------
 
             # Verifica se ci sono risultati
             xpath_empty = "//div[contains(@class, 'x-grid-empty')]"
@@ -319,6 +341,9 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
         if not self.page:
             return None
         try:
+            # Attesa di cortesia per far stabilizzare l'interfaccia dopo il caricamento dei dati
+            self.page.wait_for_timeout(500)
+
             # XPath ESATTO dal branch main
             xpath_export = "xpath=//div[contains(@class, 'x-tool') and @role='button'][.//div[@data-ref='toolEl' and contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]]"
 
@@ -369,6 +394,11 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             if ok:
                 self.log(f" ✅ {msg}")
                 processed += 1
+            elif msg.startswith("EMPTY:"):
+                clean_msg = msg.replace("EMPTY:", "").strip()
+                self.log(f" ⚠️ {clean_msg}")
+                # Emette il segnale per far apparire il popup grafico nella GUI
+                self.signals.critical_error.emit("Avviso Timesheet Vuoto", clean_msg)
             else:
                 self.log(f" ❌ Errore elaborazione {Path(f).name}: {msg}")
         self.log(f"   Elaborazione conclusa: {processed}/{len(file_list)} completati.")

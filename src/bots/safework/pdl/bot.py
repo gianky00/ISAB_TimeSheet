@@ -13,7 +13,7 @@ import fitz
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.wait import WebDriverWait
 
 from src.bots.base.base_bot import StepStatus
 from src.bots.base.selenium_bot_config import SeleniumBotConfig
@@ -41,11 +41,14 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     def __init__(
         self,
-        config: SeleniumBotConfig,
+        username: str | None = None,
+        password: str | None = None,
+        config: SeleniumBotConfig | None = None,
         account_type: str = "Esecutore",
+        **kwargs: Any,
     ) -> None:
         """Inizializza il bot SafeWork PDL."""
-        super().__init__(config, account_type=account_type)
+        super().__init__(username, password, config, account_type=account_type)
         self.downloaded_files: list[str] = []
         self.missing_pdls: list[str] = []
 
@@ -90,18 +93,19 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         return True, ""
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Ciclo principale di scarico PDL con gestione sessione orchestrata."""
         self.update_step("login", StepStatus.COMPLETED)
 
+        rows = data.get("rows", []) if isinstance(data, dict) else data
         success_count = 0
-        total = len(data)
+        total = len(rows)
         self.downloaded_files = []
         all_pdl_paths: list[str] = []
 
         self.log(f"[AVVIO] Inizio elaborazione di {total} PDL...")
 
-        for index, item in enumerate(data):
+        for index, item in enumerate(rows):
             try:
                 self._check_stop()
                 if self._process_pdl_pipeline(item, index, total, all_pdl_paths):
@@ -116,7 +120,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         # Unione finale di sessione
         self.update_step("session", StepStatus.RUNNING)
-        self._handle_session_merge(data, all_pdl_paths)
+        self._handle_session_merge(rows, all_pdl_paths)
         self.update_step("session", StepStatus.COMPLETED)
 
         self.log(f"ℹ️ Completato: {success_count}/{total} PDL.")
@@ -236,7 +240,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self._attendi_scomparsa_overlay(timeout_secondi=5)
 
         try:
-            self.driver.execute_script("window.scrollTo(0, 0);")
+            self.driver.execute_script("window.scrollTo(0, 0);")  # type: ignore[no-untyped-call]
 
             # Pulizia preventiva
             clean_name = pdl_num.replace("/", "") + ".pdf"
@@ -282,7 +286,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self._attendi_scomparsa_overlay()
 
         try:
-            self.driver.execute_script("window.scrollTo(0, 0);")
+            self.driver.execute_script("window.scrollTo(0, 0);")  # type: ignore[no-untyped-call]
 
             # Pulizia preventiva
             self._safe_remove(str(Path(self.download_path) / "ReportPdLRinnovi.pdf"))

@@ -89,22 +89,17 @@ class ScaricoPDLPanel(BaseBotPanel):
 
     def _setup_content_area(self) -> None:
         """Inizializza il contenuto specifico del pannello: filtri, opzioni stampa e tabella PDL."""
-        self._setup_params_bar()
-        self._setup_table_section()
+        from src.gui.styles.ui_effects import UIEffectsManager
+        from src.gui.styles.widget_styles import CARD_SHADOW_BLUR, CARD_SHADOW_COLOR, CARD_STYLE
 
-    def _setup_params_bar(self) -> None:
-        """Configura la barra dei parametri superiore."""
         self.params_container = QFrame()
-        self.params_container.setObjectName("filterBar")
-        self.params_container.setStyleSheet(f"""
-            QFrame#filterBar {{
-                background: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 12px;
-            }}
-        """)
+        self.params_container.setStyleSheet(CARD_STYLE)
+        UIEffectsManager.apply_shadow(self.params_container, blur=CARD_SHADOW_BLUR, color=CARD_SHADOW_COLOR)
+        UIEffectsManager.animate_fade(self.params_container, duration=400)
+
+        # Usiamo il layout interno del frame per i parametri
         params_lay = QHBoxLayout(self.params_container)
-        params_lay.setContentsMargins(15, 10, 15, 10)
+        params_lay.setContentsMargins(15, 15, 15, 15)
         params_lay.setSpacing(20)
 
         self._setup_print_options(params_lay)
@@ -112,6 +107,8 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         params_lay.addStretch()
         self.content_layout.addWidget(self.params_container)
+
+        self._setup_table_section()
 
     def _setup_print_options(self, layout: QHBoxLayout) -> None:
         """Configura i controlli di stampa."""
@@ -215,20 +212,24 @@ class ScaricoPDLPanel(BaseBotPanel):
 
     def _save_data(self) -> None:
         """Salva i dati e i parametri correnti nella configurazione persistente."""
+        from PySide6.QtWidgets import QApplication
+
+        if QApplication.closingDown():
+            return
         if getattr(self, "_is_loading", False):
             return
         if not hasattr(self, "data_table") or not hasattr(self, "check_stampa"):
             return
 
-        config_manager.set_config_value("last_pdl_data", self.data_table.get_data())
-        config_manager.set_config_value(
-            "last_pdl_params",
-            {
-                "stampa": self.check_stampa.isChecked(),
-                "stampante": self.combo_stampanti.currentText(),
-                "destinazione": self.edit_dest.text(),
-            },
-        )
+        from src.core.bots.services import ScaricoPDLService
+
+        service = ScaricoPDLService()
+        params = {
+            "stampa": self.check_stampa.isChecked(),
+            "stampante": self.combo_stampanti.currentText(),
+            "dest_path": self.edit_dest.text(),
+        }
+        service.save_config(params, self.data_table.get_data())
 
     def _update_status_list(self, force: bool = False) -> None:
         """Sincronizza il contatore visivo dello stato con il numero di righe della tabella."""
@@ -263,26 +264,26 @@ class ScaricoPDLPanel(BaseBotPanel):
 
     def _load_saved_data(self) -> None:
         """Ripristina i dati e i parametri dell'ultima sessione dalla configurazione locale."""
-        # Se la tabella ha già dati (es. iniettati da set_pdl_list), evita il caricamento dei vecchi dati
-        if self.data_table.table.rowCount() > 0:
-            logger.debug("Salto caricamento dati salvati: tabella già popolata.")
-            return
-
         self._is_loading = True
         try:
-            config = config_manager.load_config()
-            data = config.get("last_pdl_data", [])
-            if data:
-                self.data_table.set_data(data)
+            from src.core.bots.services import ScaricoPDLService
 
-            p_cfg = config.get("last_pdl_params", {})
-            self.check_stampa.setChecked(p_cfg.get("stampa", False))
-            if p_cfg.get("stampante"):
-                self.combo_stampanti.setCurrentText(p_cfg["stampante"])
-            dest_path = p_cfg.get("destinazione")
-            if not dest_path or not Path(dest_path).exists():
-                dest_path = str(Path.home() / "Downloads")
-            self.edit_dest.setText(dest_path)
+            service = ScaricoPDLService()
+            cfg = service.load_config()
+
+            # Ripristina sempre le impostazioni di stampa e destinazione
+            self.check_stampa.setChecked(cfg["stampa"])
+            if cfg["stampante"]:
+                self.combo_stampanti.setCurrentText(cfg["stampante"])
+            self.edit_dest.setText(cfg["dest_path"])
+
+            # Ripristina i dati in tabella solo se questa è attualmente vuota
+            if self.data_table.table.rowCount() == 0:
+                if cfg["data"]:
+                    self.data_table.set_data(cfg["data"])
+            else:
+                logger.debug("Salto caricamento dati salvati in tabella: già popolata.")
+
             self._update_status_list()
         finally:
             self._is_loading = False
@@ -296,26 +297,8 @@ class ScaricoPDLPanel(BaseBotPanel):
             )
             return None
 
-        # Salvataggio persistente
-        config_manager.set_config_value("last_pdl_data", items)
-        config_manager.set_config_value(
-            "last_pdl_params",
-            {
-                "stampa": self.check_stampa.isChecked(),
-                "stampante": self.combo_stampanti.currentText(),
-                "destinazione": self.edit_dest.text(),
-            },
-        )
-
-        return [
-            {
-                "numero_pdl": it["numero_pdl"],
-                "print_enabled": self.check_stampa.isChecked(),
-                "printer_name": self.combo_stampanti.currentText(),
-                "output_dir": self.edit_dest.text(),
-            }
-            for it in items
-        ]
+        self._save_data()
+        return items  # In the new architecture we just return rows and the service prepares payload
 
     def get_safework_credentials(self) -> tuple[str, str, str]:
         """Recupera le credenziali SafeWork configurate. Ritorna (user, pass, tipo)."""
@@ -348,26 +331,29 @@ class ScaricoPDLPanel(BaseBotPanel):
             self.stop_btn.setEnabled(False)
             return
 
-        bot_data = self._get_bot_data()
-        if not bot_data:
+        bot_data_rows = self._get_bot_data()
+        if not bot_data_rows:
             self._update_status(STATUS_COLORS["pending"], "In attesa")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
 
-        config = config_manager.load_config()
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-        # Configura i parametri per il BotWorker
-        bot_params = {
-            "username": username,
-            "password": password,
-            "account_type": account_type,
-            "headless": config.get("browser_headless", False),
-            "timeout": config.get("browser_timeout", 30),
-            "download_path": self.edit_dest.text() or config_manager.get_download_path(),
+        from src.core.bots.services import ScaricoPDLService
+
+        service = ScaricoPDLService()
+
+        params = {
+            "stampa": self.check_stampa.isChecked(),
+            "stampante": self.combo_stampanti.currentText(),
+            "dest_path": self.edit_dest.text(),
         }
+
+        bot_params, bot_data = service.prepare_payload(
+            (username, password, account_type), params, bot_data_rows, params_override
+        )
 
         # Inizializza il worker in modo asincrono
         worker = BotWorker(
@@ -395,41 +381,21 @@ class ScaricoPDLPanel(BaseBotPanel):
     def _on_worker_finished(self, success: bool) -> None:
         """Gestisce il completamento del worker."""
         # Recupera i file scaricati prima che il worker venga distrutto dal super()
-        downloaded_files: list[str] = []
-        if self.worker and hasattr(self.worker.bot, "downloaded_files"):
-            downloaded_files = getattr(self.worker.bot, "downloaded_files", [])
+        bot_instance = self.worker.bot if self.worker else None
 
         super()._on_worker_finished(success)
 
         if success:
             ToastManager.instance().show("Processo PDL Completato!", "success")
 
-            # Logica Telegram: Unione e invio se richiesto dal bridge
-            if getattr(self, "merge_and_send_from_telegram", False) and downloaded_files:
-                self._handle_telegram_auto_send(downloaded_files)
+            if getattr(self, "merge_and_send_from_telegram", False) and bot_instance:
+                main_win = self.window()
+                tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-    def _handle_telegram_auto_send(self, files: list[str]) -> None:
-        """Unisce i PDF e li invia via Telegram se il servizio è disponibile."""
-        main_win = self.window()
-        tg_service = getattr(main_win, "telegram", None) if main_win else None
+                from src.core.bots.services import ScaricoPDLService
 
-        if not tg_service or not files:
-            return
-
-        self.log_widget.append("📦 Elaborazione report per Telegram...")
-
-        try:
-            # Semplice invio del primo file o logica di merge
-            report_path = files[0]
-            if len(files) > 1:
-                self.log_widget.append(f"📎 Inviando {len(files)} file a Telegram...")
-
-            tg_service.send_document_sync(
-                report_path, caption=f"✅ Scarico PDL completato ({len(files)} file)"
-            )
-            self.log_widget.append("📤 Report inviato correttamente a Telegram.")
-        except Exception as e:
-            self.log_widget.append(f"⚠️ Errore invio Telegram: {e}", "ERROR")
+                service = ScaricoPDLService()
+                service.handle_post_execution(success, bot_instance, tg_service)
 
     def on_step_completed(self, step_idx: int, success: bool, message: str = "") -> None:
         """Aggiorna lo stato visivo di una specifica riga PDL."""

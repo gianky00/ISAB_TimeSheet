@@ -15,7 +15,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By  # Explicit import for internal use
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.wait import WebDriverWait
 
 from src.bots.portale_fornitori.scarico_ts.locators import ScaricoTSLocators
 from src.core.constants import Timeouts
@@ -77,8 +77,8 @@ class ScaricoTSPage:
             # Click Option
             option_xpath = f"//li[normalize-space(text())='{supplier}']"
             option = self.long_wait.until(EC.presence_of_element_located((By.XPATH, option_xpath)))
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
-            self.driver.execute_script("arguments[0].click();", option)
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].click();", option)  # type: ignore[no-untyped-call]
             self._wait_for_overlay()
 
             # Set Date
@@ -104,14 +104,14 @@ class ScaricoTSPage:
 
             # Input OdA
             field_oda = self.wait.until(EC.presence_of_element_located(ScaricoTSLocators.ODA_NUMBER_FIELD))
-            self.driver.execute_script("arguments[0].value = arguments[1];", field_oda, oda_number)
-            self.driver.execute_script(js_dispatch_events, field_oda)
+            self.driver.execute_script("arguments[0].value = arguments[1];", field_oda, oda_number)  # type: ignore[no-untyped-call]
+            self.driver.execute_script(js_dispatch_events, field_oda)  # type: ignore[no-untyped-call]
 
             # Input Position
             field_pos = self.wait.until(EC.presence_of_element_located(ScaricoTSLocators.ODA_POSITION_FIELD))
-            self.driver.execute_script("arguments[0].value = '';", field_pos)
-            self.driver.execute_script("arguments[0].value = arguments[1];", field_pos, oda_position)
-            self.driver.execute_script(js_dispatch_events, field_pos)
+            self.driver.execute_script("arguments[0].value = '';", field_pos)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].value = arguments[1];", field_pos, oda_position)  # type: ignore[no-untyped-call]
+            self.driver.execute_script(js_dispatch_events, field_pos)  # type: ignore[no-untyped-call]
 
             # Search
             self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.SEARCH_BUTTON)).click()
