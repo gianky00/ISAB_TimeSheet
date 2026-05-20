@@ -23,7 +23,7 @@ VENV_PYTHON = (
 )
 
 
-def find_git_executable():
+def find_git_executable() -> str:
     """Tenta di trovare l'eseguibile git in percorsi comuni su Windows."""
     # 1. Prova nel PATH standard
     git_bin = shutil.which("git")
@@ -55,7 +55,9 @@ def find_git_executable():
     return "git"
 
 
-def run_command(cmd, description, exit_on_fail=True, capture=False):
+def run_command(
+    cmd: list[str], description: str, exit_on_fail: bool = True, capture: bool = False
+) -> str | bool:
     """Executes a subprocess command with error handling and optional output capture."""
     print(f"\n[STEP] {description}...")
     sys.stdout.flush()
@@ -105,7 +107,7 @@ def run_command(cmd, description, exit_on_fail=True, capture=False):
         return False
 
 
-def get_current_version():
+def get_current_version() -> str:
     """Extracts the current version string from src/core/version.py."""
     version_file = ROOT_DIR / "src" / "core" / "version.py"
     content = version_file.read_text(encoding="utf-8")
@@ -115,7 +117,7 @@ def get_current_version():
     return match.group(1) if match else "unknown"
 
 
-def notify_telegram(message) -> None:
+def notify_telegram(message: str) -> None:
     """Invia notifica rapida via Telegram (usando i segreti nel progetto)"""
     try:
         config_path = ROOT_DIR / "config.json"
@@ -200,7 +202,169 @@ def detect_bump_type() -> str | None:
         return "patch"
 
 
-def main() -> None:  # noqa: C901
+def verify_clean_git_status(git_bin: str) -> None:
+    """Verifica se il repository Git locale ha modifiche non committate."""
+    try:
+        status = subprocess.run(
+            [git_bin, "status", "--porcelain"],
+            cwd=ROOT_DIR,
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip()
+        if status:
+            print("\n❌ [ERROR] Ci sono modifiche non committate nel repository Git!")
+            print(status)
+            print("Pulisci o committa le modifiche prima di procedere con il rilascio.\n")
+            sys.exit(1)
+    except Exception as e:
+        print(f"⚠️ Impossibile verificare lo stato di Git: {e}")
+
+
+def update_json_changelog(version: str, git_bin: str) -> None:
+    """Genera e aggiorna il changelog.json strutturato in src/core/changelog.json."""
+    changelog_path = ROOT_DIR / "src" / "core" / "changelog.json"
+
+    # Ottiene l'ultimo tag Git prima del rilascio
+    last_tag = None
+    with contextlib.suppress(Exception):
+        tags_res = subprocess.run(
+            [git_bin, "tag", "--sort=-v:refname"],
+            cwd=ROOT_DIR,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        tags = [t.strip() for t in tags_res.stdout.splitlines() if t.strip()]
+        # Se abbiamo creato un nuovo tag per questa versione, prendiamo il precedente
+        if tags:
+            last_tag = tags[1] if len(tags) > 1 and tags[0] == f"v{version}" else tags[0]
+
+    # Recupera i messaggi dei commit dall'ultimo tag a HEAD
+    notes = []
+    if last_tag:
+        with contextlib.suppress(Exception):
+            logs_res = subprocess.run(
+                [git_bin, "log", f"{last_tag}..HEAD", "--pretty=format:%s"],
+                cwd=ROOT_DIR,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            logs = logs_res.stdout.splitlines()
+            notes = [line.strip() for line in logs if line.strip()]
+
+    if not notes:
+        notes = [f"Aggiornamenti e ottimizzazioni di stabilità per la versione v{version}"]
+
+    # Carica il file JSON esistente
+    changelog_data = []
+    if changelog_path.exists():
+        with contextlib.suppress(Exception):
+            changelog_data = json.loads(changelog_path.read_text(encoding="utf-8"))
+
+    # Rimuove eventuali duplicati con la stessa versione
+    changelog_data = [entry for entry in changelog_data if entry.get("version") != version]
+
+    from datetime import datetime
+    new_entry = {
+        "version": version,
+        "date": datetime.now().strftime("%Y-%m-%d"),
+        "notes": notes,
+    }
+    changelog_data.insert(0, new_entry)
+
+    try:
+        changelog_path.write_text(json.dumps(changelog_data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        print(f"✓ Changelog JSON strutturato aggiornato in: {changelog_path.name}")
+    except Exception as e:
+        print(f"⚠️ Impossibile salvare il changelog JSON: {e}")
+
+
+def prompt_interactive_release(args: argparse.Namespace) -> None:
+    """Gestisce l'interazione con l'utente per configurare i parametri di rilascio."""
+    print("\n" + "=" * 60)
+    print("✨ [MODALITÀ INTERATTIVA DI RILASCIO SYNCROJOB]")
+    print("=" * 60)
+
+    # 1. Bump type
+    print("\nSeleziona il tipo di incremento di versione:")
+    print("  1) patch (default) - Bugfix e stabilità")
+    print("  2) minor           - Nuove funzionalità retrocompatibili")
+    print("  3) major           - Modifiche importanti non retrocompatibili")
+    print("  4) auto            - Rilevamento automatico basato sui commit")
+    choice = input("Scelta (1-4): ").strip()
+    if choice == "2":
+        args.type = "minor"
+    elif choice == "3":
+        args.type = "major"
+    elif choice == "4":
+        args.type = "auto"
+    else:
+        args.type = "patch"
+
+    # 2. Skip tests
+    skip_ans = input("\nDesideri saltare la suite dei test di qualità pre-flight? (s/N): ").strip().lower()
+    args.skip_tests = (skip_ans == "s")
+
+    # 3. Nuitka or PyInstaller
+    nuitka_ans = input("\nDesideri compilare con Nuitka invece di PyInstaller? (s/N): ").strip().lower()
+    args.nuitka = (nuitka_ans == "s")
+
+    # 4. Deploy
+    deploy_ans = input("\nDesideri eseguire il deploy su Netlify? (s/N): ").strip().lower()
+    args.deploy = (deploy_ans == "s")
+
+    # 5. Push remote
+    push_ans = input("\nDesideri eseguire il push remoto automatico su origin/main? (S/n): ").strip().lower()
+    args.push = (push_ans != "n")
+
+    print("\n" + "=" * 60 + "\n")
+
+
+def run_git_operations(new_version: str, args: argparse.Namespace) -> None:
+    """Esegue il commit e il tagging della nuova versione in Git."""
+    if args.no_git:
+        return
+    run_command(["git", "add", "."], "Staging changes")
+    run_command(
+        ["git", "commit", "-m", f"chore: release v{new_version} [auto]"],
+        f"Committing v{new_version}",
+    )
+    run_command(
+        ["git", "tag", "-a", f"v{new_version}", "-m", f"Release v{new_version}"],
+        f"Tagging v{new_version}",
+    )
+    if args.push:
+        run_command(["git", "push", "origin", "main", "--tags"], "Pushing to remote")
+
+
+def run_build_operations(new_version: str, args: argparse.Namespace, start_time: float) -> None:
+    """Compila il pacchetto di distribuzione e notifica il rilascio su Telegram."""
+    build_script = ROOT_DIR / "admin" / "Crea Setup" / "build_dist.py"
+    build_cmd = [str(VENV_PYTHON), str(build_script)]
+    if not args.deploy:
+        build_cmd.append("--no-deploy")
+    if args.nuitka:
+        build_cmd.append("--use-nuitka")
+    run_command(build_cmd, "Building Distribution")
+
+    duration = time.time() - start_time
+    success_msg = (
+        f"🚀 *SyncroJob v{new_version} Rilasciata!*\n"
+        f"Status: Success\n"
+        f"Tempo: {duration:.1f}s\n"
+        f"Mode: {'Cloud' if args.deploy else 'Local'}"
+    )
+
+    print("\n" + "=" * 60)
+    print(f"✨ RELEASE v{new_version} COMPLETED in {duration:.1f}s")
+    print("=" * 60)
+
+    notify_telegram(success_msg)
+
+
+def main() -> None:
     """Entry point for the release process, handling arguments and workflow execution."""
     # Fix encoding for Windows console to support emoji
     if sys.platform == "win32":
@@ -230,6 +394,18 @@ def main() -> None:  # noqa: C901
     parser.add_argument("--push", action="store_true", help="Push to remote after release")
     args = parser.parse_args()
 
+    git_bin = find_git_executable()
+
+    # Rileva se lo script è in esecuzione in un terminale interattivo senza argomenti
+    is_interactive = len(sys.argv) == 1 and sys.stdin.isatty()
+
+    if is_interactive:
+        prompt_interactive_release(args)
+
+    # Controlla lo stato di Git prima di avviare il processo
+    if not args.no_git and not args.force:
+        verify_clean_git_status(git_bin)
+
     start_time = time.time()
 
     # 1. Pre-Flight Check Interno
@@ -253,39 +429,17 @@ def main() -> None:  # noqa: C901
     # 4.1 Update Changelog
     run_command([str(VENV_PYTHON), "-m", "commitizen", "changelog"], "Updating CHANGELOG.md via Commitizen")
 
+    # 4.2 Ottiene la nuova versione prima di aggiornare il changelog JSON
     new_version = get_current_version()
 
-    # 5. Git Operations
-    if not args.no_git:
-        run_command(["git", "add", "."], "Staging changes")
-        run_command(
-            ["git", "commit", "-m", f"chore: release v{new_version} [auto]"],
-            f"Committing v{new_version}",
-        )
-        run_command(
-            ["git", "tag", "-a", f"v{new_version}", "-m", f"Release v{new_version}"],
-            f"Tagging v{new_version}",
-        )
-        if args.push:
-            run_command(["git", "push", "origin", "main", "--tags"], "Pushing to remote")
+    # 4.3 Update JSON Changelog strutturato
+    update_json_changelog(new_version, git_bin)
 
-    # 5. Build
-    build_script = ROOT_DIR / "admin" / "Crea Setup" / "build_dist.py"
-    build_cmd = [str(VENV_PYTHON), str(build_script)]
-    if not args.deploy:
-        build_cmd.append("--no-deploy")
-    if args.nuitka:
-        build_cmd.append("--use-nuitka")
-    run_command(build_cmd, "Building Distribution")
+    # 5. Operazioni Git
+    run_git_operations(new_version, args)
 
-    duration = time.time() - start_time
-    success_msg = f"🚀 *SyncroJob v{new_version} Rilasciata!*\nStatus: Success\nTempo: {duration:.1f}s\nMode: {'Cloud' if args.deploy else 'Local'}"
-
-    print("\n" + "=" * 60)
-    print(f"✨ RELEASE v{new_version} COMPLETED in {duration:.1f}s")
-    print("=" * 60)
-
-    notify_telegram(success_msg)
+    # 6. Compilazione e notifiche
+    run_build_operations(new_version, args, start_time)
 
 
 if __name__ == "__main__":

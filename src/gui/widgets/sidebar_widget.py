@@ -98,6 +98,7 @@ class SidebarWidget(QFrame):
         self.sub_fornitori = SidebarSubGroup("")
         self.sub_safework = SidebarSubGroup("")
         self.btn_help = SidebarButton("", "")
+        self.btn_changelog = SidebarButton("", "")
         self.btn_settings = SidebarButton("", "")
         self.main_btns: tuple[QWidget, ...] = ()
         self.footer_btns: tuple[QWidget, ...] = ()
@@ -319,9 +320,10 @@ class SidebarWidget(QFrame):
         f_lay.setSpacing(6)
         self.group_notifiche = SidebarGroup("Monitoraggio", get_asset_path(Icons.ACTIVITY))
         self.btn_help = SidebarButton("Guida", get_asset_path(Icons.HELP))
+        self.btn_changelog = SidebarButton("Novità", get_asset_path(Icons.LIST))
         self.btn_settings = SidebarButton("Impostazioni", get_asset_path(Icons.SETTINGS))
 
-        self.footer_btns = (self.group_notifiche, self.btn_help, self.btn_settings)
+        self.footer_btns = (self.group_notifiche, self.btn_help, self.btn_changelog, self.btn_settings)
         for footer_btn in self.footer_btns:
             f_lay.addWidget(footer_btn)
             if isinstance(footer_btn, SidebarGroup):
@@ -345,6 +347,7 @@ class SidebarWidget(QFrame):
         self.btn_pdl.clicked.connect(lambda: self.navigation_requested.emit(6, -1, -1))
         self.btn_storico_oda.clicked.connect(lambda: self.navigation_requested.emit(10, -1, -1))
         self.btn_help.clicked.connect(lambda: self.navigation_requested.emit(8, -1, -1))
+        self.btn_changelog.clicked.connect(lambda: self.navigation_requested.emit(13, -1, -1))
         self.btn_settings.clicked.connect(lambda: self.navigation_requested.emit(7, -1, -1))
 
     def _on_group_expanded(self, group: SidebarGroup) -> None:
@@ -398,6 +401,7 @@ class SidebarWidget(QFrame):
             PageIndex.DASHBOARD: self.btn_home,
             PageIndex.SETTINGS: self.btn_settings,
             PageIndex.HELP: self.btn_help,
+            PageIndex.CHANGELOG: self.btn_changelog,
             PageIndex.TIMBRATURE: self.btn_timbrature,
             PageIndex.DATAEASE: self.btn_dataease,
             PageIndex.PDL_DB: self.btn_pdl,

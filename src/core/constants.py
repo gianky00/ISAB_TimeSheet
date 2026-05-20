@@ -189,6 +189,7 @@ class Icons:
     DIPENDENTI = "assets/icons/users.svg"
     PDL = "assets/icons/building.svg"
     FILE_TEXT = "assets/icons/file-text.svg"
+    COPY = "assets/icons/file-text.svg"
     EXCEL = "assets/icons/excel.svg"
     BAR_CHART = "assets/icons/bar-chart.svg"
     ACTIVITY = "assets/icons/activity.svg"

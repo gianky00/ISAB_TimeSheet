@@ -1,0 +1,37 @@
+[
+  {
+    "version": "1.47.0",
+    "date": "2026-05-20",
+    "notes": [
+      "Feat: implementazione effetto di elevazione dei bottoni",
+      "Feat: applicato restyling Modern Card a tutti i pannelli dei bot",
+      "Feat: applicato stile Modern Card al pannello Storico OdA",
+      "Feat: applicato stile Modern Card e animazioni al pannello KPI",
+      "Feat: implementazione effetti UI moderni e stili per le schede",
+      "Feat: implementazione costanti tipografiche del sistema di design centralizzato",
+      "Feat: implementazione logica di auto-pulizia nel maintenance worker",
+      "Feat: implementazione database maintenance worker e ottimizzazione in background",
+      "Fix: rimozione del blocco run_update() da BotWorker per prevenire il freeze GIL di getaddrinfo",
+      "Fix: corretti errori di sintassi XPath nei locators e query SQL nel repository PDL",
+      "Fix: corretto errore sintassi XPath nei locators del portale fornitori",
+      "Fix: risolto ripristino parametri all'avvio e prevenuto salvataggio spurio allo spegnimento"
+    ]
+  },
+  {
+    "version": "1.46.3",
+    "date": "2026-05-13",
+    "notes": [
+      "Fix: risoluzione violazioni Ruff e 80 segnalazioni Mypy per una maggiore stabilità del codice"
+    ]
+  },
+  {
+    "version": "1.46.0",
+    "date": "2026-05-12",
+    "notes": [
+      "Feat: automazione certificati campione e unificazione logica Microsoft Outlook",
+      "Fix: bugfix autopilot e ottimizzazione workflow email audit",
+      "Fix: risolto hang all'avvio dovuto a violazioni di accesso QObject in thread in background",
+      "Refactor: standardizzazione tipi DB, logging e UI per una conformità del 100% con Ruff e MyPy"
+    ]
+  }
+]
