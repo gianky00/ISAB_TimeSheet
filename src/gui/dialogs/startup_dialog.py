@@ -170,10 +170,9 @@ class StartupDialog(QDialog):
         blueprint_size = 100
         self.blueprint.setFixedSize(blueprint_size, blueprint_size)
         blueprint_offset = -8
-        self.blueprint.move(blueprint_offset, blueprint_offset)  # Centratura rispetto al logo
+        self.blueprint.move(blueprint_offset, blueprint_offset)
 
         icon_path = get_asset_path("assets/app.ico")
-
         self.logo = PulsingLogo(header_container)
         logo_size = 85
         self.logo.setFixedSize(logo_size, logo_size)
@@ -183,8 +182,17 @@ class StartupDialog(QDialog):
         header_layout.addWidget(self.logo)
 
         title_box = QVBoxLayout()
-        title_spacing = 4
-        title_box.setSpacing(title_spacing)
+        title_box.setSpacing(4)
+        self._setup_title_and_credits(title_box)
+
+        header_layout.addLayout(title_box)
+        header_layout.addStretch()
+
+        self._setup_license_info(header_layout)
+        parent_layout.addWidget(header_container)
+
+    def _setup_title_and_credits(self, title_box: QVBoxLayout) -> None:
+        """Inizializza il blocco titolo e la firma d'autore animata."""
         self.title = QLabel()
         self.title.setTextFormat(Qt.TextFormat.RichText)
         self.title.setText(
@@ -192,7 +200,6 @@ class StartupDialog(QDialog):
             f'SYNCRO<span style="color:{COLORS["primary_blue"]};">JOB</span> '
             f'<span style="font-size:14px; color:{COLORS["primary_blue"]}; opacity: 0.6; font-weight:600; vertical-align: middle;">v{__version__}</span></span>'
         )
-        # Effetto ombra per il titolo per farlo risaltare
         title_shadow = QGraphicsDropShadowEffect()
         title_shadow.setBlurRadius(15)
         title_shadow.setColor(QColor(0, 0, 0, 200))
@@ -200,31 +207,31 @@ class StartupDialog(QDialog):
         self.title.setGraphicsEffect(title_shadow)
         title_box.addWidget(self.title)
 
-        self.version = (
-            QLabel()
-        )  # Placeholder per mantenere compatibilità se necessario, ma usiamo title per la visualizzazione
+        # Placeholder per compatibilità
+        self.version = QLabel()
 
-        # System Credit Olografico (Sottotitolo cinematografico)
-        self.credits = QLabel("DEVELOPED BY GIANCARLO ALLEGRETTI")
+        # System Credit Olografico Animato
+        self.credits = TypewriterLabel()
+        self.credits.setTextFormat(Qt.TextFormat.RichText)
         self.credits.setStyleSheet(
-            f"font-size: 9px; "
-            f"color: {COLORS['bg_white']}; "
-            f"opacity: 0.4; "
-            f"letter-spacing: 4px; "
-            f"font-weight: 500;"
+            f"font-size: 9px; color: {COLORS['bg_white']}; letter-spacing: 4px; font-weight: 500;"
         )
-        # Applichiamo l'opacità via effetto per precisione olografica
-        cred_opacity = QGraphicsOpacityEffect(self.credits)
-        cred_opacity.setOpacity(0.4)
-        self.credits.setGraphicsEffect(cred_opacity)
+
+        self.cred_opacity = QGraphicsOpacityEffect(self.credits)
+        self.credits.setGraphicsEffect(self.cred_opacity)
+
+        self.cred_pulse = QPropertyAnimation(self.cred_opacity, b"opacity")
+        self.cred_pulse.setDuration(2000)
+        self.cred_pulse.setStartValue(0.2)
+        self.cred_pulse.setEndValue(0.6)
+        self.cred_pulse.setEasingCurve(QEasingCurve.Type.InOutSine)
+        self.cred_pulse.setLoopCount(-1)
 
         title_box.addWidget(self.credits)
 
-        header_layout.addLayout(title_box)
-        header_layout.addStretch()
-
-        self._setup_license_info(header_layout)
-        parent_layout.addWidget(header_container)
+        # Avvio ritardato
+        QTimer.singleShot(800, lambda: self.credits.set_text_animated("DEVELOPED BY GIANCARLO ALLEGRETTI"))
+        QTimer.singleShot(1500, self.cred_pulse.start)
 
     def _setup_license_info(self, parent_layout: QHBoxLayout) -> None:
         """Configura il box con le informazioni della licenza in modo asincrono (placeholder iniziali)."""
