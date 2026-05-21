@@ -366,7 +366,8 @@ class WeatherWidget(ModernCard):
         self.weather_service = WeatherService.instance()
         self._is_loading = False
         self._current_weather_style = "default"
-        self._showing_details = False
+        from src.core.config_manager import get_config_value
+        self._showing_details = bool(get_config_value("weather_show_details", False))
         self._transitioning = False
 
         # Effetto particellare pioggia (Inizializzazione deterministica senza pseudo-random crittografici)
@@ -736,6 +737,14 @@ class WeatherWidget(ModernCard):
         body_h.addWidget(self.content_stack)
         self.main_layout.addLayout(body_h)
 
+        # Ripristina lo stato persistente dei dettagli del meteo
+        if self._showing_details:
+            self.content_stack.setCurrentIndex(1)
+            self.btn_details.setIcon(get_colored_icon(get_asset_path(Icons.EYE_OFF), COLORS["primary_blue"]))
+        else:
+            self.content_stack.setCurrentIndex(0)
+            self.btn_details.setIcon(get_colored_icon(get_asset_path(Icons.EYE), COLORS["text_muted"]))
+
     def _setup_metrics_gauges(self) -> None:
         """Configura la griglia 2x2 dei Mini Radial Gauge ambientali all'interno di un contenitore QFrame (SRP)."""
         self.gauges_container = QFrame()
@@ -823,6 +832,9 @@ class WeatherWidget(ModernCard):
                     self._showing_details = True
                     # Rimuoviamo l'effetto per non impattare sulle performance grafiche
                     self.panel_details.setGraphicsEffect(None)  # type: ignore[arg-type]
+                    # Salva lo stato
+                    from src.core.config_manager import set_config_value
+                    set_config_value("weather_show_details", True)
 
                 self.anim_fade_det.finished.connect(on_det_fade_finished)
                 self.anim_fade_det.start()
@@ -877,6 +889,9 @@ class WeatherWidget(ModernCard):
                     self.panel_standard.setGraphicsEffect(None)  # type: ignore[arg-type]
                     # Normalizziamo l'angolo di Don Ciro
                     self.don_ciro.set_yaw_angle(0.0)
+                    # Salva lo stato
+                    from src.core.config_manager import set_config_value
+                    set_config_value("weather_show_details", False)
 
                 self.anim_fade_std.finished.connect(on_std_fade_in_finished)
                 self.anim_fade_std.start()
