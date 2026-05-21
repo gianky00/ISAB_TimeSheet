@@ -200,30 +200,52 @@ class StartupDialog(QDialog):
         # Build Date dinamica dal changelog
         build_date = self._get_build_date()
 
+        # Container orizzontale per Titolo + Info Stack
+        text_row = QHBoxLayout()
+        text_row.setSpacing(12)
+        text_row.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
+        # 1. Titolo Principale (SYNCROJOB)
         self.title = QLabel()
         self.title.setTextFormat(Qt.TextFormat.RichText)
         self.title.setText(
             f'<span style="font-size:40px; font-weight:900; color:{COLORS["bg_white"]}; letter-spacing:2px;">'
-            f'SYNCRO<span style="color:{COLORS["primary_blue"]};">JOB</span> '
-            f'<span style="font-size:14px; color:{COLORS["primary_blue"]}; opacity: 0.6; font-weight:600; vertical-align: middle;">v{__version__}</span></span>'
+            f'SYNCRO<span style="color:{COLORS["primary_blue"]};">JOB</span></span>'
         )
         title_shadow = QGraphicsDropShadowEffect()
         title_shadow.setBlurRadius(15)
         title_shadow.setColor(QColor(0, 0, 0, 200))
         title_shadow.setOffset(2, 2)
         self.title.setGraphicsEffect(title_shadow)
-        title_box.addWidget(self.title)
+        text_row.addWidget(self.title)
 
-        # Label Data di Rilascio sotto il titolo
+        # 2. Info Stack (Versione sopra, Rilascio sotto)
+        info_stack = QVBoxLayout()
+        info_stack.setSpacing(0)
+        info_stack.setContentsMargins(0, 8, 0, 4)
+
+        # Label Versione (Sopra)
+        self.version_label = QLabel(f"v{__version__}")
+        self.version_label.setStyleSheet(
+            f"font-size: 13px; color: {COLORS['primary_blue']}; font-weight: 700; letter-spacing: 1px;"
+        )
+        v_opacity = QGraphicsOpacityEffect(self.version_label)
+        v_opacity.setOpacity(0.6)
+        self.version_label.setGraphicsEffect(v_opacity)
+        info_stack.addWidget(self.version_label, alignment=Qt.AlignmentFlag.AlignBottom)
+
+        # Label Data di Rilascio (Sotto)
         self.release_info = QLabel(f"RILASCIATO IL {build_date}")
         self.release_info.setStyleSheet(
-            f"font-size: 10px; color: {COLORS['primary_blue']}; font-weight: 600; letter-spacing: 1.5px;"
+            f"font-size: 10px; color: {COLORS['primary_blue']}; font-weight: 600; letter-spacing: 1px;"
         )
-        # Applichiamo l'opacità via effetto per precisione olografica - Aumentata per contrasto
         rel_opacity = QGraphicsOpacityEffect(self.release_info)
         rel_opacity.setOpacity(0.75)
         self.release_info.setGraphicsEffect(rel_opacity)
-        title_box.addWidget(self.release_info)
+        info_stack.addWidget(self.release_info, alignment=Qt.AlignmentFlag.AlignTop)
+
+        text_row.addLayout(info_stack)
+        title_box.addLayout(text_row)
 
         # Placeholder per compatibilità
         self.version = QLabel()
