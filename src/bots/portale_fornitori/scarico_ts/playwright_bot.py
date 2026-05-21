@@ -209,7 +209,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             if el_ts:
                 el_ts.evaluate("el => el.click()")
 
-            fornitore_arrow_xpath = "xpath=//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
+            fornitore_arrow_xpath = "xpath=//input[@name='CodiceFornitore' or @name='Fornitore']/ancestor::div[contains(@class, 'x-form-trigger-wrap') or contains(@class, 'x-form-item-body')]//div[contains(@class, 'x-form-arrow-trigger')]"
             self.page.wait_for_selector(fornitore_arrow_xpath, state="visible")
             self._wait_for_overlay()
         except Exception as e:

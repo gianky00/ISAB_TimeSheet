@@ -285,7 +285,7 @@ class ScaricaTSBot(SeleniumBaseBot):
             timesheet_menu_xpath = "//span[contains(@id, 'generic_menu_button-') and contains(@id, '-btnEl')][.//span[text()='Timesheet']]"
             self.wait.until(EC.element_to_be_clickable((By.XPATH, timesheet_menu_xpath))).click()
 
-            fornitore_arrow_xpath = "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
+            fornitore_arrow_xpath = "//input[@name='CodiceFornitore' or @name='Fornitore']/ancestor::div[contains(@class, 'x-form-trigger-wrap') or contains(@class, 'x-form-item-body')]//div[contains(@class, 'x-form-arrow-trigger')]"
             self.wait.until(EC.visibility_of_element_located((By.XPATH, fornitore_arrow_xpath)))
             self._attendi_scomparsa_overlay()
         except Exception as e:
@@ -301,7 +301,7 @@ class ScaricaTSBot(SeleniumBaseBot):
         self._check_stop()
 
         try:
-            arrow_xpath = "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
+            arrow_xpath = "//input[@name='CodiceFornitore' or @name='Fornitore']/ancestor::div[contains(@class, 'x-form-trigger-wrap') or contains(@class, 'x-form-item-body')]//div[contains(@class, 'x-form-arrow-trigger')]"
             arrow = self.wait.until(EC.element_to_be_clickable((By.XPATH, arrow_xpath)))
             ActionChains(self.driver).move_to_element(arrow).click().perform()
 

@@ -32,10 +32,13 @@ class PrenotaBPLocators:
     )
 
     # Pannello Gestione BP (Griglia e Filtri)
-    FILTER_FORNITORE = (By.NAME, "Fornitore")
+    FILTER_FORNITORE = (
+        By.XPATH,
+        "//input[@name='Fornitore' or @name='CodiceFornitore' or @name='FornitoreSap']",
+    )
     FILTER_FORNITORE_ARROW = (
         By.XPATH,
-        "//div[contains(@id, 'generic_refresh_combo_box') and contains(@id, 'trigger-picker')]",
+        "//input[@name='Fornitore' or @name='CodiceFornitore' or @name='FornitoreSap']/ancestor::div[contains(@class, 'x-form-trigger-wrap') or contains(@class, 'x-form-item-body')]//div[contains(@class, 'x-form-arrow-trigger')]",
     )
     FILTER_NUMERO_BP = (By.NAME, "IdBuonoDiPrelievo")
 
