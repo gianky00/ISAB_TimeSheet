@@ -23,6 +23,7 @@ class EmployeeDTO:
     # Campi calcolati per la UI
     inactivation_days_left: int | None = None
     cf_warning: bool = False
+    last_access_isab: str | None = None
 
     @property
     def full_name(self) -> str:
@@ -33,16 +34,17 @@ class EmployeeDTO:
     def to_table_row(self) -> list[str | int | None]:
         """Restituisce i campiùper la riga della tabella anagrafica."""
         return [
-            self.inactivation_days_left,
-            self.id_risorsa,
-            f"⚠️ {self.cognome}" if self.cf_warning else self.cognome,
-            self.nome,
-            self.codice_fiscale or "-",
-            self.badge or "-",
-            self.data_assunzione or "-",
-            self.data_nascita or "-",
-            "",  # created_at (placeholder if needed)
-            self.cognome,  # Original cognome for sorting/logic
+            self.inactivation_days_left,  # 0
+            self.id_risorsa,  # 1
+            f"⚠️ {self.cognome}" if self.cf_warning else self.cognome,  # 2
+            self.nome,  # 3
+            self.codice_fiscale or "-",  # 4
+            self.badge or "-",  # 5
+            self.data_assunzione or "-",  # 6
+            self.last_access_isab or "Mai effettuato",  # 7
+            self.data_nascita or "-",  # 8
+            "",  # 9: data_import placeholder
+            self.cognome,  # 10: Original cognome for sorting
         ]
 
     def get_metadata(self) -> dict[str, str | bool]:

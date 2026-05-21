@@ -14,7 +14,7 @@ def normalize_name(text: Any) -> str:
 
 def build_timbrature_maps(
     accessi: Sequence[Sequence[Any]],
-) -> tuple[dict[str, int], dict[tuple[str, str], int], Callable[[Any], str]]:
+) -> tuple[dict[str, tuple[int, str]], dict[tuple[str, str], tuple[int, str]], Callable[[Any], str]]:
     """
     Costruisce mappe di lookup per le timbrature indicizzate per CF e per Nome/Cognome.
 
@@ -23,10 +23,11 @@ def build_timbrature_maps(
 
     Returns:
       tuple: (mappa_cf, mappa_nomi, funzione_normalize).
+             Mappe contengono tuple (diff_days, data_str).
     """
     today = datetime.now(UTC)
-    last_by_cf: dict[str, int] = {}
-    last_by_name: dict[tuple[str, str], int] = {}
+    last_by_cf: dict[str, tuple[int, str]] = {}
+    last_by_name: dict[tuple[str, str], tuple[int, str]] = {}
 
     def normalize(t: Any) -> str:
         """Funzione locale di normalizzazione rapida."""
@@ -47,35 +48,44 @@ def build_timbrature_maps(
                         continue
                 if d_dt:
                     diff = (today - d_dt).days
-                    if norm_cf and (norm_cf not in last_by_cf or diff < last_by_cf[norm_cf]):
-                        last_by_cf[norm_cf] = diff
+                    # Salviamo la data formattata come DD/MM/YYYY per la UI
+                    pretty_date = d_dt.strftime("%d/%m/%Y")
 
-                    if norm_key not in last_by_name or diff < last_by_name[norm_key]:
-                        last_by_name[norm_key] = diff
+                    if norm_cf and (norm_cf not in last_by_cf or diff < last_by_cf[norm_cf][0]):
+                        last_by_cf[norm_cf] = (diff, pretty_date)
+
+                    if norm_key not in last_by_name or diff < last_by_name[norm_key][0]:
+                        last_by_name[norm_key] = (diff, pretty_date)
     return last_by_cf, last_by_name, normalize
 
 
 def compute_employee_status(
     r: Sequence[Any],
-    last_by_cf: dict[str, int],
-    last_by_name: dict[tuple[str, str], int],
+    last_by_cf: dict[str, tuple[int, str]],
+    last_by_name: dict[tuple[str, str], tuple[int, str]],
     normalize: Callable[[Any], str],
-) -> tuple[int | None, bool, str, str, str]:
+) -> tuple[int | None, bool, str | None, str, str, str]:
     """Calcola lo stato del dipendente basandosi su timbrature e anagrafica."""
     # r indexes: 1=Cognome, 2=Nome, 7=CodiceFiscale
     cf_val = str(r[7]).strip().upper() if r[7] else ""
     cog_val = normalize(r[1])
     nom_val = normalize(r[2])
     diff_days = None
+    last_date = None
     cf_warning = False
 
+    access_info = None
     if cf_val:
-        diff_days = last_by_cf.get(cf_val)
-    if diff_days is None:
-        diff_days = last_by_name.get((cog_val, nom_val))
-        if diff_days is not None and not cf_val:
+        access_info = last_by_cf.get(cf_val)
+    if access_info is None:
+        access_info = last_by_name.get((cog_val, nom_val))
+        if access_info is not None and not cf_val:
             cf_warning = True
-    return diff_days, cf_warning, cog_val, nom_val, cf_val
+
+    if access_info:
+        diff_days, last_date = access_info
+
+    return diff_days, cf_warning, last_date, cog_val, nom_val, cf_val
 
 
 def format_db_date(date_str: str | None) -> str:

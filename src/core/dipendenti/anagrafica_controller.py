@@ -59,7 +59,7 @@ class AnagraficaController:
 
             is_monitored = bool(record.monitoraggio_attivo)
             status_data = compute_employee_status(row, last_by_cf, last_by_name, normalize)
-            diff_days, cf_warning = status_data[0], status_data[1]
+            diff_days, cf_warning, last_date = status_data[0], status_data[1], status_data[2]
 
             # 1. Update Global Counts
             self._update_status_counts(counts, is_monitored, diff_days)
@@ -69,12 +69,12 @@ class AnagraficaController:
                 continue
 
             # 3. Create DTO
-            dto = self._create_employee_dto(record, is_monitored, diff_days, cf_warning)
+            dto = self._create_employee_dto(record, is_monitored, diff_days, cf_warning, last_date)
             dtos.append(dto)
 
         return dtos, counts
 
-    def _get_timbrature_maps(self) -> tuple[dict[str, int], dict[tuple[str, str], int], Any]:
+    def _get_timbrature_maps(self) -> tuple[dict[str, tuple[int, str]], dict[tuple[str, str], tuple[int, str]], Any]:
         """Recupera le mappe delle timbrature dal DB."""
         query_timb = "SELECT cognome, nome, codice_fiscale, data FROM timbrature"
         accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
@@ -120,7 +120,12 @@ class AnagraficaController:
         return False
 
     def _create_employee_dto(
-        self, record: EmployeeRecord, is_monitored: bool, diff_days: int | None, cf_warning: bool
+        self,
+        record: EmployeeRecord,
+        is_monitored: bool,
+        diff_days: int | None,
+        cf_warning: bool,
+        last_date: str | None = None,
     ) -> EmployeeDTO:
         """Crea un oggetto EmployeeDTO dal record."""
         inactivation_val = THRESHOLD_DAYS["expired"] - diff_days if diff_days is not None else None
@@ -135,6 +140,7 @@ class AnagraficaController:
             monitoraggio_attivo=is_monitored,
             inactivation_days_left=inactivation_val,
             cf_warning=cf_warning,
+            last_access_isab=last_date,
         )
 
     def get_last_isab_access(self, cognome: str, nome: str) -> tuple[str, int, str]:

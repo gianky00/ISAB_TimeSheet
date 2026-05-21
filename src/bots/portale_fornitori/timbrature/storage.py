@@ -192,18 +192,21 @@ class TimbratureStorage:
         filter_text: str | None = None,
         filter_reparto: str | None = None,
         filter_cantiere: str | None = None,
+        filter_year: str | None = None,
     ) -> list[tuple[Any, ...]]:
         """Recupera le timbrature e le arricchisce con i dati da config.json."""
         mappings: dict[str, dict[str, str]] = config_manager.load_config().get("employee_mappings", {})
 
         with db_manager.get_connection(self._active_db_path) as conn:
             cursor = conn.cursor()
-            sql, params = self._build_timb_query(filter_text, limit)
+            sql, params = self._build_timb_query(filter_text, limit, filter_year)
             raw_rows = cursor.execute(sql, params).fetchall()
 
             return self._enrich_and_filter_timb(raw_rows, mappings, filter_reparto, filter_cantiere, limit)
 
-    def _build_timb_query(self, filter_text: str | None, limit: int) -> tuple[str, list[Any]]:
+    def _build_timb_query(
+        self, filter_text: str | None, limit: int, filter_year: str | None = None
+    ) -> tuple[str, list[Any]]:
         query = """
       SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura,
           codice_fiscale, id_dipendente, fornitore, codice_rilpres, numero_badge,
@@ -211,28 +214,35 @@ class TimbratureStorage:
       FROM timbrature
     """
         params: list[str] = []
-        if not filter_text:
-            return query + f" ORDER BY id DESC LIMIT {limit * 2}", params
-
-        search_terms = filter_text.lower().split()
         conditions = []
-        for term in search_terms:
-            search_term = self._normalize_search_date(term)
-            term_conditions = [
-                f"{col} LIKE ?"
-                for col in (
-                    "data",
-                    "nome",
-                    "cognome",
-                    "sito_timbratura",
-                    "codice_fiscale",
-                )
-            ]
-            params.extend([f"%{search_term}%"] * 5)
-            conditions.append(f"({' OR '.join(term_conditions)})")
 
-        query += " WHERE " + " AND ".join(conditions)
-        return query + f" ORDER BY id DESC LIMIT {limit * 2}", params
+        # Filtro Anno
+        if filter_year and filter_year != "Tutti":
+            conditions.append("strftime('%Y', data) = ?")
+            params.append(filter_year)
+
+        # Filtro Testo
+        if filter_text:
+            search_terms = filter_text.lower().split()
+            for term in search_terms:
+                search_term = self._normalize_search_date(term)
+                term_conditions = [
+                    f"{col} LIKE ?"
+                    for col in (
+                        "data",
+                        "nome",
+                        "cognome",
+                        "sito_timbratura",
+                        "codice_fiscale",
+                    )
+                ]
+                params.extend([f"%{search_term}%"] * 5)
+                conditions.append(f"({' OR '.join(term_conditions)})")
+
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+
+        return query + f" ORDER BY data DESC, id DESC LIMIT {limit * 2}", params
 
     def _normalize_search_date(self, term: str) -> str:
         """
@@ -378,6 +388,15 @@ class TimbratureStorage:
         """Recupera le liste configurate (Reparti, Cantieri) da config.json."""
         config = config_manager.load_config()
 
+        # Aggiungiamo anche gli anni disponibili nel DB
+        years = []
+        with suppress(Exception), db_manager.get_connection(self._active_db_path, read_only=True) as conn:
+            cursor = conn.cursor()
+            rows = cursor.execute(
+                "SELECT DISTINCT strftime('%Y', data) as year FROM timbrature WHERE data IS NOT NULL AND data != '' ORDER BY year DESC"
+            ).fetchall()
+            years = [str(row[0]) for row in rows if row[0]]
+
         # Logica di migrazione se mancano i dati nel config ma esiste il vecchio file
         if "reparti" not in config or (not config.get("reparti") and not config.get("cantieri")):
             old_path = self._active_db_path.parent / "timbrature_lists.json"
@@ -393,6 +412,7 @@ class TimbratureStorage:
         return {
             "reparti": config.get("reparti", ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]),
             "cantieri": config.get("cantieri", []),
+            "years": years,
         }
 
     def save_lists(self, data: dict[str, list[str]]) -> None:
