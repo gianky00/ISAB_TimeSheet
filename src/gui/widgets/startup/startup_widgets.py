@@ -435,7 +435,9 @@ class ChangelogTicker(QWidget):
                 "font-size: 11px; "
                 "font-family: 'Consolas', 'Fira Code', monospace; "
                 "color: white; "
-                "background: transparent;"
+                "background: transparent; "
+                "border: none; "
+                "padding: 0px;"
             )
             lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
             lbl.setFixedWidth(710)
