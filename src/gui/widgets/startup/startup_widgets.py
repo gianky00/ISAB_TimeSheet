@@ -480,13 +480,13 @@ class ChangelogTicker(QWidget):
         c_mod = self.COLORS.get("primary_blue", "#3498db")
 
         if lower.startswith("feat"):
-            label, color = "FEAT", c_feat
+            label, color = "NEW", c_feat
             msg = clean.split(":", 1)[1].strip() if ":" in clean else clean[4:].strip()
         elif lower.startswith("fix"):
             label, color = "FIX", c_fix
             msg = clean.split(":", 1)[1].strip() if ":" in clean else clean[3:].strip()
         else:
-            label, color = "UPD", c_mod
+            label, color = "UPDATE", c_mod
             msg = clean
 
         # Tronca se troppo lungo per la riga (Aumentato per nuova larghezza)
