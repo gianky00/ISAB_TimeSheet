@@ -21,7 +21,7 @@ from src.utils.helpers import get_colored_icon
 class SidebarButton(QPushButton):
     """
     Pulsante ultra-moderno per la sidebar.
-    Ottimizzato per la fluidit  estrema rimuovendo gli effetti grafici costosi.
+    Ottimizzato per la fluidità estrema rimuovendo gli effetti grafici costosi.
     """
 
     text_opacity_changed = Signal(float)
@@ -32,6 +32,7 @@ class SidebarButton(QPushButton):
         self.icon_path = icon_path
         self._collapsed = False
         self._badge_count = 0
+        self._badge_text = ""
         self._text_opacity = 1.0
         self._drag_start_pos: QPoint | None = None
         self._current_drag: QDrag | None = None
@@ -55,16 +56,16 @@ class SidebarButton(QPushButton):
         self._set_base_style()
 
     def get_text_opacity(self) -> float:
-        """Restituisce l'opacit  del testo."""
+        """Restituisce l'opacità del testo."""
         return self._text_opacity
 
     def set_text_opacity(self, value: float) -> None:
-        """Imposta l'opacit  del testo."""
+        """Imposta l'opacità del testo."""
         if self._text_opacity != value:
             self._text_opacity = value
             self.text_opacity_changed.emit(value)
             # Qui potremmo aggiornare lo stile se necessario,
-            # ma solitamente questa property  usata per animazioni di dissolvenza.
+            # ma solitamente questa property è usata per animazioni di dissolvenza.
 
     text_opacity = Property(float, fget=get_text_opacity, fset=set_text_opacity, notify=text_opacity_changed)
 
@@ -83,7 +84,7 @@ class SidebarButton(QPushButton):
     def _refresh_state(self) -> None:
         """Sincronizza testo e icone."""
         base_text = f"  {self.label_text}"
-        display_text = f"{base_text} ({self._badge_count})" if self._badge_count > 0 else base_text
+        display_text = f"{base_text} {self._badge_text}" if self._badge_text else base_text
 
         if self._collapsed:
             self.setText("")
@@ -146,7 +147,7 @@ class SidebarButton(QPushButton):
         super().setChecked(checked)
         if checked:
             self._stop_pulse()
-        elif self._badge_count > 0:
+        elif self._badge_count > 0 or self._badge_text:
             self._start_pulse()
 
     def _start_pulse(self) -> None:
@@ -225,12 +226,17 @@ class SidebarButton(QPushButton):
 
         super().paintEvent(event)
 
-    def set_badge(self, count: int) -> None:
-        """Imposta un badge numerico sul pulsante e controlla il lampeggio."""
-        self._badge_count = count
+    def set_badge(self, value: int | str) -> None:
+        """Imposta un badge numerico o testuale sul pulsante e controlla il lampeggio."""
+        if isinstance(value, int):
+            self._badge_count = value
+            self._badge_text = f"({value})" if value > 0 else ""
+        else:
+            self._badge_text = str(value)
+            self._badge_count = 1 if value else 0
         self._refresh_state()
 
-        if count > 0:
+        if self._badge_count > 0 or self._badge_text:
             self._start_pulse()
         else:
             self._stop_pulse()

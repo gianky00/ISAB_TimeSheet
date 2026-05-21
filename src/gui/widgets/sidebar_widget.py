@@ -601,6 +601,6 @@ class SidebarWidget(QFrame):
 
                         # Se la versione nel file è diversa da quella vista, mostriamo il badge
                         if latest_version and latest_version != last_viewed:
-                            self.btn_changelog.set_badge(1)
+                            self.btn_changelog.set_badge(f"✨ {latest_version}")
         except Exception:
             logger.debug("Impossibile verificare il badge del changelog all'avvio")
