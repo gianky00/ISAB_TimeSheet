@@ -252,14 +252,17 @@ def run_installer_and_exit(setup_path: str) -> None:
             flags = subprocess.DETACHED_PROCESS if os.name == "nt" else 0
 
             if os.name == "nt":
-                # Avvio tramite cmd per il timeout, garantisce che l'app corrente sia chiusa prima che l'installer agisca
-                args = [
-                    "cmd.exe",
-                    "/c",
-                    f'timeout /t 2 /nobreak > NUL && "{setup_path}" /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS',
-                ]
+                # Sostituito 'timeout' con 'ping' perche 'timeout' fallisce con input reindirizzato (DEVNULL)
+                # 'ping -n 3' attende circa 2 secondi.
+                # Nota: Quoting rinforzato per supportare spazi nel percorso.
+                # S602: shell=True e necessario per l'operatore && e l'avvio distaccato su Windows
+                cmd = f'ping -n 3 127.0.0.1 > NUL && "{setup_path}" /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS'
                 subprocess.Popen(
-                    args, shell=False, creationflags=flags, close_fds=True, stdin=subprocess.DEVNULL
+                    cmd,
+                    shell=True,  # noqa: S602
+                    creationflags=flags,
+                    close_fds=True,
+                    stdin=subprocess.DEVNULL,
                 )
             else:
                 subprocess.Popen(
@@ -268,8 +271,16 @@ def run_installer_and_exit(setup_path: str) -> None:
                 )
         except Exception:
             logger.exception("Errore durante l'avvio dell'installer")
+    else:
+        logger.error("Installer non trovato nel percorso previsto: %s", setup_path)
+        # PLC0415: Import locale per evitare import circolari con la GUI
+        from src.gui.widgets.toast import ToastManager  # noqa: PLC0415
 
-        sys.exit(0)
+        with contextlib.suppress(Exception):
+            ToastManager.instance().show("Errore: Installer non trovato. Riprova il download.", "error")
+
+    # In ogni caso usciamo, per evitare stati incoerenti
+    sys.exit(0)
 
 
 def run_pending_installer() -> None:
@@ -280,13 +291,16 @@ def run_pending_installer() -> None:
         try:
             # Usa DETACHED_PROCESS per slegarsi dal ciclo di vita dell'app corrente
             flags = subprocess.DETACHED_PROCESS if os.name == "nt" else 0
-            # Avvio tramite cmd per il timeout, ma con quoting rinforzato
-            args = [
-                "cmd.exe",
-                "/c",
-                f'timeout /t 3 /nobreak > NUL && "{_pending_installer_path}" /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS',
-            ]
-            subprocess.Popen(args, shell=False, creationflags=flags, close_fds=True, stdin=subprocess.DEVNULL)
+            # Sostituito 'timeout' con 'ping' per robustezza (vedi run_installer_and_exit)
+            cmd = f'ping -n 3 127.0.0.1 > NUL && "{_pending_installer_path}" /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS'
+            # S602: shell=True e necessario per l'operatore &&
+            subprocess.Popen(
+                cmd,
+                shell=True,  # noqa: S602
+                creationflags=flags,
+                close_fds=True,
+                stdin=subprocess.DEVNULL,
+            )
         except Exception:
             logger.exception("Errore durante l'avvio dell'installer pendente")
 
