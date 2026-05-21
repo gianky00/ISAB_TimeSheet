@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
     QDialog,
     QFrame,
     QGraphicsDropShadowEffect,
+    QGraphicsOpacityEffect,
     QHBoxLayout,
     QLabel,
     QVBoxLayout,
@@ -198,6 +199,26 @@ class StartupDialog(QDialog):
         title_shadow.setOffset(2, 2)
         self.title.setGraphicsEffect(title_shadow)
         title_box.addWidget(self.title)
+
+        self.version = (
+            QLabel()
+        )  # Placeholder per mantenere compatibilità se necessario, ma usiamo title per la visualizzazione
+
+        # System Credit Olografico (Sottotitolo cinematografico)
+        self.credits = QLabel("DEVELOPED BY GIANCARLO ALLEGRETTI")
+        self.credits.setStyleSheet(
+            f"font-size: 9px; "
+            f"color: {COLORS['bg_white']}; "
+            f"opacity: 0.4; "
+            f"letter-spacing: 4px; "
+            f"font-weight: 500;"
+        )
+        # Applichiamo l'opacità via effetto per precisione olografica
+        cred_opacity = QGraphicsOpacityEffect(self.credits)
+        cred_opacity.setOpacity(0.4)
+        self.credits.setGraphicsEffect(cred_opacity)
+
+        title_box.addWidget(self.credits)
 
         header_layout.addLayout(title_box)
         header_layout.addStretch()
