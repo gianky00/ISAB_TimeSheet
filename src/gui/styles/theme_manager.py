@@ -74,7 +74,9 @@ class ThemeManager:
             palette.setColor(group, QPalette.ColorRole.Window, q(p.background))
             palette.setColor(group, QPalette.ColorRole.Base, q(p.surface))
             palette.setColor(group, QPalette.ColorRole.AlternateBase, q(p.surface_variant))
-            palette.setColor(group, QPalette.ColorRole.ToolTipBase, q(p.surface))
+
+            # Forza sempre i Tooltip in Light Mode a livello di palette per evitare bug nativi dell'OS
+            palette.setColor(group, QPalette.ColorRole.ToolTipBase, q("#FFFFFF"))
             palette.setColor(group, QPalette.ColorRole.Button, q(p.surface))
 
             # Text / Foreground
@@ -83,7 +85,9 @@ class ThemeManager:
             palette.setColor(group, QPalette.ColorRole.WindowText, txt_col)
             palette.setColor(group, QPalette.ColorRole.Text, txt_col)
             palette.setColor(group, QPalette.ColorRole.ButtonText, txt_col)
-            palette.setColor(group, QPalette.ColorRole.ToolTipText, q(p.on_surface))
+
+            # Forza il testo del Tooltip a grigio scuro/nero in Light Mode
+            palette.setColor(group, QPalette.ColorRole.ToolTipText, q("#212121"))
             palette.setColor(group, QPalette.ColorRole.PlaceholderText, q(p.disabled))
 
             # Accents
@@ -171,5 +175,5 @@ class ThemeManager:
 
 
 def apply_theme(app: QApplication, theme_name: str = "light") -> None:
-    """Wrapper per compatibilit  con il codice esistente."""
+    """Wrapper per compatibilità con il codice esistente."""
     ThemeManager().apply_theme(app, theme_name)
