@@ -42,6 +42,7 @@ from src.gui.widgets.startup.startup_widgets import (
     ChangelogTicker,
     ConsoleOverlay,
     GlowingProgressBar,
+    PulseIndicator,
     PulsingLogo,
     TechBlueprint,
     TypewriterLabel,
@@ -327,33 +328,24 @@ class StartupDialog(QDialog):
         return []
 
     def _setup_footer(self, parent_layout: QVBoxLayout) -> None:
-        """Configura la riga dello status di caricamento."""
+        """Configura la riga dello status di caricamento con PulseIndicator."""
         status_row = QHBoxLayout()
         status_row.setContentsMargins(0, 5, 0, 0)
+        status_row.setSpacing(12)
 
-        self.indicator = QLabel()
-        indicator_size = 8
-        self.indicator.setFixedSize(indicator_size, indicator_size)
-        self.indicator.setStyleSheet(f"background:{COLORS['primary_blue']}; border-radius:4px;")
-        status_row.addWidget(self.indicator)
-        status_row.addSpacing(8)
+        # Pulse Indicator Olografico
+        self.loading_pulse = PulseIndicator()
+        status_row.addWidget(self.loading_pulse)
 
         self.status = QLabel("AVVIO IN CORSO...")
         self.status.setStyleSheet(
-            f"font-size:11px; color:{COLORS['bg_white']}; opacity: 0.5; font-weight:600; letter-spacing:2px;"
+            f"font-size:11px; color:{COLORS['bg_white']}; opacity: 0.7; font-weight:900; letter-spacing:2px;"
         )
         status_row.addWidget(self.status)
 
-        self.dots = QLabel("")
-        self.dots.setStyleSheet(
-            f"font-size:11px; color:{COLORS['primary_blue']}; opacity: 0.8; font-weight:600;"
-        )
-        status_row.addWidget(self.dots)
         status_row.addStretch()
-
         parent_layout.addLayout(status_row)
 
-        # Riga dedicata per il Ticker Novità (Sotto lo Status)
         self._setup_ticker_row(parent_layout)
 
     def _setup_ticker_row(self, parent_layout: QVBoxLayout) -> None:
@@ -373,24 +365,10 @@ class StartupDialog(QDialog):
         parent_layout.addLayout(ticker_layout)
 
     def _setup_animations(self) -> None:
-        """Configura i timer per le animazioni (dots, pulse, fade-in)."""
-        self._dot_count = 0
-        self._dot_timer = QTimer(self)
-        self._dot_timer.timeout.connect(self._animate_dots)
-        dot_interval_ms = 350
-        self._dot_timer.start(dot_interval_ms)
-
-        self._pulse_state = True
-        self._pulse_timer = QTimer(self)
-        self._pulse_timer.timeout.connect(self._pulse_indicator)
-        pulse_interval_ms = 800
-        self._pulse_timer.start(pulse_interval_ms)
-
-        # Fade in
+        """Configura le animazioni di ingresso dello splash screen."""
         self.setWindowOpacity(0.0)
         self._fade = QPropertyAnimation(self, b"windowOpacity")
-        fade_duration_ms = 600
-        self._fade.setDuration(fade_duration_ms)
+        self._fade.setDuration(600)
         self._fade.setStartValue(0.0)
         self._fade.setEndValue(1.0)
         self._fade.setEasingCurve(QEasingCurve.Type.OutCubic)
@@ -434,54 +412,36 @@ class StartupDialog(QDialog):
         """Interrompe il drag della finestra."""
         self._drag_pos = None
 
-    def _animate_dots(self) -> None:
-        max_dots = 4
-        self._dot_count = (self._dot_count + 1) % max_dots
-        self.dots.setText("." * self._dot_count)
-
-    def _pulse_indicator(self) -> None:
-        self._pulse_state = not self._pulse_state
-        c = QColor(COLORS["primary_blue"])
-        color = COLORS["primary_blue"] if self._pulse_state else f"rgba({c.red()},{c.green()},{c.blue()},0.4)"
-        self.indicator.setStyleSheet(f"background:{color}; border-radius:4px;")
-
     def _on_progress(self, message: str, prog: int) -> None:
-        """Aggiorna UI e particelle per convergenza."""
-        full_entry = f"> {message}"
+        """Aggiorna UI, particelle e colore del PulseIndicator."""
         self.status.setText(message.upper())
-        self.particles.set_progress(prog)  # Sincronizza convergenza particelle
+        self.particles.set_progress(prog)
 
-        threshold_success = 90
-        threshold_blue = 50
+        # Update PulseIndicator color based on progress
+        if hasattr(self, "loading_pulse"):
+            if prog >= 90:
+                self.loading_pulse.color = QColor(COLORS["success_green"])
+            elif prog >= 50:
+                self.loading_pulse.color = QColor(COLORS["primary_blue"])
+            else:
+                self.loading_pulse.color = QColor(COLORS["warning_orange"])
 
-        if prog >= threshold_success:
-            self.indicator.setStyleSheet(f"background:{COLORS['success_green']}; border-radius:4px;")
-        elif prog >= threshold_blue:
-            self.indicator.setStyleSheet(f"background:{COLORS['primary_blue']}; border-radius:4px;")
-        else:
-            self.indicator.setStyleSheet(f"background:{COLORS['warning_orange']}; border-radius:4px;")
-
-        self.current_logs.append(full_entry)
-        max_log_history = 5
-        if len(self.current_logs) > max_log_history:
+        self.current_logs.append(f"> {message}")
+        if len(self.current_logs) > 5:
             self.current_logs.pop(0)
 
-        for i in range(max_log_history):
+        for i, lbl in enumerate(self.log_labels):
             if i < len(self.current_logs):
                 is_last = i == len(self.current_logs) - 1
-                opacity = 1.0 if is_last else 0.2 + i * 0.15
-
-                self.log_labels[i].setStyleSheet(
-                    f"font-size:10px; font-family:'Consolas',monospace; color:white; opacity:{opacity};"
+                lbl.setStyleSheet(
+                    f"font-size:10px; font-family:'Consolas',monospace; color:white; opacity:{1.0 if is_last else 0.4};"
                 )
-
                 if is_last:
-                    anim_speed = 15
-                    self.log_labels[i].set_text_animated(self.current_logs[i], speed=anim_speed)
+                    lbl.set_text_animated(self.current_logs[i])
                 else:
-                    self.log_labels[i].set_text_instant(self.current_logs[i])
+                    lbl.set_text_instant(self.current_logs[i])
             else:
-                self.log_labels[i].set_text_instant("")
+                lbl.set_text_instant("")
 
         self.progress.setValue(prog)
 
@@ -508,8 +468,6 @@ class StartupDialog(QDialog):
             self.particles.timer.stop()
             self.border.timer.stop()
             self.progress.timer.stop()
-            self._dot_timer.stop()
-            self._pulse_timer.stop()
             if hasattr(self, "ticker"):
                 self.ticker.cycle_timer.stop()
                 if hasattr(self.ticker, "fade_anim"):

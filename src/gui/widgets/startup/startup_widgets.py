@@ -6,6 +6,7 @@ Collezione di widget animati utilizzati nella Splash Screen.
 import math
 
 from PySide6.QtCore import (
+    Property,
     QEasingCurve,
     QParallelAnimationGroup,
     QPoint,
@@ -572,3 +573,79 @@ class ChangelogTicker(QWidget):
 
         self.current_idx = (self.current_idx + self.num_rows) % len(self.notes)
         self._show_batch()
+
+
+class PulseIndicator(QWidget):
+    """Indicatore di caricamento premium con anello ad espansione olografico."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setFixedSize(30, 30)
+        self._pulse_radius = 4.0
+        self._pulse_opacity = 0.8
+
+        # Importazione pigra colori
+        from src.gui.styles import COLORS
+
+        self.color = QColor(COLORS["primary_blue"])
+
+        # Animazione del raggio e opacità
+        self.anim_group = QParallelAnimationGroup(self)
+
+        self.radius_anim = QPropertyAnimation(self, b"pulse_radius")
+        self.radius_anim.setDuration(1500)
+        self.radius_anim.setStartValue(4.0)
+        self.radius_anim.setEndValue(14.0)
+        self.radius_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        self.opacity_anim = QPropertyAnimation(self, b"pulse_opacity")
+        self.opacity_anim.setDuration(1500)
+        self.opacity_anim.setStartValue(0.8)
+        self.opacity_anim.setEndValue(0.0)
+        self.opacity_anim.setEasingCurve(QEasingCurve.Type.Linear)
+
+        self.anim_group.addAnimation(self.radius_anim)
+        self.anim_group.addAnimation(self.opacity_anim)
+        self.anim_group.setLoopCount(-1)
+        self.anim_group.start()
+
+    @Property(float)
+    def pulse_radius(self) -> float:
+        return self._pulse_radius
+
+    @pulse_radius.setter
+    def pulse_radius(self, val: float) -> None:
+        self._pulse_radius = val
+        self.update()
+
+    @Property(float)
+    def pulse_opacity(self) -> float:
+        return self._pulse_opacity
+
+    @pulse_opacity.setter
+    def pulse_opacity(self, val: float) -> None:
+        self._pulse_opacity = val
+        self.update()
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        painter = QPainter(self)
+        try:
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            cx, cy = self.width() / 2.0, self.height() / 2.0
+
+            # 1. NUCLEO FISSO
+            painter.setBrush(self.color)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(QPoint(int(cx), int(cy)), 4, 4)
+
+            # 2. ANELLO PULSANTE
+            if self._pulse_opacity > 0:
+                alpha = int(self._pulse_opacity * 255)
+                pen_color = QColor(self.color.red(), self.color.green(), self.color.blue(), alpha)
+                painter.setPen(QPen(pen_color, 1.5))
+                painter.setBrush(Qt.BrushStyle.NoBrush)
+                painter.drawEllipse(
+                    QPoint(int(cx), int(cy)), int(self._pulse_radius), int(self._pulse_radius)
+                )
+        finally:
+            painter.end()
