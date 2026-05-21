@@ -188,7 +188,8 @@ class StartupDialog(QDialog):
         self.title.setTextFormat(Qt.TextFormat.RichText)
         self.title.setText(
             f'<span style="font-size:40px; font-weight:900; color:{COLORS["bg_white"]}; letter-spacing:2px;">'
-            f'SYNCRO<span style="color:{COLORS["primary_blue"]};">JOB</span></span>'
+            f'SYNCRO<span style="color:{COLORS["primary_blue"]};">JOB</span> '
+            f'<span style="font-size:14px; color:{COLORS["primary_blue"]}; opacity: 0.6; font-weight:600; vertical-align: middle;">v{__version__}</span></span>'
         )
         # Effetto ombra per il titolo per farlo risaltare
         title_shadow = QGraphicsDropShadowEffect()
@@ -198,11 +199,6 @@ class StartupDialog(QDialog):
         self.title.setGraphicsEffect(title_shadow)
         title_box.addWidget(self.title)
 
-        self.version = QLabel(f"v{__version__}")
-        self.version.setStyleSheet(
-            f"font-size:13px; color:{COLORS['primary_blue']}; opacity: 0.9; font-weight:600; letter-spacing:3px;"
-        )
-        title_box.addWidget(self.version)
         header_layout.addLayout(title_box)
         header_layout.addStretch()
 
