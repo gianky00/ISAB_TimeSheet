@@ -8,12 +8,13 @@ from src.gui.panels.scarico_ore_panel import ScaricoOrePanel
 
 class TestScaricoOrePanelDeep:
     @pytest.fixture
-    def panel(self, qapp, mocker):
-        mocker.patch.object(ScaricoOrePanel, "_load_data")
+    def panel(self, qapp, monkeypatch):
+        monkeypatch.setattr(ScaricoOrePanel, "_load_data", lambda self: None)
         mock_controller = MagicMock(spec=ScaricoOreController)
         mock_controller.format_number.side_effect = lambda x: f"{x:.1f}".replace(".", ",")
         p = ScaricoOrePanel(controller=mock_controller)
         return p
+
 
     def test_update_selection_totals(self, panel):
         """Verifica il calcolo della somma ore per la selezione."""

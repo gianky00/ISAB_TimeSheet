@@ -42,12 +42,14 @@ class PlaywrightBaseBot(BaseBot, ABC):
     def __init__(
         self,
         config: SeleniumBotConfig,
+        **kwargs: Any,
     ) -> None:
         """
         Inizializza le proprietà fondamentali del bot Playwright.
 
         Args:
           config: Istanza di SeleniumBotConfig con le impostazioni del bot.
+          **kwargs: Altri parametri di configurazione extra.
         """
         super().__init__(config.username, config.password, config)
         self.playwright: Playwright | None = None

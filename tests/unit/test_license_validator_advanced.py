@@ -35,9 +35,10 @@ class TestLicenseValidatorAdvanced:
     def test_get_hardware_id_windows_wmic(self, mocker):
         """Test: Recupero HWID su Windows tramite WMIC mockato."""
         mocker.patch("platform.system", return_value="Windows")
+        mocker.patch("src.core.license_hwid.platform.system", return_value="Windows")
         mock_output = b"SerialNumber\nXYZ-123-SERIAL\n"
         mocker.patch(
-            "src.core.license_validator.subprocess.check_output",
+            "src.core.license_hwid.subprocess.check_output",
             return_value=mock_output,
         )
 

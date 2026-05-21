@@ -10,8 +10,9 @@ from src.core.license_validator import (
 
 class TestLicenseValidatorRobust:
     @patch("platform.system", return_value="Windows")
-    @patch("src.core.license_validator._get_windows_hardware_id", return_value="MOCK_HWID")
-    def test_get_hardware_id_windows(self, mock_win, mock_plat):
+    @patch("src.core.license_hwid.platform.system", return_value="Windows")
+    @patch("src.core.license_hwid._get_windows_hardware_id", return_value="MOCK_HWID")
+    def test_get_hardware_id_windows(self, mock_win, mock_plat_hwid, mock_plat):
         assert get_hardware_id() == "MOCK_HWID"
 
     @patch("src.core.license_validator._get_license_paths")

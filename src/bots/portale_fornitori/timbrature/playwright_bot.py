@@ -46,6 +46,7 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
 
     def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs: Any) -> None:
         """Inizializza il bot con i parametri temporali e il fornitore."""
+        kwargs.pop("societa", None)
         super().__init__(**kwargs)
         self.data_da = data_da
         self.data_a = data_a

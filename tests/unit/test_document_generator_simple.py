@@ -9,7 +9,7 @@ class TestDocumentGeneratorSimple:
     def test_generate_pdf_from_html(self, qapp):
         # We test the logic without real printing by mocking QPrinter and QTextDocument.print
         with patch("src.utils.document_generator.QPrinter") as mock_printer:
-            with patch.object(QTextDocument, "print") as mock_print_method:
+            with patch.object(QTextDocument, "print_") as mock_print_method:
                 generate_pdf_from_html("<h1>Test</h1>", "test.pdf")
                 # Check if print was called
                 assert mock_print_method.called
