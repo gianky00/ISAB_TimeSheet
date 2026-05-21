@@ -406,19 +406,37 @@ class ChangelogTicker(QWidget):
         self.notes: list[str] = []
         self.current_idx = 0
         self.num_rows = 3
+        self.target_positions: list[QPoint] = []
+        self.positions_initialized = False
 
-        # Importazione pigra dei colori
         from src.gui.styles import COLORS
 
         self.COLORS = COLORS
+        self._setup_ui_structure()
+        self._create_content_rows()
 
-        # Layout principale: aggiunge un margine per il contenitore
+        self.setFixedWidth(750)
+        self.setFixedHeight(150)
+        self.cycle_timer = QTimer(self)
+        self.cycle_timer.timeout.connect(self.next_batch)
+
+    def _setup_ui_structure(self) -> None:
+        """Inizializza la struttura base e l'header del ticker."""
+        from src.core.version import __version__
+
         self.container_layout = QVBoxLayout(self)
         self.container_layout.setContentsMargins(10, 8, 10, 8)
+        self.container_layout.setSpacing(10)
 
-        # Frame olografico interno
+        self.header_label = QLabel(f"[ NOVITÀ VERSIONE {__version__} ]")
+        self.header_label.setStyleSheet(
+            f"font-size: 11px; color: {self.COLORS['success_green']}; letter-spacing: 2px; font-weight: 900;"
+        )
+        self.header_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.container_layout.addWidget(self.header_label)
+
         self.frame = QFrame()
-        c = QColor(COLORS["primary_blue"])
+        c = QColor(self.COLORS["primary_blue"])
         self.frame.setStyleSheet(
             f"background: rgba(0, 0, 0, 0.5); "
             f"border: 1px solid rgba({c.red()}, {c.green()}, {c.blue()}, 0.25); "
@@ -426,28 +444,21 @@ class ChangelogTicker(QWidget):
         )
         self.container_layout.addWidget(self.frame)
 
-        # Layout interno per le righe
         self.main_layout = QVBoxLayout(self.frame)
         self.main_layout.setContentsMargins(15, 8, 15, 8)
         self.main_layout.setSpacing(6)
         self.main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.labels: list[QLabel] = []
-        self.opacity_effects: list[QGraphicsOpacityEffect] = []
-        self.groups: list[QParallelAnimationGroup] = []
-        self.target_positions: list[QPoint] = []  # Memorizza le posizioni corrette dal layout
-        self.positions_initialized = False
+    def _create_content_rows(self) -> None:
+        """Crea le righe di contenuto con i relativi effetti di animazione."""
+        self.labels = []
+        self.opacity_effects = []
+        self.groups = []
 
-        # Creazione delle righe
         for _ in range(self.num_rows):
             lbl = QLabel()
             lbl.setStyleSheet(
-                "font-size: 11px; "
-                "font-family: 'Consolas', 'Fira Code', monospace; "
-                "color: white; "
-                "background: transparent; "
-                "border: none; "
-                "padding: 0px;"
+                "font-size: 11px; font-family: 'Consolas', monospace; color: white; border: none; padding: 0px;"
             )
             lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
             lbl.setFixedWidth(710)
@@ -456,9 +467,7 @@ class ChangelogTicker(QWidget):
             opacity = QGraphicsOpacityEffect(lbl)
             lbl.setGraphicsEffect(opacity)
 
-            # Gruppo di animazione (Opacità + Posizione)
             group = QParallelAnimationGroup(self)
-
             fade = QPropertyAnimation(opacity, b"opacity")
             fade.setDuration(700)
             fade.setEasingCurve(QEasingCurve.Type.OutCubic)
@@ -474,13 +483,6 @@ class ChangelogTicker(QWidget):
             self.labels.append(lbl)
             self.opacity_effects.append(opacity)
             self.groups.append(group)
-
-        self.setFixedWidth(750)
-        self.setFixedHeight(120)  # Spazio per 3 righe + frame + margins
-
-        # Timer per il ciclo di aggiornamento
-        self.cycle_timer = QTimer(self)
-        self.cycle_timer.timeout.connect(self.next_batch)
 
     def showEvent(self, event: QPaintEvent) -> None:
         """Cattura le posizioni reali del layout prima della prima visualizzazione."""
