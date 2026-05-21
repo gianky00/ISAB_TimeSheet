@@ -435,6 +435,8 @@ class ChangelogTicker(QWidget):
         self.labels: list[QLabel] = []
         self.opacity_effects: list[QGraphicsOpacityEffect] = []
         self.groups: list[QParallelAnimationGroup] = []
+        self.target_positions: list[QPoint] = []  # Memorizza le posizioni corrette dal layout
+        self.positions_initialized = False
 
         # Creazione delle righe
         for _ in range(self.num_rows):
@@ -480,14 +482,25 @@ class ChangelogTicker(QWidget):
         self.cycle_timer = QTimer(self)
         self.cycle_timer.timeout.connect(self.next_batch)
 
+    def showEvent(self, event: QPaintEvent) -> None:
+        """Cattura le posizioni reali del layout prima della prima visualizzazione."""
+        super().showEvent(event)
+        if not self.positions_initialized:
+            # Diamo tempo al layout di stabilizzarsi
+            QTimer.singleShot(100, self._initialize_positions)
+
+    def _initialize_positions(self) -> None:
+        """Salva le coordinate statiche delle label per usarle come ancora delle animazioni."""
+        self.target_positions = [lbl.pos() for lbl in self.labels]
+        self.positions_initialized = True
+        self._show_batch()
+
     def set_notes(self, notes: list[str]) -> None:
-        """Configura le note e avvia il primo batch."""
+        """Configura le note. L'avvio effettivo avviene in showEvent."""
         self.notes = [n for n in notes if n.strip()]
         if not self.notes:
             self.notes = ["VERSIONE OTTIMIZZATA - PRONTA ALL'USO"]
-
         self.current_idx = 0
-        self._show_batch()
 
     def _format_note(self, note: str) -> str:
         """Formatta la nota con tag neon e stile premium."""
@@ -521,6 +534,9 @@ class ChangelogTicker(QWidget):
 
     def _show_batch(self) -> None:
         """Mostra un gruppo di note con animazione di slide-up e fade-in."""
+        if not self.positions_initialized:
+            return
+
         for i in range(self.num_rows):
             note_idx = (self.current_idx + i) % len(self.notes)
             if i > 0 and note_idx == self.current_idx:
@@ -529,8 +545,8 @@ class ChangelogTicker(QWidget):
 
             self.labels[i].setText(self._format_note(self.notes[note_idx]))
 
-            # Calcolo posizione finale e iniziale per lo slide
-            final_pos = self.labels[i].pos()
+            # Utilizziamo le posizioni target salvate per evitare la sovrapposizione
+            final_pos = self.target_positions[i]
             start_pos = QPoint(final_pos.x(), final_pos.y() + 15)
 
             fade_anim = self.groups[i].animationAt(0)
