@@ -272,6 +272,9 @@ class StartupDialog(QDialog):
         log_layout.setContentsMargins(20, 15, 20, 15)
         log_layout.setSpacing(6)
 
+        header_row = QHBoxLayout()
+        header_row.setContentsMargins(0, 0, 0, 0)
+
         log_header = QLabel("DIAGNOSTICA DI SISTEMA")
         header_letter_spacing = 2
         log_header.setStyleSheet(
@@ -280,7 +283,23 @@ class StartupDialog(QDialog):
             f"letter-spacing: {header_letter_spacing}px; "
             f"font-weight: 900;"
         )
-        log_layout.addWidget(log_header)
+        header_row.addWidget(log_header)
+
+        header_row.addStretch()
+
+        self.clock_label = QLabel()
+        self.clock_label.setStyleSheet(
+            "font-size: 11px; color: rgba(255, 255, 255, 0.4); font-family: 'Consolas'; font-weight: bold;"
+        )
+        header_row.addWidget(self.clock_label)
+
+        log_layout.addLayout(header_row)
+
+        # Timer per l'orologio (aggiornamento ogni secondo)
+        self.clock_timer = QTimer(self)
+        self.clock_timer.timeout.connect(self._update_clock)
+        self.clock_timer.start(1000)
+        self._update_clock()
 
         sep = QFrame()
         sep.setFixedHeight(1)
@@ -445,6 +464,12 @@ class StartupDialog(QDialog):
 
         self.progress.setValue(prog)
 
+    def _update_clock(self) -> None:
+        """Aggiorna la label dell'orologio con l'ora attuale."""
+        from datetime import datetime
+
+        self.clock_label.setText(datetime.now().strftime("%H:%M:%S"))
+
     def _on_finished(self, success: bool) -> None:
         self._init_result = success
         if self._thread:
@@ -468,6 +493,8 @@ class StartupDialog(QDialog):
             self.particles.timer.stop()
             self.border.timer.stop()
             self.progress.timer.stop()
+            if hasattr(self, "clock_timer"):
+                self.clock_timer.stop()
             if hasattr(self, "ticker"):
                 self.ticker.cycle_timer.stop()
                 if hasattr(self.ticker, "fade_anim"):

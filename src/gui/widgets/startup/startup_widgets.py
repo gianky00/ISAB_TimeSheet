@@ -3,6 +3,7 @@ SyncroJob - Startup Widgets
 Collezione di widget animati utilizzati nella Splash Screen.
 """
 
+import hashlib
 import math
 
 from PySide6.QtCore import (
@@ -26,6 +27,7 @@ from PySide6.QtGui import (
     QPen,
     QPixmap,
     QRadialGradient,
+    QShowEvent,
 )
 from PySide6.QtWidgets import (
     QFrame,
@@ -396,7 +398,7 @@ class ChangelogTicker(QWidget):
         self._setup_ui_structure()
         self._create_content_rows()
 
-        self.setFixedWidth(750)
+        self.setFixedWidth(800)
         self.setFixedHeight(150)
         self.cycle_timer = QTimer(self)
         self.cycle_timer.timeout.connect(self.next_batch)
@@ -451,7 +453,7 @@ class ChangelogTicker(QWidget):
                 "font-size: 11px; font-family: 'Consolas', monospace; color: white; border: none; padding: 0px;"
             )
             lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-            lbl.setFixedWidth(710)
+            lbl.setFixedWidth(760)
             lbl.setFixedHeight(22)
 
             opacity = QGraphicsOpacityEffect(lbl)
@@ -474,7 +476,7 @@ class ChangelogTicker(QWidget):
             self.opacity_effects.append(opacity)
             self.groups.append(group)
 
-    def showEvent(self, event: QPaintEvent) -> None:
+    def showEvent(self, event: QShowEvent) -> None:
         """Cattura le posizioni reali del layout prima della prima visualizzazione."""
         super().showEvent(event)
         if not self.positions_initialized:
@@ -494,9 +496,12 @@ class ChangelogTicker(QWidget):
         self.current_idx = 0
 
     def _format_note(self, note: str) -> str:
-        """Formatta la nota con tag neon e stile premium."""
+        """Formatta la nota con tag neon, commit SHA (DNA) e stile premium."""
         clean = note.strip()
         lower = clean.lower()
+
+        # Generazione DNA deterministico basato sulla nota (Cyber-Trace)
+        dna = hashlib.sha256(clean.encode()).hexdigest()[:7]
 
         c_feat = self.COLORS.get("success_green", "#2ecc71")
         c_fix = self.COLORS.get("error_red", "#e74c3c")
@@ -512,17 +517,20 @@ class ChangelogTicker(QWidget):
             label, color = "UPDATE", c_mod
             msg = clean
 
-        max_chars = 90
+        max_chars = 85
         if len(msg) > max_chars:
             msg = msg[:max_chars] + "..."
 
         return (
             f'<span style="color:{color}; font-weight:900; letter-spacing:1px;">[{label}]</span> '
+            f"<span style=\"color:rgba(255,255,255,0.4); font-family:'Consolas';\">[{dna}]</span> "
             f'<span style="color:rgba(255,255,255,0.9); font-weight:500;">{msg.upper()}</span>'
         )
 
     def _show_batch(self) -> None:
         """Mostra un gruppo di note con animazione di slide-up e fade-in."""
+        from typing import cast
+
         if not self.positions_initialized:
             return
 
@@ -537,8 +545,8 @@ class ChangelogTicker(QWidget):
             final_pos = self.target_positions[i]
             start_pos = QPoint(final_pos.x(), final_pos.y() + 15)
 
-            fade_anim = self.groups[i].animationAt(0)
-            slide_anim = self.groups[i].animationAt(1)
+            fade_anim = cast("QPropertyAnimation", self.groups[i].animationAt(0))
+            slide_anim = cast("QPropertyAnimation", self.groups[i].animationAt(1))
 
             self.groups[i].stop()
             fade_anim.setStartValue(0.0)
@@ -553,10 +561,12 @@ class ChangelogTicker(QWidget):
 
     def next_batch(self) -> None:
         """Passa al prossimo set di note con fade-out coordinato."""
+        from typing import cast
+
         self.cycle_timer.stop()
 
         for i in range(self.num_rows):
-            fade_anim = self.groups[i].animationAt(0)
+            fade_anim = cast("QPropertyAnimation", self.groups[i].animationAt(0))
             self.groups[i].stop()
             fade_anim.setStartValue(self.opacity_effects[i].opacity())
             fade_anim.setEndValue(0.0)
@@ -613,7 +623,7 @@ class PulseIndicator(QWidget):
     def pulse_radius(self) -> float:
         return self._pulse_radius
 
-    @pulse_radius.setter
+    @pulse_radius.setter  # type: ignore
     def pulse_radius(self, val: float) -> None:
         self._pulse_radius = val
         self.update()
@@ -622,7 +632,7 @@ class PulseIndicator(QWidget):
     def pulse_opacity(self) -> float:
         return self._pulse_opacity
 
-    @pulse_opacity.setter
+    @pulse_opacity.setter  # type: ignore
     def pulse_opacity(self, val: float) -> None:
         self._pulse_opacity = val
         self.update()
