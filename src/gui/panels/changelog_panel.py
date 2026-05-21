@@ -39,6 +39,7 @@ class DiagnosticsWorker(QThread):
     finished = Signal(str, str)  # Invia (sha, platform)
 
     def run(self) -> None:
+        """Esegue il recupero dei dati diagnostici in background."""
         # 1. Recupero Git Commit SHA
         sha = "dev"
         try:
@@ -263,7 +264,16 @@ class ReleaseCard(QFrame):
         ))
 
     def filter_notes(self, category_filter: str, search_text: str = "") -> bool:
-        """Filtra le note interne e restituisce True se la card contiene almeno una nota visibile."""
+        """
+        Filtra le note interne e restituisce True se la card contiene almeno una nota visibile.
+
+        Args:
+          category_filter: Categoria per filtrare le note.
+          search_text: Testo per la ricerca nelle note.
+
+        Returns:
+          bool: True se la card è visibile dopo il filtro.
+        """
         visible_count = 0
         for note_widget, category in self.notes_rows:
             # Estrarre il testo della nota dall'etichetta del testo

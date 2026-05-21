@@ -1,3 +1,5 @@
+"""Servizio di orchestrazione per il bot Scarico PDL."""
+
 from pathlib import Path
 from typing import Any
 
@@ -9,10 +11,12 @@ logger = get_logger(__name__)
 
 
 class ScaricoPDLService(BaseBotService):
+    """Implementazione del servizio per lo scarico PDL."""
     def __init__(self) -> None:
         super().__init__("scarico_pdl")
 
     def load_config(self) -> dict[str, Any]:
+        """Carica la configurazione persistente per Scarico PDL."""
         config = config_manager.load_config()
         p_cfg = config.get("last_pdl_params", {})
 
@@ -28,6 +32,7 @@ class ScaricoPDLService(BaseBotService):
         }
 
     def save_config(self, params: dict[str, Any], data: list[dict[str, Any]]) -> None:
+        """Salva lo stato corrente e i parametri per Scarico PDL."""
         config_manager.set_config_value("last_pdl_data", data)
         config_manager.set_config_value(
             "last_pdl_params",
@@ -45,6 +50,18 @@ class ScaricoPDLService(BaseBotService):
         data: list[dict[str, Any]],
         overrides: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """
+        Prepara i dati per l'esecuzione del bot Scarico PDL.
+
+        Args:
+          credentials: Tupla (username, password, tipo).
+          params: Parametri della GUI.
+          data: Lista di righe da processare.
+          overrides: Eventuali sovrascritture esterne.
+
+        Returns:
+          tuple: (bot_params, bot_data).
+        """
         username, password, account_type = credentials
         config = config_manager.load_config()
 
@@ -74,6 +91,7 @@ class ScaricoPDLService(BaseBotService):
         return bot_params, bot_data  # type: ignore
 
     def handle_post_execution(self, success: bool, bot_instance: Any, telegram_service: Any = None) -> None:
+        """Esegue l'invio del report a Telegram dopo l'esecuzione."""
         if not success or not telegram_service:
             return
 

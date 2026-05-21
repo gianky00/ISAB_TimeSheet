@@ -1,3 +1,5 @@
+"""Inizializzazione del pacchetto models."""
+
 from src.models.contabilita import (
     AttivitaProgrammataRecord,
     CertificatoCampioneRecord,

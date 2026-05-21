@@ -6,6 +6,7 @@ from pathlib import Path
 
 @dataclass(frozen=True)
 class FilePollingParams:
+    """Parametri per il polling di file nel filesystem."""
     directory: Path | str
     pattern: str = "*"
     timeout: int = 60

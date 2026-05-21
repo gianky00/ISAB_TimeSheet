@@ -25,6 +25,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class EventInfo(TypedDict):
+    """Informazioni su un evento programmato dell'Autopilot."""
     id: str
     name: str
     time: str
@@ -58,6 +59,13 @@ class AutopilotEventCard(QFrame):
         info: EventInfo,
         parent: QWidget | None = None,
     ) -> None:
+        """
+        Inizializza la card dell'evento autopilot.
+
+        Args:
+          info: Dati dell'evento (ID, nome, ora, icona, colore).
+          parent: Widget genitore.
+        """
         super().__init__(parent)
         self.bot_id = info["id"]
         self.bot_name = info["name"]

@@ -22,6 +22,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class BotVisualInfo(TypedDict):
+    """Informazioni visuali per la rappresentazione di un bot nell'Autopilot."""
     bot_id: str
     bot_name: str
     icon_path: str
@@ -44,6 +45,13 @@ class AutopilotConfigCard(QFrame):
         """
         Inizializza la card di configurazione.
         Supporta sia il nuovo pattern (info: BotVisualInfo) che quello legacy (bot_id, bot_name, icon, color).
+
+        Args:
+          info: Informazioni visuali del bot o ID del bot.
+          bot_name: Nome del bot (legacy).
+          icon_path: Percorso icona (legacy).
+          color: Colore associato (legacy).
+          parent: Widget genitore.
         """
         super().__init__(parent)
 
@@ -208,6 +216,13 @@ class AutopilotConfigCardWithInterval(QFrame):
         """
         Inizializza la card di configurazione con intervallo.
         Supporta sia il nuovo pattern (info: BotVisualInfo) che quello legacy (bot_id, bot_name, icon, color).
+
+        Args:
+          info: Informazioni visuali del bot o ID del bot.
+          bot_name: Nome del bot (legacy).
+          icon_path: Percorso icona (legacy).
+          color: Colore associato (legacy).
+          parent: Widget genitore.
         """
         super().__init__(parent)
 

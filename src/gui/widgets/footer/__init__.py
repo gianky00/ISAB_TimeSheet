@@ -1,3 +1,5 @@
+"""Inizializzazione del pacchetto footer."""
+
 from .business_info import FooterLeftWidget
 from .components import ClickableLabel, FooterItemWidget, StartupConsole, StatsCard
 from .manager import FooterStatsManager

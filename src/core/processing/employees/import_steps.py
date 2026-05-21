@@ -1,3 +1,5 @@
+"""Passaggi di elaborazione per l'importazione dell'anagrafica dipendenti."""
+
 import csv
 from pathlib import Path
 from typing import Any
@@ -11,6 +13,7 @@ class EmployeeCsvReadStep(ProcessingStep):
     """Passaggio per la lettura e il parsing del file CSV dei dipendenti."""
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue la lettura del file CSV."""
         csv_path = context.get("file_path")
         if not csv_path:
             raise ValueError("file_path mancante nel contesto")
@@ -55,9 +58,11 @@ class EmployeeDatabaseSyncStep(ProcessingStep):
     """Passaggio per la sincronizzazione dei dipendenti con il database."""
 
     def __init__(self, repository: EmployeeRepository | None = None) -> None:
+        """Inizializza il passaggio con il repository specificato."""
         self.repo = repository or EmployeeRepository()
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue la sincronizzazione del database."""
         if not context.get("success"):
             return
 

@@ -1,3 +1,5 @@
+"""Passaggi di elaborazione per l'importazione dei Certificati Campione."""
+
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -13,6 +15,7 @@ class ReadCertificatiExcelStep(ProcessingStep):
     """Legge il file Excel dei certificati campione, rilevando header e sheet."""
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue la lettura del file Excel."""
         file_path = context["file_path"]
         path = Path(file_path)
 
@@ -37,6 +40,7 @@ class ReadCertificatiExcelStep(ProcessingStep):
         context["header_idx"] = header_idx
 
     def _find_sheet(self, xls: pd.ExcelFile) -> str | None:
+        """Individua il foglio Excel più pertinente per i certificati."""
         for name in xls.sheet_names:
             n_low = str(name).lower()
             if "strumenti campione" in n_low or "isab sud" in n_low or "registro" in n_low:
@@ -44,6 +48,7 @@ class ReadCertificatiExcelStep(ProcessingStep):
         return str(xls.sheet_names[0]) if xls.sheet_names else None
 
     def _detect_header(self, df_preview: pd.DataFrame) -> int:
+        """Rileva l'indice della riga di intestazione basandosi su parole chiave."""
         header_row_idx = -1
         max_matches = 0
         keywords = {
@@ -116,6 +121,7 @@ class NormalizeCertificatiStep(ProcessingStep):
     ]
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue la normalizzazione dei dati."""
         if not context.get("df") is not None:
             return
 
@@ -140,6 +146,7 @@ class NormalizeCertificatiStep(ProcessingStep):
         df = df.fillna("").astype(str).apply(lambda x: x.str.strip())
 
         def get_col_safe(name: str) -> Any:
+            """Recupera una colonna in modo sicuro gestendo DataFrame multi-indice."""
             col = df[name]
             if hasattr(col, "iloc") and not hasattr(col, "name"):
                 return col.iloc[:, 0]
@@ -151,6 +158,7 @@ class NormalizeCertificatiStep(ProcessingStep):
         context["df"] = df
 
     def _build_rename_map(self, columns: list[str]) -> dict[str, str]:
+        """Costruisce una mappa di rinomina per le colonne del DataFrame."""
         rename_map = {}
         used_db_cols = set()
 
@@ -183,6 +191,7 @@ class FormatCertificatiStep(ProcessingStep):
     """Applica formattazione a date, percentuali e stati, ripulendo tag debug."""
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue la formattazione dei campi."""
         if not context.get("df") is not None:
             return
 
@@ -210,6 +219,7 @@ class FormatCertificatiStep(ProcessingStep):
 
     @staticmethod
     def _format_date(val: Any) -> str:
+        """Formatta un valore in data stringa DD/MM/YYYY."""
         if pd.isna(val) or val == "" or str(val).strip() == "nan":
             return ""
         try:
@@ -252,6 +262,7 @@ class SyncCertificatiStep(ProcessingStep):
     """Passaggio per la sincronizzazione dei certificati con il database."""
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue la sincronizzazione dei dati con il database."""
         if not context.get("success"):
             return
 

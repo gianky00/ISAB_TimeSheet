@@ -1,3 +1,5 @@
+"""Servizio di orchestrazione per il bot Scarico TS."""
+
 from typing import Any
 
 from src.core import config_manager
@@ -5,10 +7,12 @@ from src.core.bots.services.base_service import BaseBotService
 
 
 class ScaricoTSService(BaseBotService):
+    """Implementazione del servizio per lo scarico Timesheet."""
     def __init__(self) -> None:
         super().__init__("scarico_ts")
 
     def load_config(self) -> dict[str, Any]:
+        """Carica la configurazione persistente per Scarico TS."""
         config = config_manager.load_config()
         return {
             "societa": config.get("last_scarico_ts_societa", "ISAB"),
@@ -19,6 +23,7 @@ class ScaricoTSService(BaseBotService):
         }
 
     def save_config(self, params: dict[str, Any], data: list[dict[str, Any]]) -> None:
+        """Salva lo stato corrente e i parametri per Scarico TS."""
         config_manager.set_config_value("last_scarico_ts_data", data)
         config_manager.set_config_value("last_scarico_ts_societa", params.get("societa", ""))
         config_manager.set_config_value("last_scarico_ts_fornitore", params.get("fornitore", ""))
@@ -32,6 +37,18 @@ class ScaricoTSService(BaseBotService):
         data: list[dict[str, Any]],
         overrides: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """
+        Prepara i dati per l'esecuzione del bot Scarico TS.
+
+        Args:
+          credentials: Tupla (username, password, tipo).
+          params: Parametri della GUI.
+          data: Lista di righe da processare.
+          overrides: Eventuali sovrascritture esterne.
+
+        Returns:
+          tuple: (bot_params, bot_data).
+        """
         username, password, _ = credentials
         config = config_manager.load_config()
 

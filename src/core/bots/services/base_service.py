@@ -11,6 +11,7 @@ logger = get_logger(__name__)
 
 
 class BaseBotService:
+    """Classe base per i servizi di orchestrazione dei bot."""
     def __init__(self, bot_id: str) -> None:
         self.bot_id = bot_id
 

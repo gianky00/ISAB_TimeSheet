@@ -1,0 +1,2 @@
+"""Inizializzazione del pacchetto bridge."""
+

@@ -113,6 +113,7 @@ class DonCiroWidget(QWidget):
         return self._blink
 
     def set_blink(self, v: float) -> None:
+        """Imposta lo stato del battito ciglia."""
         if self._blink != v:
             self._blink = v
             self.blink_changed.emit(v)
@@ -125,6 +126,7 @@ class DonCiroWidget(QWidget):
         return self._label_phase
 
     def set_label_phase(self, v: float) -> None:
+        """Imposta la fase del testo."""
         if self._label_phase != v:
             self._label_phase = v
             self.label_phase_changed.emit(v)

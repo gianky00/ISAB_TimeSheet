@@ -8,6 +8,7 @@ from src.core.constants import Timeouts
 
 @dataclass(frozen=True)
 class SeleniumBotConfig(BotConfig):
+    """Configurazione per i bot Selenium."""
     username: str = ""
     password: str = ""
     headless: bool = False

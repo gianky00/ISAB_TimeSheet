@@ -1,3 +1,5 @@
+"""Repository per l'accesso ai dati dello Storico OdA."""
+
 import contextlib
 from datetime import UTC, datetime
 from typing import Any, Literal, overload
@@ -50,12 +52,14 @@ class OdaRepository:
         ]
 
     @overload
-    def get_all(self, search_text: str | None = ..., as_objects: Literal[True] = ...) -> list[OdaRecord]: ...
+    def get_all(self, search_text: str | None = ..., as_objects: Literal[True] = ...) -> list[OdaRecord]:
+        """Recupera tutti gli OdA come oggetti."""
 
     @overload
     def get_all(
         self, search_text: str | None = ..., as_objects: Literal[False] = ...
-    ) -> list[tuple[Any, ...]]: ...
+    ) -> list[tuple[Any, ...]]:
+        """Recupera tutti gli OdA come tuple."""
 
     def get_all(
         self, search_text: str | None = None, as_objects: bool = True
