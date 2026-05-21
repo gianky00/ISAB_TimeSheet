@@ -422,13 +422,12 @@ class ChangelogTicker(QWidget):
 
     def _setup_ui_structure(self) -> None:
         """Inizializza la struttura base e l'header del ticker."""
-        from src.core.version import __version__
 
         self.container_layout = QVBoxLayout(self)
         self.container_layout.setContentsMargins(10, 8, 10, 8)
         self.container_layout.setSpacing(10)
 
-        self.header_label = QLabel(f"[ NOVITÀ VERSIONE {__version__} ]")
+        self.header_label = QLabel("[ NOVITÀ DELLA VERSIONE INSTALLATA ]")
         self.header_label.setStyleSheet(
             f"font-size: 11px; color: {self.COLORS['success_green']}; letter-spacing: 2px; font-weight: 900;"
         )
