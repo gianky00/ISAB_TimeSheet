@@ -56,7 +56,7 @@ class WeatherService(QObject):
         url_weather = (
             f"https://api.open-meteo.com/v1/forecast?"
             f"latitude={lat}&longitude={lon}&"
-            f"current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_gusts_10m&"
+            f"current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_gusts_10m,precipitation,cloud_cover,wind_direction_10m&"
             f"daily=temperature_2m_max,temperature_2m_min,weather_code,uv_index_max,precipitation_probability_max,sunrise,sunset&"
             f"timezone=Europe%2FRome"
         )
@@ -88,7 +88,7 @@ class WeatherService(QObject):
             url_aqi = (
                 f"https://air-quality-api.open-meteo.com/v1/air-quality?"
                 f"latitude={lat}&longitude={lon}&"
-                f"current=european_aqi,pm10,pm2_5&"
+                f"current=european_aqi,pm10,pm2_5,nitrogen_dioxide,sulphur_dioxide,carbon_monoxide,grass_pollen,olive_pollen&"
                 f"timezone=Europe%2FRome"
             )
 
