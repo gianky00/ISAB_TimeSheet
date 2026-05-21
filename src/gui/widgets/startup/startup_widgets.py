@@ -5,7 +5,7 @@ Collezione di widget animati utilizzati nella Splash Screen.
 
 import math
 
-from PySide6.QtCore import QPoint, QRect, Qt, QTimer
+from PySide6.QtCore import QEasingCurve, QPoint, QPropertyAnimation, QRect, Qt, QTimer
 from PySide6.QtGui import (
     QBrush,
     QColor,
@@ -18,7 +18,12 @@ from PySide6.QtGui import (
     QPixmap,
     QRadialGradient,
 )
-from PySide6.QtWidgets import QLabel, QWidget
+from PySide6.QtWidgets import (
+    QGraphicsOpacityEffect,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 class AnimatedBorder(QWidget):
@@ -370,78 +375,141 @@ class ConsoleOverlay(QWidget):
             painter.end()
 
 
-class ChangelogTicker(QLabel):
-    """Widget premium a scorrimento/digitazione per le novità della versione corrente."""
+class ChangelogTicker(QWidget):
+    """Widget premium multi-riga (3 righe) per mostrare più novità della versione contemporaneamente."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.notes: list[str] = []
         self.current_idx = 0
-        self.char_idx = 0
-        self.is_typing = False
+        self.num_rows = 3  # Mostriamo 3 novità alla volta
 
-        # Stile fantascientifico: azzurro olografico, corsivo/monospazio, allineato a destra
-        self.setStyleSheet(
-            "font-size: 10px; "
-            "font-family: 'Consolas', 'Fira Code', monospace; "
-            "color: rgba(52, 152, 219, 0.85); "
-            "font-style: italic; "
-            "background: transparent;"
-        )
-        self.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        self.setFixedWidth(300)  # Larghezza fissa per evitare salti di layout
+        # Importazione pigra dei colori
+        from src.gui.styles import COLORS
 
-        # Timer per la digitazione (carattere per carattere)
-        self.type_timer = QTimer(self)
-        self.type_timer.timeout.connect(self._type_char)
+        self.COLORS = COLORS
 
-        # Timer per il cambio nota (intervallo tra le scritte)
+        # Layout principale verticale per le righe
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(4)
+        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.labels: list[QLabel] = []
+        self.opacity_effects: list[QGraphicsOpacityEffect] = []
+        self.animations: list[QPropertyAnimation] = []
+
+        # Creazione delle righe
+        for _ in range(self.num_rows):
+            lbl = QLabel()
+            lbl.setStyleSheet(
+                "font-size: 11px; "
+                "font-family: 'Consolas', 'Fira Code', monospace; "
+                "color: white; "
+                "background: transparent;"
+            )
+            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            lbl.setFixedWidth(550)
+            lbl.setFixedHeight(20)
+
+            opacity = QGraphicsOpacityEffect(lbl)
+            lbl.setGraphicsEffect(opacity)
+            anim = QPropertyAnimation(opacity, b"opacity")
+            anim.setEasingCurve(QEasingCurve.Type.InOutSine)
+            anim.setDuration(600)
+
+            self.main_layout.addWidget(lbl)
+            self.labels.append(lbl)
+            self.opacity_effects.append(opacity)
+            self.animations.append(anim)
+
+        self.setFixedWidth(550)
+        self.setFixedHeight(80)  # Spazio per 3 righe + spacing
+
+        # Timer per il ciclo di aggiornamento
         self.cycle_timer = QTimer(self)
-        self.cycle_timer.timeout.connect(self.next_note)
+        self.cycle_timer.timeout.connect(self.next_batch)
 
     def set_notes(self, notes: list[str]) -> None:
-        """Configura l'elenco delle novità e avvia lo scorrimento."""
+        """Configura le note e avvia il primo batch."""
         self.notes = [n for n in notes if n.strip()]
         if not self.notes:
-            self.notes = ["Nessuna novita rilevata per questa versione"]
+            self.notes = ["VERSIONE OTTIMIZZATA - PRONTA ALL'USO"]
+
         self.current_idx = 0
-        self.start_typing()
+        self._show_batch()
 
-    def start_typing(self) -> None:
-        """Avvia la digitazione della nota corrente."""
-        self.type_timer.stop()
-        self.cycle_timer.stop()
-        self.char_idx = 0
-        self.is_typing = True
-        self._type_char()
+    def _format_note(self, note: str) -> str:
+        """Formatta la nota con tag colorati."""
+        clean = note.strip()
+        lower = clean.lower()
 
-    def _type_char(self) -> None:
-        if not self.notes:
-            return
+        c_feat = self.COLORS.get("success_green", "#2ecc71")
+        c_fix = self.COLORS.get("error_red", "#e74c3c")
+        c_mod = self.COLORS.get("primary_blue", "#3498db")
 
-        note = self.notes[self.current_idx]
-        # Formattazione abbreviata se troppo lunga per stare nel widget
-        max_len = 52
-        if len(note) > max_len:
-            note = note[:max_len] + "..."
-
-        if self.char_idx <= len(note):
-            # Aggiungiamo un cursore lampeggiante durante la digitazione
-            cursor = "█" if self.char_idx % 2 == 0 and self.char_idx < len(note) else ""
-            self.setText(note[:self.char_idx] + cursor)
-            self.char_idx += 1
-            # Velocità di battitura (30ms per carattere)
-            self.type_timer.start(30)
+        if lower.startswith("feat"):
+            label = "FEAT"
+            color = c_feat
+            msg = clean.split(":", 1)[1].strip() if ":" in clean else clean[4:].strip()
+        elif lower.startswith("fix"):
+            label = "FIX"
+            color = c_fix
+            msg = clean.split(":", 1)[1].strip() if ":" in clean else clean[3:].strip()
         else:
-            self.type_timer.stop()
-            self.is_typing = False
-            self.setText(note)
-            # Mostra la nota completata per 4 secondi, poi passa alla successiva
-            self.cycle_timer.start(4000)
+            label = "UPD"
+            color = c_mod
+            msg = clean
 
-    def next_note(self) -> None:
-        """Passa alla novità successiva."""
-        if not self.notes:
-            return
-        self.current_idx = (self.current_idx + 1) % len(self.notes)
-        self.start_typing()
+        # Tronca se troppo lungo per la riga
+        max_chars = 65
+        if len(msg) > max_chars:
+            msg = msg[:max_chars] + "..."
+
+        return (
+            f'<span style="color:{color}; font-weight:bold;">[{label}]</span> '
+            f'<span style="color:white; font-weight:500;">{msg.upper()}</span>'
+        )
+
+    def _show_batch(self) -> None:
+        """Mostra un gruppo di note con animazione di fade-in."""
+        for i in range(self.num_rows):
+            note_idx = (self.current_idx + i) % len(self.notes)
+            # Se abbiamo meno note del numero di righe, evitiamo duplicati se non necessario
+            if i > 0 and note_idx == self.current_idx:
+                self.labels[i].setText("")
+                continue
+
+            self.labels[i].setText(self._format_note(self.notes[note_idx]))
+
+            # Animazione sfalsata per un effetto più dinamico (100ms di delay tra righe)
+            self.animations[i].stop()
+            self.animations[i].setStartValue(0.0)
+            self.animations[i].setEndValue(1.0)
+            QTimer.singleShot(i * 100, self.animations[i].start)
+
+        # Il batch resta visibile per 6 secondi
+        self.cycle_timer.start(6000)
+
+    def next_batch(self) -> None:
+        """Passa al prossimo set di note con fade-out coordinato."""
+        self.cycle_timer.stop()
+
+        for i in range(self.num_rows):
+            self.animations[i].stop()
+            self.animations[i].setStartValue(self.opacity_effects[i].opacity())
+            self.animations[i].setEndValue(0.0)
+            if i == self.num_rows - 1:
+                self.animations[i].finished.connect(self._on_fade_out_finished)
+            self.animations[i].start()
+
+    def _on_fade_out_finished(self) -> None:
+        """Cambia indice e mostra il nuovo batch."""
+        import contextlib
+
+        with contextlib.suppress(Exception):
+            self.animations[self.num_rows - 1].finished.disconnect(self._on_fade_out_finished)
+
+        # Avanziamo di num_rows per mostrare note fresche
+        self.current_idx = (self.current_idx + self.num_rows) % len(self.notes)
+        self._show_batch()

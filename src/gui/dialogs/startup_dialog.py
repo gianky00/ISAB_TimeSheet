@@ -297,6 +297,7 @@ class StartupDialog(QDialog):
         """Carica le note di changelog per la versione corrente dell'applicazione."""
         try:
             import json
+
             changelog_path = Path(__file__).resolve().parent.parent.parent / "core" / "changelog.json"
             if changelog_path.exists():
                 with open(changelog_path, encoding="utf-8") as f:
@@ -313,39 +314,50 @@ class StartupDialog(QDialog):
         return []
 
     def _setup_footer(self, parent_layout: QVBoxLayout) -> None:
-        """Configura il footer con indicatore, status e ticker novità."""
-        footer = QHBoxLayout()
-        footer.setContentsMargins(0, 5, 0, 0)
+        """Configura la riga dello status di caricamento."""
+        status_row = QHBoxLayout()
+        status_row.setContentsMargins(0, 5, 0, 0)
 
         self.indicator = QLabel()
         indicator_size = 8
         self.indicator.setFixedSize(indicator_size, indicator_size)
         self.indicator.setStyleSheet(f"background:{COLORS['primary_blue']}; border-radius:4px;")
-        footer.addWidget(self.indicator)
-        indicator_spacing = 8
-        footer.addSpacing(indicator_spacing)
+        status_row.addWidget(self.indicator)
+        status_row.addSpacing(8)
 
         self.status = QLabel("AVVIO IN CORSO...")
         self.status.setStyleSheet(
             f"font-size:11px; color:{COLORS['bg_white']}; opacity: 0.5; font-weight:600; letter-spacing:2px;"
         )
-        footer.addWidget(self.status)
+        status_row.addWidget(self.status)
 
         self.dots = QLabel("")
         self.dots.setStyleSheet(
             f"font-size:11px; color:{COLORS['primary_blue']}; opacity: 0.8; font-weight:600;"
         )
-        footer.addWidget(self.dots)
+        status_row.addWidget(self.dots)
+        status_row.addStretch()
 
-        footer.addStretch()
+        parent_layout.addLayout(status_row)
 
-        # Ticker novità scorrimento in basso a destra
+        # Riga dedicata per il Ticker Novità (Sotto lo Status)
+        self._setup_ticker_row(parent_layout)
+
+    def _setup_ticker_row(self, parent_layout: QVBoxLayout) -> None:
+        """Posiziona il ticker del changelog multi-riga centrato in basso."""
+        ticker_layout = QHBoxLayout()
+        # Riduciamo il margine superiore per far stare comodamente 3 righe
+        ticker_layout.setContentsMargins(0, 5, 0, 0)
+
         self.ticker = ChangelogTicker()
         notes = self._load_current_changelog_notes()
         self.ticker.set_notes(notes)
-        footer.addWidget(self.ticker)
 
-        parent_layout.addLayout(footer)
+        ticker_layout.addStretch(1)
+        ticker_layout.addWidget(self.ticker, alignment=Qt.AlignmentFlag.AlignCenter)
+        ticker_layout.addStretch(1)
+
+        parent_layout.addLayout(ticker_layout)
 
     def _setup_animations(self) -> None:
         """Configura i timer per le animazioni (dots, pulse, fade-in)."""
@@ -486,8 +498,9 @@ class StartupDialog(QDialog):
             self._dot_timer.stop()
             self._pulse_timer.stop()
             if hasattr(self, "ticker"):
-                self.ticker.type_timer.stop()
                 self.ticker.cycle_timer.stop()
+                if hasattr(self.ticker, "fade_anim"):
+                    self.ticker.fade_anim.stop()
             for lbl in self.log_labels:
                 lbl._timer.stop()
             if self._thread and self._thread.isRunning():
