@@ -203,7 +203,7 @@ class StartupDialog(QDialog):
             f'<span style="font-size:40px; font-weight:900; color:{COLORS["bg_white"]}; letter-spacing:2px;">'
             f'SYNCRO<span style="color:{COLORS["primary_blue"]};">JOB</span> '
             f'<span style="font-size:14px; color:{COLORS["primary_blue"]}; opacity: 0.6; font-weight:600; vertical-align: middle;">v{__version__} '
-            f'<span style="font-size:10px; color:rgba(255,255,255,0.4); font-weight:400;"> — RILASCIATO IL {build_date}</span></span></span>'
+            f'<span style="font-size:10px; color:{COLORS["primary_blue"]}; opacity: 0.4; font-weight:400;"> — RILASCIATO IL {build_date}</span></span></span>'
         )
         title_shadow = QGraphicsDropShadowEffect()
         title_shadow.setBlurRadius(15)
