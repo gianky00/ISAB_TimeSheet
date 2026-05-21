@@ -156,6 +156,9 @@ class StartupDialog(QDialog):
         self._setup_progress(content_layout)
         self._setup_footer(content_layout)
 
+        # Firma d'autore animata a piè di pagina (centrata)
+        self._setup_credits_bottom(content_layout)
+
     def _setup_header(self, parent_layout: QVBoxLayout) -> None:
         """Configura l'header con logo, blueprint e titoli."""
         header_container = QFrame()
@@ -184,7 +187,7 @@ class StartupDialog(QDialog):
 
         title_box = QVBoxLayout()
         title_box.setSpacing(4)
-        self._setup_title_and_credits(title_box)
+        self._setup_title_and_release(title_box)
 
         header_layout.addLayout(title_box)
         header_layout.addStretch()
@@ -192,8 +195,8 @@ class StartupDialog(QDialog):
         self._setup_license_info(header_layout)
         parent_layout.addWidget(header_container)
 
-    def _setup_title_and_credits(self, title_box: QVBoxLayout) -> None:
-        """Inizializza il blocco titolo e la firma d'autore animata."""
+    def _setup_title_and_release(self, title_box: QVBoxLayout) -> None:
+        """Inizializza il blocco titolo e la data di rilascio coordinata."""
         # Build Date dinamica dal changelog
         build_date = self._get_build_date()
 
@@ -202,8 +205,7 @@ class StartupDialog(QDialog):
         self.title.setText(
             f'<span style="font-size:40px; font-weight:900; color:{COLORS["bg_white"]}; letter-spacing:2px;">'
             f'SYNCRO<span style="color:{COLORS["primary_blue"]};">JOB</span> '
-            f'<span style="font-size:14px; color:{COLORS["primary_blue"]}; opacity: 0.6; font-weight:600; vertical-align: middle;">v{__version__} '
-            f'<span style="font-size:10px; color:{COLORS["primary_blue"]}; opacity: 0.4; font-weight:400;"> — RILASCIATO IL {build_date}</span></span></span>'
+            f'<span style="font-size:14px; color:{COLORS["primary_blue"]}; opacity: 0.6; font-weight:600; vertical-align: middle;">v{__version__}</span></span>'
         )
         title_shadow = QGraphicsDropShadowEffect()
         title_shadow.setBlurRadius(15)
@@ -212,10 +214,22 @@ class StartupDialog(QDialog):
         self.title.setGraphicsEffect(title_shadow)
         title_box.addWidget(self.title)
 
+        # Label Data di Rilascio sotto il titolo
+        self.release_info = QLabel(f"RILASCIATO IL {build_date}")
+        self.release_info.setStyleSheet(
+            f"font-size: 10px; color: {COLORS['primary_blue']}; opacity: 0.4; font-weight: 400; letter-spacing: 1px;"
+        )
+        # Applichiamo l'opacità via effetto per precisione olografica
+        rel_opacity = QGraphicsOpacityEffect(self.release_info)
+        rel_opacity.setOpacity(0.4)
+        self.release_info.setGraphicsEffect(rel_opacity)
+        title_box.addWidget(self.release_info)
+
         # Placeholder per compatibilità
         self.version = QLabel()
 
-        # System Credit Olografico Animato
+    def _setup_credits_bottom(self, parent_layout: QVBoxLayout) -> None:
+        """Inizializza la firma d'autore animata a piè di pagina."""
         self.credits = TypewriterLabel()
         self.credits.setTextFormat(Qt.TextFormat.RichText)
         self.credits.setStyleSheet(
@@ -242,9 +256,10 @@ class StartupDialog(QDialog):
 
         self.cred_pulse_group.addAnimation(pulse_in)
         self.cred_pulse_group.addAnimation(pulse_out)
-        self.cred_pulse_group.setLoopCount(-1)  # Infinito
+        self.cred_pulse_group.setLoopCount(-1)
 
-        title_box.addWidget(self.credits)
+        parent_layout.addSpacing(10)
+        parent_layout.addWidget(self.credits, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # Avvio ritardato
         QTimer.singleShot(800, lambda: self.credits.set_text_animated("DEVELOPED BY GIANCARLO ALLEGRETTI"))
