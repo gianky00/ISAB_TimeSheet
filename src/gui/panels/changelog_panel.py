@@ -11,25 +11,62 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QThread, QTimer, Signal
 from PySide6.QtGui import QColor, QGuiApplication
 from PySide6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
     QWidget,
 )
 
+from src.core.config_manager import set_config_value
 from src.core.constants import Icons
 from src.core.version import __version__
 from src.gui.styles import COLORS, SCROLL_AREA_TRANSPARENT, card_style
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
+
+
+class DiagnosticsWorker(QThread):
+    """Worker in background per caricare lo SHA di Git e i dati hardware in modo asincrono."""
+    finished = Signal(str, str)  # Invia (sha, platform)
+
+    def run(self) -> None:
+        # 1. Recupero Git Commit SHA
+        sha = "dev"
+        try:
+            from admin.release import ROOT_DIR, find_git_executable
+            git_bin = find_git_executable()
+            res = subprocess.run(
+                [git_bin, "rev-parse", "--short", "HEAD"],
+                cwd=ROOT_DIR,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            sha_stripped = res.stdout.strip()
+            if sha_stripped:
+                sha = sha_stripped
+        except Exception:
+            logger.debug("Impossibile caricare lo SHA di Git")
+
+        # 2. Platform info
+        plat = "Windows (x64)"
+        try:
+            os_name = platform.system()
+            arch = platform.machine()
+            plat = f"{os_name} ({arch})"
+        except Exception:
+            logger.debug("Impossibile ottenere informazioni di piattaforma")
+
+        self.finished.emit(sha, plat)
 
 
 class ReleaseCard(QFrame):
@@ -170,17 +207,17 @@ class ReleaseCard(QFrame):
         """Esegue il parsing della nota e restituisce l'etichetta e lo stile della categoria."""
         lower_note = note.lower()
         categories = {
-            "feat": ("FEATURE", "success"),
-            "fix": ("BUGFIX", "danger"),
-            "refactor": ("REFACTOR", "purple"),
-            "perf": ("PERF", "warning"),
-            "docs": ("DOCS", "info"),
-            "chore": ("CHORE", "secondary"),
+            "feat": ("🚀 FEATURE", "success"),
+            "fix": ("🐛 BUGFIX", "danger"),
+            "refactor": ("♻️ REFACTOR", "purple"),
+            "perf": ("⚡ PERF", "warning"),
+            "docs": ("📝 DOCS", "info"),
+            "chore": ("🔧 CHORE", "secondary"),
         }
         for prefix, result in categories.items():
             if lower_note.startswith((f"{prefix}:", f"{prefix}(", f"{prefix} ")):
                 return result
-        return "UPDATE", "info"
+        return "✨ UPDATE", "info"
 
     def _clean_note_text(self, note: str) -> str:
         """Rimuove i prefissi convenzionali a scopo di visualizzazione UI."""
@@ -225,17 +262,24 @@ class ReleaseCard(QFrame):
             get_colored_icon(get_asset_path(Icons.COPY), COLORS["text_secondary"])
         ))
 
-    def filter_notes(self, category_filter: str) -> bool:
+    def filter_notes(self, category_filter: str, search_text: str = "") -> bool:
         """Filtra le note interne e restituisce True se la card contiene almeno una nota visibile."""
-        if category_filter == "all":
-            for note_widget, _ in self.notes_rows:
-                note_widget.show()
-            self.show()
-            return True
-
         visible_count = 0
         for note_widget, category in self.notes_rows:
-            if category == category_filter:
+            # Estrarre il testo della nota dall'etichetta del testo
+            note_layout = note_widget.layout()
+            note_text = ""
+            if note_layout and note_layout.count() >= 2:
+                item = note_layout.itemAt(1)
+                if item is not None:
+                    text_widget = item.widget()
+                    if isinstance(text_widget, QLabel):
+                        note_text = text_widget.text().lower()
+
+            category_match = (category_filter in ("all", category))
+            text_match = (not search_text or search_text in note_text)
+
+            if category_match and text_match:
                 note_widget.show()
                 visible_count += 1
             else:
@@ -269,12 +313,60 @@ class ChangelogPanel(QWidget):
     Rendering dinamico ed estetico del changelog strutturato con timeline DevOps e filtri sticky.
     """
 
+    _changelog_cache: list[dict[str, Any]] | None = None
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.release_rows: list[tuple[QWidget, ReleaseCard]] = []
         self.active_filter = "all"
+        self.search_text = ""
+        self.search_bar: QLineEdit | None = None
+        self.sha_lbl: QLabel | None = None
+        self.platform_lbl: QLabel | None = None
         self._setup_ui()
         self._load_changelog()
+
+        # Avvio Diagnostics Worker in Background
+        self.worker = DiagnosticsWorker(self)
+        self.worker.finished.connect(self._on_diagnostics_loaded)
+        self.worker.start()
+
+    def _on_diagnostics_loaded(self, sha: str, plat: str) -> None:
+        """Aggiorna le label diagnostiche una volta caricati i dati in background."""
+        if self.sha_lbl:
+            self.sha_lbl.setText(sha)
+        if self.platform_lbl:
+            self.platform_lbl.setText(plat)
+
+    def _setup_search_bar(self, layout: QHBoxLayout) -> None:
+        """Configura la barra di ricerca premium e la aggiunge al layout dei filtri."""
+        self.search_bar = QLineEdit()
+        self.search_bar.setPlaceholderText("Cerca nelle note...")
+        self.search_bar.setFixedWidth(200)
+        self.search_bar.setFixedHeight(24)
+        self.search_bar.setStyleSheet(f"""
+            QLineEdit {{
+                background-color: {COLORS['bg_white']};
+                color: {COLORS['text_dark']};
+                border: 1px solid {COLORS['border_light']};
+                border-radius: 12px;
+                padding: 2px 10px 2px 26px;
+                font-size: 11px;
+                font-weight: 600;
+            }}
+            QLineEdit:focus {{
+                border: 1px solid {COLORS['primary_blue']};
+            }}
+        """)
+
+        # Icona lente di ingrandimento
+        search_icon = QLabel(self.search_bar)
+        search_icon.setPixmap(get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_secondary"]).pixmap(12, 12))
+        search_icon.setStyleSheet("background: transparent; border: none;")
+        search_icon.setGeometry(8, 6, 12, 12)
+
+        self.search_bar.textChanged.connect(self._on_search_changed)
+        layout.addWidget(self.search_bar)
 
     def _setup_ui(self) -> None:
         """Configura il layout del portale Changelog con area diagnostica e scorrimento."""
@@ -327,6 +419,7 @@ class ChangelogPanel(QWidget):
             self.filter_buttons[cat_type] = btn
 
         filter_outer_layout.addStretch()
+        self._setup_search_bar(filter_outer_layout)
         layout.addWidget(self.filter_container)
 
         # Configurazione Stile Tooltip Light Premium
@@ -409,10 +502,15 @@ class ChangelogPanel(QWidget):
 
         self._apply_filter()
 
+    def _on_search_changed(self, text: str) -> None:
+        """Gestisce il cambio del testo di ricerca in tempo reale."""
+        self.search_text = text.lower().strip()
+        self._apply_filter()
+
     def _apply_filter(self) -> None:
-        """Applica il filtro attivo a tutte le card di rilascio."""
+        """Applica il filtro attivo e di ricerca a tutte le card di rilascio."""
         for row_widget, card in self.release_rows:
-            has_visible_notes = card.filter_notes(self.active_filter)
+            has_visible_notes = card.filter_notes(self.active_filter, self.search_text)
             if has_visible_notes:
                 row_widget.show()
             else:
@@ -485,11 +583,9 @@ class ChangelogPanel(QWidget):
 
         # Dati diagnostici
         version_str = __version__
-        platform_str = self._get_platform_info()
-        sha_str = self._get_git_commit_sha()
         update_str = self._get_last_update_date()
 
-        def add_column(title: str, value: str, icon_path: str, color: str) -> None:
+        def add_column(title: str, value: str, icon_path: str, color: str) -> QLabel:
             col_widget = QWidget()
             col_widget.setStyleSheet("background: transparent; border: none;")
             col_layout = QVBoxLayout(col_widget)
@@ -520,11 +616,12 @@ class ChangelogPanel(QWidget):
             col_layout.addWidget(title_lbl)
             col_layout.addWidget(val_container)
             layout.addWidget(col_widget, 1)
+            return val_lbl
 
         # Aggiungiamo le colonne
         add_column("VERSIONE UTENTE", f"v{version_str}", Icons.CPU, COLORS["teal_accent"])
-        add_column("PIATTAFORMA", platform_str, Icons.GLOBE, COLORS["primary_blue"])
-        add_column("COMMIT SHA", sha_str, Icons.ACTIVITY, COLORS["teal_accent"])
+        self.platform_lbl = add_column("PIATTAFORMA", "Caricamento...", Icons.GLOBE, COLORS["primary_blue"])
+        self.sha_lbl = add_column("COMMIT SHA", "Caricamento...", Icons.ACTIVITY, COLORS["teal_accent"])
         add_column("AGGIORNATO IL", update_str, Icons.CALENDAR, COLORS["teal_accent"])
 
         return card
@@ -604,14 +701,15 @@ class ChangelogPanel(QWidget):
         self.scroll_layout.addWidget(row_widget)
         self.release_rows.append((row_widget, card))
 
-    def _load_changelog(self) -> None:
-        """Carica il file changelog.json ed esegue il rendering delle card di versione con la timeline."""
+    def _read_changelog_from_disk(self) -> list[dict[str, Any]]:
+        """Legge il file changelog.json da disco e applica un fallback in caso di errori."""
         changelog_path = Path(__file__).resolve().parent.parent.parent / "core" / "changelog.json"
-
-        changelog_data = []
+        changelog_data: list[dict[str, Any]] = []
         if changelog_path.exists():
             try:
-                changelog_data = json.loads(changelog_path.read_text(encoding="utf-8"))
+                data = json.loads(changelog_path.read_text(encoding="utf-8"))
+                if isinstance(data, list):
+                    changelog_data = data
             except Exception:
                 logger.exception("Impossibile decodificare il file changelog.json")
 
@@ -624,6 +722,15 @@ class ChangelogPanel(QWidget):
                     "notes": ["Release iniziale della versione corrente. Changelog in fase di indicizzazione."]
                 }
             ]
+        return changelog_data
+
+    def _load_changelog(self) -> None:
+        """Carica il file changelog.json ed esegue il rendering delle card di versione con la timeline."""
+        if ChangelogPanel._changelog_cache is not None:
+            changelog_data = ChangelogPanel._changelog_cache
+        else:
+            changelog_data = self._read_changelog_from_disk()
+            ChangelogPanel._changelog_cache = changelog_data
 
         # Svuota i layout per sicurezza
         self._clear_layout(self.diag_outer_layout)
@@ -649,6 +756,12 @@ class ChangelogPanel(QWidget):
                 if not is_next:
                     first_stable_index = idx
                     break
+
+        # Impostiamo la versione corrente vista come l'ultima stabile trovata
+        if first_stable_index != -1 and first_stable_index < total_real:
+            latest_version = changelog_data[first_stable_index].get("version")
+            if latest_version:
+                set_config_value("changelog_last_viewed_version", str(latest_version))
 
         for i, release in enumerate(changelog_data):
             if isinstance(release, dict):
