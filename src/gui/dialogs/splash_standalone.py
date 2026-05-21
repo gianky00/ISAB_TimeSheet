@@ -85,19 +85,18 @@ def run_standalone() -> None:  # noqa: PLR0915
     def read_stdin() -> None:
         """Legge i comandi JSON da stdin e aggiorna la splash standalone."""
         logger.info("Stdin reader thread active")
-        import io
 
-        # Usiamo il buffer binario per evitare problemi di encoding su Windows
-        input_stream = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", line_buffering=True)
+        # Usiamo direttamente il buffer binario grezzo per evitare problemi di encoding e buffering su Windows
+        buffer = sys.stdin.buffer
 
         while True:
             try:
-                line = input_stream.readline()
-                if not line:
+                line_bytes = buffer.readline()
+                if not line_bytes:
                     logger.info("Stdin stream closed")
                     break
 
-                line = line.strip()
+                line = line_bytes.decode("utf-8", errors="ignore").strip()
                 if not line:
                     continue
 

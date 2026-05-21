@@ -6,6 +6,7 @@ SyncroJob - Zero-Lag Startup Architecture
 Animazioni fluide a 60fps garantite tramite thread separato per il caricamento.
 """
 
+import contextlib
 import ctypes
 import json
 import os
@@ -231,7 +232,40 @@ def _start_instance_server() -> Any:
     return server
 
 
-def _init_splash() -> tuple[Callable[[str, int], None], Callable[[], None]]:
+class SplashPipeWriter:
+    """Gestisce la comunicazione sicura e binaria verso lo splash screen standalone."""
+
+    def __init__(self, sp: subprocess.Popen[bytes]) -> None:
+        self.sp = sp
+
+    def _write(self, data_dict: dict[str, Any]) -> None:
+        if self.sp.poll() is None and self.sp.stdin:
+            data = json.dumps(data_dict) + "\n"
+            with contextlib.suppress(OSError):
+                self.sp.stdin.write(data.encode("utf-8"))
+                self.sp.stdin.flush()
+
+    def update(self, msg: str, prog: int) -> None:
+        """Invia un comando di aggiornamento avanzamento allo splash screen."""
+        self._write({"cmd": "update", "msg": msg.replace("\n", " "), "prog": prog})
+
+    def send_license(self, cliente: str, hw_id: str, scadenza: str) -> None:
+        """Invia i dati di licenza decifrati allo splash screen."""
+        self._write({"cmd": "license_info", "cliente": cliente, "hw_id": hw_id, "scadenza": scadenza})
+
+    def close(self) -> None:
+        """Invia il segnale di chiusura e attende la terminazione del processo splash."""
+        if self.sp.poll() is None and self.sp.stdin:
+            self._write({"cmd": "close"})
+            with contextlib.suppress(OSError):
+                self.sp.stdin.close()
+            try:
+                self.sp.wait(1.5)
+            except subprocess.TimeoutExpired:
+                self.sp.kill()
+
+
+def _init_splash() -> tuple[Callable[[str, int], None], Callable[[], None], Callable[[str, str, str], None]]:
     """Inizializza il processo splash e restituisce le funzioni di controllo."""
     cmd = (
         [sys.executable, "--splash-mode"]
@@ -241,28 +275,24 @@ def _init_splash() -> tuple[Callable[[str, int], None], Callable[[], None]]:
     sp = subprocess.Popen(
         cmd,
         stdin=subprocess.PIPE,
-        text=True,
-        bufsize=1,
-        encoding="utf-8",
+        bufsize=0,  # Unbuffered per trasmissione istantanea
         env=os.environ | {"PYTHONUNBUFFERED": "1", "PYTHONPATH": str(ROOT_DIR)},
     )
+    writer = SplashPipeWriter(sp)
+    return writer.update, writer.close, writer.send_license
 
-    def upd(m: str, p: int) -> None:
-        if sp.poll() is None and sp.stdin:
-            sp.stdin.write(json.dumps({"cmd": "update", "msg": m.replace("\n", " "), "prog": p}) + "\n")
-            sp.stdin.flush()
 
-    def cls() -> None:
-        if sp.poll() is None and sp.stdin:
-            sp.stdin.write(json.dumps({"cmd": "close"}) + "\n")
-            sp.stdin.flush()
-            sp.stdin.close()
-            try:
-                sp.wait(1.5)
-            except subprocess.TimeoutExpired:
-                sp.kill()
-
-    return upd, cls
+def _send_license_to_splash(send_lic_fn: Callable[[str, str, str], None]) -> None:
+    """Invia in modo sicuro i dati di licenza (in cache o reali) allo splash screen."""
+    try:
+        from src.core.license_validator import get_hardware_id, get_license_client, get_license_expiry
+        cliente = get_license_client()
+        hw_id = get_hardware_id()
+        scadenza = get_license_expiry()
+        get_logger("startup").info(f"Invio dati licenza allo splash: {cliente} | {hw_id} | {scadenza}")
+        send_lic_fn(cliente, hw_id, scadenza)
+    except Exception as e:
+        get_logger("startup").warning(f"Impossibile inviare dati licenza allo splash: {e}")
 
 
 def main() -> None:
@@ -293,7 +323,7 @@ def main() -> None:
             c.disconnectFromServer()
 
     server.newConnection.connect(handle_conn)
-    upd, cls = _init_splash()
+    upd, cls, send_lic = _init_splash()
 
     from src.core.audit.signals import AuditSignals
     from src.core.notification_manager import NotificationManager
@@ -303,8 +333,14 @@ def main() -> None:
     AuditSignals.instance()
     NotificationManager.instance()
 
+    # Invia immediatamente i dati di licenza reali (o memorizzati) allo splash screen
+    _send_license_to_splash(send_lic)
+
     upd("Inizializzazione Nucleo...", 5)
     _run_phase1(app, upd, cls, get_logger("phase1"))
+
+    # Invia nuovamente i dati di licenza aggiornati dopo la Fase 1
+    _send_license_to_splash(send_lic)
 
     from src.core.app_initializer import AppInitializer
     from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
