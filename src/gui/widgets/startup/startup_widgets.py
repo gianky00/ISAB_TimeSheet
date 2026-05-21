@@ -140,7 +140,7 @@ class AnimatedBorder(QWidget):
 
 
 class GlowingProgressBar(QWidget):
-    """Progress bar con glow e shimmer."""
+    """Progress bar premium con Laser Core, tracking dati e shimmer olografico."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Inizializza la barra di progresso luminosa."""
@@ -149,18 +149,20 @@ class GlowingProgressBar(QWidget):
         self._display_value = 0.0
         self._shimmer = -100.0
         self._phase = 0.0
-        self.setFixedHeight(6)
+        # Altezza aumentata per ospitare il testo olografico
+        self.setFixedHeight(28)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._tick)
         self.timer.start(16)
 
     def _tick(self) -> None:
-        """Aggiorna il progresso e l'effetto shimmer."""
+        """Aggiorna il progresso e l'effetto shimmer/laser."""
         diff = self._value - self._display_value
-        self._display_value += diff * 0.15
-        self._shimmer += 4.0
-        if self._shimmer > self.width() + 100:
-            self._shimmer = -100.0
+        # Smoothing del valore visualizzato
+        self._display_value += diff * 0.12
+        self._shimmer += 5.0
+        if self._shimmer > self.width() + 150:
+            self._shimmer = -150.0
         self._phase += 0.08
         self.update()
 
@@ -169,51 +171,94 @@ class GlowingProgressBar(QWidget):
         self._value = max(0, min(100, val))
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
-        """Disegna la barra di progresso con effetto gradiente, shimmer e glow dinamico."""
+        """Disegna la barra Laser-Track con tracking dati olografico."""
         painter = QPainter(self)
         try:
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)
             w, h = self.width(), self.height()
+            bar_h = 6
+            bar_y = h - bar_h - 2
 
-            # 1. TRACK SFONDO
-            track = QPainterPath()
-            track.addRoundedRect(0.0, 0.0, float(w), float(h), 3.0, 3.0)
-            painter.fillPath(track, QColor(15, 15, 25))
+            self._draw_track(painter, w, bar_y, bar_h)
 
-            if self._display_value > 0:
+            if self._display_value > 1:
                 pw = int((self._display_value / 100.0) * w)
-
-                # 2. GLOW DINAMICO
-                glow_grad = QRadialGradient(pw, h / 2.0, 80.0)
-                glow_grad.setColorAt(0, QColor(52, 152, 219, 40))
-                glow_grad.setColorAt(1, QColor(52, 152, 219, 0))
-                painter.save()
-                painter.setBrush(QBrush(glow_grad))
-                painter.setPen(Qt.PenStyle.NoPen)
-                painter.drawEllipse(QPoint(int(pw), int(h / 2)), 60, 15)
-                painter.restore()
-
-                # 3. BARRA DI PROGRESSO
-                grad = QLinearGradient(0.0, 0.0, float(pw), 0.0)
-                grad.setColorAt(0, QColor(52, 152, 219))
-                grad.setColorAt(1, QColor(155, 89, 182))
-
-                progress = QPainterPath()
-                progress.addRoundedRect(0.0, 0.0, float(pw), float(h), 3.0, 3.0)
-                painter.fillPath(progress, grad)
-
-                # 4. EFFETTO SHIMMER
-                if 0 < self._shimmer < pw:
-                    painter.save()
-                    shimmer = QLinearGradient(self._shimmer - 40.0, 0.0, self._shimmer + 40.0, 0.0)
-                    shimmer.setColorAt(0, QColor(255, 255, 255, 0))
-                    shimmer.setColorAt(0.5, QColor(255, 255, 255, 120))
-                    shimmer.setColorAt(1, QColor(255, 255, 255, 0))
-                    painter.setClipPath(progress)
-                    painter.fillRect(int(self._shimmer - 40), 0, 80, h, shimmer)
-                    painter.restore()
+                self._draw_progress_and_laser(painter, pw, bar_y, bar_h)
+                self._draw_holographic_data(painter, pw, w, bar_y, bar_h)
+                self._draw_shimmer(painter, pw, bar_y, bar_h)
         finally:
             painter.end()
+
+    def _draw_track(self, painter: QPainter, w: int, bar_y: int, bar_h: int) -> None:
+        """Disegna lo sfondo segmentato della barra."""
+        track_path = QPainterPath()
+        track_path.addRoundedRect(0.0, float(bar_y), float(w), float(bar_h), 2.0, 2.0)
+        painter.fillPath(track_path, QColor(10, 10, 20, 180))
+
+        painter.setPen(QColor(52, 152, 219, 30))
+        for i in range(0, w, 20):
+            painter.drawLine(i, bar_y, i, bar_y + bar_h)
+
+    def _draw_progress_and_laser(self, painter: QPainter, pw: int, bar_y: int, bar_h: int) -> None:
+        """Disegna il gradiente di progresso e il core laser."""
+        glow_intensity = 0.6 + 0.4 * math.sin(self._phase)
+        glow_grad = QRadialGradient(pw, bar_y + bar_h / 2.0, 100.0)
+        glow_grad.setColorAt(0, QColor(52, 152, 219, int(60 * glow_intensity)))
+        glow_grad.setColorAt(1, QColor(52, 152, 219, 0))
+
+        painter.save()
+        painter.setBrush(QBrush(glow_grad))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawEllipse(QPoint(int(pw), int(bar_y + bar_h / 2)), 80, 25)
+        painter.restore()
+
+        grad = QLinearGradient(0.0, float(bar_y), float(pw), float(bar_y))
+        grad.setColorAt(0, QColor(52, 152, 219))
+        grad.setColorAt(1, QColor(155, 89, 182))
+
+        progress_path = QPainterPath()
+        progress_path.addRoundedRect(0.0, float(bar_y), float(pw), float(bar_h), 2.0, 2.0)
+        painter.fillPath(progress_path, grad)
+
+        laser_pen = QPen(QColor(255, 255, 255, int(180 * glow_intensity)), 1.5)
+        painter.setPen(laser_pen)
+        painter.drawLine(2, int(bar_y + bar_h / 2), pw - 2, int(bar_y + bar_h / 2))
+
+    def _draw_holographic_data(self, painter: QPainter, pw: int, w: int, bar_y: int, bar_h: int) -> None:
+        """Disegna la percentuale olografica che segue la barra."""
+        from PySide6.QtGui import QFont
+
+        painter.setPen(QColor(100, 200, 255, 220))
+        font = QFont("Consolas", 10, QFont.Weight.Bold)
+        font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 1)
+        painter.setFont(font)
+
+        perc_text = f"{int(self._display_value)}%"
+        text_x = max(0, min(pw - 15, w - 40))
+
+        painter.setPen(QColor(0, 0, 0, 150))
+        painter.drawText(text_x + 1, bar_y - 6 + 1, perc_text)
+        painter.setPen(QColor(100, 200, 255, 220))
+        painter.drawText(text_x, bar_y - 6, perc_text)
+
+        head_pen = QPen(QColor(255, 255, 255, 255), 2)
+        painter.setPen(head_pen)
+        painter.drawLine(pw, bar_y - 2, pw, bar_y + bar_h + 2)
+
+    def _draw_shimmer(self, painter: QPainter, pw: int, bar_y: int, bar_h: int) -> None:
+        """Disegna l'effetto shimmer in movimento."""
+        if 0 < self._shimmer < pw:
+            painter.save()
+            shimmer = QLinearGradient(self._shimmer - 60.0, 0.0, self._shimmer + 60.0, 0.0)
+            shimmer.setColorAt(0, QColor(255, 255, 255, 0))
+            shimmer.setColorAt(0.5, QColor(255, 255, 255, 100))
+            shimmer.setColorAt(1, QColor(255, 255, 255, 0))
+
+            progress_path = QPainterPath()
+            progress_path.addRoundedRect(0.0, float(bar_y), float(pw), float(bar_h), 2.0, 2.0)
+            painter.setClipPath(progress_path)
+            painter.fillRect(int(self._shimmer - 60), bar_y, 120, bar_h, shimmer)
+            painter.restore()
 
 
 class PulsingLogo(QWidget):
