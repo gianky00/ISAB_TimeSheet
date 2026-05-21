@@ -620,8 +620,8 @@ class StartupDialog(QDialog):
         """Mappa il messaggio di log granulare in una macro-fase leggibile."""
         msg_upper = message.upper()
         mapping = {
-            ("DATABASE", "TABELLE", "SQL", "BACKUP"): "INIZIALIZZAZIONE DATABASE",
-            ("MODULE", "CORE", "LIBRARY", "NUCLEO"): "CARICAMENTO MODULI CORE",
+            ("DATABASE", "TABELLE", "SQL", "BACKUP", "ENGINE"): "INIZIALIZZAZIONE DATABASE",
+            ("MODULE", "CORE", "LIBRARY", "NUCLEO", "BOT", "REGISTRY"): "CARICAMENTO MODULI CORE",
             (
                 "GUI",
                 "RENDER",
@@ -631,13 +631,25 @@ class StartupDialog(QDialog):
                 "DASHBOARD",
                 "SCHEDULER",
             ): "PREPARAZIONE INTERFACCIA UTENTE",
-            ("CONFIG", "SETTING", "PATH", "AMBIENTE", "DIPENDENZE"): "CARICAMENTO CONFIGURAZIONI",
-            ("DIPENDENTI", "ANAGRAFICA", "PERSONALE", "DIRECTORY"): "VERIFICA ARCHIVIO PERSONALE",
+            (
+                "CONFIG",
+                "SETTING",
+                "PATH",
+                "AMBIENTE",
+                "DIPENDENZE",
+                "VALIDAZIONE",
+            ): "CARICAMENTO CONFIGURAZIONI",
+            ("DIPENDENTI", "ANAGRAFICA", "PERSONALE", "DIRECTORY", "SCHEDE"): "VERIFICA ARCHIVIO PERSONALE",
             ("ODA", "ORDINI", "STORICO"): "ANALISI STORICO ORDINI",
-            ("PDL", "SYNC"): "SINCRONIZZAZIONE DATI PDL",
-            ("LICENZA", "LICENSE", "HWID", "IDENTIT", "HANDSHAKE"): "SICUREZZA E LICENZA",
+            ("PDL", "SYNC", "DATAEASE", "BRIDGE"): "SINCRONIZZAZIONE DATI ESTERNI",
+            ("LICENZA", "LICENSE", "HWID", "IDENTIT", "HANDSHAKE", "CERTIFICATI"): "SICUREZZA E LICENZA",
             ("LOGGING", "LOG"): "SISTEMA DI LOGGING",
-            ("PLAYWRIGHT", "WEBDRIVER", "PDF", "EXCEL", "OTTIMIZZAZIONE"): "OTTIMIZZAZIONE RISORSE",
+            ("PLAYWRIGHT", "WEBDRIVER", "PDF", "EXCEL", "OTTIMIZZAZIONE", "MOTORI"): "OTTIMIZZAZIONE RISORSE",
+            ("ORE", "REPOSITORY"): "CARICAMENTO REPOSITORY ORE",
+            ("ASSET",): "REGISTRO ASSET AZIENDALI",
+            ("NOTIFICA",): "SISTEMA DI NOTIFICHE",
+            ("MANUALE",): "MANUALE OPERATIVO",
+            ("CONSUNTIVO",): "ELABORAZIONE CONSUNTIVI",
         }
 
         for keys, status in mapping.items():
@@ -646,10 +658,10 @@ class StartupDialog(QDialog):
 
         if prog >= 95:
             return "SISTEMA PRONTO"
-        if prog <= 10:
+        if prog <= 15:
             return "INIZIALIZZAZIONE SISTEMA"
 
-        return "AVVIO IN CORSO..."
+        return "OTTIMIZZAZIONE AMBIENTE"
 
     def _update_indicators(self, prog: int) -> None:
         """Aggiorna i colori degli indicatori visuali in base al progresso."""
