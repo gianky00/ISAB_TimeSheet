@@ -15,6 +15,7 @@ from PySide6.QtCore import (
     Qt,
     QThread,
     QTimer,
+    Slot,
 )
 from PySide6.QtGui import (
     QColor,
@@ -30,7 +31,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from src.core.license_validator import get_hardware_id, get_license_info
+# Rimossa dipendenza sincrona a get_hardware_id e get_license_info per reattività all'avvio
 from src.core.version import __version__
 from src.gui.styles import COLORS
 
@@ -201,25 +202,34 @@ class StartupDialog(QDialog):
         parent_layout.addWidget(header_container)
 
     def _setup_license_info(self, parent_layout: QHBoxLayout) -> None:
-        """Configura il box con le informazioni della licenza."""
-        lic_info = get_license_info() or {}
-        client_name = lic_info.get("Cliente", "N/D").upper()
-        expiry_date = lic_info.get("Scadenza Licenza", "N/D")
-        hw_id = lic_info.get("Hardware ID", get_hardware_id() or "UNKNOWN")
-
+        """Configura il box con le informazioni della licenza in modo asincrono (placeholder iniziali)."""
         license_box = QVBoxLayout()
         license_spacing = 2
         license_box.setSpacing(license_spacing)
         license_box.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
 
-        license_box.addLayout(self._create_info_row("CLIENTE:", client_name))
-        license_box.addLayout(self._create_info_row("HW-ID:", hw_id))
-        license_box.addLayout(self._create_info_row("SCADENZA:", expiry_date))
+        lay_c, self.lbl_val_cliente = self._create_info_row("CLIENTE:", "ATTESA...")
+        lay_h, self.lbl_val_hwid = self._create_info_row("HW-ID:", "ATTESA...")
+        lay_s, self.lbl_val_scadenza = self._create_info_row("SCADENZA:", "ATTESA...")
+
+        license_box.addLayout(lay_c)
+        license_box.addLayout(lay_h)
+        license_box.addLayout(lay_s)
 
         parent_layout.addLayout(license_box)
 
-    def _create_info_row(self, label_text: str, value_text: str) -> QHBoxLayout:
-        """Crea una riga di informazione label: valore."""
+    @Slot(str, str, str)
+    def update_license_display(self, cliente: str, hw_id: str, scadenza: str) -> None:
+        """Aggiorna le informazioni di licenza visualizzate (chiamato asincronamente)."""
+        if hasattr(self, "lbl_val_cliente") and self.lbl_val_cliente:
+            self.lbl_val_cliente.setText(cliente.upper())
+        if hasattr(self, "lbl_val_hwid") and self.lbl_val_hwid:
+            self.lbl_val_hwid.setText(hw_id)
+        if hasattr(self, "lbl_val_scadenza") and self.lbl_val_scadenza:
+            self.lbl_val_scadenza.setText(scadenza)
+
+    def _create_info_row(self, label_text: str, value_text: str) -> tuple[QHBoxLayout, QLabel]:
+        """Crea una riga di informazione label: valore e restituisce il layout e la label del valore."""
         row = QHBoxLayout()
         row_spacing = 5
         row.setSpacing(row_spacing)
@@ -235,7 +245,7 @@ class StartupDialog(QDialog):
 
         row.addWidget(lbl)
         row.addWidget(val)
-        return row
+        return row, val
 
     def _setup_console(self, parent_layout: QVBoxLayout) -> None:
         """Configura la console di log con TypewriterLabels e overlay CRT."""
