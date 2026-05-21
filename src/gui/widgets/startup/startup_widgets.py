@@ -368,3 +368,80 @@ class ConsoleOverlay(QWidget):
             painter.fillRect(0, 0, w, h, grad)
         finally:
             painter.end()
+
+
+class ChangelogTicker(QLabel):
+    """Widget premium a scorrimento/digitazione per le novità della versione corrente."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.notes: list[str] = []
+        self.current_idx = 0
+        self.char_idx = 0
+        self.is_typing = False
+
+        # Stile fantascientifico: azzurro olografico, corsivo/monospazio, allineato a destra
+        self.setStyleSheet(
+            "font-size: 10px; "
+            "font-family: 'Consolas', 'Fira Code', monospace; "
+            "color: rgba(52, 152, 219, 0.85); "
+            "font-style: italic; "
+            "background: transparent;"
+        )
+        self.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        self.setFixedWidth(300)  # Larghezza fissa per evitare salti di layout
+
+        # Timer per la digitazione (carattere per carattere)
+        self.type_timer = QTimer(self)
+        self.type_timer.timeout.connect(self._type_char)
+
+        # Timer per il cambio nota (intervallo tra le scritte)
+        self.cycle_timer = QTimer(self)
+        self.cycle_timer.timeout.connect(self.next_note)
+
+    def set_notes(self, notes: list[str]) -> None:
+        """Configura l'elenco delle novità e avvia lo scorrimento."""
+        self.notes = [n for n in notes if n.strip()]
+        if not self.notes:
+            self.notes = ["Nessuna novita rilevata per questa versione"]
+        self.current_idx = 0
+        self.start_typing()
+
+    def start_typing(self) -> None:
+        """Avvia la digitazione della nota corrente."""
+        self.type_timer.stop()
+        self.cycle_timer.stop()
+        self.char_idx = 0
+        self.is_typing = True
+        self._type_char()
+
+    def _type_char(self) -> None:
+        if not self.notes:
+            return
+
+        note = self.notes[self.current_idx]
+        # Formattazione abbreviata se troppo lunga per stare nel widget
+        max_len = 52
+        if len(note) > max_len:
+            note = note[:max_len] + "..."
+
+        if self.char_idx <= len(note):
+            # Aggiungiamo un cursore lampeggiante durante la digitazione
+            cursor = "█" if self.char_idx % 2 == 0 and self.char_idx < len(note) else ""
+            self.setText(note[:self.char_idx] + cursor)
+            self.char_idx += 1
+            # Velocità di battitura (30ms per carattere)
+            self.type_timer.start(30)
+        else:
+            self.type_timer.stop()
+            self.is_typing = False
+            self.setText(note)
+            # Mostra la nota completata per 4 secondi, poi passa alla successiva
+            self.cycle_timer.start(4000)
+
+    def next_note(self) -> None:
+        """Passa alla novità successiva."""
+        if not self.notes:
+            return
+        self.current_idx = (self.current_idx + 1) % len(self.notes)
+        self.start_typing()

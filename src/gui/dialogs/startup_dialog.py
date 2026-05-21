@@ -39,6 +39,7 @@ from src.gui.styles import COLORS
 from src.gui.widgets.startup.particle_background import ParticleBackground
 from src.gui.widgets.startup.startup_widgets import (
     AnimatedBorder,
+    ChangelogTicker,
     ConsoleOverlay,
     GlowingProgressBar,
     PulsingLogo,
@@ -292,8 +293,27 @@ class StartupDialog(QDialog):
         self.progress = GlowingProgressBar()
         parent_layout.addWidget(self.progress)
 
+    def _load_current_changelog_notes(self) -> list[str]:
+        """Carica le note di changelog per la versione corrente dell'applicazione."""
+        try:
+            import json
+            changelog_path = Path(__file__).resolve().parent.parent.parent / "core" / "changelog.json"
+            if changelog_path.exists():
+                with open(changelog_path, encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        for entry in data:
+                            if entry.get("version") == __version__:
+                                return list(entry.get("notes", []))
+                        # Se non trova la versione esatta, restituisce le note dell'ultima versione disponibile
+                        if data:
+                            return list(data[0].get("notes", []))
+        except Exception:
+            logger.exception("Errore nel caricamento del changelog nello splash screen")
+        return []
+
     def _setup_footer(self, parent_layout: QVBoxLayout) -> None:
-        """Configura il footer con indicatore, status."""
+        """Configura il footer con indicatore, status e ticker novità."""
         footer = QHBoxLayout()
         footer.setContentsMargins(0, 5, 0, 0)
 
@@ -318,6 +338,13 @@ class StartupDialog(QDialog):
         footer.addWidget(self.dots)
 
         footer.addStretch()
+
+        # Ticker novità scorrimento in basso a destra
+        self.ticker = ChangelogTicker()
+        notes = self._load_current_changelog_notes()
+        self.ticker.set_notes(notes)
+        footer.addWidget(self.ticker)
+
         parent_layout.addLayout(footer)
 
     def _setup_animations(self) -> None:
@@ -458,6 +485,9 @@ class StartupDialog(QDialog):
             self.progress.timer.stop()
             self._dot_timer.stop()
             self._pulse_timer.stop()
+            if hasattr(self, "ticker"):
+                self.ticker.type_timer.stop()
+                self.ticker.cycle_timer.stop()
             for lbl in self.log_labels:
                 lbl._timer.stop()
             if self._thread and self._thread.isRunning():
