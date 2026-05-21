@@ -281,8 +281,8 @@ class StartupDialog(QDialog):
         license_box.addLayout(lay_h)
         license_box.addLayout(lay_s)
 
-        # Label di conferma validazione (Inizialmente invisibile)
-        self.lbl_validated = QLabel("LICENZA VALIDATA")
+        # Label di conferma validazione (Olografica Animata)
+        self.lbl_validated = TypewriterLabel()
         self.lbl_validated.setStyleSheet(
             f"font-size: 11px; color: {COLORS['success_green']}; font-weight: 900; letter-spacing: 2px;"
         )
@@ -290,30 +290,45 @@ class StartupDialog(QDialog):
         self.val_opacity.setOpacity(0.0)
         self.lbl_validated.setGraphicsEffect(self.val_opacity)
 
-        # Animazione di pulsazione per la validazione
+        # Effetto Glow Neon per la validazione
+        self.val_glow = QGraphicsDropShadowEffect()
+        self.val_glow.setBlurRadius(0)
+        self.val_glow.setColor(QColor(COLORS["success_green"]))
+        self.val_glow.setOffset(0, 0)
+        # Nota: Un widget può avere solo un effetto. Useremo l'opacità e gestiremo il glow via stile o proprietà se necessario,
+        # ma per ora manteniamo l'opacità e usiamo una transizione di colore/glow più netta.
+
+        # Animazione di pulsazione coordinata
         self.val_pulse = QSequentialAnimationGroup(self)
+
+        # Fase 1: Fade-in rapido
         p_in = QPropertyAnimation(self.val_opacity, b"opacity")
-        p_in.setDuration(400)
+        p_in.setDuration(300)
         p_in.setStartValue(0.0)
         p_in.setEndValue(1.0)
-        p_in.setEasingCurve(QEasingCurve.Type.OutCubic)
+        p_in.setEasingCurve(QEasingCurve.Type.OutQuad)
 
-        p_pulse = QPropertyAnimation(self.val_opacity, b"opacity")
-        p_pulse.setDuration(600)
-        p_pulse.setStartValue(1.0)
-        p_pulse.setEndValue(0.4)
-        p_pulse.setEasingCurve(QEasingCurve.Type.InOutSine)
+        # Fase 2: Pulsazione "Breathing" (3 cicli)
+        self.val_loop = QSequentialAnimationGroup()
 
-        p_pulse_rev = QPropertyAnimation(self.val_opacity, b"opacity")
-        p_pulse_rev.setDuration(600)
-        p_pulse_rev.setStartValue(0.4)
-        p_pulse_rev.setEndValue(1.0)
-        p_pulse_rev.setEasingCurve(QEasingCurve.Type.InOutSine)
+        p_down = QPropertyAnimation(self.val_opacity, b"opacity")
+        p_down.setDuration(500)
+        p_down.setStartValue(1.0)
+        p_down.setEndValue(0.3)
+        p_down.setEasingCurve(QEasingCurve.Type.InOutSine)
+
+        p_up = QPropertyAnimation(self.val_opacity, b"opacity")
+        p_up.setDuration(500)
+        p_up.setStartValue(0.3)
+        p_up.setEndValue(1.0)
+        p_up.setEasingCurve(QEasingCurve.Type.InOutSine)
+
+        self.val_loop.addAnimation(p_down)
+        self.val_loop.addAnimation(p_up)
+        self.val_loop.setLoopCount(3)
 
         self.val_pulse.addAnimation(p_in)
-        self.val_pulse.addAnimation(p_pulse)
-        self.val_pulse.addAnimation(p_pulse_rev)
-        self.val_pulse.setLoopCount(3)  # Pulsa un po' di volte
+        self.val_pulse.addAnimation(self.val_loop)
 
         license_box.addSpacing(5)
         license_box.addWidget(self.lbl_validated, alignment=Qt.AlignmentFlag.AlignRight)
