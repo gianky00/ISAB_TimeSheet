@@ -5,7 +5,15 @@ Collezione di widget animati utilizzati nella Splash Screen.
 
 import math
 
-from PySide6.QtCore import QEasingCurve, QPoint, QPropertyAnimation, QRect, Qt, QTimer
+from PySide6.QtCore import (
+    QEasingCurve,
+    QParallelAnimationGroup,
+    QPoint,
+    QPropertyAnimation,
+    QRect,
+    Qt,
+    QTimer,
+)
 from PySide6.QtGui import (
     QBrush,
     QColor,
@@ -426,7 +434,7 @@ class ChangelogTicker(QWidget):
 
         self.labels: list[QLabel] = []
         self.opacity_effects: list[QGraphicsOpacityEffect] = []
-        self.animations: list[QPropertyAnimation] = []
+        self.groups: list[QParallelAnimationGroup] = []
 
         # Creazione delle righe
         for _ in range(self.num_rows):
@@ -445,14 +453,25 @@ class ChangelogTicker(QWidget):
 
             opacity = QGraphicsOpacityEffect(lbl)
             lbl.setGraphicsEffect(opacity)
-            anim = QPropertyAnimation(opacity, b"opacity")
-            anim.setEasingCurve(QEasingCurve.Type.InOutSine)
-            anim.setDuration(600)
+
+            # Gruppo di animazione (Opacità + Posizione)
+            group = QParallelAnimationGroup(self)
+
+            fade = QPropertyAnimation(opacity, b"opacity")
+            fade.setDuration(700)
+            fade.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+            slide = QPropertyAnimation(lbl, b"pos")
+            slide.setDuration(700)
+            slide.setEasingCurve(QEasingCurve.Type.OutBack)
+
+            group.addAnimation(fade)
+            group.addAnimation(slide)
 
             self.main_layout.addWidget(lbl)
             self.labels.append(lbl)
             self.opacity_effects.append(opacity)
-            self.animations.append(anim)
+            self.groups.append(group)
 
         self.setFixedWidth(750)
         self.setFixedHeight(120)  # Spazio per 3 righe + frame + margins
@@ -501,7 +520,7 @@ class ChangelogTicker(QWidget):
         )
 
     def _show_batch(self) -> None:
-        """Mostra un gruppo di note con animazione di fade-in."""
+        """Mostra un gruppo di note con animazione di slide-up e fade-in."""
         for i in range(self.num_rows):
             note_idx = (self.current_idx + i) % len(self.notes)
             if i > 0 and note_idx == self.current_idx:
@@ -510,31 +529,44 @@ class ChangelogTicker(QWidget):
 
             self.labels[i].setText(self._format_note(self.notes[note_idx]))
 
-            self.animations[i].stop()
-            self.animations[i].setStartValue(0.0)
-            self.animations[i].setEndValue(1.0)
-            QTimer.singleShot(i * 120, self.animations[i].start)
+            # Calcolo posizione finale e iniziale per lo slide
+            final_pos = self.labels[i].pos()
+            start_pos = QPoint(final_pos.x(), final_pos.y() + 15)
 
-        self.cycle_timer.start(6000)
+            fade_anim = self.groups[i].animationAt(0)
+            slide_anim = self.groups[i].animationAt(1)
+
+            self.groups[i].stop()
+            fade_anim.setStartValue(0.0)
+            fade_anim.setEndValue(1.0)
+
+            slide_anim.setStartValue(start_pos)
+            slide_anim.setEndValue(final_pos)
+
+            # Delay sfalsato per effetto cascata
+            QTimer.singleShot(i * 150, self.groups[i].start)
+
+        self.cycle_timer.start(7000)
 
     def next_batch(self) -> None:
         """Passa al prossimo set di note con fade-out coordinato."""
         self.cycle_timer.stop()
 
         for i in range(self.num_rows):
-            self.animations[i].stop()
-            self.animations[i].setStartValue(self.opacity_effects[i].opacity())
-            self.animations[i].setEndValue(0.0)
+            fade_anim = self.groups[i].animationAt(0)
+            self.groups[i].stop()
+            fade_anim.setStartValue(self.opacity_effects[i].opacity())
+            fade_anim.setEndValue(0.0)
             if i == self.num_rows - 1:
-                self.animations[i].finished.connect(self._on_fade_out_finished)
-            self.animations[i].start()
+                fade_anim.finished.connect(self._on_fade_out_finished)
+            fade_anim.start()
 
     def _on_fade_out_finished(self) -> None:
         """Cambia indice e mostra il nuovo batch."""
         import contextlib
 
         with contextlib.suppress(Exception):
-            self.animations[self.num_rows - 1].finished.disconnect(self._on_fade_out_finished)
+            self.groups[self.num_rows - 1].animationAt(0).finished.disconnect(self._on_fade_out_finished)
 
         self.current_idx = (self.current_idx + self.num_rows) % len(self.notes)
         self._show_batch()
