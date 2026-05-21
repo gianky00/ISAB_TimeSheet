@@ -546,7 +546,8 @@ class ChangelogTicker(QWidget):
             # Delay sfalsato per effetto cascata
             QTimer.singleShot(i * 150, self.groups[i].start)
 
-        self.cycle_timer.start(7000)
+        # Durata visibilità ridotta a 3.5 secondi per un ritmo più rapido
+        self.cycle_timer.start(3500)
 
     def next_batch(self) -> None:
         """Passa al prossimo set di note con fade-out coordinato."""
