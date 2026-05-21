@@ -439,20 +439,36 @@ class StartupDialog(QDialog):
         """Mappa il messaggio di log granulare in una macro-fase leggibile."""
         msg_upper = message.upper()
         mapping = {
-            ("DATABASE", "TABELLE", "SQL"): "INIZIALIZZAZIONE DATABASE",
-            ("MODULE", "CORE", "LIBRARY"): "CARICAMENTO MODULI CORE",
-            ("GUI", "RENDER", "WIDGET", "UI"): "PREPARAZIONE INTERFACCIA UTENTE",
-            ("CONFIG", "SETTING"): "CARICAMENTO CONFIGURAZIONI",
-            ("DIPENDENTI", "ANAGRAFICA"): "VERIFICA ARCHIVIO PERSONALE",
-            ("ODA", "ORDINI"): "ANALISI STORICO ORDINI",
-            ("PDL",): "SINCRONIZZAZIONE DATI PDL",
+            ("DATABASE", "TABELLE", "SQL", "BACKUP"): "INIZIALIZZAZIONE DATABASE",
+            ("MODULE", "CORE", "LIBRARY", "NUCLEO"): "CARICAMENTO MODULI CORE",
+            (
+                "GUI",
+                "RENDER",
+                "WIDGET",
+                "UI",
+                "INTERFACCIA",
+                "DASHBOARD",
+                "SCHEDULER",
+            ): "PREPARAZIONE INTERFACCIA UTENTE",
+            ("CONFIG", "SETTING", "PATH", "AMBIENTE", "DIPENDENZE"): "CARICAMENTO CONFIGURAZIONI",
+            ("DIPENDENTI", "ANAGRAFICA", "PERSONALE", "DIRECTORY"): "VERIFICA ARCHIVIO PERSONALE",
+            ("ODA", "ORDINI", "STORICO"): "ANALISI STORICO ORDINI",
+            ("PDL", "SYNC"): "SINCRONIZZAZIONE DATI PDL",
+            ("LICENZA", "LICENSE", "HWID", "IDENTIT", "HANDSHAKE"): "SICUREZZA E LICENZA",
+            ("LOGGING", "LOG"): "SISTEMA DI LOGGING",
+            ("PLAYWRIGHT", "WEBDRIVER", "PDF", "EXCEL", "OTTIMIZZAZIONE"): "OTTIMIZZAZIONE RISORSE",
         }
 
         for keys, status in mapping.items():
             if any(k in msg_upper for k in keys):
                 return status
 
-        return "SISTEMA PRONTO" if prog >= 95 else "AVVIO IN CORSO..."
+        if prog >= 95:
+            return "SISTEMA PRONTO"
+        if prog <= 10:
+            return "INIZIALIZZAZIONE SISTEMA"
+
+        return "AVVIO IN CORSO..."
 
     def _update_indicators(self, prog: int) -> None:
         """Aggiorna i colori degli indicatori visuali in base al progresso."""
