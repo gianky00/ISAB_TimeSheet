@@ -94,7 +94,7 @@ class DashboardPanel(QWidget):
         self.timer.start(30000)  # 30 seconds
 
     def refresh_data(self) -> None:
-        # """Esegue un aggiornamento forzato di tutti i widget della dashboard."""
+        """Esegue un aggiornamento forzato di tutti i widget della dashboard."""
         self.refresh_live_data()
 
     def refresh_live_data(self) -> None:

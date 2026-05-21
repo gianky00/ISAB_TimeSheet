@@ -1,5 +1,23 @@
 [
   {
+    "version": "1.48.0",
+    "date": "2026-05-21",
+    "notes": [
+      "chore(quality): global code quality cleanup and documentation enhancement",
+      "refactor(bots): enhance interaction robustness and migrate to structural locators",
+      "feat(timbrature): implement massive import and real-time access monitoring",
+      "fix(bot): resolve Excel download ambiguity in Timbrature bot using FontAwesome unicode",
+      "fix(browser): remove --no-sandbox, --disable-gpu to resolve STATUS_BREAKPOINT crashes",
+      "fix(splash): pipe license details dynamically to standalone splash screen via binary unbuffered stdin",
+      "fix(bot): prevent TypeError on unexpected societa parameter in Playwright base and Timbrature bot",
+      "perf(gui): optimize splash screen and startup dialog with async license and HWID IPC",
+      "feat(ui): implement dynamic changelog and sidebar breathing warning pulse",
+      "feat(gui): improve changelog UI with light-mode tooltips, clear filters and dynamic next release handling",
+      "feat(report): aggiunta postilla audit per strumenti senza scadenza nel PDF",
+      "fix(updater): improve installer launch robustness on Windows with delay and detached process"
+    ]
+  },
+  {
     "version": "1.47.0",
     "date": "2026-05-20",
     "notes": [

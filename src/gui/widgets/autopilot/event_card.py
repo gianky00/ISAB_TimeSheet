@@ -1,3 +1,8 @@
+"""
+Componenti visuali per gli eventi dell'Autopilot.
+Visualizzazione dei countdown e dello stato di sincronizzazione dei database.
+"""
+
 from contextlib import suppress
 from datetime import datetime
 from typing import TypedDict

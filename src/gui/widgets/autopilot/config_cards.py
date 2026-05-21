@@ -1,3 +1,8 @@
+"""
+Card di configurazione per il sistema Autopilot.
+Permettono all'utente di abilitare e programmare l'esecuzione automatica dei bot.
+"""
+
 from typing import TypedDict
 
 from PySide6.QtCore import Qt, QTime, QTimer

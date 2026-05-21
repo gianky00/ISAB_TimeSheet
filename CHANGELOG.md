@@ -2,6 +2,31 @@
 
 ### Feat
 
+- **timbrature**: implement massive import and real-time access monitoring
+- **ui**: implement dynamic changelog and sidebar breathing warning pulse
+- **gui**: improve changelog UI with light-mode tooltips, clear filters and dynamic next release handling
+- **report**: aggiunta postilla audit per strumenti senza scadenza nel PDF
+
+### Fix
+
+- **bot**: resolve Excel download ambiguity in Timbrature bot using FontAwesome unicode
+- **browser**: remove --no-sandbox, --disable-gpu to resolve STATUS_BREAKPOINT crashes
+- **splash**: pipe license details dynamically to standalone splash screen via binary unbuffered stdin
+- **bot**: prevent TypeError on unexpected societa parameter in Playwright base and Timbrature bot
+- **updater**: improve installer launch robustness on Windows with delay and detached process
+
+### Refactor
+
+- **bots**: enhance interaction robustness and migrate to structural locators
+
+### Perf
+
+- **gui**: optimize splash screen and startup dialog with async license and HWID IPC
+
+## v1.47.0 (2026-05-18)
+
+### Feat
+
 - implement button elevation effect
 - apply Modern Card restyling to all bot panels
 - apply Modern Card style to Storico OdA panel
