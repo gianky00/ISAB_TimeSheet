@@ -428,19 +428,45 @@ class StartupDialog(QDialog):
         self._drag_pos = None
 
     def _on_progress(self, message: str, prog: int) -> None:
-        """Aggiorna UI, particelle e colore del PulseIndicator."""
-        self.status.setText(message.upper())
+        """Aggiorna UI, particelle e colore del PulseIndicator con raggruppamento in macro-fasi."""
+        self.status.setText(self._map_macro_status(message, prog))
         self.particles.set_progress(prog)
+        self._update_indicators(prog)
+        self._append_console_log(message)
+        self.progress.setValue(prog)
 
-        # Update PulseIndicator color based on progress
-        if hasattr(self, "loading_pulse"):
-            if prog >= 90:
-                self.loading_pulse.color = QColor(COLORS["success_green"])
-            elif prog >= 50:
-                self.loading_pulse.color = QColor(COLORS["primary_blue"])
-            else:
-                self.loading_pulse.color = QColor(COLORS["warning_orange"])
+    def _map_macro_status(self, message: str, prog: int) -> str:
+        """Mappa il messaggio di log granulare in una macro-fase leggibile."""
+        msg_upper = message.upper()
+        mapping = {
+            ("DATABASE", "TABELLE", "SQL"): "INIZIALIZZAZIONE DATABASE",
+            ("MODULE", "CORE", "LIBRARY"): "CARICAMENTO MODULI CORE",
+            ("GUI", "RENDER", "WIDGET", "UI"): "PREPARAZIONE INTERFACCIA UTENTE",
+            ("CONFIG", "SETTING"): "CARICAMENTO CONFIGURAZIONI",
+            ("DIPENDENTI", "ANAGRAFICA"): "VERIFICA ARCHIVIO PERSONALE",
+            ("ODA", "ORDINI"): "ANALISI STORICO ORDINI",
+            ("PDL",): "SINCRONIZZAZIONE DATI PDL",
+        }
 
+        for keys, status in mapping.items():
+            if any(k in msg_upper for k in keys):
+                return status
+
+        return "SISTEMA PRONTO" if prog >= 95 else "AVVIO IN CORSO..."
+
+    def _update_indicators(self, prog: int) -> None:
+        """Aggiorna i colori degli indicatori visuali in base al progresso."""
+        if not hasattr(self, "loading_pulse"):
+            return
+        if prog >= 90:
+            self.loading_pulse.color = QColor(COLORS["success_green"])
+        elif prog >= 50:
+            self.loading_pulse.color = QColor(COLORS["primary_blue"])
+        else:
+            self.loading_pulse.color = QColor(COLORS["warning_orange"])
+
+    def _append_console_log(self, message: str) -> None:
+        """Aggiunge un nuovo log alla console con effetto typewriter."""
         self.current_logs.append(f"> {message}")
         if len(self.current_logs) > 5:
             self.current_logs.pop(0)
@@ -457,8 +483,6 @@ class StartupDialog(QDialog):
                     lbl.set_text_instant(self.current_logs[i])
             else:
                 lbl.set_text_instant("")
-
-        self.progress.setValue(prog)
 
     def _update_clock(self) -> None:
         """Aggiorna la label dell'orologio con l'ora attuale."""
