@@ -395,9 +395,12 @@ class StartupDialog(QDialog):
 
         # Avvio feedback di validazione olografico
         if hasattr(self, "val_pulse") and hasattr(self, "lbl_validated"):
+            # Impostiamo il testo con effetto typewriter
+            self.lbl_validated.set_text_animated("LICENZA VALIDATA")
+            # Avviamo la pulsazione dell'opacità
             self.val_pulse.start()
-            # Fade-out finale dopo la pulsazione
-            QTimer.singleShot(4000, self._hide_validation_label)
+            # Fade-out finale dopo la pulsazione (aumentato tempo per permettere la lettura)
+            QTimer.singleShot(6000, self._hide_validation_label)
 
     def _hide_validation_label(self) -> None:
         """Nasconde la label di validazione con un fade-out fluido."""
