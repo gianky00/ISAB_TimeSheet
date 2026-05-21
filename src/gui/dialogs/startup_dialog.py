@@ -54,11 +54,11 @@ logger = logging.getLogger(__name__)
 class StartupDialog(QDialog):
     """Splash screen con animazioni fluide a 60fps e effetti 3D."""
 
-    # Dimensioni del contenuto visibile
-    CONTENT_WIDTH = 700
-    CONTENT_HEIGHT = 460
-    # Margine per l'ombra (per evitare che venga tagliata creando "punte")
-    SHADOW_MARGIN = 40
+    # Dimensioni del contenuto visibile (Innalzate proporzionalmente)
+    CONTENT_WIDTH = 850
+    CONTENT_HEIGHT = 560
+    # Margine per l'ombra
+    SHADOW_MARGIN = 50
 
     _thread: QThread | None
     _worker: Any
