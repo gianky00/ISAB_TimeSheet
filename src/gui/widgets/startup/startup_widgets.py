@@ -421,17 +421,28 @@ class ChangelogTicker(QWidget):
         self.cycle_timer.timeout.connect(self.next_batch)
 
     def _setup_ui_structure(self) -> None:
-        """Inizializza la struttura base e l'header del ticker."""
-
+        """Inizializza la struttura base e l'header del ticker con effetti premium."""
         self.container_layout = QVBoxLayout(self)
         self.container_layout.setContentsMargins(10, 8, 10, 8)
-        self.container_layout.setSpacing(10)
+        self.container_layout.setSpacing(12)
 
-        self.header_label = QLabel("[ NOVITÀ DELLA VERSIONE INSTALLATA ]")
+        # Header con stile moderno e spaziatura generosa
+        self.header_label = QLabel("NOVITÀ DELLA VERSIONE INSTALLATA")
         self.header_label.setStyleSheet(
-            f"font-size: 11px; color: {self.COLORS['success_green']}; letter-spacing: 2px; font-weight: 900;"
+            f"font-size: 11px; color: {self.COLORS['success_green']}; letter-spacing: 3px; font-weight: 900;"
         )
         self.header_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # Effetto Glow al titolo
+        from PySide6.QtWidgets import QGraphicsDropShadowEffect
+
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(15)
+        c_green = QColor(self.COLORS["success_green"])
+        shadow.setColor(QColor(c_green.red(), c_green.green(), c_green.blue(), 180))
+        shadow.setOffset(0, 0)
+        self.header_label.setGraphicsEffect(shadow)
+
         self.container_layout.addWidget(self.header_label)
 
         self.frame = QFrame()
