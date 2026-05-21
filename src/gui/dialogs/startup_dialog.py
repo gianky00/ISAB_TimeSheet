@@ -12,6 +12,7 @@ from PySide6.QtCore import (
     QEasingCurve,
     QPoint,
     QPropertyAnimation,
+    QSequentialAnimationGroup,
     Qt,
     QThread,
     QTimer,
@@ -220,18 +221,30 @@ class StartupDialog(QDialog):
         self.cred_opacity = QGraphicsOpacityEffect(self.credits)
         self.credits.setGraphicsEffect(self.cred_opacity)
 
-        self.cred_pulse = QPropertyAnimation(self.cred_opacity, b"opacity")
-        self.cred_pulse.setDuration(2000)
-        self.cred_pulse.setStartValue(0.2)
-        self.cred_pulse.setEndValue(0.6)
-        self.cred_pulse.setEasingCurve(QEasingCurve.Type.InOutSine)
-        self.cred_pulse.setLoopCount(-1)
+        # Animazione di pulsazione (Breathing Effect - Fluido andata e ritorno)
+        self.cred_pulse_group = QSequentialAnimationGroup(self)
+
+        pulse_in = QPropertyAnimation(self.cred_opacity, b"opacity")
+        pulse_in.setDuration(2000)
+        pulse_in.setStartValue(0.2)
+        pulse_in.setEndValue(0.6)
+        pulse_in.setEasingCurve(QEasingCurve.Type.InOutSine)
+
+        pulse_out = QPropertyAnimation(self.cred_opacity, b"opacity")
+        pulse_out.setDuration(2000)
+        pulse_out.setStartValue(0.6)
+        pulse_out.setEndValue(0.2)
+        pulse_out.setEasingCurve(QEasingCurve.Type.InOutSine)
+
+        self.cred_pulse_group.addAnimation(pulse_in)
+        self.cred_pulse_group.addAnimation(pulse_out)
+        self.cred_pulse_group.setLoopCount(-1)  # Infinito
 
         title_box.addWidget(self.credits)
 
         # Avvio ritardato
         QTimer.singleShot(800, lambda: self.credits.set_text_animated("DEVELOPED BY GIANCARLO ALLEGRETTI"))
-        QTimer.singleShot(1500, self.cred_pulse.start)
+        QTimer.singleShot(1500, self.cred_pulse_group.start)
 
     def _setup_license_info(self, parent_layout: QHBoxLayout) -> None:
         """Configura il box con le informazioni della licenza in modo asincrono (placeholder iniziali)."""
