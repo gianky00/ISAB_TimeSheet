@@ -35,21 +35,48 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
         self.download_path = download_path
 
     def navigate_to_timbrature(self) -> bool:
-        """Naviga verso Report -> Timbrature."""
+        """Naviga verso Report -> Timbrature in modo diretto, veloce e robusto."""
         try:
             self.log("Navigazione verso pagina Timbrature...")
+
+            # STRATEGIA 1 (Primaria): Ricerca globale ultra-rapida "Report Timbrature"
+            search_sel = self._get_selector(TimbratureLocators.HOME_SEARCH_INPUT)
+            try:
+                # Controlliamo rapidamente se l'input di ricerca globale è visibile all'avvio
+                inp = self.page.locator(search_sel).first
+                inp.wait_for(state="visible", timeout=3000)
+                self.log("[NAVIGAZIONE] Uso ricerca globale per reindirizzamento immediato...")
+
+                # Inserimento "Report Timbrature"
+                inp.click(force=True, timeout=2000)
+                inp.evaluate("el => { el.value = ''; el.dispatchEvent(new Event('input', {bubbles: true})); }")
+                inp.type("Report Timbrature", delay=30)
+                self.page.wait_for_timeout(300)
+                inp.press("Enter")
+
+                # Attesa del caricamento effettivo della pagina (comparsa dell'input del fornitore)
+                supplier_input_sel = self._get_selector(TimbratureLocators.SUPPLIER_INPUT)
+                self.page.wait_for_selector(supplier_input_sel, state="visible", timeout=6000)
+                self._wait_overlay()
+                self.log("[NAVIGAZIONE] Reindirizzamento tramite ricerca globale riuscito!")
+            except Exception as e:
+                self.log(f"[NAVIGAZIONE] Ricerca globale non disponibile o fallita ({str(e)[:30]}). Procedo con navigazione menu...")
+            else:
+                return True
+
+            # STRATEGIA 2 (Fallback): Navigazione manuale robusta tramite menu Report -> sottomenu Timbrature
             report_sel = self._get_selector(TimbratureLocators.REPORT_MENU)
-
             self.page.click(report_sel)
+            self._wait_overlay()
 
-            # Navigazione da tastiera (come nell'originale)
-            self.page.keyboard.press("Tab")
-            self.page.wait_for_timeout(300)
-            self.page.keyboard.press("Tab")
-            self.page.wait_for_timeout(300)
-            self.page.keyboard.press("Tab")
-            self.page.wait_for_timeout(300)
-            self.page.keyboard.press("Enter")
+            # Click diretto sulla voce "Timbrature" del menu per evitare la fragilità della tastiera
+            timbrature_sel = self._get_selector(TimbratureLocators.TIMBRATURE_SUBMENU)
+            self.page.wait_for_selector(timbrature_sel, state="visible", timeout=5000)
+
+            try:
+                self.page.locator(timbrature_sel).evaluate("el => el.click()")
+            except Exception:
+                self.page.click(timbrature_sel, force=True, timeout=3000)
 
             self._wait_overlay()
         except Exception as e:
@@ -144,10 +171,16 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
 
             self.log("Clicco su Excel...")
 
+            # Usiamo .first per gestire eventuali ambiguità residue e logghiamo se necessario
+            excel_locator = self.page.locator(excel_sel)
+            count = excel_locator.count()
+            if count > 1:
+                self.log(f"⚠️ Attenzione: trovati {count} elementi per il pulsante Excel. Uso il primo.")
+            
             # Playwright gestisce il download in modo nativo e sicuro
             with self.page.expect_download(timeout=Timeouts.DOWNLOAD * 1000) as download_info:
                 # Clic JavaScript per evitare blocchi da overlay invisibili
-                self.page.locator(excel_sel).evaluate("el => el.click()")
+                excel_locator.first.evaluate("el => el.click()")
 
             download = download_info.value
             self.log(f"Download avviato: {download.suggested_filename}")
