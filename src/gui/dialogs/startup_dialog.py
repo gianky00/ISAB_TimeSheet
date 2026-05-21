@@ -255,13 +255,45 @@ class StartupDialog(QDialog):
 
         lay_c, self.lbl_val_cliente = self._create_info_row("CLIENTE:", "ATTESA...")
         lay_h, self.lbl_val_hwid = self._create_info_row("HW-ID:", "ATTESA...")
+
+        # Build Date dinamica dal changelog
+        build_date = self._get_build_date()
+        lay_b, self.lbl_val_build = self._create_info_row("BUILD DATE:", build_date)
+
         lay_s, self.lbl_val_scadenza = self._create_info_row("SCADENZA:", "ATTESA...")
 
         license_box.addLayout(lay_c)
         license_box.addLayout(lay_h)
+        license_box.addLayout(lay_b)
         license_box.addLayout(lay_s)
 
         parent_layout.addLayout(license_box)
+
+    def _get_build_date(self) -> str:
+        """Estrae la data di rilascio della versione corrente dal changelog."""
+        try:
+            import json
+
+            changelog_path = Path(__file__).resolve().parent.parent.parent / "core" / "changelog.json"
+            if changelog_path.exists():
+                with open(changelog_path, encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        for entry in data:
+                            if entry.get("version") == __version__:
+                                raw_date = entry.get("date", "")
+                                if raw_date and "-" in raw_date:
+                                    y, m, d = raw_date.split("-")
+                                    return f"{d}/{m}/{y}"
+                        # Fallback alla data dell'ultima versione se non trovata (molto raro)
+                        if data:
+                            raw_date = data[0].get("date", "")
+                            if raw_date and "-" in raw_date:
+                                y, m, d = raw_date.split("-")
+                                return f"{d}/{m}/{y}"
+        except Exception:
+            logger.exception("Errore nel caricamento della build date nello splash screen")
+        return "N/D"
 
     @Slot(str, str, str)
     def update_license_display(self, cliente: str, hw_id: str, scadenza: str) -> None:
