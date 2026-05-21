@@ -438,7 +438,7 @@ class ChangelogTicker(QWidget):
                 "background: transparent;"
             )
             lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-            lbl.setFixedWidth(520)
+            lbl.setFixedWidth(710)
             lbl.setFixedHeight(22)
 
             opacity = QGraphicsOpacityEffect(lbl)
@@ -452,7 +452,7 @@ class ChangelogTicker(QWidget):
             self.opacity_effects.append(opacity)
             self.animations.append(anim)
 
-        self.setFixedWidth(560)
+        self.setFixedWidth(750)
         self.setFixedHeight(120)  # Spazio per 3 righe + frame + margins
 
         # Timer per il ciclo di aggiornamento
@@ -487,8 +487,8 @@ class ChangelogTicker(QWidget):
             label, color = "UPD", c_mod
             msg = clean
 
-        # Tronca se troppo lungo per la riga
-        max_chars = 60
+        # Tronca se troppo lungo per la riga (Aumentato per nuova larghezza)
+        max_chars = 90
         if len(msg) > max_chars:
             msg = msg[:max_chars] + "..."
 
