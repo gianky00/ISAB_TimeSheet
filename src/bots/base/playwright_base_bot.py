@@ -117,10 +117,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
             "headless": headless,
             "args": [
                 "--disable-blink-features=AutomationControlled",
-                "--no-sandbox",
                 "--disable-dev-shm-usage",
-                "--disable-gpu",
-                "--disable-software-rasterizer",
                 "--disable-infobars",
                 "--no-first-run",
                 "--no-default-browser-check",
@@ -184,9 +181,10 @@ class PlaywrightBaseBot(BaseBot, ABC):
                 self.log(f"⚠️ Errore inizializzazione (T{attempt + 1}): {err_msg}", "WARNING")
                 self._stop_playwright_internal()
 
-                if "Browser.getWindowForTarget" in err_msg:
+                # Se fallisce il lancio, forziamo il reset del profilo per ripristinare database SQL/lock corrotti
+                if attempt < max_retries - 1:
                     with suppress(Exception):
-                        self.log("[RECOVERY] Profilo instabile, reset in corso...", "WARNING")
+                        self.log("[RECOVERY] Rilevato fallimento avvio. Forzatura reset profilo per recupero da corruzioni...", "WARNING")
                         if emergency_profile_reset(user_data_dir):
                             patch_browser_profile(user_data_dir, download_dir=downloads_dir)
 
