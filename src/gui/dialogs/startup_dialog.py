@@ -186,9 +186,15 @@ class StartupDialog(QDialog):
         self.title = QLabel()
         self.title.setTextFormat(Qt.TextFormat.RichText)
         self.title.setText(
-            f'<span style="font-size:40px; font-weight:800; color:{COLORS["bg_white"]}; letter-spacing:2px;">'
+            f'<span style="font-size:40px; font-weight:900; color:{COLORS["bg_white"]}; letter-spacing:2px;">'
             f'SYNCRO<span style="color:{COLORS["primary_blue"]};">JOB</span></span>'
         )
+        # Effetto ombra per il titolo per farlo risaltare
+        title_shadow = QGraphicsDropShadowEffect()
+        title_shadow.setBlurRadius(15)
+        title_shadow.setColor(QColor(0, 0, 0, 200))
+        title_shadow.setOffset(2, 2)
+        self.title.setGraphicsEffect(title_shadow)
         title_box.addWidget(self.title)
 
         self.version = QLabel(f"v{__version__}")
@@ -253,24 +259,31 @@ class StartupDialog(QDialog):
         self.log_frame = QFrame()
         self.log_frame.setObjectName("LogConsole")
         c = QColor(COLORS["primary_blue"])
-        log_border_opacity = 0.25
+        log_border_opacity = 0.4
         self.log_frame.setStyleSheet(
-            f"#LogConsole {{ background:rgba(0,0,0,0.4); border-radius:16px; border:1px solid rgba({c.red()},{c.green()},{c.blue()},{log_border_opacity}); }}"
+            f"#LogConsole {{ "
+            f"  background: rgba(0, 0, 0, 0.6); "
+            f"  border-radius: 16px; "
+            f"  border: 1px solid rgba({c.red()}, {c.green()}, {c.blue()}, {log_border_opacity}); "
+            f"}}"
         )
         log_layout = QVBoxLayout(self.log_frame)
-        log_layout.setContentsMargins(15, 12, 15, 12)
-        log_layout.setSpacing(4)
+        log_layout.setContentsMargins(20, 15, 20, 15)
+        log_layout.setSpacing(6)
 
-        log_header = QLabel("DIAGNOSTICA DI SISTEMA")
-        header_letter_spacing = 3
+        log_header = QLabel("[ DIAGNOSTICA DI SISTEMA ]")
+        header_letter_spacing = 2
         log_header.setStyleSheet(
-            f"font-size:10px; color:rgba({c.red()},{c.green()},{c.blue()},0.7); letter-spacing:{header_letter_spacing}px; font-weight:800;"
+            f"font-size: 11px; "
+            f"color: {COLORS['primary_blue']}; "
+            f"letter-spacing: {header_letter_spacing}px; "
+            f"font-weight: 900;"
         )
         log_layout.addWidget(log_header)
 
         sep = QFrame()
         sep.setFixedHeight(1)
-        sep_opacity = 0.2
+        sep_opacity = 0.3
         sep.setStyleSheet(f"background:rgba({c.red()},{c.green()},{c.blue()},{sep_opacity});")
         log_layout.addWidget(sep)
 

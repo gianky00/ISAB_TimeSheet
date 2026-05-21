@@ -19,6 +19,7 @@ from PySide6.QtGui import (
     QRadialGradient,
 )
 from PySide6.QtWidgets import (
+    QFrame,
     QGraphicsOpacityEffect,
     QLabel,
     QVBoxLayout,
@@ -164,18 +165,31 @@ class GlowingProgressBar(QWidget):
         self._value = max(0, min(100, val))
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
-        """Disegna la barra di progresso con effetto gradiente e shimmer."""
+        """Disegna la barra di progresso con effetto gradiente, shimmer e glow dinamico."""
         painter = QPainter(self)
         try:
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)
             w, h = self.width(), self.height()
 
+            # 1. TRACK SFONDO
             track = QPainterPath()
             track.addRoundedRect(0.0, 0.0, float(w), float(h), 3.0, 3.0)
             painter.fillPath(track, QColor(15, 15, 25))
 
             if self._display_value > 0:
                 pw = int((self._display_value / 100.0) * w)
+
+                # 2. GLOW DINAMICO (Bagliore sotto la barra)
+                glow_grad = QRadialGradient(pw, h / 2.0, 80.0)
+                glow_grad.setColorAt(0, QColor(52, 152, 219, 40))
+                glow_grad.setColorAt(1, QColor(52, 152, 219, 0))
+                painter.save()
+                painter.setBrush(QBrush(glow_grad))
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.drawEllipse(QPoint(int(pw), int(h / 2)), 60, 15)
+                painter.restore()
+
+                # 3. BARRA DI PROGRESSO
                 grad = QLinearGradient(0.0, 0.0, float(pw), 0.0)
                 grad.setColorAt(0, QColor(52, 152, 219))
                 grad.setColorAt(1, QColor(155, 89, 182))
@@ -184,11 +198,12 @@ class GlowingProgressBar(QWidget):
                 progress.addRoundedRect(0.0, 0.0, float(pw), float(h), 3.0, 3.0)
                 painter.fillPath(progress, grad)
 
+                # 4. EFFETTO SHIMMER (Riflesso che scorre)
                 if 0 < self._shimmer < pw:
                     painter.save()
                     shimmer = QLinearGradient(self._shimmer - 40.0, 0.0, self._shimmer + 40.0, 0.0)
                     shimmer.setColorAt(0, QColor(255, 255, 255, 0))
-                    shimmer.setColorAt(0.5, QColor(255, 255, 255, 100))
+                    shimmer.setColorAt(0.5, QColor(255, 255, 255, 120))
                     shimmer.setColorAt(1, QColor(255, 255, 255, 0))
                     painter.setClipPath(progress)
                     painter.fillRect(int(self._shimmer - 40), 0, 80, h, shimmer)
@@ -376,23 +391,37 @@ class ConsoleOverlay(QWidget):
 
 
 class ChangelogTicker(QWidget):
-    """Widget premium multi-riga (3 righe) per mostrare più novità della versione contemporaneamente."""
+    """Widget premium multi-riga (3 righe) con contenitore olografico e tag neon."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.notes: list[str] = []
         self.current_idx = 0
-        self.num_rows = 3  # Mostriamo 3 novità alla volta
+        self.num_rows = 3
 
         # Importazione pigra dei colori
         from src.gui.styles import COLORS
 
         self.COLORS = COLORS
 
-        # Layout principale verticale per le righe
-        self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(0, 0, 0, 0)
-        self.main_layout.setSpacing(4)
+        # Layout principale: aggiunge un margine per il contenitore
+        self.container_layout = QVBoxLayout(self)
+        self.container_layout.setContentsMargins(10, 8, 10, 8)
+
+        # Frame olografico interno
+        self.frame = QFrame()
+        c = QColor(COLORS["primary_blue"])
+        self.frame.setStyleSheet(
+            f"background: rgba(0, 0, 0, 0.5); "
+            f"border: 1px solid rgba({c.red()}, {c.green()}, {c.blue()}, 0.25); "
+            f"border-radius: 12px;"
+        )
+        self.container_layout.addWidget(self.frame)
+
+        # Layout interno per le righe
+        self.main_layout = QVBoxLayout(self.frame)
+        self.main_layout.setContentsMargins(15, 8, 15, 8)
+        self.main_layout.setSpacing(6)
         self.main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.labels: list[QLabel] = []
@@ -408,9 +437,9 @@ class ChangelogTicker(QWidget):
                 "color: white; "
                 "background: transparent;"
             )
-            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl.setFixedWidth(550)
-            lbl.setFixedHeight(20)
+            lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            lbl.setFixedWidth(520)
+            lbl.setFixedHeight(22)
 
             opacity = QGraphicsOpacityEffect(lbl)
             lbl.setGraphicsEffect(opacity)
@@ -423,8 +452,8 @@ class ChangelogTicker(QWidget):
             self.opacity_effects.append(opacity)
             self.animations.append(anim)
 
-        self.setFixedWidth(550)
-        self.setFixedHeight(80)  # Spazio per 3 righe + spacing
+        self.setFixedWidth(560)
+        self.setFixedHeight(120)  # Spazio per 3 righe + frame + margins
 
         # Timer per il ciclo di aggiornamento
         self.cycle_timer = QTimer(self)
@@ -440,7 +469,7 @@ class ChangelogTicker(QWidget):
         self._show_batch()
 
     def _format_note(self, note: str) -> str:
-        """Formatta la nota con tag colorati."""
+        """Formatta la nota con tag neon e stile premium."""
         clean = note.strip()
         lower = clean.lower()
 
@@ -449,46 +478,41 @@ class ChangelogTicker(QWidget):
         c_mod = self.COLORS.get("primary_blue", "#3498db")
 
         if lower.startswith("feat"):
-            label = "FEAT"
-            color = c_feat
+            label, color = "FEAT", c_feat
             msg = clean.split(":", 1)[1].strip() if ":" in clean else clean[4:].strip()
         elif lower.startswith("fix"):
-            label = "FIX"
-            color = c_fix
+            label, color = "FIX", c_fix
             msg = clean.split(":", 1)[1].strip() if ":" in clean else clean[3:].strip()
         else:
-            label = "UPD"
-            color = c_mod
+            label, color = "UPD", c_mod
             msg = clean
 
         # Tronca se troppo lungo per la riga
-        max_chars = 65
+        max_chars = 60
         if len(msg) > max_chars:
             msg = msg[:max_chars] + "..."
 
+        # Tag con effetto neon (tramite bold e colori saturi)
         return (
-            f'<span style="color:{color}; font-weight:bold;">[{label}]</span> '
-            f'<span style="color:white; font-weight:500;">{msg.upper()}</span>'
+            f'<span style="color:{color}; font-weight:900; letter-spacing:1px;">[{label}]</span> '
+            f'<span style="color:rgba(255,255,255,0.9); font-weight:500;">{msg.upper()}</span>'
         )
 
     def _show_batch(self) -> None:
         """Mostra un gruppo di note con animazione di fade-in."""
         for i in range(self.num_rows):
             note_idx = (self.current_idx + i) % len(self.notes)
-            # Se abbiamo meno note del numero di righe, evitiamo duplicati se non necessario
             if i > 0 and note_idx == self.current_idx:
                 self.labels[i].setText("")
                 continue
 
             self.labels[i].setText(self._format_note(self.notes[note_idx]))
 
-            # Animazione sfalsata per un effetto più dinamico (100ms di delay tra righe)
             self.animations[i].stop()
             self.animations[i].setStartValue(0.0)
             self.animations[i].setEndValue(1.0)
-            QTimer.singleShot(i * 100, self.animations[i].start)
+            QTimer.singleShot(i * 120, self.animations[i].start)
 
-        # Il batch resta visibile per 6 secondi
         self.cycle_timer.start(6000)
 
     def next_batch(self) -> None:
@@ -510,6 +534,5 @@ class ChangelogTicker(QWidget):
         with contextlib.suppress(Exception):
             self.animations[self.num_rows - 1].finished.disconnect(self._on_fade_out_finished)
 
-        # Avanziamo di num_rows per mostrare note fresche
         self.current_idx = (self.current_idx + self.num_rows) % len(self.notes)
         self._show_batch()
