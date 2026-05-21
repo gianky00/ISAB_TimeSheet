@@ -281,6 +281,43 @@ class StartupDialog(QDialog):
         license_box.addLayout(lay_h)
         license_box.addLayout(lay_s)
 
+        # Label di conferma validazione (Inizialmente invisibile)
+        self.lbl_validated = QLabel("LICENZA VALIDATA")
+        self.lbl_validated.setStyleSheet(
+            f"font-size: 11px; color: {COLORS['success_green']}; font-weight: 900; letter-spacing: 2px;"
+        )
+        self.val_opacity = QGraphicsOpacityEffect(self.lbl_validated)
+        self.val_opacity.setOpacity(0.0)
+        self.lbl_validated.setGraphicsEffect(self.val_opacity)
+
+        # Animazione di pulsazione per la validazione
+        self.val_pulse = QSequentialAnimationGroup(self)
+        p_in = QPropertyAnimation(self.val_opacity, b"opacity")
+        p_in.setDuration(400)
+        p_in.setStartValue(0.0)
+        p_in.setEndValue(1.0)
+        p_in.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        p_pulse = QPropertyAnimation(self.val_opacity, b"opacity")
+        p_pulse.setDuration(600)
+        p_pulse.setStartValue(1.0)
+        p_pulse.setEndValue(0.4)
+        p_pulse.setEasingCurve(QEasingCurve.Type.InOutSine)
+
+        p_pulse_rev = QPropertyAnimation(self.val_opacity, b"opacity")
+        p_pulse_rev.setDuration(600)
+        p_pulse_rev.setStartValue(0.4)
+        p_pulse_rev.setEndValue(1.0)
+        p_pulse_rev.setEasingCurve(QEasingCurve.Type.InOutSine)
+
+        self.val_pulse.addAnimation(p_in)
+        self.val_pulse.addAnimation(p_pulse)
+        self.val_pulse.addAnimation(p_pulse_rev)
+        self.val_pulse.setLoopCount(3)  # Pulsa un po' di volte
+
+        license_box.addSpacing(5)
+        license_box.addWidget(self.lbl_validated, alignment=Qt.AlignmentFlag.AlignRight)
+
         parent_layout.addLayout(license_box)
 
     def _get_build_date(self) -> str:
@@ -311,13 +348,30 @@ class StartupDialog(QDialog):
 
     @Slot(str, str, str)
     def update_license_display(self, cliente: str, hw_id: str, scadenza: str) -> None:
-        """Aggiorna le informazioni di licenza visualizzate (chiamato asincronamente)."""
+        """Aggiorna le informazioni di licenza visualizzate e mostra il feedback di validazione."""
         if hasattr(self, "lbl_val_cliente") and self.lbl_val_cliente:
             self.lbl_val_cliente.setText(cliente.upper())
         if hasattr(self, "lbl_val_hwid") and self.lbl_val_hwid:
             self.lbl_val_hwid.setText(hw_id)
         if hasattr(self, "lbl_val_scadenza") and self.lbl_val_scadenza:
             self.lbl_val_scadenza.setText(scadenza)
+
+        # Avvio feedback di validazione olografico
+        if hasattr(self, "val_pulse") and hasattr(self, "lbl_validated"):
+            self.val_pulse.start()
+            # Fade-out finale dopo la pulsazione
+            QTimer.singleShot(4000, self._hide_validation_label)
+
+    def _hide_validation_label(self) -> None:
+        """Nasconde la label di validazione con un fade-out fluido."""
+        if not hasattr(self, "val_opacity"):
+            return
+        self._val_fade_out = QPropertyAnimation(self.val_opacity, b"opacity")
+        self._val_fade_out.setDuration(1000)
+        self._val_fade_out.setStartValue(self.val_opacity.opacity())
+        self._val_fade_out.setEndValue(0.0)
+        self._val_fade_out.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self._val_fade_out.start()
 
     def _create_info_row(self, label_text: str, value_text: str) -> tuple[QHBoxLayout, QLabel]:
         """Crea una riga di informazione label: valore e restituisce il layout e la label del valore."""
