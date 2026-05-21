@@ -194,12 +194,16 @@ class StartupDialog(QDialog):
 
     def _setup_title_and_credits(self, title_box: QVBoxLayout) -> None:
         """Inizializza il blocco titolo e la firma d'autore animata."""
+        # Build Date dinamica dal changelog
+        build_date = self._get_build_date()
+
         self.title = QLabel()
         self.title.setTextFormat(Qt.TextFormat.RichText)
         self.title.setText(
             f'<span style="font-size:40px; font-weight:900; color:{COLORS["bg_white"]}; letter-spacing:2px;">'
             f'SYNCRO<span style="color:{COLORS["primary_blue"]};">JOB</span> '
-            f'<span style="font-size:14px; color:{COLORS["primary_blue"]}; opacity: 0.6; font-weight:600; vertical-align: middle;">v{__version__}</span></span>'
+            f'<span style="font-size:14px; color:{COLORS["primary_blue"]}; opacity: 0.6; font-weight:600; vertical-align: middle;">v{__version__} '
+            f'<span style="font-size:10px; color:rgba(255,255,255,0.4); font-weight:400;"> — RILASCIATO IL {build_date}</span></span></span>'
         )
         title_shadow = QGraphicsDropShadowEffect()
         title_shadow.setBlurRadius(15)
@@ -256,15 +260,10 @@ class StartupDialog(QDialog):
         lay_c, self.lbl_val_cliente = self._create_info_row("CLIENTE:", "ATTESA...")
         lay_h, self.lbl_val_hwid = self._create_info_row("HW-ID:", "ATTESA...")
 
-        # Build Date dinamica dal changelog
-        build_date = self._get_build_date()
-        lay_b, self.lbl_val_build = self._create_info_row("BUILD DATE:", build_date)
-
         lay_s, self.lbl_val_scadenza = self._create_info_row("SCADENZA:", "ATTESA...")
 
         license_box.addLayout(lay_c)
         license_box.addLayout(lay_h)
-        license_box.addLayout(lay_b)
         license_box.addLayout(lay_s)
 
         parent_layout.addLayout(license_box)
