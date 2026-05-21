@@ -199,7 +199,7 @@ max-complexity = 10
 "*.py" = ["PTH"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["src"]
+known-first-party = ["src", "admin"]
 force-single-line = false
 combine-as-imports = true
 
@@ -293,7 +293,7 @@ ignore_missing_imports = true
 
 
 [tool.deptry]
-known_first_party = ["src"]
+known_first_party = ["src", "admin"]
 exclude = [".venv", "build", "dist", "temp", "admin", "scripts", "site", "docs", "graveyard", "mutants", "scratch"]
 
 [tool.deptry.per_rule_ignores]
