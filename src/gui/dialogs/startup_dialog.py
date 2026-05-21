@@ -217,11 +217,11 @@ class StartupDialog(QDialog):
         # Label Data di Rilascio sotto il titolo
         self.release_info = QLabel(f"RILASCIATO IL {build_date}")
         self.release_info.setStyleSheet(
-            f"font-size: 10px; color: {COLORS['primary_blue']}; opacity: 0.4; font-weight: 400; letter-spacing: 1px;"
+            f"font-size: 10px; color: {COLORS['primary_blue']}; font-weight: 600; letter-spacing: 1.5px;"
         )
-        # Applichiamo l'opacità via effetto per precisione olografica
+        # Applichiamo l'opacità via effetto per precisione olografica - Aumentata per contrasto
         rel_opacity = QGraphicsOpacityEffect(self.release_info)
-        rel_opacity.setOpacity(0.4)
+        rel_opacity.setOpacity(0.75)
         self.release_info.setGraphicsEffect(rel_opacity)
         title_box.addWidget(self.release_info)
 
