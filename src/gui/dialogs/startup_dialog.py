@@ -59,7 +59,7 @@ class StartupDialog(QDialog):
 
     # Dimensioni del contenuto visibile (Innalzate proporzionalmente)
     CONTENT_WIDTH = 850
-    CONTENT_HEIGHT = 560
+    CONTENT_HEIGHT = 620
     # Margine per l'ombra
     SHADOW_MARGIN = 50
 
