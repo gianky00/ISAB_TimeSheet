@@ -55,7 +55,8 @@ class ModernButton(QPushButton):
         self._hover_opacity = 0.0
 
         # Animation attributes
-        self._anim: QPropertyAnimation
+        self._anim: Any
+        self._shadow: Any
 
         self._setup_animation()
         self._apply_style()

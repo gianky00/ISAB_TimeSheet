@@ -1,3 +1,5 @@
+"""Configurazione specifica per i bot basati su Selenium."""
+
 from dataclasses import dataclass
 
 from src.bots.base.base_bot import BotConfig

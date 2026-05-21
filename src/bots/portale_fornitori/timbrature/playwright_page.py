@@ -176,7 +176,7 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
             count = excel_locator.count()
             if count > 1:
                 self.log(f"⚠️ Attenzione: trovati {count} elementi per il pulsante Excel. Uso il primo.")
-            
+
             # Playwright gestisce il download in modo nativo e sicuro
             with self.page.expect_download(timeout=Timeouts.DOWNLOAD * 1000) as download_info:
                 # Clic JavaScript per evitare blocchi da overlay invisibili

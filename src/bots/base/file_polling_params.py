@@ -1,3 +1,5 @@
+"""Parametri di configurazione per il polling del filesystem."""
+
 from dataclasses import dataclass, field
 from pathlib import Path
 

@@ -78,37 +78,50 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
 
         return True, ""
 
+    def _normalize_ranges(self, data: list[dict[str, Any]] | dict[str, Any]) -> list[dict[str, Any]]:
+        """
+        Normalizza i dati di input in una lista di intervalli temporali.
+
+        Args:
+          data: Dati grezzi ricevuti dal worker.
+
+        Returns:
+          list: Lista di dizionari contenenti data_da, data_a e fornitore.
+        """
+        from typing import cast
+
+        rows = data if isinstance(data, list) else data.get("rows", [])
+        if rows:
+            # Se abbiamo più righe, le trattiamo come una coda di intervalli
+            return [
+                {
+                    "data_da": row.get("data_da", self.data_da),
+                    "data_a": row.get("data_a", self.data_a),
+                    "fornitore": row.get("fornitore", self.fornitore),
+                }
+                for row in rows
+            ]
+
+        if isinstance(data, dict) and data.get("ranges"):
+            # Modalità esplicita multi-range (usata da Crea Database)
+            self.fornitore = data.get("fornitore", self.fornitore)
+            return cast("list[dict[str, Any]]", data["ranges"])
+
+        # Fallback singolo range (default)
+        return [
+            {
+                "data_da": (data.get("data_da") if isinstance(data, dict) else None) or self.data_da,
+                "data_a": (data.get("data_a") if isinstance(data, dict) else None) or self.data_a,
+                "fornitore": (data.get("fornitore") if isinstance(data, dict) else None) or self.fornitore,
+            }
+        ]
+
     def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Esegue il workflow completo di recuperòe importazione delle timbrature."""
         self.update_step("login", StepStatus.COMPLETED)
 
         # Gestione parametri da input (modalità singola o multi-range)
-        rows = data if isinstance(data, list) else data.get("rows", [])
-        ranges = []
-
-        if rows:
-            # Se abbiamo più righe, le trattiamo come una coda di intervalli
-            for row in rows:
-                ranges.append(
-                    {
-                        "data_da": row.get("data_da", self.data_da),
-                        "data_a": row.get("data_a", self.data_a),
-                        "fornitore": row.get("fornitore", self.fornitore),
-                    }
-                )
-        elif isinstance(data, dict) and data.get("ranges"):
-            # Modalità esplicita multi-range (usata da Crea Database)
-            ranges = data["ranges"]
-            self.fornitore = data.get("fornitore", self.fornitore)
-        else:
-            # Fallback singolo range (default)
-            ranges = [
-                {
-                    "data_da": (data.get("data_da") if isinstance(data, dict) else None) or self.data_da,
-                    "data_a": (data.get("data_a") if isinstance(data, dict) else None) or self.data_a,
-                    "fornitore": (data.get("fornitore") if isinstance(data, dict) else None) or self.fornitore,
-                }
-            ]
+        ranges = self._normalize_ranges(data)
 
         if not ranges:
             self.log("❌ Nessun intervallo temporale specificato.")
@@ -128,8 +141,24 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
         self.update_step("nav", StepStatus.COMPLETED)
 
         # 2. Ciclo di scarico per ogni intervallo
-        total_ranges = len(ranges)
+        success_count = self._process_download_ranges(page_obj, ranges)
+
+        self.log(f"ℹ️ Procedura conclusa. Periodi scaricati: {success_count}/{len(ranges)}")
+        return success_count > 0
+
+    def _process_download_ranges(self, page_obj: PlaywrightTimbraturePage, ranges: list[dict[str, Any]]) -> int:
+        """
+        Cicla sugli intervalli e gestisce download e importazione.
+
+        Args:
+          page_obj: Page Object per l'interazione Playwright.
+          ranges: Lista di intervalli da processare.
+
+        Returns:
+          int: Numero di periodi scaricati e importati con successo.
+        """
         success_count = 0
+        total_ranges = len(ranges)
 
         for i, rng in enumerate(ranges, 1):
             d_da, d_a = rng["data_da"], rng["data_a"]
@@ -166,6 +195,4 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
             else:
                 self.log(f"⚠️ Nessun dato trovato per il periodo {d_da} - {d_a}")
                 self.update_step("download", StepStatus.ERROR)
-
-        self.log(f"ℹ️ Procedura conclusa. Periodi scaricati: {success_count}/{total_ranges}")
-        return success_count > 0
+        return success_count

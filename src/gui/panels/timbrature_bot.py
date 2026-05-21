@@ -217,7 +217,7 @@ class TimbratureBotPanel(BaseBotPanel):
             "data_da": data_da,
             "data_a": data_a,
         }
-        
+
         # Integrazione modalità Multi-Range (Crea Database)
         if params_override and "ranges" in params_override:
             bot_data["ranges"] = params_override["ranges"]

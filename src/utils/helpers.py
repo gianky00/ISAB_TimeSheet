@@ -303,8 +303,6 @@ def get_colored_icon(icon_path: str, color: str = "#000000") -> QIcon:
     if not Path(icon_path).exists():
         return QIcon()
 
-    import os
-    import sys
     if "pytest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST"):
         return QIcon(icon_path)
 
