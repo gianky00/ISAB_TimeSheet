@@ -271,7 +271,7 @@ class StartupDialog(QDialog):
         log_layout.setContentsMargins(20, 15, 20, 15)
         log_layout.setSpacing(6)
 
-        log_header = QLabel("[ DIAGNOSTICA DI SISTEMA ]")
+        log_header = QLabel("DIAGNOSTICA DI SISTEMA")
         header_letter_spacing = 2
         log_header.setStyleSheet(
             f"font-size: 11px; "

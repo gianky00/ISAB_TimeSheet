@@ -28,6 +28,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import (
     QFrame,
+    QGraphicsDropShadowEffect,
     QGraphicsOpacityEffect,
     QLabel,
     QVBoxLayout,
@@ -67,15 +68,13 @@ class AnimatedBorder(QWidget):
             intensity = 0.6 + 0.4 * math.sin(self.phase * 2)
 
             # 1. CLIP PATH PER EVITARE PUNTE NEGLI ANGOLI
-            # Questo assicura che nulla venga disegnato fuori dagli angoli smussati
             clip_path = QPainterPath()
             clip_path.addRoundedRect(0.0, 0.0, float(w), float(h), float(r), float(r))
             painter.setClipPath(clip_path)
 
-            # 2. GLOW INTERNO (Invece di esterno che veniva tagliato)
+            # 2. GLOW INTERNO
             for offset in (2, 4, 6):
                 glow_path = QPainterPath()
-                # Disegniamo leggermente all'interno per evitare artefatti di clipping
                 glow_path.addRoundedRect(
                     float(offset),
                     float(offset),
@@ -90,7 +89,7 @@ class AnimatedBorder(QWidget):
                 painter.setPen(pen)
                 painter.drawPath(glow_path)
 
-            # 3. MAIN CONIC BORDER (Posizionato esattamente sul bordo)
+            # 3. MAIN CONIC BORDER
             cx, cy = w / 2.0, h / 2.0
             conic = QConicalGradient(cx, cy, -math.degrees(self.phase))
             conic.setColorAt(0.0, QColor(52, 152, 219, int(255 * intensity)))
@@ -100,7 +99,6 @@ class AnimatedBorder(QWidget):
             conic.setColorAt(1.0, QColor(52, 152, 219, int(255 * intensity)))
 
             border_path = QPainterPath()
-            # Un leggero inset di 1px assicura che l'antialiasing del bordo non venga tagliato
             border_path.addRoundedRect(1.0, 1.0, float(w - 2), float(h - 2), float(r - 1), float(r - 1))
             pen = QPen(QBrush(conic), 2.5)
             pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
@@ -164,12 +162,7 @@ class GlowingProgressBar(QWidget):
         self.update()
 
     def setValue(self, val: int) -> None:
-        """
-        Imposta il valore del progresso (0-100).
-
-        Args:
-            val: Valore intero del progresso.
-        """
+        """Imposta il valore del progresso (0-100)."""
         self._value = max(0, min(100, val))
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
@@ -187,7 +180,7 @@ class GlowingProgressBar(QWidget):
             if self._display_value > 0:
                 pw = int((self._display_value / 100.0) * w)
 
-                # 2. GLOW DINAMICO (Bagliore sotto la barra)
+                # 2. GLOW DINAMICO
                 glow_grad = QRadialGradient(pw, h / 2.0, 80.0)
                 glow_grad.setColorAt(0, QColor(52, 152, 219, 40))
                 glow_grad.setColorAt(1, QColor(52, 152, 219, 0))
@@ -206,7 +199,7 @@ class GlowingProgressBar(QWidget):
                 progress.addRoundedRect(0.0, 0.0, float(pw), float(h), 3.0, 3.0)
                 painter.fillPath(progress, grad)
 
-                # 4. EFFETTO SHIMMER (Riflesso che scorre)
+                # 4. EFFETTO SHIMMER
                 if 0 < self._shimmer < pw:
                     painter.save()
                     shimmer = QLinearGradient(self._shimmer - 40.0, 0.0, self._shimmer + 40.0, 0.0)
@@ -323,50 +316,37 @@ class TypewriterLabel(QLabel):
     """Label con effetto typewriter fluido."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la label typewriter."""
         super().__init__(parent)
-        self._target, self._current, self._index = "", "", 0
+        self._full_text = ""
+        self._current_text = ""
         self._timer = QTimer(self)
-        self._timer.timeout.connect(self._type)
+        self._timer.timeout.connect(self._update_text)
 
-    def set_text_animated(self, text: str, speed: int = 20) -> None:
-        """
-        Imposta il testo con un'animazione di digitazione.
-
-        Args:
-            text: Testo da visualizzare.
-            speed: Velocità di digitazione in ms.
-        """
-        self._target, self._current, self._index = text, "", 0
+    def set_text_animated(self, text: str, speed: int = 25) -> None:
+        """Inizia l'animazione di digitazione."""
+        self._full_text = text
+        self._current_text = ""
+        self.setText("")
         self._timer.start(speed)
 
     def set_text_instant(self, text: str) -> None:
-        """
-        Imposta il testo istantaneamente senza animazione.
-
-        Args:
-            text: Testo da visualizzare.
-        """
+        """Imposta il testo istantaneamente senza animazione."""
         self._timer.stop()
-        self._target = self._current = text
-        self._index = len(text)
+        self._full_text = text
         self.setText(text)
 
-    def _type(self) -> None:
-        """Slot del timer che aggiunge un carattere alla volta."""
-        if self._index < len(self._target):
-            self._index += 1
-            self._current = self._target[: self._index]
-            self.setText(self._current)
+    def _update_text(self) -> None:
+        if len(self._current_text) < len(self._full_text):
+            self._current_text += self._full_text[len(self._current_text)]
+            self.setText(self._current_text)
         else:
             self._timer.stop()
 
 
 class ConsoleOverlay(QWidget):
-    """Overlay per la console con effetto scanline e griglia CRT."""
+    """Overlay CRT per la console di diagnostica."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza l'overlay della console."""
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -429,17 +409,16 @@ class ChangelogTicker(QWidget):
         # Header con stile moderno e spaziatura generosa
         self.header_label = QLabel("NOVITÀ DELLA VERSIONE INSTALLATA")
         self.header_label.setStyleSheet(
-            f"font-size: 11px; color: {self.COLORS['success_green']}; letter-spacing: 3px; font-weight: 900;"
+            f"font-size: 11px; color: {self.COLORS['primary_blue']}; letter-spacing: 3px; font-weight: 900;"
         )
         self.header_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Effetto Glow al titolo
-        from PySide6.QtWidgets import QGraphicsDropShadowEffect
 
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(15)
-        c_green = QColor(self.COLORS["success_green"])
-        shadow.setColor(QColor(c_green.red(), c_green.green(), c_green.blue(), 180))
+        c_blue = QColor(self.COLORS["primary_blue"])
+        shadow.setColor(QColor(c_blue.red(), c_blue.green(), c_blue.blue(), 180))
         shadow.setOffset(0, 0)
         self.header_label.setGraphicsEffect(shadow)
 
@@ -498,7 +477,6 @@ class ChangelogTicker(QWidget):
         """Cattura le posizioni reali del layout prima della prima visualizzazione."""
         super().showEvent(event)
         if not self.positions_initialized:
-            # Diamo tempo al layout di stabilizzarsi
             QTimer.singleShot(100, self._initialize_positions)
 
     def _initialize_positions(self) -> None:
@@ -533,12 +511,10 @@ class ChangelogTicker(QWidget):
             label, color = "UPDATE", c_mod
             msg = clean
 
-        # Tronca se troppo lungo per la riga (Aumentato per nuova larghezza)
         max_chars = 90
         if len(msg) > max_chars:
             msg = msg[:max_chars] + "..."
 
-        # Tag con effetto neon (tramite bold e colori saturi)
         return (
             f'<span style="color:{color}; font-weight:900; letter-spacing:1px;">[{label}]</span> '
             f'<span style="color:rgba(255,255,255,0.9); font-weight:500;">{msg.upper()}</span>'
@@ -557,7 +533,6 @@ class ChangelogTicker(QWidget):
 
             self.labels[i].setText(self._format_note(self.notes[note_idx]))
 
-            # Utilizziamo le posizioni target salvate per evitare la sovrapposizione
             final_pos = self.target_positions[i]
             start_pos = QPoint(final_pos.x(), final_pos.y() + 15)
 
@@ -571,10 +546,8 @@ class ChangelogTicker(QWidget):
             slide_anim.setStartValue(start_pos)
             slide_anim.setEndValue(final_pos)
 
-            # Delay sfalsato per effetto cascata
             QTimer.singleShot(i * 150, self.groups[i].start)
 
-        # Durata visibilità ridotta a 3.5 secondi per un ritmo più rapido
         self.cycle_timer.start(3500)
 
     def next_batch(self) -> None:
