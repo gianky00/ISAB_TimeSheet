@@ -105,7 +105,9 @@ class TestBackupManagerRobust:
             # Forza mtime per ordine
             os.utime(f, (i * 1000, i * 1000))
 
-        BackupManager._cleanup_old_backups(backup_dir, keep=5)
+        from src.core.backup.archive_rotator import ArchiveRotator
+
+        ArchiveRotator.rotate_backups(backup_dir, keep=5)
 
         files = list(backup_dir.glob("*.zip"))
         assert len(files) == 5

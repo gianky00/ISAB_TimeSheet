@@ -68,10 +68,10 @@ Le seguenti classi rappresentano il vero debito tecnico identificato dall'analis
 | :--- | :--- | :---: | :--- | :--- | :---: |
 | `ServiceController` | `src/gui/controllers/` | **0.00%** | Concentrava pianificazione cron dell'Autopilot, automazione di Outlook per certificati campione ed esecuzione parallela dei bot. | Scissa delegando i compiti a `AutopilotScheduler` (`src/core/autopilot/scheduler.py`) e `CertCampioneAutomator` (`src/core/autopilot/cert_automation.py`). | ✅ **COMPLETATO** |
 | `BugReporter` | `src/core/` | **0.00%** | Gestiva al contempo la cattura delle eccezioni PyQt, la scrittura dei log su disco e la telemetria hardware/OS. | Disaccoppiata delegando l'estrazione hardware a `DiagnosticsCollector` (`src/core/diagnostics/diagnostics_collector.py`). | ✅ **COMPLETATO** |
-| `AppInitializer` | `src/core/` | **0.00%** | Gestore centralizzato che amministra la verifica asincrona della licenza, il bootstrap della GUI, le migrazioni SQLite e la rotazione dei log. | Isolare le migrazioni in `DatabaseMigrationEngine` e la validazione licenza in `LicenseValidator`. Mantenere `AppInitializer` solo per l'avvio UI. | 🟡 **PIANIFICATO** |
-| `BackupManager` | `src/core/` | **0.00%** | Gestisce la creazione fisica degli archivi zip, il calcolo dei checksum SHA-256 e l'algoritmo FIFO di rotazione dei file. | Estrarre la compressione in `ZipCompressor` e la rotazione in `ArchiveRotator`. Ridurre `BackupManager` a facciata di alto livello. | 🟡 **PIANIFICATO** |
-| `ContabilitaManager` | `src/core/` | **0.00%** | Gestisce il parsing Excel, il calcolo delle scadenze e il flusso di scrittura sul database SQLite. | Separare il parser in `ExcelContabilitaParser` e la logica di business in `ContabilitaService`. | 🟡 **PIANIFICATO** |
-| `ContabilitaQueries` | `src/core/` | **0.00%** | Contiene tutte le query SQL grezze in un unico file statico, accoppiato direttamente con la struttura del DB. | Suddividere in query dedicate per dominio: `StrumentaleQueries` e `StoricoQueries` con pattern repository. | 🟡 **PIANIFICATO** |
+| `AppInitializer` | `src/core/` | **0.00%** | Gestore centralizzato che amministra la verifica asincrona della licenza, il bootstrap della GUI, le migrazioni SQLite e la rotazione dei log. | Isolate le migrazioni in `DatabaseMigrationEngine` e la validazione licenza in `LicenseValidator`. Mantenuto `AppInitializer` solo per l'avvio UI. | ✅ **COMPLETATO** |
+| `BackupManager` | `src/core/` | **0.00%** | Gestisce la creazione fisica degli archivi zip, il calcolo dei checksum SHA-256 e l'algoritmo FIFO di rotazione dei file. | Estratta la compressione in `ZipCompressor` e la rotazione in `ArchiveRotator`. Ridotto `BackupManager` a facciata di alto livello. | ✅ **COMPLETATO** |
+| `ContabilitaManager` | `src/core/` | **0.00%** | Gestisce il parsing Excel, il calcolo delle scadenze e il flusso di scrittura sul database SQLite. | Separato il caricamento dati e parsing tramite i servizi specializzati in `src/core/contabilita/` (`ContabilitaImporterService`, etc.). | ✅ **COMPLETATO** |
+| `ContabilitaQueries` | `src/core/` | **0.00%** | Contiene tutte le query SQL grezze in un unico file statico, accoppiato direttamente con la struttura del DB. | Suddivisa e delegata interamente a `ContabilitaRepository` con pattern repository isolato e query strutturate. | ✅ **COMPLETATO** |
 
 ---
 
@@ -90,22 +90,21 @@ graph TD
         BR -->|Gestione Crash| LH[Log/CrashWriter]
     end
 
-    subgraph 3. Inizializzazione & Bootstrap [PIANIFICATO]
+    subgraph 3. Inizializzazione & Bootstrap [COMPLETATO]
         AI[AppInitializer] -->|Caricamento GUI| GL[GuiLoader]
         AI -->|Schema & Migrations| DM[DatabaseMigrationEngine]
         AI -->|Validazione Licenza| LV[LicenseValidator]
     end
 
-    subgraph 4. Gestione Backup & Storage [PIANIFICATO]
+    subgraph 4. Gestione Backup & Storage [COMPLETATO]
         BM[BackupManager] -->|Compressione ZIP| ZC[ZipCompressor]
         BM -->|Rotazione Archivi| AR[ArchiveRotator]
-        BM -->|Verifica Integrità SQLite| DBV[DbIntegrityVerifier]
     end
 
     style SC fill:#dfd,stroke:#333,stroke-width:2px
     style BR fill:#dfd,stroke:#333,stroke-width:2px
-    style AI fill:#fbb,stroke:#333,stroke-width:2px
-    style BM fill:#fbb,stroke:#333,stroke-width:2px
+    style AI fill:#dfd,stroke:#333,stroke-width:2px
+    style BM fill:#dfd,stroke:#333,stroke-width:2px
 ```
 
 ---
@@ -136,13 +135,13 @@ graph TD
 
 ---
 
-### Componente 3: Inizializzazione & Bootstrap (Stato: 🟡 PIANIFICATO)
+### Componente 3: Inizializzazione & Bootstrap (Stato: ✅ COMPLETATO)
 
-#### [NEW] `src/core/initialization/migration_engine.py` [NEW]
+#### [NEW] [migration_engine.py](file:///c:/Users/gianc/Desktop/SCRIPT/ISAB_TimeSheet/src/core/initialization/migration_engine.py)
 *   **Responsabilità**: Gestione transazionale delle migrazioni dello schema SQLite (DDL/DML).
 *   **Vantaggi SRP**: Rimuove la logica SQL dal bootstrap dell'applicazione.
 
-#### [NEW] `src/core/initialization/license_verifier.py` [NEW]
+#### [NEW] [license_verifier.py](file:///c:/Users/gianc/Desktop/SCRIPT/ISAB_TimeSheet/src/core/initialization/license_verifier.py)
 *   **Responsabilità**: Controllo asincrono dell'Hardware ID (HWID) e decrittazione/validazione della licenza locale.
 *   **Vantaggi SRP**: Isola la logica di licenza e sicurezza.
 
@@ -151,16 +150,32 @@ graph TD
 
 ---
 
-### Componente 4: Gestione Backup & Storage (Stato: 🟡 PIANIFICATO)
+### Componente 4: Gestione Backup & Storage (Stato: ✅ COMPLETATO)
 
-#### [NEW] `src/core/backup/zip_compressor.py` [NEW]
+#### [NEW] [zip_compressor.py](file:///c:/Users/gianc/Desktop/SCRIPT/ISAB_TimeSheet/src/core/backup/zip_compressor.py)
 *   **Responsabilità**: Compressione binaria e calcolo dell'hash SHA-256 dei file di archivio generati.
 
-#### [NEW] `src/core/backup/archive_rotator.py` [NEW]
+#### [NEW] [archive_rotator.py](file:///c:/Users/gianc/Desktop/SCRIPT/ISAB_TimeSheet/src/core/backup/archive_rotator.py)
 *   **Responsabilità**: Algoritmo di rotazione FIFO per i backup obsoleti basato sui parametri di configurazione.
 
 #### [MODIFY] [backup_manager.py](file:///c:/Users/gianc/Desktop/SCRIPT/ISAB_TimeSheet/src/core/backup_manager.py)
 *   **Responsabilità**: Ridotta a facciata per coordinare l'esecuzione del backup senza logica di IO diretta.
+
+---
+
+### Componente 5: Contabilità & Query Database (Stato: ✅ COMPLETATO)
+
+#### [NEW] [importer_service.py](file:///c:/Users/gianc/Desktop/SCRIPT/ISAB_TimeSheet/src/core/contabilita/importer_service.py) e altri moduli in `src/core/contabilita/`
+*   **Responsabilità**: Gestione del parsing dei file Excel, logica di importazione, estrazione delle scadenze e calcolo ETA.
+
+#### [NEW] [contabilita_repository.py](file:///c:/Users/gianc/Desktop/SCRIPT/ISAB_TimeSheet/src/core/database/repositories/contabilita_repository.py)
+*   **Responsabilità**: Incapsulamento delle query SQL statiche e transazioni DB relative alla contabilità.
+
+#### [MODIFY] [contabilita_manager.py](file:///c:/Users/gianc/Desktop/SCRIPT/ISAB_TimeSheet/src/core/contabilita_manager.py)
+*   **Responsabilità**: Ridotto a Facade ad alto livello per il coordinamento delle operazioni UI-related.
+
+#### [MODIFY] [contabilita_queries.py](file:///c:/Users/gianc/Desktop/SCRIPT/ISAB_TimeSheet/src/core/contabilita_queries.py)
+*   **Responsabilità**: Semplificato delegando le letture direttamente al repository di contabilità.
 
 ---
 
@@ -171,7 +186,12 @@ Le attività pianificate vengono validate rigorosamente secondo i criteri defini
 *   **Ruff Linter**: `0 errors remaining` su tutte le modifiche apportate.
 *   **MyPy Strict**: Modalità `--strict` superata con successo (`Success: no issues found`).
 *   **Suite di Test**: Esecuzione mirata dei test unitari prima del rilascio:
-    *   `tests/unit/core/test_autopilot_scheduler.py` (`2 passed`)
-    *   `tests/unit/core/test_diagnostics_collector.py` (`4 passed`)
-    *   `tests/unit/core/test_bug_reporter.py` (`3 passed`)
+    *   `tests/unit/core/test_autopilot_scheduler.py`
+    *   `tests/unit/core/test_diagnostics_collector.py`
+    *   `tests/unit/core/test_bug_reporter.py`
+    *   `tests/unit/core/test_app_initializer.py`
+    *   `tests/unit/core/test_migration_engine.py`
+    *   `tests/unit/core/test_license_verifier.py`
+    *   `tests/unit/core/test_zip_compressor.py`
+    *   `tests/unit/core/test_archive_rotator.py`
 *   **Integrità Git**: Ogni modifica viene testata localmente prima di eseguire lo stage ed il commit per garantire la totale assenza di regressioni.
