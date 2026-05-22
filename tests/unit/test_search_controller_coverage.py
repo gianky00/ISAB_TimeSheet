@@ -1,92 +1,133 @@
 import unittest
+from typing import Any
 from unittest.mock import MagicMock, patch
 
-from PySide6.QtCore import QPoint
+import PySide6.QtWidgets
 
-from src.gui.controllers.search_controller import SearchController
+# Salviamo il riferimento originario di QMenu
+orig_qmenu = PySide6.QtWidgets.QMenu
+
+
+# Definiamo la classe fittizia pure-Python per sostituire QMenu
+class MockQMenu:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self._actions: list[Any] = []
+        self.exec: Any = MagicMock()
+
+    def setParent(self, parent: PySide6.QtWidgets.QWidget) -> None:  # noqa: N802
+        pass
+
+    def setStyleSheet(self, style: str) -> None:  # noqa: N802
+        pass
+
+    def addAction(self, text: str) -> MagicMock:  # noqa: N802
+        action = MagicMock()
+        action.text.return_value = text
+        self._actions.append(action)
+        return action
+
+    def addSeparator(self) -> None:  # noqa: N802
+        pass
+
+    def actions(self) -> list[Any]:
+        return self._actions
+
+
+# Sostituiamo QMenu con la versione fittizia prima di importare il modulo sotto test
+PySide6.QtWidgets.QMenu = MockQMenu  # type: ignore
+
+from src.gui.components.search.results_menu import SearchResultsMenu  # noqa: E402
+from src.gui.controllers.search_controller import SearchController  # noqa: E402
 
 
 class TestSearchControllerCoverage(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.mock_mw = MagicMock()
         self.mock_mw.global_search = MagicMock()
-        self.mock_mw.global_search.mapToGlobal.return_value = QPoint(0, 0)
+        self.mock_mw.global_search.mapToGlobal.return_value = MagicMock()
         self.mock_mw.global_search.height.return_value = 30
 
         self.controller = SearchController(self.mock_mw)
 
-    def test_perform_search_short_query(self):
+    def test_perform_search_short_query(self) -> None:
         self.controller.perform_search("a")
         # should not trigger search timer
         self.assertEqual(self.controller._last_query, "")
 
-    @patch("src.gui.controllers.search_controller.QMenu")
-    def test_perform_search_no_results(self, mock_menu):
-        mock_menu_instance = mock_menu.return_value
+    @patch("src.gui.controllers.search_controller.SearchResultsMenu")
+    def test_show_results_menu_delegation(self, mock_menu_class: MagicMock) -> None:
+        mock_menu_instance = mock_menu_class.return_value
 
-        # Mock all sub-searches to return 0
-        self.controller._add_oda_matches = MagicMock(return_value=0)
-        self.controller._add_storico_oda_matches = MagicMock(return_value=0)
-        self.controller._add_extended_matches = MagicMock(return_value=0)
-        self.controller._add_employees_matches = MagicMock(return_value=0)
-        self.controller._add_attivita_matches = MagicMock(return_value=0)
-        self.controller._add_pdl_matches = MagicMock(return_value=0)
-        self.controller._add_audit_matches = MagicMock(return_value=0)
+        self.controller._last_query = "test_query"
+        self.controller._show_results_menu({"oda": []})
 
-        self.controller._show_results_menu({})
+        # Il codice reale passa parent=self.mw (cioè self.mock_mw nei test)
+        mock_menu_class.assert_called_once_with(self.mock_mw, "test_query", parent=self.mock_mw)
+        mock_menu_instance.build_and_exec.assert_called_once_with({"oda": []}, self.mock_mw.global_search)
 
-        # Check "No results" action added
-        mock_menu_instance.addAction.assert_called_with("Nessun risultato trovato")
-        mock_menu_instance.exec.assert_called()
 
-    def test_add_oda_matches(self):
-        menu = MagicMock()
-        count = self.controller._add_oda_matches([{"codice_oda": "123", "descrizione": "Test OdA"}], menu)
-        self.assertEqual(count, 1)
-        menu.addAction.assert_any_call("CONTABILITÀ STRUMENTALE (OdA):")
+class TestSearchResultsMenuCoverage(unittest.TestCase):
+    @classmethod
+    def tearDownClass(cls) -> None:
+        # Ripristiniamo la classe base originaria per non influenzare altri test
+        PySide6.QtWidgets.QMenu = orig_qmenu  # type: ignore
 
-    def test_add_extended_matches(self):
-        ext_results = {
-            "GIORNALIERE": [{"data": "2023", "personale": "P1", "descrizione": "D1"}],
-            "CANTIERE": [{"data": "2023", "personale": "P2", "commessa": "C1"}],
-            "CERTIFICATI": [{"matricola": "M1", "modello": "Mod1", "costruttore": "Cost1"}],
+    def setUp(self) -> None:
+        self.mock_mw = MagicMock()
+        self.mock_search_widget = MagicMock()
+        self.mock_search_widget.mapToGlobal.return_value = MagicMock()
+        self.mock_search_widget.height.return_value = 30
+
+        # Istanziamo il menu (usa MockQMenu internamente come classe base)
+        self.menu = SearchResultsMenu(self.mock_mw, "query_di_prova", parent=None)
+
+    def test_results_menu_no_results(self) -> None:
+        self.menu.build_and_exec({}, self.mock_search_widget)
+
+        # Verifica che sia stata aggiunta l'azione "Nessun risultato trovato"
+        actions = self.menu.actions()
+        self.assertTrue(any(a.text() == "Nessun risultato trovato" for a in actions))
+        self.menu.exec.assert_called_once()  # type: ignore[attr-defined]
+
+    def test_add_oda_matches(self) -> None:
+        results = {"oda": [{"codice_oda": "123", "descrizione": "Test OdA"}]}
+        self.menu.build_and_exec(results, self.mock_search_widget)
+
+        actions = self.menu.actions()
+        self.assertTrue(any("CONTABILITÀ STRUMENTALE (OdA):" in a.text() for a in actions))
+        self.assertTrue(any("OdA 123 - Test OdA..." in a.text() for a in actions))
+        self.menu.exec.assert_called_once()  # type: ignore[attr-defined]
+
+    def test_add_extended_matches(self) -> None:
+        results = {
+            "extended": {
+                "GIORNALIERE": [{"data": "2023", "personale": "P1", "descrizione": "D1"}],
+                "CANTIERE": [{"data": "2023", "personale": "P2", "commessa": "C1"}],
+                "CERTIFICATI": [{"matricola": "M1", "modello": "Mod1", "costruttore": "Cost1"}],
+            }
         }
-        menu = MagicMock()
-        count = self.controller._add_extended_matches(ext_results, menu)
+        self.menu.build_and_exec(results, self.mock_search_widget)
 
-        self.assertEqual(count, 3)
-        menu.addAction.assert_any_call("GIORNALIERE:")
-        menu.addAction.assert_any_call("CANTIERE (Scarico Ore):")
-        menu.addAction.assert_any_call("CERTIFICATI:")
+        actions = self.menu.actions()
+        self.assertTrue(any("GIORNALIERE:" in a.text() for a in actions))
+        self.assertTrue(any("CANTIERE (Scarico Ore):" in a.text() for a in actions))
+        self.assertTrue(any("CERTIFICATI:" in a.text() for a in actions))
+        self.menu.exec.assert_called_once()  # type: ignore[attr-defined]
 
-    def test_add_employees_matches(self):
-        menu = MagicMock()
-        count = self.controller._add_employees_matches([{"cognome": "Rossi", "nome": "Mario"}], menu)
-        self.assertEqual(count, 1)
-        menu.addAction.assert_any_call("DIPENDENTI:")
+    def test_add_employees_matches(self) -> None:
+        results = {"employees": [{"cognome": "Rossi", "nome": "Mario"}]}
+        self.menu.build_and_exec(results, self.mock_search_widget)
 
-    def test_add_audit_matches(self):
-        menu = MagicMock()
-        count = self.controller._add_audit_matches([{"action": "Login", "entity": "User"}], menu)
-        self.assertEqual(count, 1)
-        menu.addAction.assert_any_call("AUDIT LOG:")
+        actions = self.menu.actions()
+        self.assertTrue(any("DIPENDENTI:" in a.text() for a in actions))
+        self.assertTrue(any("Rossi Mario" in a.text() for a in actions))
+        self.menu.exec.assert_called_once()  # type: ignore[attr-defined]
 
-    @patch("src.gui.controllers.search_controller.QMenu")
-    def test_perform_search_integration(self, mock_menu):
-        mock_menu_obj = mock_menu.return_value
+    def test_add_audit_matches(self) -> None:
+        results = {"audit": [{"action": "Login", "entity": "User"}]}
+        self.menu.build_and_exec(results, self.mock_search_widget)
 
-        # Use simple return values for sub-methods to verify orchestration
-        self.controller._add_oda_matches = MagicMock(return_value=1)
-        self.controller._add_extended_matches = MagicMock(return_value=0)
-        self.controller._add_employees_matches = MagicMock(return_value=0)
-        self.controller._add_audit_matches = MagicMock(return_value=0)
-        self.controller._add_storico_oda_matches = MagicMock(return_value=0)
-        self.controller._add_attivita_matches = MagicMock(return_value=0)
-        self.controller._add_pdl_matches = MagicMock(return_value=0)
-
-        self.controller._show_results_menu({"oda": [{"codice_oda": "1", "descrizione": ""}]})
-
-        self.controller._add_oda_matches.assert_called()
-        # "No results" should NOT be added
-        self.assertFalse(any("Nessun risultato" in str(call) for call in mock_menu_obj.addAction.mock_calls))
-        mock_menu_obj.exec.assert_called()
+        actions = self.menu.actions()
+        self.assertTrue(any("AUDIT LOG:" in a.text() for a in actions))
+        self.assertTrue(any("Login - User" in a.text() for a in actions))
+        self.menu.exec.assert_called_once()  # type: ignore[attr-defined]
