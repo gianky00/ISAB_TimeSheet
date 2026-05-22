@@ -193,7 +193,7 @@ class BotParametersWidget(QWidget):
         self.societa_combo.setMinimumHeight(38)
         self.societa_combo.setFixedWidth(100)
         self.societa_combo.setStyleSheet(COMBOBOX_STYLE)
-        self.societa_combo.currentIndexChanged.connect(self.changed.emit)
+        self.societa_combo.currentIndexChanged.connect(lambda: self.changed.emit())
         vbox.addWidget(self.societa_combo)
 
         self.main_row_layout.addLayout(vbox)
@@ -212,7 +212,7 @@ class BotParametersWidget(QWidget):
         self.fornitore_combo.setMinimumHeight(38)
         self.fornitore_combo.setMinimumWidth(200)
         self.fornitore_combo.setStyleSheet(COMBOBOX_STYLE)
-        self.fornitore_combo.currentIndexChanged.connect(self.changed.emit)
+        self.fornitore_combo.currentIndexChanged.connect(lambda: self.changed.emit())
         hbox.addWidget(self.fornitore_combo)
 
         self.settings_btn = IconButton()
@@ -237,7 +237,7 @@ class BotParametersWidget(QWidget):
         self.date_da = CalendarDateEdit()
         self.date_da.setMinimumHeight(38)
         self.date_da.setStyleSheet(COMBOBOX_STYLE)
-        self.date_da.dateChanged.connect(self.changed.emit)
+        self.date_da.dateChanged.connect(lambda: self.changed.emit())
         vbox_da.addWidget(self.date_da)
         self.main_row_layout.addLayout(vbox_da)
 
@@ -250,7 +250,7 @@ class BotParametersWidget(QWidget):
             self.date_a = CalendarDateEdit()
             self.date_a.setMinimumHeight(38)
             self.date_a.setStyleSheet(COMBOBOX_STYLE)
-            self.date_a.dateChanged.connect(self.changed.emit)
+            self.date_a.dateChanged.connect(lambda: self.changed.emit())
             vbox_a.addWidget(self.date_a)
             self.main_row_layout.addLayout(vbox_a)
 
@@ -270,7 +270,7 @@ class BotParametersWidget(QWidget):
         self.dest_path_edit.setMinimumWidth(200)
         self.dest_path_edit.setMinimumHeight(38)
         self.dest_path_edit.setStyleSheet(LINEEDIT_STYLE)
-        self.dest_path_edit.textChanged.connect(self.changed.emit)
+        self.dest_path_edit.textChanged.connect(lambda: self.changed.emit())
         hbox.addWidget(self.dest_path_edit)
 
         self.browse_btn = IconButton()

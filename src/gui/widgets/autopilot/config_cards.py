@@ -139,7 +139,7 @@ class AutopilotConfigCard(QFrame):
       }}
     """
         )
-        self.enable_check.stateChanged.connect(self._on_config_changed)
+        self.enable_check.stateChanged.connect(lambda: self._on_config_changed())
         layout.addWidget(self.enable_check)
 
     def _add_time_picker(self, layout: QVBoxLayout) -> None:
@@ -160,7 +160,7 @@ class AutopilotConfigCard(QFrame):
       QTimeEdit:focus {{ border-color: {COLORS["primary_dark"]}; }}
     """
         )
-        self.time_edit.timeChanged.connect(self._on_config_changed)
+        self.time_edit.timeChanged.connect(lambda: self._on_config_changed())
         time_layout.addWidget(self.time_edit)
         time_layout.addStretch()
 
@@ -310,7 +310,7 @@ class AutopilotConfigCardWithInterval(QFrame):
       }}
     """
         )
-        self.enable_check.stateChanged.connect(self._on_config_changed)
+        self.enable_check.stateChanged.connect(lambda: self._on_config_changed())
         layout.addWidget(self.enable_check)
 
     def _add_interval_settings(self, layout: QVBoxLayout) -> None:
@@ -333,7 +333,7 @@ class AutopilotConfigCardWithInterval(QFrame):
       QTimeEdit:focus {{ border-color: {COLORS["primary_dark"]}; }}
     """
         )
-        self.time_edit.timeChanged.connect(self._on_config_changed)
+        self.time_edit.timeChanged.connect(lambda: self._on_config_changed())
         settings_layout.addWidget(self.time_edit)
 
         # Intervallo giorni
@@ -352,7 +352,7 @@ class AutopilotConfigCardWithInterval(QFrame):
       QSpinBox:focus {{ border-color: {COLORS["primary_dark"]}; }}
     """
         )
-        self.interval_spin.valueChanged.connect(self._on_config_changed)
+        self.interval_spin.valueChanged.connect(lambda: self._on_config_changed())
         settings_layout.addWidget(self.interval_spin)
         settings_layout.addStretch()
 

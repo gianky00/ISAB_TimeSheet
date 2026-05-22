@@ -301,9 +301,7 @@ class ServiceController(QObject):
 
         certs_to_report = []
         for certs in groups.values():
-            latest = sorted(certs, key=lambda x: str(x[ContabilitaQueries.CERT_IDX_EMISSIONE]), reverse=True)[
-                0
-            ]
+            latest = max(certs, key=lambda x: str(x[ContabilitaQueries.CERT_IDX_EMISSIONE]))
             matricola = str(latest[ContabilitaQueries.CERT_IDX_MATRICOLA]).strip()
 
             if matricola in engine._exclusions:

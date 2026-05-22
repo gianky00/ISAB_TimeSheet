@@ -102,7 +102,7 @@ class PathsPage(QWidget):
         edit.setMinimumHeight(40)
         edit.setPlaceholderText("Seleziona cartella..." if folder else "Seleziona file...")
         style_input(edit)
-        edit.textChanged.connect(self.settings_changed.emit)
+        edit.textChanged.connect(lambda: self.settings_changed.emit())
         edit.textChanged.connect(lambda: self._validate_path(edit))
         row.addWidget(edit)
 

@@ -355,3 +355,9 @@ version_files = [
     "src/core/version.py:__version__",
     "pyproject.toml:version"
 ]
+
+[tool.refurb]
+ignore = [
+    "FURB111", # Redundant lambda (Pericoloso con segnali PySide6/Qt)
+    "FURB184", # Chained statements (Peggiore leggibilità in casi complessi)
+]

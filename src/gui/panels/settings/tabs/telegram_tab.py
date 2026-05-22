@@ -187,11 +187,11 @@ class TelegramTab(QWidget):
         self.token_edit = StandardInput()
         self.token_edit.setPlaceholderText("Inserisci Bot Token (7123456789:ABC...)")
         self.token_edit.setEchoMode(QLineEdit.EchoMode.PasswordEchoOnEdit)
-        self.token_edit.textChanged.connect(self.settings_changed.emit)
+        self.token_edit.textChanged.connect(lambda: self.settings_changed.emit())
 
         self.chat_id_edit = StandardInput()
         self.chat_id_edit.setPlaceholderText("Inserisci Chat ID (es. 123456789)")
-        self.chat_id_edit.textChanged.connect(self.settings_changed.emit)
+        self.chat_id_edit.textChanged.connect(lambda: self.settings_changed.emit())
 
         creds_layout.addWidget(QLabel("Bot APiùToken:"))
         creds_layout.addWidget(self.token_edit)

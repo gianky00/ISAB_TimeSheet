@@ -77,7 +77,7 @@ class ScaricoOreFilterBar(ModernCard):
             size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.REFRESH),
         )
-        self.update_btn.clicked.connect(self.update_requested.emit)
+        self.update_btn.clicked.connect(lambda: self.update_requested.emit())
 
         btn_h = QHBoxLayout()
         btn_h.setSpacing(5)
