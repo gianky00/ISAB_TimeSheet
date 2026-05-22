@@ -148,6 +148,8 @@ Futuri agenti IA possono fare affidamento immediato sulle seguenti librerie inte
    - `pydantic-settings` (Ottimizzato per definire impostazioni di configurazione tipizzate e supportare caricamento integrato/override da variabili d'ambiente)
 5. **Analisi Sintattica del Codice (AI-Friendly):**
    - `libcst` (Concrete Syntax Tree per effettuare analisi sintattiche e modifiche/refactoring sicuri sul codice mantenendo integra la formattazione e i commenti originali, ideale per l'interazione programmata tra agenti IA)
-6. **Logging e Diagnostica:**
+6. **Misurazione Coesione & SRP (AI-Friendly):**
+   - `cohesion` (Utility per calcolare la coesione interna LCOM - Lack of Cohesion in Methods per ciascuna classe, offrendo all'IA feedback quantitativi immediati per applicare rigidamente il principio di singola responsabilità SRP)
+7. **Logging e Diagnostica:**
    - `loguru` (Logging strutturato protetto, rotazione automatica e intercettazione crash)
    - `faulthandler` (Diagnostica degli errori a livello C++ per PySide6)

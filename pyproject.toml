@@ -83,6 +83,7 @@ pytest-playwright = "^0.7.2"
 types-pillow = "^10.2.0.20240822"
 types-setuptools = "^82.0.0.20260508"
 pydoclint = "^0.8.4"
+cohesion = "^1.2.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

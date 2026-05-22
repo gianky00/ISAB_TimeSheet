@@ -489,6 +489,17 @@ toml = ["tomli ; python_version < \"3.11\""]
 types = ["chardet (>=5.1.0)", "mypy", "pytest", "pytest-cov", "pytest-dependency"]
 
 [[package]]
+name = "cohesion"
+version = "1.2.0"
+description = "A tool for measuring Python class cohesion."
+optional = false
+python-versions = "<4.0.0,>=3.8.1"
+groups = ["dev"]
+files = [
+    {file = "cohesion-1.2.0-py3-none-any.whl", hash = "sha256:d4a4c06a83022fcc56bf6af220247df9d6de7707a7a16442e98e7ad2ea152f79"},
+]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -5160,4 +5171,4 @@ tokenize-rt = ">=2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "4ce5ef196150a93ba181bcf7110c7a10d9a783da6969b180fc4c2c897dd7bdfe"
+content-hash = "e8ab35941ff6d43e4107035e74c8e8e229a3bd48e056d7e19db88d3d484d6614"

@@ -19,14 +19,11 @@ pip install -e .
 
 ### Testing
 ```bash
-# Run all tests
-pytest tests/
+# Run all tests (Always use the robust suite script to avoid environment mismatches)
+python tests/run_robust_tests.py
 
-# Run specific test file
-pytest tests/unit/test_audit_manager_coverage.py
-
-# Run with verbose output
-pytest -v tests/
+# Run specific test file (if isolated and safe)
+pytest -v tests/unit/test_audit_manager_coverage.py
 ```
 
 ### Code Quality
@@ -39,6 +36,9 @@ mypy .
 
 # Format code
 ruff format .
+
+# Cohesion checking (SRP / LCOM Analysis - Requires PYTHONUTF8=1 on Windows)
+poetry run cohesion --directory src/
 ```
 
 ### Building
@@ -194,7 +194,7 @@ find src -type d -name "__pycache__" -exec rm -rf {} +
 
 ### Bot State Management
 
-Bots track state via `_status` property:
+Template bots track state via `_status` property:
 - `IDLE`: Ready to run
 - `INITIALIZING`: Setting up driver
 - `LOGGING_IN`: Authentication in progress
@@ -229,6 +229,7 @@ UI is Italian language. Key terms:
 - Mock Selenium WebDriver for bot tests
 - Mock PySide6 QApplication when testing UI components
 - Test files mirror `src/` structure in `tests/`
+- **Important**: NEVER run global tests via generic `pytest` command. Always run the robust suite using `python tests/run_robust_tests.py`.
 
 ## Common Pitfalls
 
@@ -239,5 +240,3 @@ UI is Italian language. Key terms:
 5. **Bot credentials**: Load from config, never hardcode
 6. **Download paths**: Always use `Path` objects and ensure parent dirs exist
 7. **WebDriver waits**: Use `WebDriverWait` with explicit conditions, not `time.sleep()`
-river waits**: Use `WebDriverWait` with explicit conditions, not `time.sleep()`
-river waits**: Use `WebDriverWait` with explicit conditions, not `time.sleep()`

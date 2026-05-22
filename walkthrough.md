@@ -7,6 +7,7 @@ Questo documento riassume le migliorie introdotte per rendere il codebase di Syn
 ### 1. Nuove Librerie AI-Friendly nel Toolset
 - **pydantic-settings**: Integrata per definire classi di configurazione strongly-typed. Supporta la validazione automatica dei tipi a runtime, il parsing e l'override diretto da variabili d'ambiente (12-Factor App pattern).
 - **libcst**: Integrata come strumento avanzato di analisi sintattica per consentire refactoring automatici e modifiche al codice da parte di agenti IA senza il rischio di alterare o perdere commenti, formattazione e docstring del codebase.
+- **cohesion (1.2.0)**: Integrata per misurare la coesione interna delle classi (LCOM - Lack of Cohesion in Methods) e validare scientificamente l'adesione al **Single Responsibility Principle (SRP)**.
 
 ### 2. Modello di Configurazione Centralizzato Strongly-Typed
 - Creato il file di configurazione tipizzato [settings.py](file:///c:/Users/gianc/Desktop/SCRIPT/ISAB_TimeSheet/src/core/config/settings.py) basato su Pydantic V2 e `BaseSettings` di `pydantic-settings`.
@@ -24,7 +25,7 @@ Un file ad altissima densità informativa collocato nella root del progetto:
 Un reference manual esaustivo per le IA:
 - **Dettaglio Database SQLite:** Schema esatto delle colonne e delle chiavi composite di `storico_oda`, i registri di audit con hash chaining immutabile in `audit_logs` e lo schema JSON di `SyncTracker`.
 - **Firme dei Bot:** L'interfaccia astratta di `BaseBot` con la gestione degli stati (`BotStatus`) e lo stop asincrono grazioso.
-- **Mappa delle Dipendenze:** L'elenco ordinato e commentato delle librerie disponibili nel progetto (PySide6, Selenium, Playwright, Pandas, Openpyxl, Pydantic, Pydantic-Settings, LibCST, Loguru, Pytest).
+- **Mappa delle Dipendenze:** L'elenco ordinato e commentato delle librerie disponibili nel progetto (PySide6, Selenium, Playwright, Pandas, Openpyxl, Pydantic, Pydantic-Settings, LibCST, Cohesion, Loguru, Pytest).
 
 ### 5. Integrazione di Pydantic e Tipizzazione Semantica in [GEMINI.md](file:///c:/Users/gianc/Desktop/SCRIPT/ISAB_TimeSheet/GEMINI.md)
 Aggiunta la regola **7. Tipizzazione Semantica & Pydantic V2** per guidare i futuri sviluppi:
@@ -46,5 +47,5 @@ Aggiunta la regola **7. Tipizzazione Semantica & Pydantic V2** per guidare i fut
 2. **MyPy Type Checker:**
    - Eseguito `poetry run mypy .` per validare la correttezza formale della tipizzazione rigida.
    - **Risultato:** `Success: no issues found in 472 source files` con il 100% di conformità alla modalità rigorosa `--strict`.
-3. **Unit Tests (PyTest):**
-   - Esecuzione di `poetry run pytest tests/` per validare che l'intero patrimonio di test unitari sia integro e non presenti alcuna regressione.
+3. **Cohesion SRP metrics:**
+   - Eseguito `poetry run cohesion --directory src/` (con `PYTHONUTF8=1` forzato su Windows) per mappare l'indice LCOM per tutti i moduli produttivi del codebase, garantendo feedback quantitativi immediati sui livelli di SRP del progetto.
