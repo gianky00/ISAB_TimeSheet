@@ -10,8 +10,6 @@ Raccoglie diagnostica completa per segnalazioni bug, integrando:
 
 import json
 import logging
-import os
-import platform
 import zipfile
 from contextlib import suppress
 from dataclasses import asdict
@@ -19,16 +17,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-try:
-    import psutil
-
-    PSUTIL_AVAILABLE = True
-except ImportError:
-    PSUTIL_AVAILABLE = False
-
 from src.core.audit import AuditManager
+from src.core.diagnostics.diagnostics_collector import DiagnosticsCollector
 from src.core.logging import generate_analytics_report, view_trace
-from src.core.paths import CONFIG_DIR, get_version
+from src.core.paths import CONFIG_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -118,6 +110,15 @@ class BugReporter:
         except Exception as e:
             logger.error("Errore durante la creazione del bug report", exc_info=True)
             return None, f"Errore creazione report: {e}", []
+
+    @staticmethod
+    def _collect_system_info() -> dict[str, Any]:
+        """Raccoglie informazioni diagnostiche delegando a DiagnosticsCollector per retrocompatibilità.
+
+        Returns:
+            Dizionario contenente la telemetria di sistema.
+        """
+        return DiagnosticsCollector.collect_system_info()
 
     @staticmethod
     def _add_structured_logs(zipf: zipfile.ZipFile, log_dir: Path) -> list[str]:
@@ -243,61 +244,6 @@ class BugReporter:
         except Exception as e:
             logger.warning(f"Impossibile generare trace timeline: {e}")
             return []
-
-    @staticmethod
-    def _collect_system_info() -> dict[str, Any]:
-        """Raccoglie informazioni di sistema."""
-        sys_info: dict[str, Any] = {
-            "app_version": get_version(),
-            "os": platform.system(),
-            "os_release": platform.release(),
-            "os_version": platform.version(),
-            "machine": platform.machine(),
-            "timestamp": datetime.now(UTC).astimezone().isoformat(),
-            "python_version": platform.python_version(),
-            "processor": platform.processor(),
-        }
-
-        # Filtra variabili ambiente sensibili
-        safe_env = {
-            k: v
-            for k, v in os.environ.items()
-            if not any(
-                s in k.upper() for s in ("TOKEN", "KEY", "PASS", "SECRET", "API", "AUTH", "CREDENTIAL")
-            )
-        }
-        sys_info["env_filtered"] = safe_env
-
-        # Memory Info
-        try:
-            if PSUTIL_AVAILABLE:
-                mem = psutil.virtual_memory()
-                sys_info["memory"] = {
-                    "total": f"{mem.total / (1024**3):.2f} GB",
-                    "available": f"{mem.available / (1024**3):.2f} GB",
-                    "percent": f"{mem.percent}%",
-                }
-
-                # CPU Info
-                sys_info["cpu"] = {
-                    "cores_physical": psutil.cpu_count(logical=False),
-                    "cores_logical": psutil.cpu_count(logical=True),
-                    "usage_percent": psutil.cpu_percent(interval=0.1),
-                }
-
-                # Disk Info
-                disk = psutil.disk_usage("/")
-                sys_info["disk"] = {
-                    "total": f"{disk.total / (1024**3):.2f} GB",
-                    "free": f"{disk.free / (1024**3):.2f} GB",
-                    "percent": f"{disk.percent}%",
-                }
-        except ImportError:
-            sys_info["memory"] = "psutil not installed"
-        except Exception as e:
-            sys_info["system_info_error"] = str(e)
-
-        return sys_info
 
     @staticmethod
     def cleanup_old_reports(max_reports: int = 5) -> None:
