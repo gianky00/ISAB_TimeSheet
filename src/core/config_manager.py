@@ -35,6 +35,8 @@ __all__ = [
     "set_default_account",
     "switch_default_account",
 ]
+import time
+
 from src.core.version import __version__
 
 # Modular imports
@@ -51,8 +53,10 @@ from .config.migration import (
 )
 from .config.security import decrypt_all_credentials, encrypt_all_credentials
 
+# ... (rest of imports remains same, just adding time and uuid if needed)
 _config_cache: dict[str, Any] | None = None
 _config_lock = threading.RLock()
+_file_io_lock = threading.Lock()
 
 
 def _reset_configuration_for_testing() -> None:
@@ -171,28 +175,50 @@ def invalidate_config_cache() -> None:
 
 
 def _atomic_write_json(path: Path, data: dict[str, Any]) -> bool:
-    """Scrive un file JSON in modo atomico usando un file temporaneo."""
-    temp_path = path.with_suffix(".tmp")
-    try:
-        ensure_config_dir()
-        with temp_path.open("w", encoding="utf-8") as f:
-            json.dump(data, f, indent=4, ensure_ascii=False)
-            # Flush e sync per essere sicuri che i dati siano su disco prima di chiudere
-            f.flush()
-            os.fsync(f.fileno())
+    """Scrive un file JSON in modo atomico usando un file temporaneo con retry e lock."""
+    # Use unique temp file per thread to avoid "file in use" on the .tmp file itself during concurrent writes
+    temp_path = path.parent / f"{path.name}.{threading.get_ident()}.tmp"
 
-        if path.exists():
-            os.replace(temp_path, path)
+    max_retries = 5
+    retry_delay = 0.1
+
+    win_err_file_in_use = 32
+
+    for attempt in range(max_retries):
+        try:
+            ensure_config_dir()
+            # 1. Scrittura del file temporaneo
+            with temp_path.open("w", encoding="utf-8") as f:
+                json.dump(data, f, indent=4, ensure_ascii=False)
+                f.flush()
+                os.fsync(f.fileno())
+
+            # 2. Sostituzione atomica protetta da lock globale di processo
+            with _file_io_lock:
+                if path.exists():
+                    os.replace(temp_path, path)
+                else:
+                    temp_path.rename(path)
+        except (PermissionError, OSError) as e:
+            # WinError 32: Il file è utilizzato da un altro processo
+            is_busy = isinstance(e, PermissionError) or (
+                isinstance(e, OSError) and getattr(e, "winerror", 0) == win_err_file_in_use
+            )
+            if is_busy and attempt < max_retries - 1:
+                time.sleep(retry_delay * (attempt + 1))
+                continue
+            print(f"Atomic write failed for {path} after {attempt + 1} attempts: {e}")
+            break
+        except Exception as e:
+            print(f"Atomic write critical error for {path}: {e}")
+            break
         else:
-            temp_path.rename(path)
-    except Exception as e:
-        print(f"Atomic write failed for {path}: {e}")
-        if temp_path.exists():
-            with suppress(OSError):
-                temp_path.unlink()
-        return False
-    else:
-        return True
+            return True
+        finally:
+            if temp_path.exists():
+                with suppress(OSError):
+                    temp_path.unlink()
+    return False
 
 
 def get_config_value(key: str, default: Any = None) -> Any:

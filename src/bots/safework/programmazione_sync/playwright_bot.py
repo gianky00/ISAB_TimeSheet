@@ -33,16 +33,24 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
         config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
+        """Inizializza il bot per la sincronizzazione della programmazione.
+
+        Args:
+          config: Configurazione del bot Selenium.
+          account_type: Tipologia di account (es. Esecutore).
+        """
         super().__init__(config, account_type=account_type)
         self.downloaded_file: str | None = None
         self.attivita_page: PlaywrightVisualizzaAttivitaPage | None = None
 
     @property
     def name(self) -> str:
+        """Restituisce il nome identificativo del bot."""
         return "Sincronizzazione Programmazione (PW)"
 
     @property
     def description(self) -> str:
+        """Restituisce la descrizione delle finalità del bot."""
         return "Download massivo report attività SafeWork (Playwright)"
 
     @staticmethod

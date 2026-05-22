@@ -19,6 +19,13 @@ class SafeWorkLoginPage:
     def __init__(
         self, driver: webdriver.Chrome, wait: WebDriverWait[webdriver.Chrome], log_func: Callable[[str], None]
     ) -> None:
+        """Inizializza la pagina di login SafeWork.
+
+        Args:
+          driver: Istanza di WebDriver Chrome.
+          wait: Oggetto WebDriverWait configurato.
+          log_func: Funzione di callback per il logging.
+        """
         self.driver = driver
         self.wait = wait
         self.log = log_func
@@ -86,7 +93,7 @@ class SafeWorkLoginPage:
                 raise
 
     def _login_flow_standard(self) -> bool:
-        """Flusso STANDARD (Lento):
+        """Flusso STANDARD (Lento).
 
         - DEVE attendere la comparsa dello spinner 'Caricamento...'
         - DEVE attendere la sua scomparsa.

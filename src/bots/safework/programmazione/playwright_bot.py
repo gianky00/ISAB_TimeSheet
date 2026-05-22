@@ -41,16 +41,24 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
         config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
+        """Inizializza il bot per la programmazione PDL con Playwright.
+
+        Args:
+          config: Configurazione del bot Selenium.
+          account_type: Tipologia di account (es. Esecutore).
+        """
         super().__init__(config, account_type=account_type)
         self.results: list[dict[str, Any]] = []
         self.attivita_page: PlaywrightVisualizzaAttivitaPage | None = None
 
     @property
     def name(self) -> str:
+        """Restituisce il nome identificativo del bot."""
         return "Programmazione PDL (PW)"
 
     @property
     def description(self) -> str:
+        """Restituisce la descrizione delle finalità del bot."""
         return "Monitoraggio programmazione settimanale SafeWork (Playwright)"
 
     @staticmethod
