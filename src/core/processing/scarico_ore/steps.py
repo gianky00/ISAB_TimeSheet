@@ -262,7 +262,7 @@ class SyncScaricoOreStep(ProcessingStep):
         from src.core.data_synchronizer import DataSynchronizer  # noqa: PLC0415
         from src.core.database import db_manager  # noqa: PLC0415
 
-        total_added, total_removed = DataSynchronizer.sync_scarico_ore(db_manager.DB_SCARICO_ORE, rows)
+        total_added, total_removed = DataSynchronizer.sync_scarico_ore(db_manager.DB_CONTABILITA, rows)
 
         context["total_added"] = total_added
         context["total_removed"] = total_removed

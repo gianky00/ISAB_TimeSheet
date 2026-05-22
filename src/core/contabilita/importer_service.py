@@ -159,7 +159,9 @@ class ContabilitaImporterService:
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, int, int]:
         """Importa il file Certificati Campione."""
-        success, message, imported_rows = ExcelImporter.import_certificati_campione(
+        from src.core.importers.certificati import CertificatiImporter  # noqa: PLC0415
+
+        success, message, imported_rows = CertificatiImporter.import_certificati_campione(
             file_path, progress_callback
         )
         if not success:
@@ -168,4 +170,4 @@ class ContabilitaImporterService:
         total_added, total_removed = DataSynchronizer.sync_certificati_campione(
             db_manager.DB_CONTABILITA, imported_rows
         )
-        return True, message, total_added, total_removed
+        return True, f"Importati {len(imported_rows)} certificati.", total_added, total_removed

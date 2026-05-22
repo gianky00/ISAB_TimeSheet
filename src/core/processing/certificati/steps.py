@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Any, ClassVar
 
+import numpy as np
 import pandas as pd
 
 from src.core.logging import get_logger
@@ -26,10 +27,16 @@ class ReadCertificatiExcelStep(ProcessingStep):
             context["message"] = "Nessun foglio trovato."
             return
 
-        df_preview = pd.read_excel(path, sheet_name=sheet_name, header=None, nrows=30)
+        # Scansione header più profonda (100 righe invece di 30)
+        df_preview = pd.read_excel(path, sheet_name=sheet_name, header=None, nrows=100)
         header_idx = self._detect_header(df_preview)
 
-        df = pd.read_excel(path, sheet_name=sheet_name, header=header_idx)
+        try:
+            df = pd.read_excel(path, sheet_name=sheet_name, header=header_idx)
+        except Exception:
+            # Fallback su openpyxl per file complessi o xlsm
+            df = pd.read_excel(path, sheet_name=sheet_name, header=header_idx, engine="openpyxl")
+
         if df.empty:
             context["success"] = False
             context["message"] = "Foglio vuoto."
@@ -85,24 +92,38 @@ class NormalizeCertificatiStep(ProcessingStep):
         "ID COEMI": "id_coemi",
         "ID-STRUMENTO": "id_coemi",
         "ID STRUMENTO": "id_coemi",
+        "ID": "id_coemi",
+        "IDENTIFICATIVO": "id_coemi",
         "Certificato Taratura": "certificato",
         "CERTIFICATO": "certificato",
+        "CERT.": "certificato",
+        "N. CERT.": "certificato",
+        "N. CERTIFICATO": "certificato",
         "Modello / Tipo": "modello",
         "MODELLO": "modello",
         "TIPO": "modello",
         "Costruttore": "costruttore",
         "COSTRUTTORE": "costruttore",
+        "MARCA": "costruttore",
         "Matricola": "matricola",
         "MATRICOLA": "matricola",
+        "S/N": "matricola",
+        "SERIAL": "matricola",
         "Range Strumento": "range_strumento",
         "RANGE": "range_strumento",
+        "CAMPO SCALA": "range_strumento",
         "Errore max %": "errore_max",
         "ERR %": "errore_max",
         "ERROR %": "errore_max",
+        "PRECISIONE": "errore_max",
         "Emissione Certificato": "emissione",
         "EMISSIONE": "emissione",
+        "DATA EMISSIONE": "emissione",
+        "DATA CERT.": "emissione",
         "Scadenza Certificato": "scadenza",
         "SCADENZA": "scadenza",
+        "DATA SCADENZA": "scadenza",
+        "SCAD.": "scadenza",
         "Stato Certificato": "stato",
         "STATO": "stato",
     }
@@ -144,6 +165,11 @@ class NormalizeCertificatiStep(ProcessingStep):
 
         # Riempimento e normalizzazione testo
         df = df.fillna("").astype(str).apply(lambda x: x.str.strip())
+
+        # Forward fill per ID e Matricola (per gestire righe raggruppate in Excel)
+        for col in ("id_coemi", "matricola"):
+            if col in df.columns:
+                df[col] = df[col].replace("", np.nan).ffill().fillna("")
 
         def get_col_safe(name: str) -> Any:
             """Recupera una colonna in modo sicuro gestendo DataFrame multi-indice."""
@@ -274,7 +300,7 @@ class SyncCertificatiStep(ProcessingStep):
         from src.core.database import db_manager  # noqa: PLC0415
 
         total_added, total_removed = DataSynchronizer.sync_certificati_campione(
-            db_manager.DB_CERTIFICATI, rows
+            db_manager.DB_CONTABILITA, rows
         )
 
         context["total_added"] = total_added

@@ -190,7 +190,7 @@ class SyncGiornaliereStep(ProcessingStep):
         from src.core.database import db_manager  # noqa: PLC0415
 
         total_added, total_removed = DataSynchronizer.sync_giornaliere(
-            db_manager.DB_GIORNALIERE, rows, [context["year"]]
+            db_manager.DB_CONTABILITA, rows, [context["year"]]
         )
 
         # Nota: In modalità parallela, questi valori verranno aggregati dall'importer
