@@ -45,7 +45,7 @@ class GeneralPage(QWidget):
         self.engine_combo.setMinimumHeight(40)
         self.engine_combo.setMinimumWidth(150)
         style_input(self.engine_combo)
-        self.engine_combo.currentIndexChanged.connect(lambda: self.settings_changed.emit())
+        self.engine_combo.currentIndexChanged.connect(self.settings_changed.emit)
         engine_layout.addWidget(self.engine_combo)
         engine_layout.addStretch()
         gen_layout.addLayout(engine_layout)
@@ -57,7 +57,7 @@ class GeneralPage(QWidget):
         self.headless_check.setStyleSheet(
             f"QCheckBox {{ padding: 5px; font-size: 15px; font-weight: bold; color: {COLORS['magenta_pink']}; }}"
         )
-        self.headless_check.stateChanged.connect(lambda: self.settings_changed.emit())
+        self.headless_check.stateChanged.connect(self.settings_changed.emit)
         gen_layout.addWidget(self.headless_check)
         layout.addWidget(self.general_group)
 
@@ -76,7 +76,7 @@ class GeneralPage(QWidget):
         self.timeout_spin.setMinimumHeight(40)
         self.timeout_spin.setMinimumWidth(100)
         style_input(self.timeout_spin)
-        self.timeout_spin.valueChanged.connect(lambda: self.settings_changed.emit())
+        self.timeout_spin.valueChanged.connect(self.settings_changed.emit)
 
         timeout_layout.addWidget(self.timeout_spin)
         timeout_layout.addStretch()

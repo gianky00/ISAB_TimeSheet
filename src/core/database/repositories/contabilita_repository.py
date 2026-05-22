@@ -66,7 +66,7 @@ class ContabilitaRepository:
 
                 cols = list(ExcelImporter.COLUMNS_MAPPING.values())
                 cursor.execute(
-                    f"SELECT {', '.join(cols)} FROM contabilita WHERE year = ? ORDER BY n_prev DESC, id DESC",
+                    f"SELECT {', '.join(cols)} FROM contabilita WHERE year = ? ORDER BY n_prev DESC, id DESC",  # nosec B608
                     (year,),
                 )
                 return [tuple(row) for row in cursor.fetchall()]
@@ -117,10 +117,12 @@ class ContabilitaRepository:
                     "ore",
                     "nome_file",
                 ]
+                query = f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"  # nosec B608
                 cursor.execute(
-                    f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC",
+                    query,
                     (year,),
                 )
+
                 return [tuple(row) for row in cursor.fetchall()]
         except Exception:
             logger.exception("Errore repository get_giornaliere_by_year", year=year)
@@ -155,7 +157,7 @@ class ContabilitaRepository:
                 from src.core.excel_importer import ExcelImporter  # noqa: PLC0415
 
                 cols = ExcelImporter.ATTIVITA_PROGRAMMATE_COLS
-                cursor.execute(f"SELECT {', '.join(cols)} FROM attivita_programmate ORDER BY id ASC")
+                cursor.execute(f"SELECT {', '.join(cols)} FROM attivita_programmate ORDER BY id ASC")  # nosec B608
                 return [tuple(row) for row in cursor.fetchall()]
         except Exception:
             logger.exception("Errore repository get_attivita_programmate")
@@ -204,10 +206,9 @@ class ContabilitaRepository:
                         results.append(CertificatoCampioneRecord(**filtered_d))
                     return results
 
-                # Per compatibilità legacy
                 from src.core.excel_importer import ExcelImporter  # noqa: PLC0415
 
-                cols = list(ExcelImporter.CERTIFICATI_CAMPIONE_COLS)
+                cols = ExcelImporter.CERTIFICATI_CAMPIONE_COLS.copy()
 
                 # Sostituiamo id_coemi con quello reale del DB se necessario
                 if id_col == "id_strumento" and "id_coemi" in cols:
@@ -226,7 +227,7 @@ class ContabilitaRepository:
                     "stato",
                 ]
                 cols_str = ", ".join(cols)
-                query = f"SELECT {cols_str}, annotazioni, ubicazione, id FROM certificati_campione ORDER BY id ASC"
+                query = f"SELECT {cols_str}, annotazioni, ubicazione, id FROM certificati_campione ORDER BY id ASC"  # nosec B608
                 cursor.execute(query)
                 return [tuple(row) for row in cursor.fetchall()]
         except Exception:

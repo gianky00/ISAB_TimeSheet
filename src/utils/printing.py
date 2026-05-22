@@ -1,6 +1,6 @@
 import logging
 import os
-import subprocess
+import subprocess  # nosec B404
 import time
 from pathlib import Path
 from typing import Any, cast
@@ -31,9 +31,14 @@ def get_installed_printers() -> list[str]:
 def _run_powershell(command: str) -> subprocess.CompletedProcess[str] | None:
     """Esegue un comando PowerShell e restituisce l'output."""
     try:
+        # Percorso assoluto per mitigare Bandit B607
+        powershell_path = os.path.join(
+            os.environ.get("SYSTEMROOT", "C:\\Windows"),
+            "System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        )
         creation_flags = 0x08000000  # CREATE_NO_WINDOW
-        return subprocess.run(
-            ["powershell", "-Command", command],
+        return subprocess.run(  # nosec B603
+            [powershell_path, "-Command", command],
             capture_output=True,
             text=True,
             creationflags=creation_flags,
@@ -141,9 +146,9 @@ def print_pdf(file_path: str, printer_name: str) -> bool:
 
     except Exception:
         logger.exception("Errore critico stampa")
-        # Fallback disperato
+        # Fallback disperato - uso intenzionale di os.startfile per stampa Windows
         try:
-            os.startfile(file_path, "print")  # noqa: S606
+            os.startfile(file_path, "print")  # nosec B606 # noqa: S606
         except Exception:
             return False
         else:

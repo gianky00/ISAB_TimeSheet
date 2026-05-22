@@ -7,7 +7,7 @@ import contextlib
 import json
 import logging
 import os
-import subprocess
+import subprocess  # nosec B404
 import sys
 import tempfile
 import time
@@ -254,9 +254,8 @@ def run_installer_and_exit(setup_path: str) -> None:
             if os.name == "nt":
                 # Sostituito 'timeout' con 'ping' perche 'timeout' fallisce con input reindirizzato (DEVNULL)
                 # 'ping -n 3' attende circa 2 secondi.
-                # Nota: Quoting rinforzato per supportare spazi nel percorso.
                 cmd = f'ping -n 3 127.0.0.1 > NUL && "{setup_path}" /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS'
-                subprocess.Popen(  # noqa: S602
+                subprocess.Popen(  # nosec B602 # noqa: S602
                     cmd,
                     shell=True,
                     creationflags=flags,
@@ -264,7 +263,7 @@ def run_installer_and_exit(setup_path: str) -> None:
                     stdin=subprocess.DEVNULL,
                 )
             else:
-                subprocess.Popen(
+                subprocess.Popen(  # nosec B603
                     [setup_path, "/CLOSEAPPLICATIONS", "/RESTARTAPPLICATIONS"],
                     close_fds=True,
                 )
@@ -292,7 +291,7 @@ def run_pending_installer() -> None:
             flags = subprocess.DETACHED_PROCESS if os.name == "nt" else 0
             # Sostituito 'timeout' con 'ping' per robustezza (vedi run_installer_and_exit)
             cmd = f'ping -n 3 127.0.0.1 > NUL && "{_pending_installer_path}" /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS'
-            subprocess.Popen(  # noqa: S602
+            subprocess.Popen(  # nosec B602 # noqa: S602
                 cmd,
                 shell=True,
                 creationflags=flags,

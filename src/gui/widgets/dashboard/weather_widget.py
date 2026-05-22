@@ -1108,12 +1108,12 @@ class WeatherWidget(ModernCard):
 
     def _update_metrics(self, wind: float, gusts: float, hum: int, uv: float, aqi: float) -> None:
         """Aggiorna i valori dei Mini Radial Gauge ambientali."""
-        self.gauge_wind.set_value(wind, f"{int(wind)}")
+        self.gauge_wind.set_value(wind, str(int(wind)))
         self.gauge_wind.setToolTip(f"<b>Vento</b><br/>Medio: {wind} km/h<br/>Raffiche max: {gusts} km/h")
 
         self.gauge_hum.set_value(float(hum), f"{hum}%")
 
-        self.gauge_uv.set_value(uv, f"{uv}")
+        self.gauge_uv.set_value(uv, str(uv))
 
         aqi_color = COLORS["success_green"]
         if aqi > AQI_MODERATE:
@@ -1124,7 +1124,7 @@ class WeatherWidget(ModernCard):
             aqi_color = COLORS["error_red"]
 
         self.gauge_aqi.accent_color = aqi_color
-        self.gauge_aqi.set_value(aqi, f"{int(aqi)}")
+        self.gauge_aqi.set_value(aqi, str(int(aqi)))
 
     def _update_forecast(self, daily: dict[str, Any]) -> None:
         """Ricarica la riga delle previsioni per i giorni successivi."""

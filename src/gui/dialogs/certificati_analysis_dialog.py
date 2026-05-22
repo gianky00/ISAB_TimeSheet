@@ -388,7 +388,7 @@ class ScadenzeAnalysisDialog(QDialog):
         try:
             # 1. Importazione win32com
             try:
-                import win32com.client
+                import win32com.client  # nosec B403
 
                 win32com.client.Dispatch("Outlook.Application")
             except ImportError as err:

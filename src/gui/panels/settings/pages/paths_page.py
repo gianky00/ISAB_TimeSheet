@@ -47,7 +47,7 @@ class PathsPage(QWidget):
 
         self.auto_update_check = QCheckBox("Attiva aggiornamento automatico all'avvio (background)")
         self.auto_update_check.setStyleSheet("padding: 5px; font-size: 15px;")
-        self.auto_update_check.stateChanged.connect(lambda: self.settings_changed.emit())
+        self.auto_update_check.stateChanged.connect(self.settings_changed.emit)
         cont_layout.addWidget(self.auto_update_check)
 
         # Giornaliere
@@ -102,7 +102,7 @@ class PathsPage(QWidget):
         edit.setMinimumHeight(40)
         edit.setPlaceholderText("Seleziona cartella..." if folder else "Seleziona file...")
         style_input(edit)
-        edit.textChanged.connect(lambda: self.settings_changed.emit())
+        edit.textChanged.connect(self.settings_changed.emit)
         edit.textChanged.connect(lambda: self._validate_path(edit))
         row.addWidget(edit)
 

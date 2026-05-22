@@ -70,7 +70,7 @@ class Business:
     HOURLY_COST_STD = 28.50
     DEFAULT_SUPPLIER = "SYNCROJOB"
     DEFAULT_SITE = "ISAB"
-    DEFAULT_EXCEL_PASSWORD = "isab"  # noqa: S105
+    DEFAULT_EXCEL_PASSWORD = "isab"  # nosec B105 # noqa: S105
 
 
 class Emails:

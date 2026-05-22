@@ -5,7 +5,7 @@ Separa la simulazione del comportamento dalla visualizzazione UI.
 """
 
 import math
-import random
+import random  # nosec B311
 from enum import Enum, auto
 
 from PySide6.QtCore import QObject, QPointF, QTimer, Signal

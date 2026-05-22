@@ -131,12 +131,12 @@ class AnagraficaController:
         inactivation_val = THRESHOLD_DAYS["expired"] - diff_days if diff_days is not None else None
         return EmployeeDTO(
             id_risorsa=str(record.id_risorsa),
-            cognome=str(record.cognome),
-            nome=str(record.nome),
-            data_nascita=str(record.data_nascita),
-            badge=str(record.badge),
-            data_assunzione=str(record.data_assunzione),
-            codice_fiscale=str(record.codice_fiscale),
+            cognome=record.cognome,
+            nome=record.nome,
+            data_nascita=record.data_nascita,
+            badge=record.badge,
+            data_assunzione=record.data_assunzione,
+            codice_fiscale=record.codice_fiscale,
             monitoraggio_attivo=is_monitored,
             inactivation_days_left=inactivation_val,
             cf_warning=cf_warning,

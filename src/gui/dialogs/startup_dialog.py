@@ -364,7 +364,7 @@ class StartupDialog(QDialog):
 
             changelog_path = Path(__file__).resolve().parent.parent.parent / "core" / "changelog.json"
             if changelog_path.exists():
-                with open(changelog_path, encoding="utf-8") as f:
+                with changelog_path.open(encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, list):
                         for entry in data:
@@ -510,7 +510,7 @@ class StartupDialog(QDialog):
 
             changelog_path = Path(__file__).resolve().parent.parent.parent / "core" / "changelog.json"
             if changelog_path.exists():
-                with open(changelog_path, encoding="utf-8") as f:
+                with changelog_path.open(encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, list):
                         for entry in data:

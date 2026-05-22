@@ -6,7 +6,7 @@ Pannello Premium per la visualizzazione dinamica e strutturata delle note di ril
 import json
 import logging
 import platform
-import subprocess
+import subprocess  # nosec B404
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -45,7 +45,7 @@ class DiagnosticsWorker(QThread):
         try:
             from admin.release import ROOT_DIR, find_git_executable
             git_bin = find_git_executable()
-            res = subprocess.run(
+            res = subprocess.run(  # nosec B603
                 [git_bin, "rev-parse", "--short", "HEAD"],
                 cwd=ROOT_DIR,
                 capture_output=True,
@@ -531,7 +531,7 @@ class ChangelogPanel(QWidget):
         try:
             from admin.release import ROOT_DIR, find_git_executable
             git_bin = find_git_executable()
-            res = subprocess.run(
+            res = subprocess.run(  # nosec B603
                 [git_bin, "rev-parse", "--short", "HEAD"],
                 cwd=ROOT_DIR,
                 capture_output=True,
@@ -542,7 +542,7 @@ class ChangelogPanel(QWidget):
         except Exception:
             return "dev"
         else:
-            return sha if sha else "dev"
+            return sha or "dev"
 
     def _get_platform_info(self) -> str:
         """Restituisce informazioni sulla piattaforma hardware/OS."""
@@ -794,3 +794,4 @@ class ChangelogPanel(QWidget):
 
         # Spazio elastico in fondo
         self.scroll_layout.addStretch()
+

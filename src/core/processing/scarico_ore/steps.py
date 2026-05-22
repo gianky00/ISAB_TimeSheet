@@ -242,7 +242,7 @@ class ProcessScaricoOreRowsStep(ProcessingStep):
         if not val:
             return ""
         if hasattr(val, "strftime"):
-            return str(val.strftime("%Y-%m-%d"))
+            return val.strftime("%Y-%m-%d")
         s = str(val).strip()
         return s.split(" ")[0] if " " in s else s
 

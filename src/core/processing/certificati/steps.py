@@ -224,7 +224,7 @@ class FormatCertificatiStep(ProcessingStep):
             return ""
         try:
             dt = pd.to_datetime(val)
-            return str(dt.strftime("%d/%m/%Y"))
+            return dt.strftime("%d/%m/%Y")
         except Exception:
             return str(val).split(" ")[0]
 

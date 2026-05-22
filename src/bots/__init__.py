@@ -235,7 +235,7 @@ def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:
     bot_kwargs = {
         k: v
         for k, v in kwargs.items()
-        if k not in ["username", "password", "headless", "timeout", "download_path", "company"]
+        if k not in ("username", "password", "headless", "timeout", "download_path", "company")
     }
 
     if engine == "playwright":

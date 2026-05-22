@@ -42,7 +42,7 @@ class PlaywrightBasePage:
             return False
         try:
             arrow = self.page.locator(arrow_selector).first
-            arrow_visible = bool(arrow.is_visible(timeout=1000))
+            arrow_visible = arrow.is_visible(timeout=1000)
         except Exception:
             return False
         else:

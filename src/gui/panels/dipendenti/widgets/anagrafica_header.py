@@ -78,7 +78,7 @@ class AnagraficaHeaderWidget(QWidget):
         self.search_input.setPlaceholderText("Nome, Cognome, CF o Badge...")
         self.search_input.setMinimumWidth(300)
         self.search_input.setStyleSheet(LINEEDIT_STYLE)
-        self.search_input.textChanged.connect(lambda text: self.search_changed.emit(text))
+        self.search_input.textChanged.connect(self.search_changed.emit)
 
         search_v.addWidget(search_label)
         search_v.addWidget(self.search_input)
@@ -103,7 +103,7 @@ class AnagraficaHeaderWidget(QWidget):
             size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.UPLOAD),
         )
-        import_btn.clicked.connect(lambda: self.import_requested.emit())
+        import_btn.clicked.connect(self.import_requested.emit)
 
         email_report_btn = ModernButton(
             "REPORT EMAIL",
@@ -111,7 +111,7 @@ class AnagraficaHeaderWidget(QWidget):
             size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.SEND),
         )
-        email_report_btn.clicked.connect(lambda: self.report_requested.emit())
+        email_report_btn.clicked.connect(self.report_requested.emit)
 
         self.btn_bot_update = ModernButton(
             "AGGIORNA",
@@ -119,7 +119,7 @@ class AnagraficaHeaderWidget(QWidget):
             size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.REFRESH),
         )
-        self.btn_bot_update.clicked.connect(lambda: self.update_requested.emit())
+        self.btn_bot_update.clicked.connect(self.update_requested.emit)
 
         for b in (import_btn, email_report_btn, self.btn_bot_update):
             actions_h.addWidget(b)
@@ -148,7 +148,7 @@ class AnagraficaHeaderWidget(QWidget):
         )
 
         for card in (self.card_ok, self.card_warning, self.card_expired, self.card_excluded):
-            card.clicked.connect(lambda text: self.filter_changed.emit(text))
+            card.clicked.connect(self.filter_changed.emit)
             cards_layout.addWidget(card, stretch=1)
 
         layout.addWidget(self.cards_container)

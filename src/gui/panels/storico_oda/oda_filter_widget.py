@@ -51,7 +51,7 @@ class OdaFilterWidget(QWidget):
         self.search_input.setPlaceholderText("OdA, Fornitore, Descrizione...")
         self.search_input.setMinimumWidth(350)
         self.search_input.setStyleSheet(LINEEDIT_STYLE)
-        self.search_input.textChanged.connect(lambda text: self.search_changed.emit(text))
+        self.search_input.textChanged.connect(self.search_changed.emit)
 
         search_container.addWidget(search_label)
         search_container.addWidget(self.search_input)
@@ -78,7 +78,7 @@ class OdaFilterWidget(QWidget):
             size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.UPLOAD),
         )
-        self.btn_import.clicked.connect(lambda: self.import_clicked.emit())
+        self.btn_import.clicked.connect(self.import_clicked.emit)
 
         # Update Bot Button
         self.btn_bot_update = ModernButton(
@@ -87,7 +87,7 @@ class OdaFilterWidget(QWidget):
             size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.REFRESH),
         )
-        self.btn_bot_update.clicked.connect(lambda: self.update_clicked.emit())
+        self.btn_bot_update.clicked.connect(self.update_clicked.emit)
 
         # Export Excel
         self.export_btn = ModernButton(
@@ -97,7 +97,7 @@ class OdaFilterWidget(QWidget):
             icon=get_asset_path(Icons.EXCEL),
         )
         self.export_btn.setToolTip("Esporta Excel")
-        self.export_btn.clicked.connect(lambda: self.export_clicked.emit())
+        self.export_btn.clicked.connect(self.export_clicked.emit)
 
         actions_h.addWidget(self.btn_import)
         actions_h.addWidget(self.export_btn)

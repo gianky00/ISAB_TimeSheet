@@ -49,7 +49,7 @@ class PrenotaBPBot(SeleniumBaseBot):
     def __init__(  # noqa: PLR0913
         self,
         username: str | None = None,
-        password: str | None = None,
+        password: str | None = None,  # nosec B107
         config: SeleniumBotConfig | None = None,
         data_da: str | None = None,
         data_a: str | None = None,

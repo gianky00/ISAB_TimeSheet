@@ -341,8 +341,9 @@ quiet = false
 color = true
 
 [tool.bandit]
-skips = ["B608", "B603", "B606", "B607", "B404", "B311", "B101", "B110", "B112", "B105", "B106", "B107"]
-exclude = ["src/bots/safework/pdl/search_bot.py"]
+skips = ["B608"]
+exclude_dirs = [".venv", "tests", "docs", "build", "dist", "temp", "admin", "scripts"]
+# Soppressione granulare tramite # nosec nel codice per casi verificati.
 
 [tool.commitizen]
 name = "cz_conventional_commits"

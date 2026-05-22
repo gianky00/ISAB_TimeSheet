@@ -115,7 +115,7 @@ class NormalizeGiornalieraStep(ProcessingStep):
         if df.empty:
             return df
 
-        critical_cols = [c for c in ["data", "personale", "ore"] if c in df.columns]
+        critical_cols = [c for c in ("data", "personale", "ore") if c in df.columns]
         if critical_cols:
             df.dropna(subset=critical_cols, how="any", inplace=True)
 
