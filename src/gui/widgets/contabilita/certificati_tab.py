@@ -58,6 +58,7 @@ class CertificatiCampioneTab(QWidget):
         self._include_history = get_config_value("cert_filter_history", True)
 
         self.worker: CertificatiWorker | None = None
+        self._pdf_worker: PDFExportWorker | None = None
         self._pending_expanded_ids: list[str] = []
 
         self._setup_ui()

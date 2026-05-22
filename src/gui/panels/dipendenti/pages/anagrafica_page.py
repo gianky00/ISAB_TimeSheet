@@ -46,6 +46,7 @@ class AnagraficaPage(QWidget):
         super().__init__(parent)
         self.controller = controller
         self.worker: BotWorker | None = None
+        self._emp_worker: EmployeeWorker | None = None
         self.current_filter: str | None = None
 
         self.headers = [

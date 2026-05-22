@@ -102,6 +102,7 @@ class StoricoOdaPanel(QWidget):
 
         self.model = QStandardItemModel()
         self.model.setHorizontalHeaderLabels(self.master_headers)
+        self._data_worker: ODADataWorker | None = None
 
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
@@ -153,7 +154,7 @@ class StoricoOdaPanel(QWidget):
         self.filters.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('oda')}")
         search_text = self.filters.search_input.text()
 
-        if hasattr(self, "_data_worker") and self._data_worker.isRunning():
+        if self._data_worker and self._data_worker.isRunning():
             self._data_worker.terminate()
             self._data_worker.wait()
 

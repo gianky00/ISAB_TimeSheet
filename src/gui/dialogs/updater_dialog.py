@@ -216,18 +216,19 @@ def check_for_updates(
             f"L'applicazione è aggiornata (v{version.__version__})",
         )
     )
-    _active_check_worker.error_signal.connect(
-        lambda msg: (
-            not silent
-            and QMessageBox.warning(
-                parent,
-                "Errore Aggiornamento",
-                f"Impossibile controllare gli aggiornamenti: {msg}",
-            )
-        )
-        or logger.debug(f"Update check failed: {msg}")
-    )
+    _active_check_worker.error_signal.connect(lambda msg: _on_update_error(msg, silent, parent))
     _active_check_worker.start()
+
+
+def _on_update_error(msg: str, silent: bool, parent: QWidget | None) -> None:
+    """Gestisce gli errori durante il controllo aggiornamenti."""
+    if not silent:
+        QMessageBox.warning(
+            parent,
+            "Errore Aggiornamento",
+            f"Impossibile controllare gli aggiornamenti: {msg}",
+        )
+    logger.debug(f"Update check failed: {msg}")
 
 
 def _handle_update_result(

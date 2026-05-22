@@ -60,6 +60,9 @@ class ServiceController(QObject):
         self.telegram = telegram_service
         self.queue_manager = BotQueueManager()
 
+        self._report_worker: AutopilotReportWorker | None = None
+        self._fallback_worker: AutopilotCertWorker | None = None
+
         self.scheduler_timer: QTimer | None = None
         self._cert_worker: Any = None
 

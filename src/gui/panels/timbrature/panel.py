@@ -72,6 +72,10 @@ class TimbratureDBPanel(QWidget):
         self.reparti: list[str] = []
         self.cantieri: list[str] = []
 
+        self._data_worker: TimbratureDataWorker | None = None
+        self._filter_worker: TimbratureDataWorker | None = None
+        self._import_worker: TimbratureDataWorker | None = None
+
         self._setup_ui()
 
         # Caricamento differito per massimizzare la fluidit  dello splash screen
@@ -317,7 +321,7 @@ class TimbratureDBPanel(QWidget):
         reparto = self.reparto_filter.currentData()
         cantiere = self.cantiere_filter.currentData()
 
-        if hasattr(self, "_data_worker") and self._data_worker.isRunning():
+        if self._data_worker and self._data_worker.isRunning():
             self._data_worker.terminate()
             self._data_worker.wait()
 

@@ -84,6 +84,7 @@ class MainWindow(QMainWindow):
 
         self.setMinimumSize(1200, 800)
         self._force_quit = False
+        self._license_worker: LicenseWorker | None = None
         self._init_core_services()
         self._init_ui_components()
         self._init_controllers()

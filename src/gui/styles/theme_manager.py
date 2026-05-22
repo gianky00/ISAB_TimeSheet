@@ -21,13 +21,14 @@ class ThemeManager:
     """Manager centralizzato per l'aspetto visivo dell'applicazione."""
 
     _instance: Optional["ThemeManager"] = None
+    _cached_stylesheet: str | None = None
 
     def __new__(cls) -> "ThemeManager":
         """Pattern Singleton per il gestore dello stile."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance.current_theme = "light"
-            cls._instance._cached_stylesheet: str | None = None
+            cls._instance._cached_stylesheet = None
         return cls._instance
 
     @property

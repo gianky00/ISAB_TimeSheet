@@ -113,6 +113,7 @@ class PDLStatsWidget(ModernCard):
         """Inizializza il widget delle statistiche PDL e avvia il timer di aggiornamento."""
         super().__init__(elevation=5, parent=parent)
         self.setMinimumWidth(340)
+        self._worker: PDLStatsWorker | None = None
         self._setup_ui()
         self.stats_updated.connect(self._update_ui)
 

@@ -244,6 +244,7 @@ class HealthPanel(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         """Inizializza l'interfaccia e avvia gli scheduler di monitoraggio."""
         super().__init__(parent)
+        self._health_worker: HealthWorker | None = None
         self._first_refresh_done = False
         self._setup_ui()
         self._refresh_timer = QTimer(self)
@@ -401,7 +402,7 @@ class HealthPanel(QWidget):
 
     def refresh(self) -> None:
         """Interroga i motori di analytics in background (Asincrono)."""
-        if hasattr(self, "_health_worker") and self._health_worker.isRunning():
+        if self._health_worker and self._health_worker.isRunning():
             return
 
         self._last_update.setText("Analisi in corso...")

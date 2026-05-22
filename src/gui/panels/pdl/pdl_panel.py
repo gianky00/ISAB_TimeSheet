@@ -91,6 +91,11 @@ class PDLDBPanel(QWidget):
         ]
 
         self.model = FastTableModel([], self.master_headers)
+        self.data_worker: PDLDataWorker | None = None
+        self.filter_worker: PDLDataWorker | None = None
+        self.area_worker: PDLDataWorker | None = None
+        self.unit_worker: PDLDataWorker | None = None
+
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self.refresh_data)
@@ -185,7 +190,7 @@ class PDLDBPanel(QWidget):
         self.filters.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('pdl')}")
         filters = self.filters.get_filters()
 
-        if hasattr(self, "data_worker") and self.data_worker.isRunning():
+        if self.data_worker and self.data_worker.isRunning():
             self.data_worker.terminate()
             self.data_worker.wait()
 
@@ -245,6 +250,10 @@ class PDLDBPanel(QWidget):
         """Aggiorna dinamicamente il filtro Area basandosi sul Sito selezionato (Asincrono)."""
         site = self.filters.site_filter.currentText()
 
+        if self.area_worker and self.area_worker.isRunning():
+            self.area_worker.terminate()
+            self.area_worker.wait()
+
         self.area_worker = PDLDataWorker("update_areas", site)
         self.area_worker.filters_ready.connect(self._on_filters_ready)
         self.area_worker.start()
@@ -253,6 +262,10 @@ class PDLDBPanel(QWidget):
         """Aggiorna dinamicamente il filtro Unità (Asincrono)."""
         site = self.filters.site_filter.currentText()
         area = self.filters.area_filter.currentText()
+
+        if self.unit_worker and self.unit_worker.isRunning():
+            self.unit_worker.terminate()
+            self.unit_worker.wait()
 
         self.unit_worker = PDLDataWorker("update_units", site, area)
         self.unit_worker.filters_ready.connect(self._on_filters_ready)

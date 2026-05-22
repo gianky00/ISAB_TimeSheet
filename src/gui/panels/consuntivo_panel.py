@@ -31,7 +31,10 @@ class ConsuntivoPanel(QWidget):
         super().__init__(parent)
         self.controller = controller
         self._data_preloaded = False
+        self._worker: ConsuntivoWorker | None = None
+
         self._setup_ui()
+
         # Avvia il caricamento dei dati immediatamente all'istanza (Eager Loading)
         QTimer.singleShot(100, self._pre_load_data)
 

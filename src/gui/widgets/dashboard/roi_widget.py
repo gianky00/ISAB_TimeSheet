@@ -49,6 +49,7 @@ class BotSavingsWidget(ModernCard):
         """
         super().__init__(elevation=5, parent=parent)
         self.setMinimumWidth(340)
+        self._worker: ROIWorker | None = None
         self._setup_ui()
 
         self.stats_updated.connect(self._update_ui)
@@ -293,7 +294,7 @@ class BotSavingsWidget(ModernCard):
 
     def refresh_stats(self) -> None:
         """Avvia il worker asincrono per il calcolo del ROI."""
-        if hasattr(self, "_worker") and self._worker.isRunning():
+        if hasattr(self, "_worker") and self._worker and self._worker.isRunning():
             return
 
         self._worker = ROIWorker()
