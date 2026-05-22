@@ -78,7 +78,7 @@ class AnagraficaHeaderWidget(QWidget):
         self.search_input.setPlaceholderText("Nome, Cognome, CF o Badge...")
         self.search_input.setMinimumWidth(300)
         self.search_input.setStyleSheet(LINEEDIT_STYLE)
-        self.search_input.textChanged.connect(lambda text: self.search_changed.emit(text))
+        self.search_input.textChanged.connect(self.search_changed.emit)
 
         search_v.addWidget(search_label)
         search_v.addWidget(self.search_input)
@@ -148,7 +148,7 @@ class AnagraficaHeaderWidget(QWidget):
         )
 
         for card in (self.card_ok, self.card_warning, self.card_expired, self.card_excluded):
-            card.clicked.connect(lambda text: self.filter_changed.emit(text))
+            card.clicked.connect(self.filter_changed.emit)
             cards_layout.addWidget(card, stretch=1)
 
         layout.addWidget(self.cards_container)

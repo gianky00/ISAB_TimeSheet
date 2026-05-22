@@ -1,3 +1,5 @@
+"""Passaggi di elaborazione per la trasformazione strutturale dei file Timesheet."""
+
 from __future__ import annotations
 
 import time
@@ -24,6 +26,7 @@ class LoadWorkbookStep(ProcessingStep):
     """Passaggio per caricare il file Excel."""
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue il caricamento del workbook."""
         file_path = Path(context["file_path"])
         if not file_path.exists():
             raise FileNotFoundError(f"File non trovato: {file_path}")
@@ -39,6 +42,7 @@ class ExtractMetadataStep(ProcessingStep):
     """Passaggio per estrarre ODC e POS."""
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue l'estrazione dei metadati."""
         ws: Worksheet = context["worksheet"]
 
         # ODC
@@ -82,7 +86,15 @@ class ExtractMetadataStep(ProcessingStep):
         return val
 
     def _deduce_odc_from_filename(self, file_path_str: str | Path) -> str:
-        """Deduce l'ODC dal nome del file sorgente."""
+        """
+        Deduce l'ODC dal nome del file sorgente.
+
+        Args:
+          file_path_str: Percorso del file Excel.
+
+        Returns:
+          str: Il codice ODC estratto.
+        """
         file_path = Path(file_path_str)
         name_parts = file_path.stem.split("_")
         min_parts_len = 2
@@ -91,7 +103,15 @@ class ExtractMetadataStep(ProcessingStep):
         return ""
 
     def _is_sheet_empty(self, ws: Worksheet) -> bool:
-        """Verifica se il foglio Excel non contiene righe di dati valide."""
+        """
+        Verifica se il foglio Excel non contiene righe di dati valide.
+
+        Args:
+          ws: Il foglio di lavoro da controllare.
+
+        Returns:
+          bool: True se il foglio è considerato vuoto.
+        """
         min_rows_with_data = 2
         if ws.max_row < min_rows_with_data:
             return True
@@ -104,6 +124,7 @@ class TransformSheetStep(ProcessingStep):
     """Passaggio per applicare le trasformazioni strutturali."""
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue la trasformazione del foglio."""
         if context.get("is_empty", False):
             logger.info("Salto trasformazione foglio vuoto.")
             return
@@ -148,7 +169,12 @@ class TransformSheetStep(ProcessingStep):
         self._autofit_columns(ws)
 
     def _autofit_columns(self, ws: Worksheet) -> None:
-        """Regola la larghezza delle colonne."""
+        """
+        Regola la larghezza delle colonne in base al contenuto.
+
+        Args:
+          ws: Il foglio di lavoro da elaborare.
+        """
         for col in ws.columns:
             max_len = 0
             first_cell = cast("Cell", col[0])
@@ -166,6 +192,7 @@ class SaveWorkbookStep(ProcessingStep):
     """Passaggio per salvare il file finale."""
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue il salvataggio del workbook."""
         wb: Workbook = context["workbook"]
         dest_dir = Path(context["dest_dir"])
         metadata: TimesheetMetadata = context["metadata"]

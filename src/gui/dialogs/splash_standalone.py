@@ -32,6 +32,7 @@ class SplashCommunicator(QObject):
 
     update_signal = Signal(str, int)
     close_signal = Signal()
+    license_received = Signal(str, str, str)
 
 
 class StandaloneSplash(StartupDialog):
@@ -52,7 +53,7 @@ class StandaloneSplash(StartupDialog):
         super().update_status(message, progress)
 
 
-def run_standalone() -> None:
+def run_standalone() -> None:  # noqa: PLR0915
     """Main loop dello splash screen standalone."""
     logger.info("Splash standalone process starting...")
 
@@ -79,23 +80,23 @@ def run_standalone() -> None:
     comm = SplashCommunicator()
     comm.update_signal.connect(splash.update_status)
     comm.close_signal.connect(splash.close)
+    comm.license_received.connect(splash.update_license_display)
 
     def read_stdin() -> None:
         """Legge i comandi JSON da stdin e aggiorna la splash standalone."""
         logger.info("Stdin reader thread active")
-        import io
 
-        # Usiamo il buffer binario per evitare problemi di encoding su Windows
-        input_stream = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", line_buffering=True)
+        # Usiamo direttamente il buffer binario grezzo per evitare problemi di encoding e buffering su Windows
+        buffer = sys.stdin.buffer
 
         while True:
             try:
-                line = input_stream.readline()
-                if not line:
+                line_bytes = buffer.readline()
+                if not line_bytes:
                     logger.info("Stdin stream closed")
                     break
 
-                line = line.strip()
+                line = line_bytes.decode("utf-8", errors="ignore").strip()
                 if not line:
                     continue
 
@@ -106,6 +107,12 @@ def run_standalone() -> None:
                     msg = data.get("msg", "")
                     prog = int(data.get("prog", 0))
                     comm.update_signal.emit(msg, prog)
+                elif command == "license_info":
+                    cliente = data.get("cliente", "N/D")
+                    hw_id = data.get("hw_id", "N/D")
+                    scadenza = data.get("scadenza", "N/D")
+                    logger.info(f"LICENSE RECEIVED IPC: {cliente} | {hw_id}")
+                    comm.license_received.emit(cliente, hw_id, scadenza)
                 elif command == "close":
                     logger.info("Close signal emitted")
                     comm.close_signal.emit()

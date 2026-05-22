@@ -1,3 +1,5 @@
+"""Inizializzazione del pacchetto scarico_ore."""
+
 from src.gui.components.scarico_ore.cache import CacheWorker
 from src.gui.components.scarico_ore.filters.header import FilterHeaderView
 from src.gui.components.scarico_ore.filters.popup_date import DateFilterPopupWidget

@@ -51,10 +51,11 @@ class ReportService:
             cf_norm = normalize(cf or "")
             name_key = (normalize(cog or ""), normalize(nom or ""))
 
-            diff_days = last_by_cf.get(cf_norm) or last_by_name.get(name_key)
-            if diff_days is None:
+            diff_days_tuple = last_by_cf.get(cf_norm) or last_by_name.get(name_key)
+            if diff_days_tuple is None:
                 continue
 
+            diff_days, _ = diff_days_tuple
             last_access_date = datetime.now(UTC).astimezone() - timedelta(days=diff_days)
             item = {
                 "id": id_ris,

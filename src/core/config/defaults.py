@@ -61,4 +61,5 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "certificati_autopilot_interval_days": 1,
     "certificati_autopilot_last_sent": None,
     "statistics": {},
+    "weather_show_details": False,
 }

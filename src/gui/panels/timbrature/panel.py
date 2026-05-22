@@ -55,6 +55,7 @@ class TimbratureDBPanel(QWidget):
         self.tabs: AnimatedTabWidget
         self.toolbar_container: QWidget
         self.search_input: QLineEdit
+        self.anno_filter: QComboBox
         self.reparto_filter: QComboBox
         self.cantiere_filter: QComboBox
         self.tab_database: QWidget
@@ -78,19 +79,7 @@ class TimbratureDBPanel(QWidget):
     def _deferred_init(self) -> None:
         """Carica le liste e i dati iniziali dopo la creazione del widget."""
         try:
-            lists = self.storage.get_lists()
-            self.reparti = lists.get("reparti", [])
-            self.cantieri = lists.get("cantieri", [])
-
-            # Aggiorna i filtri nella UI
-            self.reparto_filter.clear()
-            self.reparto_filter.addItem("Tutti")
-            self.reparto_filter.addItems(self.reparti)
-
-            self.cantiere_filter.clear()
-            self.cantiere_filter.addItem("Tutti")
-            self.cantiere_filter.addItems(self.cantieri)
-
+            self._update_filter_combos()
             self.refresh_data()
         except Exception as e:
             from src.core.logging import get_logger
@@ -180,11 +169,24 @@ class TimbratureDBPanel(QWidget):
         layout.addWidget(v_line)
 
     def _setup_filters_section(self, layout: QHBoxLayout) -> None:
-        """Configura i selettori di reparto e cantiere."""
+        """Configura i selettori di anno, reparto e cantiere."""
         from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED
 
         filters_h = QHBoxLayout()
         filters_h.setSpacing(12)
+
+        # Anno
+        anno_v = QVBoxLayout()
+        anno_v.setSpacing(4)
+        lbl_anno = QLabel("ANNO")
+        lbl_anno.setStyleSheet(LABEL_MUTED)
+        self.anno_filter = FilterComboBox()
+        self.anno_filter.setMinimumWidth(100)
+        self.anno_filter.setStyleSheet(COMBOBOX_STYLE)
+        self.anno_filter.currentIndexChanged.connect(self.refresh_data)
+        anno_v.addWidget(lbl_anno)
+        anno_v.addWidget(self.anno_filter)
+        filters_h.addLayout(anno_v)
 
         # Reparto
         rep_v = QVBoxLayout()
@@ -276,7 +278,17 @@ class TimbratureDBPanel(QWidget):
         lists = self.storage.get_lists()
         self.reparti = lists.get("reparti", [])
         self.cantieri = lists.get("cantieri", [])
+        years = lists.get("years", [])
 
+        # Update Anno
+        self.anno_filter.blockSignals(True)
+        self.anno_filter.clear()
+        self.anno_filter.addItem("Tutti gli anni", "Tutti")
+        for yr in years:
+            self.anno_filter.addItem(str(yr), str(yr))
+        self.anno_filter.blockSignals(False)
+
+        # Update Reparto
         self.reparto_filter.blockSignals(True)
         self.reparto_filter.clear()
         self.reparto_filter.addItem("Tutti i reparti", "Tutti")
@@ -284,6 +296,7 @@ class TimbratureDBPanel(QWidget):
             self.reparto_filter.addItem(rep, rep)
         self.reparto_filter.blockSignals(False)
 
+        # Update Cantiere
         self.cantiere_filter.blockSignals(True)
         self.cantiere_filter.clear()
         self.cantiere_filter.addItem("Tutti i cantieri", "Tutti")
@@ -294,6 +307,7 @@ class TimbratureDBPanel(QWidget):
     def refresh_data(self) -> None:
         """Carica i dati dal DB e aggiorna il modello virtuale."""
         text = self.search_input.text()
+        anno = self.anno_filter.currentData()
         reparto = self.reparto_filter.currentData()
         cantiere = self.cantiere_filter.currentData()
 
@@ -303,6 +317,7 @@ class TimbratureDBPanel(QWidget):
             filter_text=text,
             filter_reparto=reparto,
             filter_cantiere=cantiere,
+            filter_year=anno,
         )
 
         # Prepare for FastTableModel

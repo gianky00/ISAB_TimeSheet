@@ -51,7 +51,7 @@ class OdaFilterWidget(QWidget):
         self.search_input.setPlaceholderText("OdA, Fornitore, Descrizione...")
         self.search_input.setMinimumWidth(350)
         self.search_input.setStyleSheet(LINEEDIT_STYLE)
-        self.search_input.textChanged.connect(lambda text: self.search_changed.emit(text))
+        self.search_input.textChanged.connect(self.search_changed.emit)
 
         search_container.addWidget(search_label)
         search_container.addWidget(self.search_input)

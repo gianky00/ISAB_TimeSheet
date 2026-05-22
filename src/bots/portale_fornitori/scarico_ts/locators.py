@@ -19,15 +19,17 @@ class ScaricoTSLocators:
     )
     """Voce di menu Timesheet sotto Report."""
 
-    # Filters
-    SUPPLIER_INPUT = (By.XPATH, "//input[@name='CodiceFornitore' or @name='Fornitore']")
+    SUPPLIER_INPUT = (
+        By.XPATH,
+        "//input[@name='CodiceFornitore' or @name='Fornitore' or @name='FornitoreSap']",
+    )
     """Campo input del fornitore (supporta nomi multipli ExtJS)."""
 
     SUPPLIER_DROPDOWN_ARROW = (
         By.XPATH,
-        "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]",
+        "//input[@name='CodiceFornitore' or @name='Fornitore' or @name='FornitoreSap']/ancestor::div[contains(@class, 'x-form-trigger-wrap') or contains(@class, 'x-form-item-body')]//div[contains(@class, 'x-form-arrow-trigger')]",
     )
-    """Freccia per aprire il dropdown del fornitore."""
+    """Freccia per aprire il dropdown del fornitore, indipendente dagli ID dinamici."""
 
     DATE_FROM_FIELD = (By.NAME, "DataTimesheetDa")
     """Campo input data inizio timesheet."""

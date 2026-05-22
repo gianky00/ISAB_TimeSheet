@@ -12,6 +12,7 @@ from pathlib import Path
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.wait import WebDriverWait
@@ -91,16 +92,50 @@ class DettagliOdAPage:
             return True
 
     def setup_supplier(self, supplier: str) -> bool:
-        """Seleziona il fornitore dal menu a discesa della pagina."""
+        """
+        Seleziona il fornitore dal menu a discesa della pagina o tramite inserimento diretto.
+
+        Args:
+            supplier: Ragione sociale del fornitore.
+
+        Returns:
+            bool: True se la selezione ha successo, False altrimenti.
+        """
         try:
             self.log(f"Selezione fornitore: {supplier}")
-            arrow = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.SUPPLIER_ARROW))
-            ActionChains(self.driver).move_to_element(arrow).click().perform()
 
-            option_xpath = f"//li[contains(text(), '{supplier}')]"
-            option = self.long_wait.until(EC.presence_of_element_located((By.XPATH, option_xpath)))
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)  # type: ignore[no-untyped-call]
-            self.driver.execute_script("arguments[0].click();", option)  # type: ignore[no-untyped-call]
+            # Controlliamo se la freccia fisica esiste e proviamo a cliccarla
+            has_arrow = False
+            try:
+                arrow = WebDriverWait(self.driver, 2).until(
+                    EC.element_to_be_clickable(DettagliOdALocators.SUPPLIER_ARROW)
+                )
+                has_arrow = True
+            except Exception:
+                has_arrow = False
+
+            if has_arrow:
+                ActionChains(self.driver).move_to_element(arrow).click().perform()
+
+                option_xpath = f"//li[contains(text(), '{supplier}')]"
+                option = self.long_wait.until(EC.presence_of_element_located((By.XPATH, option_xpath)))
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].click();", option)  # type: ignore[no-untyped-call]
+            else:
+                # Inserimento diretto nell'input (senza freccia fisica)
+                self.log("   Freccia non rilevata. Tento l'inserimento manuale forzato.")
+                inp = self.wait.until(EC.visibility_of_element_located(DettagliOdALocators.SUPPLIER_INPUT))
+
+                try:
+                    inp.click()
+                except Exception:
+                    self.driver.execute_script("arguments[0].click();", inp)  # type: ignore[no-untyped-call]
+
+                self.driver.execute_script("arguments[0].value = '';", inp)  # type: ignore[no-untyped-call]
+                inp.send_keys(supplier)
+                time.sleep(0.5)
+                inp.send_keys(Keys.ENTER)
+
             self._wait_for_overlay()
         except Exception as e:
             self.log(f"  Selezione fornitore fallita: {e}")

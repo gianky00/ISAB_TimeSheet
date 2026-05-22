@@ -1,3 +1,5 @@
+"""Passaggi di elaborazione per l'importazione delle giornaliere strumentali."""
+
 import warnings
 import zipfile
 from typing import Any, ClassVar
@@ -15,6 +17,7 @@ class ReadGiornalieraStep(ProcessingStep):
     """Legge il foglio 'RIASSUNTO' da un file Excel (può essere Path o BytesIO)."""
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue la lettura del file Excel giornaliera."""
         file_obj = context.get("file_obj") or context["file_path"]
         file_name = context["file_path"].name if hasattr(context["file_path"], "name") else "Sconosciuto"
 
@@ -60,6 +63,7 @@ class NormalizeGiornalieraStep(ProcessingStep):
     }
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue la normalizzazione dei dati giornaliera."""
         if not context.get("success") or "df" not in context:
             return
 
@@ -95,6 +99,7 @@ class NormalizeGiornalieraStep(ProcessingStep):
         context["df"] = df
 
     def _clean_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Esegue la pulizia fine del DataFrame (rimozione totali e righe vuote)."""
         if df.empty:
             return df
         if len(df) > 0:
@@ -110,7 +115,7 @@ class NormalizeGiornalieraStep(ProcessingStep):
         if df.empty:
             return df
 
-        critical_cols = [c for c in ["data", "personale", "ore"] if c in df.columns]
+        critical_cols = [c for c in ("data", "personale", "ore") if c in df.columns]
         if critical_cols:
             df.dropna(subset=critical_cols, how="any", inplace=True)
 
@@ -121,6 +126,7 @@ class EnrichGiornalieraStep(ProcessingStep):
     """Arricchisce i dati della giornaliera con ODC da mapping e pattern matching."""
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue l'arricchimento dei dati giornaliera."""
         if not context.get("success") or "df" not in context:
             return
 
@@ -172,6 +178,7 @@ class SyncGiornaliereStep(ProcessingStep):
     """Passaggio per la sincronizzazione delle giornaliere con il database."""
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue la sincronizzazione delle giornaliere nel database."""
         if not context.get("success"):
             return
 
@@ -183,7 +190,7 @@ class SyncGiornaliereStep(ProcessingStep):
         from src.core.database import db_manager  # noqa: PLC0415
 
         total_added, total_removed = DataSynchronizer.sync_giornaliere(
-            db_manager.DB_GIORNALIERE, rows, [context["year"]]
+            db_manager.DB_CONTABILITA, rows, [context["year"]]
         )
 
         # Nota: In modalità parallela, questi valori verranno aggregati dall'importer

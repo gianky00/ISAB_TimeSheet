@@ -122,12 +122,13 @@ class MenuBarComponent(QObject):
         """
 
         def restart_app() -> None:
-            import subprocess
+            import subprocess  # nosec B404
 
             from PySide6.QtWidgets import QApplication
 
             QApplication.quit()
-            subprocess.Popen([sys.executable, *sys.argv])
+            # Uso di sys.executable (percorso assoluto) per mitigare B607
+            subprocess.Popen([sys.executable, *sys.argv])  # nosec B603
             sys.exit()
 
         def open_folder_path(path: str | Path) -> None:

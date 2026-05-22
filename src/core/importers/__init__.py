@@ -1,3 +1,5 @@
+"""Inizializzazione del pacchetto importers."""
+
 from collections.abc import Callable
 from typing import Any, Optional
 

@@ -1,3 +1,5 @@
+"""Funzioni di formattazione e modelli per la visualizzazione dei dati nella GUI."""
+
 from collections.abc import Callable
 from contextlib import suppress
 from datetime import UTC, datetime
@@ -196,7 +198,7 @@ class FastTableModel(QAbstractTableModel):
         return None
 
     def _get_display_value(self, col: int, raw_value: Any) -> str:
-        """Helper per DisplayRole."""
+        """Determina il valore testuale da visualizzare applicando il formatter."""
         if col in self._formatters:
             return self._formatters[col](raw_value)
         return str(raw_value) if raw_value is not None else ""
@@ -222,6 +224,7 @@ class FastTableModel(QAbstractTableModel):
         try:
 
             def sort_key(row_tuple: tuple[list[Any], Any]) -> tuple[int, Any]:
+                """Genera una chiave di ordinamento tipizzata per la riga."""
                 return _get_sort_key_value(row_tuple[0][column], column)
 
             reverse = order == Qt.SortOrder.DescendingOrder

@@ -351,13 +351,26 @@ class CertificatiCampioneTab(QWidget):
         days_val: int | None = g["days"]
         days_text = self.engine.format_days_text_short(days_val)
 
+        # Recupero numero certificato più recente (il primo della lista ordinata dall'engine)
+        from src.core.contabilita_queries import ContabilitaQueries
+
+        latest_cert_num = ""
+        if g.get("certificates"):
+            latest_cert_num = self.engine.get_col_safe(
+                g["certificates"][0], ContabilitaQueries.CERT_IDX_CERTIFICATO
+            )
+
         is_digital = "MANOMETRO DIGITALE" in str(g["modello"]).upper()
         range_part = f"  •  {g['range_strumento']}" if is_digital and g["range_strumento"] else ""
         ex_marker = "  [ESCLUSO]" if is_excluded else ""
         pr_marker = "  [NON STAMPARE]" if is_print_excluded else ""
 
         id_part = f"{g['id_coemi']}  •  " if g["id_coemi"] else ""
-        label = f"{id_part}{g['costruttore']}  •  {g['modello']}{range_part}  •  {g['matricola']}  •  {days_text}{ex_marker}{pr_marker}"
+        cert_part = f"{latest_cert_num} " if latest_cert_num else ""
+        label = (
+            f"{id_part}{g['costruttore']}  •  {g['modello']}{range_part}  •  {g['matricola']}  •  "
+            f"{cert_part}{days_text}{ex_marker}{pr_marker}"
+        )
 
         parent_item = SortableTreeWidgetItem(self.tree, [label])
         parent_item.setFirstColumnSpanned(True)

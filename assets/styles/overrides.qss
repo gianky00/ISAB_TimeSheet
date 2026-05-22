@@ -161,9 +161,11 @@ QSplitter::handle:vertical {
 QToolTip {
     background-color: #FFFFFF;
     color: #212121;
-    border: 1px solid #BBBBBB;
+    border: 1px solid #CCCCCC;
     border-radius: 6px;
     padding: 8px 12px;
+    font-family: 'Segoe UI', -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    font-size: 12px;
 }
 
 /* === TREE & LIST WIDGETS === */
@@ -217,6 +219,10 @@ QSlider::groove:horizontal {
     background: {{bg_alt}};
     margin: 2px 0;
     border-radius: 3px;
+}
+
+QSlider::groove:horizontal:hover {
+    background: {{bg_hover}};
 }
 
 QSlider::handle:horizontal {

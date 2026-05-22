@@ -17,5 +17,4 @@ class TimesheetProcessor:
     @staticmethod
     def process_and_move(file_path: Path, dest_dir: Path) -> tuple[bool, str]:
         """Elabora il file Excel delegando al nuovo servizio."""
-        service = TimesheetService()
-        return service.process_file(file_path, dest_dir)
+        return TimesheetService().process_file(file_path, dest_dir)

@@ -94,6 +94,19 @@ class TimbratureBotPanel(BaseBotPanel):
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
 
+        # Inserimento Pulsante "Crea Database"
+        from src.gui.widgets.modern_button import ModernButton
+        self.create_db_btn = ModernButton(
+            "CREA DATABASE",
+            variant=ModernButton.Variant.SECONDARY,
+            size=ModernButton.Size.SMALL
+        )
+        self.create_db_btn.setToolTip("Analizza e scarica le timbrature mancanti per un intero anno (trimestre per trimestre)")
+        self.create_db_btn.clicked.connect(self._on_create_database_clicked)
+
+        # Lo aggiungiamo al widget parametri accanto a DATA FINE
+        self.params_widget.add_widget_to_row(self.create_db_btn)
+
         self.content_layout.addWidget(params_container)
 
         # Aggiungiamo uno stretch per "spingere" i parametri in alto e creare
@@ -205,6 +218,14 @@ class TimbratureBotPanel(BaseBotPanel):
             "data_a": data_a,
         }
 
+        # Integrazione modalità Multi-Range (Crea Database)
+        if params_override and "ranges" in params_override:
+            bot_data["ranges"] = params_override["ranges"]
+            # Quando ci sono i ranges, i log devono riflettere lo storico
+            log_msg = f"Avvio ricostruzione Database Timbrature ({fornitore})"
+        else:
+            log_msg = f"Avvio bot Timbrature ({fornitore})"
+
         # Inizializza il worker (nessuna importazione pesante Selenium qui)
         self.worker = BotWorker(
             bot_id="timbrature",
@@ -222,7 +243,7 @@ class TimbratureBotPanel(BaseBotPanel):
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
-        self.log_widget.append(f"Avvio bot Timbrature ({fornitore})")
+        self.log_widget.append(log_msg)
         self.worker.start()
         self.bot_started.emit()
 
@@ -231,3 +252,74 @@ class TimbratureBotPanel(BaseBotPanel):
         super()._on_worker_finished(success)
         if success:
             self.data_updated.emit()
+
+    def _on_create_database_clicked(self) -> None:
+        """Avvia la procedura di creazione massiva del database storico."""
+        from datetime import UTC, datetime
+
+        from PySide6.QtWidgets import QInputDialog
+
+        current_year = datetime.now(UTC).year
+        start_year, ok = QInputDialog.getInt(
+            self, "Crea Database Storico", "Anno di inizio ricostruzione:",
+            current_year - 1, 2000, current_year
+        )
+
+        if not ok:
+            return
+
+        # Generazione Slot Trimestrali dal start_year ad oggi
+        ranges = self._generate_quarterly_ranges(start_year)
+        if not ranges:
+            ToastManager.instance().show("Nessun periodo valido da elaborare.", "info")
+            return
+
+        # Avvio Bot in modalità Multi-Range
+        fornitore = self.params_widget.get_fornitore()
+        if not fornitore:
+            ToastManager.instance().show("Seleziona prima un fornitore.", "warning")
+            return
+
+        params_override = {
+            "ranges": ranges,
+            "fornitore": fornitore,
+            "societa": self.params_widget.get_societa()
+        }
+
+        self.log_widget.append(f"🚀 Ricostruzione DATABASE dal {start_year} ad oggi ({len(ranges)} trimestri)")
+        self._on_start(params_override=params_override)
+
+    def _generate_quarterly_ranges(self, start_year: int) -> list[dict[str, str]]:
+        """Calcola i trimestri solari dal start_year indicato fino alla data odierna."""
+        from datetime import UTC, date, datetime
+
+        today = datetime.now(UTC).date()
+        quarters_template = [
+            ("01.01", "31.03"),
+            ("01.04", "30.06"),
+            ("01.07", "30.09"),
+            ("01.10", "31.12"),
+        ]
+
+        valid_ranges = []
+        for year in range(start_year, today.year + 1):
+            for start_str, end_str in quarters_template:
+                start_d, start_m = map(int, start_str.split("."))
+                end_d, end_m = map(int, end_str.split("."))
+
+                q_start = date(year, start_m, start_d)
+                q_end = date(year, end_m, end_d)
+
+                # Se il trimestre inizia nel futuro, interrompiamo la generazione
+                if q_start > today:
+                    break
+
+                # Se il trimestre finisce nel futuro, lo limitiamo ad oggi
+                q_end = min(q_end, today)
+
+                valid_ranges.append({
+                    "data_da": q_start.strftime("%d.%m.%Y"),
+                    "data_a": q_end.strftime("%d.%m.%Y")
+                })
+
+        return valid_ranges

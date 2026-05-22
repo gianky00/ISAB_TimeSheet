@@ -47,7 +47,7 @@ class PathsPage(QWidget):
 
         self.auto_update_check = QCheckBox("Attiva aggiornamento automatico all'avvio (background)")
         self.auto_update_check.setStyleSheet("padding: 5px; font-size: 15px;")
-        self.auto_update_check.stateChanged.connect(lambda: self.settings_changed.emit())
+        self.auto_update_check.stateChanged.connect(self.settings_changed.emit)
         cont_layout.addWidget(self.auto_update_check)
 
         # Giornaliere

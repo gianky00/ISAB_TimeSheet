@@ -70,6 +70,7 @@ class DonCiroWidget(QWidget):
         return self._walk_phase
 
     def set_walk_phase(self, v: float) -> None:
+        """Imposta la fase della camminata."""
         if self._walk_phase != v:
             self._walk_phase = v
             # Sincronizza motore per la fisica
@@ -84,6 +85,7 @@ class DonCiroWidget(QWidget):
         return self._action_phase
 
     def set_action_phase(self, v: float) -> None:
+        """Imposta la fase dell'azione."""
         if self._action_phase != v:
             self._action_phase = v
             self.engine._action_phase = v
@@ -97,6 +99,7 @@ class DonCiroWidget(QWidget):
         return self._yaw_angle
 
     def set_yaw_angle(self, v: float) -> None:
+        """Imposta l'angolo di imbardata."""
         if self._yaw_angle != v:
             self._yaw_angle = v
             self.engine._yaw_angle = v
@@ -110,6 +113,7 @@ class DonCiroWidget(QWidget):
         return self._blink
 
     def set_blink(self, v: float) -> None:
+        """Imposta lo stato del battito ciglia."""
         if self._blink != v:
             self._blink = v
             self.blink_changed.emit(v)
@@ -122,6 +126,7 @@ class DonCiroWidget(QWidget):
         return self._label_phase
 
     def set_label_phase(self, v: float) -> None:
+        """Imposta la fase del testo."""
         if self._label_phase != v:
             self._label_phase = v
             self.label_phase_changed.emit(v)

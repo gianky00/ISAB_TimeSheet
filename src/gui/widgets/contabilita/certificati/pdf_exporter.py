@@ -77,7 +77,7 @@ class CertificatiPdfExporter:
                 painter.restore()
 
                 # Footer (Pagina X / Y) con eventuale postilla
-                self._draw_footer(painter, page_idx + 1, total_pages, width_pt, paint_rect_pt.height(), has_nd)
+                self._draw_footer(painter, page_idx + 1, total_pages, QRectF(paint_rect_pt), has_nd=has_nd)
 
             painter.end()
         except Exception as e:
@@ -135,9 +135,28 @@ class CertificatiPdfExporter:
 
         return ""
 
-    def _draw_footer(self, painter: QPainter, current: int, total: int, width: float, height: float, has_nd: bool = False) -> None:
-        """Disegna il footer con la numerazione delle pagine e l'eventuale postilla."""
+    def _draw_footer(
+        self,
+        painter: QPainter,
+        current: int,
+        total: int,
+        rect: QRectF,
+        *,
+        has_nd: bool = False,
+    ) -> None:
+        """
+        Disegna il footer con la numerazione delle pagine e l'eventuale postilla.
+
+        Args:
+          painter: L'oggetto QPainter per il disegno.
+          current: Indice della pagina corrente.
+          total: Numero totale di pagine.
+          rect: Area di disegno della pagina.
+          has_nd: Se True, aggiunge la nota per gli strumenti senza data.
+        """
         painter.save()
+        width = rect.width()
+        height = rect.height()
         font = painter.font()
         font.setPixelSize(8)
         painter.setFont(font)
@@ -145,12 +164,19 @@ class CertificatiPdfExporter:
 
         # Postilla Audit (Angolo in basso a sinistra)
         if has_nd:
-            disclaimer = "(*) La dicitura 'Senza scadenza' identifica la strumentazione con certificazione in fase di aggiornamento documentale, attualmente esclusa dall'impiego operativo. Tutti gli apparati in elenco sono regolarmente tracciati e gestiti in piena conformità alle procedure di controllo qualità vigenti."
+            disclaimer = (
+                "(*) La dicitura 'Senza scadenza' identifica la strumentazione con certificazione "
+                "in fase di aggiornamento documentale, attualmente esclusa dall'impiego operativo. "
+                "Tutti gli apparati in elenco sono regolarmente tracciati e gestiti in piena "
+                "conformità alle procedure di controllo qualità vigenti."
+            )
             font.setPixelSize(6)  # Testo piccolo per la postilla
             painter.setFont(font)
             disclaimer_rect = QRectF(15, height - 20, width - 100, 20)
-            painter.drawText(disclaimer_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, disclaimer)
-            
+            painter.drawText(
+                disclaimer_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, disclaimer
+            )
+
             # Ripristina font per la numerazione
             font.setPixelSize(8)
             painter.setFont(font)
@@ -212,7 +238,7 @@ class CertificatiPdfExporter:
                 style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html
             )
 
-        return pages_html
+        return pages_html, has_nd
 
     def _gather_and_sort_data(self) -> tuple[list[QTreeWidgetItem], list[tuple[str, ...]]]:
         """Raccoglie e ordina i dati dal TreeWidget."""

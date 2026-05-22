@@ -6,6 +6,10 @@ Risolti bug di sovrapposizione e artefatti grafici. Massima fluidità garantita.
 
 from __future__ import annotations
 
+import json
+import logging
+from pathlib import Path
+
 from PySide6.QtCore import Property, QEvent, Qt, QTimer, Signal
 from PySide6.QtGui import QEnterEvent, QIcon
 from PySide6.QtWidgets import (
@@ -18,6 +22,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.core.config_manager import get_config_value
 from src.core.constants import Icons
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
@@ -26,6 +31,8 @@ from src.utils.helpers import get_asset_path
 
 from .sidebar.animations import SidebarAnimationManager
 from .sidebar.components import SidebarChildButton, SidebarGroup, SidebarSubGroup
+
+logger = logging.getLogger(__name__)
 
 
 class SidebarWidget(QFrame):
@@ -98,6 +105,7 @@ class SidebarWidget(QFrame):
         self.sub_fornitori = SidebarSubGroup("")
         self.sub_safework = SidebarSubGroup("")
         self.btn_help = SidebarButton("", "")
+        self.btn_changelog = SidebarButton("", "")
         self.btn_settings = SidebarButton("", "")
         self.main_btns: tuple[QWidget, ...] = ()
         self.footer_btns: tuple[QWidget, ...] = ()
@@ -109,6 +117,7 @@ class SidebarWidget(QFrame):
         self.bg_frame.setProperty("state", "collapsed")
         self._update_ui_state()
         QTimer.singleShot(500, self._update_track)
+        self._check_changelog_badge()
 
     def get_sidebar_width(self) -> int:
         """Restituisce la larghezza corrente della sidebar."""
@@ -319,9 +328,10 @@ class SidebarWidget(QFrame):
         f_lay.setSpacing(6)
         self.group_notifiche = SidebarGroup("Monitoraggio", get_asset_path(Icons.ACTIVITY))
         self.btn_help = SidebarButton("Guida", get_asset_path(Icons.HELP))
+        self.btn_changelog = SidebarButton("Novità", get_asset_path(Icons.LIST))
         self.btn_settings = SidebarButton("Impostazioni", get_asset_path(Icons.SETTINGS))
 
-        self.footer_btns = (self.group_notifiche, self.btn_help, self.btn_settings)
+        self.footer_btns = (self.group_notifiche, self.btn_help, self.btn_changelog, self.btn_settings)
         for footer_btn in self.footer_btns:
             f_lay.addWidget(footer_btn)
             if isinstance(footer_btn, SidebarGroup):
@@ -345,6 +355,7 @@ class SidebarWidget(QFrame):
         self.btn_pdl.clicked.connect(lambda: self.navigation_requested.emit(6, -1, -1))
         self.btn_storico_oda.clicked.connect(lambda: self.navigation_requested.emit(10, -1, -1))
         self.btn_help.clicked.connect(lambda: self.navigation_requested.emit(8, -1, -1))
+        self.btn_changelog.clicked.connect(self._on_changelog_clicked)
         self.btn_settings.clicked.connect(lambda: self.navigation_requested.emit(7, -1, -1))
 
     def _on_group_expanded(self, group: SidebarGroup) -> None:
@@ -398,6 +409,7 @@ class SidebarWidget(QFrame):
             PageIndex.DASHBOARD: self.btn_home,
             PageIndex.SETTINGS: self.btn_settings,
             PageIndex.HELP: self.btn_help,
+            PageIndex.CHANGELOG: self.btn_changelog,
             PageIndex.TIMBRATURE: self.btn_timbrature,
             PageIndex.DATAEASE: self.btn_dataease,
             PageIndex.PDL_DB: self.btn_pdl,
@@ -566,3 +578,29 @@ class SidebarWidget(QFrame):
         """Sincronizza lo stato dei gruppi."""
         for g in (self.group_db, self.group_automazioni, self.group_contabilita, self.group_notifiche):
             g.set_collapsed(self._is_collapsed)
+
+    def _on_changelog_clicked(self) -> None:
+        """Gestisce il click sul pulsante Novità: azzera il badge e richiede navigazione."""
+        self.btn_changelog.set_badge(0)
+        self.navigation_requested.emit(13, -1, -1)
+
+    def _check_changelog_badge(self) -> None:
+        """Verifica se mostrare il badge di novità non lette all'avvio."""
+        try:
+            # Leggiamo l'ultima versione vista dall'utente nel config
+            last_viewed = get_config_value("changelog_last_viewed_version", "")
+
+            # Leggiamo l'ultima versione disponibile nel changelog.json
+            changelog_path = Path(__file__).resolve().parent.parent.parent / "core" / "changelog.json"
+            if changelog_path.exists():
+                changelog_data = json.loads(changelog_path.read_text(encoding="utf-8"))
+                if changelog_data and isinstance(changelog_data, list):
+                    first_entry = changelog_data[0]
+                    if isinstance(first_entry, dict) and "version" in first_entry:
+                        latest_version = str(first_entry["version"])
+
+                        # Se la versione nel file è diversa da quella vista, mostriamo il badge
+                        if latest_version and latest_version != last_viewed:
+                            self.btn_changelog.set_badge(f"✨ {latest_version}")
+        except Exception:
+            logger.debug("Impossibile verificare il badge del changelog all'avvio")

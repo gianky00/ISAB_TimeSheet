@@ -59,24 +59,74 @@ class TimbraturePage:
             self.log("⚠️ Timeout attesa overlay.")
 
     def navigate_to_timbrature(self) -> bool:
-        """Navigates to Report -> Timbrature."""
+        """
+        Naviga verso la pagina delle timbrature tramite ricerca globale o fallback del menu.
+
+        Returns:
+            bool: True se la navigazione ha successo, False altrimenti.
+        """
         try:
             self.log("Navigazione verso pagina Timbrature...")
+
+            # Strategia 1 (Primaria): Ricerca globale ultra-rapida "Report Timbrature"
+            try:
+                search_input = WebDriverWait(self.driver, 3).until(
+                    EC.visibility_of_element_located(TimbratureLocators.HOME_SEARCH_INPUT)
+                )
+                self.log("[NAVIGAZIONE] Uso ricerca globale per reindirizzamento immediato...")
+
+                # Pulizia e digitazione
+                try:
+                    search_input.click()
+                except Exception:
+                    self.driver.execute_script("arguments[0].click();", search_input)  # type: ignore[no-untyped-call]
+
+                self.driver.execute_script("arguments[0].value = '';", search_input)  # type: ignore[no-untyped-call]
+                search_input.send_keys("Report Timbrature")
+                time.sleep(0.3)
+                search_input.send_keys(Keys.ENTER)
+
+                # Attesa della comparsa del campo fornitore per confermare il caricamento
+                WebDriverWait(self.driver, 6).until(
+                    EC.visibility_of_element_located(TimbratureLocators.SUPPLIER_INPUT)
+                )
+                self._wait_for_overlay()
+                self.log("[NAVIGAZIONE] Reindirizzamento tramite ricerca globale riuscito!")
+            except Exception as e:
+                self.log(
+                    f"[NAVIGAZIONE] Ricerca globale non disponibile o fallita ({str(e)[:30]}). "
+                    "Procedo con navigazione menu..."
+                )
+            else:
+                return True
+
+            # Strategia 2 (Fallback): Click sul menu Report -> click sottomenu o tastiera
             report_element = self.wait.until(EC.element_to_be_clickable(TimbratureLocators.REPORT_MENU))
             report_element.click()
 
-            # Keyboard navigation to tab
-            actions = ActionChains(self.driver)
-            actions.send_keys(Keys.TAB).pause(0.3)
-            actions.send_keys(Keys.TAB).pause(0.3)
-            actions.send_keys(Keys.TAB).pause(0.3)
-            actions.send_keys(Keys.ENTER).perform()
+            # Tenta click sul sottomenu se visibile, altrimenti naviga con la tastiera
+            try:
+                submenu = WebDriverWait(self.driver, 3).until(
+                    EC.element_to_be_clickable(TimbratureLocators.TIMBRATURE_SUBMENU)
+                )
+                try:
+                    submenu.click()
+                except Exception:
+                    self.driver.execute_script("arguments[0].click();", submenu)  # type: ignore[no-untyped-call]
+            except Exception:
+                actions = ActionChains(self.driver)
+                actions.send_keys(Keys.TAB).pause(0.3)
+                actions.send_keys(Keys.TAB).pause(0.3)
+                actions.send_keys(Keys.TAB).pause(0.3)
+                actions.send_keys(Keys.ENTER).perform()
+
             self._wait_for_overlay()
         except Exception as e:
             self.log(f"Errore navigazione: {e}")
             return False
         else:
             return True
+
 
     def set_filters(self, fornitore: str, data_da: str, data_a: str) -> bool:
         """Sets the search filters."""

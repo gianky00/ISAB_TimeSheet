@@ -1,3 +1,8 @@
+"""
+Card di configurazione per il sistema Autopilot.
+Permettono all'utente di abilitare e programmare l'esecuzione automatica dei bot.
+"""
+
 from typing import TypedDict
 
 from PySide6.QtCore import Qt, QTime, QTimer
@@ -17,6 +22,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class BotVisualInfo(TypedDict):
+    """Informazioni visuali per la rappresentazione di un bot nell'Autopilot."""
     bot_id: str
     bot_name: str
     icon_path: str
@@ -39,6 +45,13 @@ class AutopilotConfigCard(QFrame):
         """
         Inizializza la card di configurazione.
         Supporta sia il nuovo pattern (info: BotVisualInfo) che quello legacy (bot_id, bot_name, icon, color).
+
+        Args:
+          info: Informazioni visuali del bot o ID del bot.
+          bot_name: Nome del bot (legacy).
+          icon_path: Percorso icona (legacy).
+          color: Colore associato (legacy).
+          parent: Widget genitore.
         """
         super().__init__(parent)
 
@@ -126,7 +139,7 @@ class AutopilotConfigCard(QFrame):
       }}
     """
         )
-        self.enable_check.stateChanged.connect(self._on_config_changed)
+        self.enable_check.stateChanged.connect(lambda: self._on_config_changed())
         layout.addWidget(self.enable_check)
 
     def _add_time_picker(self, layout: QVBoxLayout) -> None:
@@ -147,7 +160,7 @@ class AutopilotConfigCard(QFrame):
       QTimeEdit:focus {{ border-color: {COLORS["primary_dark"]}; }}
     """
         )
-        self.time_edit.timeChanged.connect(self._on_config_changed)
+        self.time_edit.timeChanged.connect(lambda: self._on_config_changed())
         time_layout.addWidget(self.time_edit)
         time_layout.addStretch()
 
@@ -203,6 +216,13 @@ class AutopilotConfigCardWithInterval(QFrame):
         """
         Inizializza la card di configurazione con intervallo.
         Supporta sia il nuovo pattern (info: BotVisualInfo) che quello legacy (bot_id, bot_name, icon, color).
+
+        Args:
+          info: Informazioni visuali del bot o ID del bot.
+          bot_name: Nome del bot (legacy).
+          icon_path: Percorso icona (legacy).
+          color: Colore associato (legacy).
+          parent: Widget genitore.
         """
         super().__init__(parent)
 
@@ -290,7 +310,7 @@ class AutopilotConfigCardWithInterval(QFrame):
       }}
     """
         )
-        self.enable_check.stateChanged.connect(self._on_config_changed)
+        self.enable_check.stateChanged.connect(lambda: self._on_config_changed())
         layout.addWidget(self.enable_check)
 
     def _add_interval_settings(self, layout: QVBoxLayout) -> None:
@@ -313,7 +333,7 @@ class AutopilotConfigCardWithInterval(QFrame):
       QTimeEdit:focus {{ border-color: {COLORS["primary_dark"]}; }}
     """
         )
-        self.time_edit.timeChanged.connect(self._on_config_changed)
+        self.time_edit.timeChanged.connect(lambda: self._on_config_changed())
         settings_layout.addWidget(self.time_edit)
 
         # Intervallo giorni
@@ -332,7 +352,7 @@ class AutopilotConfigCardWithInterval(QFrame):
       QSpinBox:focus {{ border-color: {COLORS["primary_dark"]}; }}
     """
         )
-        self.interval_spin.valueChanged.connect(self._on_config_changed)
+        self.interval_spin.valueChanged.connect(lambda: self._on_config_changed())
         settings_layout.addWidget(self.interval_spin)
         settings_layout.addStretch()
 

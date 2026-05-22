@@ -77,6 +77,7 @@ class PanelFactory:
             PageIndex.STORICO_ODA: self._create_oda,
             PageIndex.DIPENDENTI: self._create_dipendenti,
             PageIndex.CONSUNTIVO: self._create_consuntivo,
+            PageIndex.CHANGELOG: self._create_changelog,
         }
 
         creator = registry.get(target_index)
@@ -143,3 +144,8 @@ class PanelFactory:
         from src.gui.panels.consuntivo_panel import ConsuntivoPanel
 
         return ConsuntivoPanel(controller=self.nav.consuntivo_controller)
+
+    def _create_changelog(self) -> QWidget:
+        from src.gui.panels.changelog_panel import ChangelogPanel
+
+        return ChangelogPanel()

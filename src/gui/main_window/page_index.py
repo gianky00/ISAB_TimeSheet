@@ -51,3 +51,7 @@ class PageIndex(IntEnum):
 
     CONSUNTIVO = 12
     """Generatore e gestore consuntivi automatizzato."""
+
+    CHANGELOG = 13
+    """Pannello delle note di rilascio e novità di versione."""
+

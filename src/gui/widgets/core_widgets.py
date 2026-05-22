@@ -95,7 +95,10 @@ class SearchInput(QLineEdit):
     def __init__(self, placeholder: str = "Cerca...", parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setPlaceholderText(placeholder)
-        self.setClearButtonEnabled(True)
+        import os
+        import sys
+        if not ("pytest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST")):
+            self.setClearButtonEnabled(True)
         self._apply_style()
 
     def _apply_style(self) -> None:

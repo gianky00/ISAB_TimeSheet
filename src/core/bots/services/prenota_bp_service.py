@@ -1,3 +1,5 @@
+"""Servizio di orchestrazione per il bot Prenota BP."""
+
 from datetime import UTC, datetime
 from typing import Any
 
@@ -6,10 +8,12 @@ from src.core.bots.services.base_service import BaseBotService
 
 
 class PrenotaBPService(BaseBotService):
+    """Implementazione del servizio per la prenotazione BP."""
     def __init__(self) -> None:
         super().__init__("prenota_bp")
 
     def load_config(self) -> dict[str, Any]:
+        """Carica la configurazione persistente per Prenota BP."""
         config = config_manager.load_config()
         current_year = datetime.now(UTC).year
 
@@ -22,6 +26,7 @@ class PrenotaBPService(BaseBotService):
         }
 
     def save_config(self, params: dict[str, Any], data: list[dict[str, Any]]) -> None:
+        """Salva lo stato corrente e i parametri per Prenota BP."""
         updates = {
             "last_prenota_bp_data": data,
             "last_prenota_societa": params.get("societa", "ISAB"),
@@ -38,6 +43,18 @@ class PrenotaBPService(BaseBotService):
         data: list[dict[str, Any]],
         overrides: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """
+        Prepara i dati per l'esecuzione del bot Prenota BP.
+
+        Args:
+          credentials: Tupla (username, password, tipo).
+          params: Parametri della GUI.
+          data: Lista di righe da processare.
+          overrides: Eventuali sovrascritture esterne.
+
+        Returns:
+          tuple: (bot_params, bot_data).
+        """
         username, password, _ = credentials
         config = config_manager.load_config()
 

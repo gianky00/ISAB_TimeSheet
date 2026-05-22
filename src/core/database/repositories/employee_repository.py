@@ -28,7 +28,7 @@ class EmployeeRepository:
         self, active_only: bool = True, as_objects: bool = True
     ) -> list[EmployeeRecord] | list[dict[str, Any]]:
         """Restituisce tutti i dipendenti."""
-        query = f"SELECT {', '.join(self.columns)} FROM dipendenti"
+        query = f"SELECT {', '.join(self.columns)} FROM dipendenti"  # nosec B608
         if active_only:
             query += " WHERE monitoraggio_attivo = 1"
         query += " ORDER BY cognome, nome"
@@ -77,7 +77,7 @@ class EmployeeRepository:
         self, search_text: str = "", active_only: bool = False, as_objects: bool = True
     ) -> list[EmployeeRecord] | list[dict[str, Any]]:
         """Recupera i dipendenti filtrati per testo e stato monitoraggio."""
-        query = f"SELECT {', '.join(self.columns)} FROM dipendenti WHERE 1=1"
+        query = f"SELECT {', '.join(self.columns)} FROM dipendenti WHERE 1=1"  # nosec B608
         params = []
 
         if active_only:
@@ -104,7 +104,7 @@ class EmployeeRepository:
 
     def get_by_badge(self, badge: str) -> EmployeeRecord | None:
         """Cerca un dipendente per numero di badge."""
-        query = f"SELECT {', '.join(self.columns)} FROM dipendenti WHERE badge = ?"
+        query = f"SELECT {', '.join(self.columns)} FROM dipendenti WHERE badge = ?"  # nosec B608
         try:
             results = self.db.execute_query(self.db.DB_DIPENDENTI, query, (badge,))
             if results:
@@ -135,7 +135,7 @@ class EmployeeRepository:
             values = list(data.values())
             values.append(id_risorsa)
 
-            query = f"UPDATE dipendenti SET {', '.join(fields)} WHERE id_risorsa = ?"
+            query = f"UPDATE dipendenti SET {', '.join(fields)} WHERE id_risorsa = ?"  # nosec B608
             try:
                 self.db.execute_query(self.db.DB_DIPENDENTI, query, tuple(values))
             except Exception:
@@ -150,7 +150,7 @@ class EmployeeRepository:
             query = f"""
                 INSERT INTO dipendenti ({", ".join(cols)})
                 VALUES ({", ".join(["?"] * len(cols))})
-            """
+            """  # nosec B608
             params = (
                 cognome,
                 nome,

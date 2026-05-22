@@ -2,6 +2,67 @@
 
 ### Feat
 
+- **splash**: implementata Laser-Track Progress Bar con percentuale olografica dinamica
+- **splash**: raffinamento totale macro-status per eliminare fallback generici
+- **splash**: riorganizzazione header con info stack laterale (versione sopra, rilascio sotto)
+- **splash**: upgrade animazione LICENZA VALIDATA con effetto typewriter e breathing fluido
+- **splash**: aggiunto feedback olografico LICENZA VALIDATA con animazione breathing
+- **splash**: espansione verticale e riorganizzazione finale layout header/footer
+- **splash**: riorganizzazione layout con data sotto il titolo e credits centrati a piè di pagina
+- **splash**: spostata e rinominata data rilascio accanto alla versione nell'header
+- **splash**: aggiunta Build Date dinamica dal changelog nel box metadati
+- **splash**: perfezionata animazione breathing crediti con ciclo fluido e fix indentazione
+- **splash**: animazione typewriter e breathing pulse per i crediti developer
+- **splash**: aggiunto system credit olografico e risolti errori import Ruff
+- **splash**: raffinamento mappatura macro-status per eliminare fallback AVVIO IN CORSO
+- **splash**: raggruppamento macro-fasi e conformità totale QA
+- **splash**: unificato header brand-versione con scaling dinamico
+- **splash**: aggiunto orologio live e DNA tech-trace nel changelog
+- **splash**: sostituita animazione caricamento testuale con PulseIndicator grafico
+- **splash**: aggiunto titolo dinamico della versione e refactoring per standard Ruff
+- **splash**: animazione Slide-Up & Fade con easing OutBack per il changelog ticker
+- **splash**: implementazione Ticker multi-riga per il changelog
+- **splash**: implementazione ChangelogTicker nello splashscreen
+- **gui**: persistenza dello stato dettagli della card meteo al riavvio
+- **gui**: aggiunti pulsanti dettaglio/ritorno in WeatherWidget con animazione spin di Don Ciro
+- **ui**: implement dynamic version badge with sparkles in sidebar changelog
+
+### Fix
+
+- **security**: risolte vulnerabilità Bandit e allineati controlli Ruff
+- **splash**: risolto bug visibilità notifica LICENZA VALIDATA e sincronizzato effetto typewriter
+- **splash**: risolto bug sovrapposizione righe changelog ticker tramite ancoraggio posizioni statiche
+- **updater**: resolve 'Install Now' failure on Windows
+
+## v1.48.0 (2026-05-21)
+
+### Feat
+
+- **timbrature**: implement massive import and real-time access monitoring
+- **ui**: implement dynamic changelog and sidebar breathing warning pulse
+- **gui**: improve changelog UI with light-mode tooltips, clear filters and dynamic next release handling
+- **report**: aggiunta postilla audit per strumenti senza scadenza nel PDF
+
+### Fix
+
+- **bot**: resolve Excel download ambiguity in Timbrature bot using FontAwesome unicode
+- **browser**: remove --no-sandbox, --disable-gpu to resolve STATUS_BREAKPOINT crashes
+- **splash**: pipe license details dynamically to standalone splash screen via binary unbuffered stdin
+- **bot**: prevent TypeError on unexpected societa parameter in Playwright base and Timbrature bot
+- **updater**: improve installer launch robustness on Windows with delay and detached process
+
+### Refactor
+
+- **bots**: enhance interaction robustness and migrate to structural locators
+
+### Perf
+
+- **gui**: optimize splash screen and startup dialog with async license and HWID IPC
+
+## v1.47.0 (2026-05-18)
+
+### Feat
+
 - implement button elevation effect
 - apply Modern Card restyling to all bot panels
 - apply Modern Card style to Storico OdA panel

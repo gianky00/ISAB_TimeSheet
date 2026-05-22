@@ -44,7 +44,8 @@ class PdlRepository:
         as_objects: bool = True,
     ) -> list[PdlRecord] | list[tuple[Any, ...]]:
         """Recupera i PDL filtrati e ordinati."""
-        query = f"SELECT {', '.join(self.columns)} FROM pdl WHERE 1=1"
+        query = f"SELECT {', '.join(self.columns)} FROM pdl WHERE 1=1"  # nosec B608
+  # nosec B608
         params = []
 
         search_text = filters.get("search", "")
@@ -172,7 +173,7 @@ class PdlRepository:
             query = f"""
                 INSERT INTO pdl_programmazione ({", ".join(fields)})
                 VALUES ({", ".join(["?"] * len(fields))})
-            """
+            """  # nosec B608
 
             data_to_insert = []
             for r in records:

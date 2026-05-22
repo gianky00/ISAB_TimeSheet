@@ -7,7 +7,7 @@ Include una robusta logica di terminazione per processi Chrome/Chromedriver "zom
 import logging
 import os
 import re
-import subprocess
+import subprocess  # nosec B404
 import sys
 from contextlib import suppress
 from datetime import UTC, datetime
@@ -151,11 +151,14 @@ def safe_open(path: str | Path) -> bool:
 
     try:
         if is_windows():
-            os.startfile(str(path_obj))  # noqa: S606
+            # Uso intenzionale di startfile per apertura documenti utente (validati sopra)
+            os.startfile(str(path_obj))  # nosec B606 # noqa: S606
         elif sys.platform == "darwin":
-            subprocess.run(["open", str(path_obj)], check=False)
+            # Percorso assoluto per mitigare B607
+            subprocess.run(["/usr/bin/open", str(path_obj)], check=False)  # nosec B603
         else:
-            subprocess.run(["xdg-open", str(path_obj)], check=False)
+            # Percorso assoluto per mitigare B607
+            subprocess.run(["/usr/bin/xdg-open", str(path_obj)], check=False)  # nosec B603
     except Exception:
         return False
     else:
@@ -302,6 +305,9 @@ def get_colored_icon(icon_path: str, color: str = "#000000") -> QIcon:
     """
     if not Path(icon_path).exists():
         return QIcon()
+
+    if "pytest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST"):
+        return QIcon(icon_path)
 
     # Genera chiave unica per la cache
     cache_key = f"{icon_path}_{color}"

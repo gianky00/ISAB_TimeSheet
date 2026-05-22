@@ -1,3 +1,5 @@
+"""Passaggi di elaborazione per l'importazione dello Scarico Ore."""
+
 import io
 import json
 import re
@@ -29,6 +31,7 @@ class LoadScaricoOreStep(ProcessingStep):
     """Carica e decritta il file Excel dello Scarico Ore."""
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue il caricamento del file Excel scarico ore."""
         file_path = Path(context["file_path"])
 
         if not HAS_OPENPYXL:
@@ -51,6 +54,7 @@ class LoadScaricoOreStep(ProcessingStep):
             context["message"] = f"Errore caricamento workbook: {e}"
 
     def _load_scarico_workbook(self, path: Path) -> Any:
+        """Carica il workbook Excel, decrittandolo se necessario."""
         wb_file = io.BytesIO()
         is_encrypted = False
 
@@ -95,6 +99,7 @@ class ProcessScaricoOreRowsStep(ProcessingStep):
     ]
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue il processamento delle righe."""
         if not context.get("success") or "ws" not in context:
             return
 
@@ -126,6 +131,7 @@ class ProcessScaricoOreRowsStep(ProcessingStep):
             context["message"] = f"Errore processamento righe: {e}"
 
     def _process_scarico_ore_row(self, row: Any) -> tuple[Any, ...] | None:
+        """Processa una singola riga estraendo valori e stili."""
         vals = self._extract_row_values(row)
         if not vals:
             return None
@@ -151,6 +157,7 @@ class ProcessScaricoOreRowsStep(ProcessingStep):
         )
 
     def _extract_row_values(self, row: Any) -> list[str] | None:
+        """Estrae i valori testuali dalle celle della riga."""
         c_data, c_p1, c_p2, c_odc, c_pos, c_dalle, c_alle, c_tot, c_desc, c_fin, c_comm = row[0:11]
 
         if c_odc.value is None and c_pos.value is None:
@@ -188,6 +195,7 @@ class ProcessScaricoOreRowsStep(ProcessingStep):
         ]
 
     def _extract_row_styles(self, row: Any, vals: list[str]) -> str:
+        """Estrae i colori (foreground/background) dalle celle e li serializza in JSON."""
         row_styles: dict[str, dict[str, str]] = {}
         for i, key in enumerate(self.COL_KEYS):
             if vals[i] == "":
@@ -243,6 +251,7 @@ class SyncScaricoOreStep(ProcessingStep):
     """Passaggio per la sincronizzazione dello scarico ore con il database."""
 
     def execute(self, context: dict[str, Any]) -> None:
+        """Esegue la sincronizzazione dello scarico ore nel database."""
         if not context.get("success"):
             return
 
@@ -253,7 +262,7 @@ class SyncScaricoOreStep(ProcessingStep):
         from src.core.data_synchronizer import DataSynchronizer  # noqa: PLC0415
         from src.core.database import db_manager  # noqa: PLC0415
 
-        total_added, total_removed = DataSynchronizer.sync_scarico_ore(db_manager.DB_SCARICO_ORE, rows)
+        total_added, total_removed = DataSynchronizer.sync_scarico_ore(db_manager.DB_CONTABILITA, rows)
 
         context["total_added"] = total_added
         context["total_removed"] = total_removed

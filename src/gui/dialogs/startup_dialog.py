@@ -12,9 +12,11 @@ from PySide6.QtCore import (
     QEasingCurve,
     QPoint,
     QPropertyAnimation,
+    QSequentialAnimationGroup,
     Qt,
     QThread,
     QTimer,
+    Slot,
 )
 from PySide6.QtGui import (
     QColor,
@@ -25,12 +27,13 @@ from PySide6.QtWidgets import (
     QDialog,
     QFrame,
     QGraphicsDropShadowEffect,
+    QGraphicsOpacityEffect,
     QHBoxLayout,
     QLabel,
     QVBoxLayout,
 )
 
-from src.core.license_validator import get_hardware_id, get_license_info
+# Rimossa dipendenza sincrona a get_hardware_id e get_license_info per reattività all'avvio
 from src.core.version import __version__
 from src.gui.styles import COLORS
 
@@ -38,8 +41,10 @@ from src.gui.styles import COLORS
 from src.gui.widgets.startup.particle_background import ParticleBackground
 from src.gui.widgets.startup.startup_widgets import (
     AnimatedBorder,
+    ChangelogTicker,
     ConsoleOverlay,
     GlowingProgressBar,
+    PulseIndicator,
     PulsingLogo,
     TechBlueprint,
     TypewriterLabel,
@@ -52,11 +57,11 @@ logger = logging.getLogger(__name__)
 class StartupDialog(QDialog):
     """Splash screen con animazioni fluide a 60fps e effetti 3D."""
 
-    # Dimensioni del contenuto visibile
-    CONTENT_WIDTH = 700
-    CONTENT_HEIGHT = 460
-    # Margine per l'ombra (per evitare che venga tagliata creando "punte")
-    SHADOW_MARGIN = 40
+    # Dimensioni del contenuto visibile (Innalzate proporzionalmente)
+    CONTENT_WIDTH = 850
+    CONTENT_HEIGHT = 680
+    # Margine per l'ombra
+    SHADOW_MARGIN = 50
 
     _thread: QThread | None
     _worker: Any
@@ -151,6 +156,9 @@ class StartupDialog(QDialog):
         self._setup_progress(content_layout)
         self._setup_footer(content_layout)
 
+        # Firma d'autore animata a piè di pagina (centrata)
+        self._setup_credits_bottom(content_layout)
+
     def _setup_header(self, parent_layout: QVBoxLayout) -> None:
         """Configura l'header con logo, blueprint e titoli."""
         header_container = QFrame()
@@ -166,10 +174,9 @@ class StartupDialog(QDialog):
         blueprint_size = 100
         self.blueprint.setFixedSize(blueprint_size, blueprint_size)
         blueprint_offset = -8
-        self.blueprint.move(blueprint_offset, blueprint_offset)  # Centratura rispetto al logo
+        self.blueprint.move(blueprint_offset, blueprint_offset)
 
         icon_path = get_asset_path("assets/app.ico")
-
         self.logo = PulsingLogo(header_container)
         logo_size = 85
         self.logo.setFixedSize(logo_size, logo_size)
@@ -179,47 +186,235 @@ class StartupDialog(QDialog):
         header_layout.addWidget(self.logo)
 
         title_box = QVBoxLayout()
-        title_spacing = 4
-        title_box.setSpacing(title_spacing)
-        self.title = QLabel()
-        self.title.setTextFormat(Qt.TextFormat.RichText)
-        self.title.setText(
-            f'<span style="font-size:40px; font-weight:800; color:{COLORS["bg_white"]}; letter-spacing:2px;">'
-            f'SYNCRO<span style="color:{COLORS["primary_blue"]};">JOB</span></span>'
-        )
-        title_box.addWidget(self.title)
+        title_box.setSpacing(4)
+        self._setup_title_and_release(title_box)
 
-        self.version = QLabel(f"v{__version__}")
-        self.version.setStyleSheet(
-            f"font-size:13px; color:{COLORS['primary_blue']}; opacity: 0.9; font-weight:600; letter-spacing:3px;"
-        )
-        title_box.addWidget(self.version)
         header_layout.addLayout(title_box)
         header_layout.addStretch()
 
         self._setup_license_info(header_layout)
         parent_layout.addWidget(header_container)
 
-    def _setup_license_info(self, parent_layout: QHBoxLayout) -> None:
-        """Configura il box con le informazioni della licenza."""
-        lic_info = get_license_info() or {}
-        client_name = lic_info.get("Cliente", "N/D").upper()
-        expiry_date = lic_info.get("Scadenza Licenza", "N/D")
-        hw_id = lic_info.get("Hardware ID", get_hardware_id() or "UNKNOWN")
+    def _setup_title_and_release(self, title_box: QVBoxLayout) -> None:
+        """Inizializza il blocco titolo e la data di rilascio coordinata."""
+        # Build Date dinamica dal changelog
+        build_date = self._get_build_date()
 
+        # Container orizzontale per Titolo + Info Stack
+        text_row = QHBoxLayout()
+        text_row.setSpacing(12)
+        text_row.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
+        # 1. Titolo Principale (SYNCROJOB)
+        self.title = QLabel()
+        self.title.setTextFormat(Qt.TextFormat.RichText)
+        self.title.setText(
+            f'<span style="font-size:40px; font-weight:900; color:{COLORS["bg_white"]}; letter-spacing:2px;">'
+            f'SYNCRO<span style="color:{COLORS["primary_blue"]};">JOB</span></span>'
+        )
+        title_shadow = QGraphicsDropShadowEffect()
+        title_shadow.setBlurRadius(15)
+        title_shadow.setColor(QColor(0, 0, 0, 200))
+        title_shadow.setOffset(2, 2)
+        self.title.setGraphicsEffect(title_shadow)
+        text_row.addWidget(self.title)
+
+        # 2. Info Stack (Versione sopra, Rilascio sotto)
+        info_stack = QVBoxLayout()
+        info_stack.setSpacing(0)
+        info_stack.setContentsMargins(0, 8, 0, 4)
+
+        # Label Versione (Sopra)
+        self.version_label = QLabel(f"v{__version__}")
+        self.version_label.setStyleSheet(
+            f"font-size: 13px; color: {COLORS['primary_blue']}; font-weight: 700; letter-spacing: 1px;"
+        )
+        v_opacity = QGraphicsOpacityEffect(self.version_label)
+        v_opacity.setOpacity(0.6)
+        self.version_label.setGraphicsEffect(v_opacity)
+        info_stack.addWidget(self.version_label, alignment=Qt.AlignmentFlag.AlignBottom)
+
+        # Label Data di Rilascio (Sotto)
+        self.release_info = QLabel(f"RILASCIATO IL {build_date}")
+        self.release_info.setStyleSheet(
+            f"font-size: 10px; color: {COLORS['primary_blue']}; font-weight: 600; letter-spacing: 1px;"
+        )
+        rel_opacity = QGraphicsOpacityEffect(self.release_info)
+        rel_opacity.setOpacity(0.75)
+        self.release_info.setGraphicsEffect(rel_opacity)
+        info_stack.addWidget(self.release_info, alignment=Qt.AlignmentFlag.AlignTop)
+
+        text_row.addLayout(info_stack)
+        title_box.addLayout(text_row)
+
+        # Placeholder per compatibilità
+        self.version = QLabel()
+
+    def _setup_credits_bottom(self, parent_layout: QVBoxLayout) -> None:
+        """Inizializza la firma d'autore animata a piè di pagina."""
+        self.credits = TypewriterLabel()
+        self.credits.setTextFormat(Qt.TextFormat.RichText)
+        self.credits.setStyleSheet(
+            f"font-size: 9px; color: {COLORS['bg_white']}; letter-spacing: 4px; font-weight: 500;"
+        )
+
+        self.cred_opacity = QGraphicsOpacityEffect(self.credits)
+        self.credits.setGraphicsEffect(self.cred_opacity)
+
+        # Animazione di pulsazione (Breathing Effect - Fluido andata e ritorno)
+        self.cred_pulse_group = QSequentialAnimationGroup(self)
+
+        pulse_in = QPropertyAnimation(self.cred_opacity, b"opacity")
+        pulse_in.setDuration(2000)
+        pulse_in.setStartValue(0.2)
+        pulse_in.setEndValue(0.6)
+        pulse_in.setEasingCurve(QEasingCurve.Type.InOutSine)
+
+        pulse_out = QPropertyAnimation(self.cred_opacity, b"opacity")
+        pulse_out.setDuration(2000)
+        pulse_out.setStartValue(0.6)
+        pulse_out.setEndValue(0.2)
+        pulse_out.setEasingCurve(QEasingCurve.Type.InOutSine)
+
+        self.cred_pulse_group.addAnimation(pulse_in)
+        self.cred_pulse_group.addAnimation(pulse_out)
+        self.cred_pulse_group.setLoopCount(-1)
+
+        parent_layout.addSpacing(10)
+        parent_layout.addWidget(self.credits, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        # Avvio ritardato
+        QTimer.singleShot(800, lambda: self.credits.set_text_animated("DEVELOPED BY GIANCARLO ALLEGRETTI"))
+        QTimer.singleShot(1500, self.cred_pulse_group.start)
+
+    def _setup_license_info(self, parent_layout: QHBoxLayout) -> None:
+        """Configura il box con le informazioni della licenza in modo asincrono (placeholder iniziali)."""
         license_box = QVBoxLayout()
         license_spacing = 2
         license_box.setSpacing(license_spacing)
         license_box.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
 
-        license_box.addLayout(self._create_info_row("CLIENTE:", client_name))
-        license_box.addLayout(self._create_info_row("HW-ID:", hw_id))
-        license_box.addLayout(self._create_info_row("SCADENZA:", expiry_date))
+        lay_c, self.lbl_val_cliente = self._create_info_row("CLIENTE:", "ATTESA...")
+        lay_h, self.lbl_val_hwid = self._create_info_row("HW-ID:", "ATTESA...")
+
+        lay_s, self.lbl_val_scadenza = self._create_info_row("SCADENZA:", "ATTESA...")
+
+        license_box.addLayout(lay_c)
+        license_box.addLayout(lay_h)
+        license_box.addLayout(lay_s)
+
+        # Label di conferma validazione (Olografica Animata)
+        self.lbl_validated = TypewriterLabel()
+        self.lbl_validated.setStyleSheet(
+            f"font-size: 11px; color: {COLORS['success_green']}; font-weight: 900; letter-spacing: 2px;"
+        )
+        self.val_opacity = QGraphicsOpacityEffect(self.lbl_validated)
+        self.val_opacity.setOpacity(0.0)
+        self.lbl_validated.setGraphicsEffect(self.val_opacity)
+
+        # Effetto Glow Neon per la validazione
+        self.val_glow = QGraphicsDropShadowEffect()
+        self.val_glow.setBlurRadius(0)
+        self.val_glow.setColor(QColor(COLORS["success_green"]))
+        self.val_glow.setOffset(0, 0)
+        # Nota: Un widget può avere solo un effetto. Useremo l'opacità e gestiremo il glow via stile o proprietà se necessario,
+        # ma per ora manteniamo l'opacità e usiamo una transizione di colore/glow più netta.
+
+        # Animazione di pulsazione coordinata
+        self.val_pulse = QSequentialAnimationGroup(self)
+
+        # Fase 1: Fade-in rapido
+        p_in = QPropertyAnimation(self.val_opacity, b"opacity")
+        p_in.setDuration(300)
+        p_in.setStartValue(0.0)
+        p_in.setEndValue(1.0)
+        p_in.setEasingCurve(QEasingCurve.Type.OutQuad)
+
+        # Fase 2: Pulsazione "Breathing" (3 cicli)
+        self.val_loop = QSequentialAnimationGroup()
+
+        p_down = QPropertyAnimation(self.val_opacity, b"opacity")
+        p_down.setDuration(500)
+        p_down.setStartValue(1.0)
+        p_down.setEndValue(0.3)
+        p_down.setEasingCurve(QEasingCurve.Type.InOutSine)
+
+        p_up = QPropertyAnimation(self.val_opacity, b"opacity")
+        p_up.setDuration(500)
+        p_up.setStartValue(0.3)
+        p_up.setEndValue(1.0)
+        p_up.setEasingCurve(QEasingCurve.Type.InOutSine)
+
+        self.val_loop.addAnimation(p_down)
+        self.val_loop.addAnimation(p_up)
+        self.val_loop.setLoopCount(3)
+
+        self.val_pulse.addAnimation(p_in)
+        self.val_pulse.addAnimation(self.val_loop)
+
+        license_box.addSpacing(5)
+        license_box.addWidget(self.lbl_validated, alignment=Qt.AlignmentFlag.AlignRight)
 
         parent_layout.addLayout(license_box)
 
-    def _create_info_row(self, label_text: str, value_text: str) -> QHBoxLayout:
-        """Crea una riga di informazione label: valore."""
+    def _get_build_date(self) -> str:
+        """Estrae la data di rilascio della versione corrente dal changelog."""
+        try:
+            import json
+
+            changelog_path = Path(__file__).resolve().parent.parent.parent / "core" / "changelog.json"
+            if changelog_path.exists():
+                with changelog_path.open(encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        for entry in data:
+                            if entry.get("version") == __version__:
+                                raw_date = entry.get("date", "")
+                                if raw_date and "-" in raw_date:
+                                    y, m, d = raw_date.split("-")
+                                    return f"{d}/{m}/{y}"
+                        # Fallback alla data dell'ultima versione se non trovata (molto raro)
+                        if data:
+                            raw_date = data[0].get("date", "")
+                            if raw_date and "-" in raw_date:
+                                y, m, d = raw_date.split("-")
+                                return f"{d}/{m}/{y}"
+        except Exception:
+            logger.exception("Errore nel caricamento della build date nello splash screen")
+        return "N/D"
+
+    @Slot(str, str, str)
+    def update_license_display(self, cliente: str, hw_id: str, scadenza: str) -> None:
+        """Aggiorna le informazioni di licenza visualizzate e mostra il feedback di validazione."""
+        if hasattr(self, "lbl_val_cliente") and self.lbl_val_cliente:
+            self.lbl_val_cliente.setText(cliente.upper())
+        if hasattr(self, "lbl_val_hwid") and self.lbl_val_hwid:
+            self.lbl_val_hwid.setText(hw_id)
+        if hasattr(self, "lbl_val_scadenza") and self.lbl_val_scadenza:
+            self.lbl_val_scadenza.setText(scadenza)
+
+        # Avvio feedback di validazione olografico
+        if hasattr(self, "val_pulse") and hasattr(self, "lbl_validated"):
+            # Impostiamo il testo con effetto typewriter
+            self.lbl_validated.set_text_animated("LICENZA VALIDATA")
+            # Avviamo la pulsazione dell'opacità
+            self.val_pulse.start()
+            # Fade-out finale dopo la pulsazione (aumentato tempo per permettere la lettura)
+            QTimer.singleShot(6000, self._hide_validation_label)
+
+    def _hide_validation_label(self) -> None:
+        """Nasconde la label di validazione con un fade-out fluido."""
+        if not hasattr(self, "val_opacity"):
+            return
+        self._val_fade_out = QPropertyAnimation(self.val_opacity, b"opacity")
+        self._val_fade_out.setDuration(1000)
+        self._val_fade_out.setStartValue(self.val_opacity.opacity())
+        self._val_fade_out.setEndValue(0.0)
+        self._val_fade_out.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self._val_fade_out.start()
+
+    def _create_info_row(self, label_text: str, value_text: str) -> tuple[QHBoxLayout, QLabel]:
+        """Crea una riga di informazione label: valore e restituisce il layout e la label del valore."""
         row = QHBoxLayout()
         row_spacing = 5
         row.setSpacing(row_spacing)
@@ -235,31 +430,57 @@ class StartupDialog(QDialog):
 
         row.addWidget(lbl)
         row.addWidget(val)
-        return row
+        return row, val
 
     def _setup_console(self, parent_layout: QVBoxLayout) -> None:
         """Configura la console di log con TypewriterLabels e overlay CRT."""
         self.log_frame = QFrame()
         self.log_frame.setObjectName("LogConsole")
         c = QColor(COLORS["primary_blue"])
-        log_border_opacity = 0.25
+        log_border_opacity = 0.4
         self.log_frame.setStyleSheet(
-            f"#LogConsole {{ background:rgba(0,0,0,0.4); border-radius:16px; border:1px solid rgba({c.red()},{c.green()},{c.blue()},{log_border_opacity}); }}"
+            f"#LogConsole {{ "
+            f"  background: rgba(0, 0, 0, 0.6); "
+            f"  border-radius: 16px; "
+            f"  border: 1px solid rgba({c.red()}, {c.green()}, {c.blue()}, {log_border_opacity}); "
+            f"}}"
         )
         log_layout = QVBoxLayout(self.log_frame)
-        log_layout.setContentsMargins(15, 12, 15, 12)
-        log_layout.setSpacing(4)
+        log_layout.setContentsMargins(20, 15, 20, 15)
+        log_layout.setSpacing(6)
+
+        header_row = QHBoxLayout()
+        header_row.setContentsMargins(0, 0, 0, 0)
 
         log_header = QLabel("DIAGNOSTICA DI SISTEMA")
-        header_letter_spacing = 3
+        header_letter_spacing = 2
         log_header.setStyleSheet(
-            f"font-size:10px; color:rgba({c.red()},{c.green()},{c.blue()},0.7); letter-spacing:{header_letter_spacing}px; font-weight:800;"
+            f"font-size: 11px; "
+            f"color: {COLORS['primary_blue']}; "
+            f"letter-spacing: {header_letter_spacing}px; "
+            f"font-weight: 900;"
         )
-        log_layout.addWidget(log_header)
+        header_row.addWidget(log_header)
+
+        header_row.addStretch()
+
+        self.clock_label = QLabel()
+        self.clock_label.setStyleSheet(
+            "font-size: 11px; color: rgba(255, 255, 255, 0.4); font-family: 'Consolas'; font-weight: bold;"
+        )
+        header_row.addWidget(self.clock_label)
+
+        log_layout.addLayout(header_row)
+
+        # Timer per l'orologio (aggiornamento ogni secondo)
+        self.clock_timer = QTimer(self)
+        self.clock_timer.timeout.connect(self._update_clock)
+        self.clock_timer.start(1000)
+        self._update_clock()
 
         sep = QFrame()
         sep.setFixedHeight(1)
-        sep_opacity = 0.2
+        sep_opacity = 0.3
         sep.setStyleSheet(f"background:rgba({c.red()},{c.green()},{c.blue()},{sep_opacity});")
         log_layout.addWidget(sep)
 
@@ -282,53 +503,68 @@ class StartupDialog(QDialog):
         self.progress = GlowingProgressBar()
         parent_layout.addWidget(self.progress)
 
-    def _setup_footer(self, parent_layout: QVBoxLayout) -> None:
-        """Configura il footer con indicatore, status."""
-        footer = QHBoxLayout()
-        footer.setContentsMargins(0, 5, 0, 0)
+    def _load_current_changelog_notes(self) -> list[str]:
+        """Carica le note di changelog per la versione corrente dell'applicazione."""
+        try:
+            import json
 
-        self.indicator = QLabel()
-        indicator_size = 8
-        self.indicator.setFixedSize(indicator_size, indicator_size)
-        self.indicator.setStyleSheet(f"background:{COLORS['primary_blue']}; border-radius:4px;")
-        footer.addWidget(self.indicator)
-        indicator_spacing = 8
-        footer.addSpacing(indicator_spacing)
+            changelog_path = Path(__file__).resolve().parent.parent.parent / "core" / "changelog.json"
+            if changelog_path.exists():
+                with changelog_path.open(encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        for entry in data:
+                            if entry.get("version") == __version__:
+                                return list(entry.get("notes", []))
+                        # Se non trova la versione esatta, restituisce le note dell'ultima versione disponibile
+                        if data:
+                            return list(data[0].get("notes", []))
+        except Exception:
+            logger.exception("Errore nel caricamento del changelog nello splash screen")
+        return []
+
+    def _setup_footer(self, parent_layout: QVBoxLayout) -> None:
+        """Configura la riga dello status di caricamento con PulseIndicator."""
+        status_row = QHBoxLayout()
+        status_row.setContentsMargins(0, 5, 0, 0)
+        status_row.setSpacing(12)
+
+        # Pulse Indicator Olografico
+        self.loading_pulse = PulseIndicator()
+        status_row.addWidget(self.loading_pulse)
 
         self.status = QLabel("AVVIO IN CORSO...")
         self.status.setStyleSheet(
-            f"font-size:11px; color:{COLORS['bg_white']}; opacity: 0.5; font-weight:600; letter-spacing:2px;"
+            f"font-size:11px; color:{COLORS['bg_white']}; opacity: 0.7; font-weight:900; letter-spacing:2px;"
         )
-        footer.addWidget(self.status)
+        status_row.addWidget(self.status)
 
-        self.dots = QLabel("")
-        self.dots.setStyleSheet(
-            f"font-size:11px; color:{COLORS['primary_blue']}; opacity: 0.8; font-weight:600;"
-        )
-        footer.addWidget(self.dots)
+        status_row.addStretch()
+        parent_layout.addLayout(status_row)
 
-        footer.addStretch()
-        parent_layout.addLayout(footer)
+        self._setup_ticker_row(parent_layout)
+
+    def _setup_ticker_row(self, parent_layout: QVBoxLayout) -> None:
+        """Posiziona il ticker del changelog multi-riga centrato in basso."""
+        ticker_layout = QHBoxLayout()
+        # Riduciamo il margine superiore per far stare comodamente 3 righe
+        ticker_layout.setContentsMargins(0, 5, 0, 0)
+
+        self.ticker = ChangelogTicker()
+        notes = self._load_current_changelog_notes()
+        self.ticker.set_notes(notes)
+
+        ticker_layout.addStretch(1)
+        ticker_layout.addWidget(self.ticker, alignment=Qt.AlignmentFlag.AlignCenter)
+        ticker_layout.addStretch(1)
+
+        parent_layout.addLayout(ticker_layout)
 
     def _setup_animations(self) -> None:
-        """Configura i timer per le animazioni (dots, pulse, fade-in)."""
-        self._dot_count = 0
-        self._dot_timer = QTimer(self)
-        self._dot_timer.timeout.connect(self._animate_dots)
-        dot_interval_ms = 350
-        self._dot_timer.start(dot_interval_ms)
-
-        self._pulse_state = True
-        self._pulse_timer = QTimer(self)
-        self._pulse_timer.timeout.connect(self._pulse_indicator)
-        pulse_interval_ms = 800
-        self._pulse_timer.start(pulse_interval_ms)
-
-        # Fade in
+        """Configura le animazioni di ingresso dello splash screen."""
         self.setWindowOpacity(0.0)
         self._fade = QPropertyAnimation(self, b"windowOpacity")
-        fade_duration_ms = 600
-        self._fade.setDuration(fade_duration_ms)
+        self._fade.setDuration(600)
         self._fade.setStartValue(0.0)
         self._fade.setEndValue(1.0)
         self._fade.setEasingCurve(QEasingCurve.Type.OutCubic)
@@ -372,56 +608,96 @@ class StartupDialog(QDialog):
         """Interrompe il drag della finestra."""
         self._drag_pos = None
 
-    def _animate_dots(self) -> None:
-        max_dots = 4
-        self._dot_count = (self._dot_count + 1) % max_dots
-        self.dots.setText("." * self._dot_count)
-
-    def _pulse_indicator(self) -> None:
-        self._pulse_state = not self._pulse_state
-        c = QColor(COLORS["primary_blue"])
-        color = COLORS["primary_blue"] if self._pulse_state else f"rgba({c.red()},{c.green()},{c.blue()},0.4)"
-        self.indicator.setStyleSheet(f"background:{color}; border-radius:4px;")
-
     def _on_progress(self, message: str, prog: int) -> None:
-        """Aggiorna UI e particelle per convergenza."""
-        full_entry = f"> {message}"
-        self.status.setText(message.upper())
-        self.particles.set_progress(prog)  # Sincronizza convergenza particelle
+        """Aggiorna UI, particelle e colore del PulseIndicator con raggruppamento in macro-fasi."""
+        self.status.setText(self._map_macro_status(message, prog))
+        self.particles.set_progress(prog)
+        self._update_indicators(prog)
+        self._append_console_log(message)
+        self.progress.setValue(prog)
 
-        threshold_success = 90
-        threshold_blue = 50
+    def _map_macro_status(self, message: str, prog: int) -> str:
+        """Mappa il messaggio di log granulare in una macro-fase leggibile."""
+        msg_upper = message.upper()
+        mapping = {
+            ("DATABASE", "TABELLE", "SQL", "BACKUP", "ENGINE"): "INIZIALIZZAZIONE DATABASE",
+            ("MODULE", "CORE", "LIBRARY", "NUCLEO", "BOT", "REGISTRY"): "CARICAMENTO MODULI CORE",
+            (
+                "GUI",
+                "RENDER",
+                "WIDGET",
+                "UI",
+                "INTERFACCIA",
+                "DASHBOARD",
+                "SCHEDULER",
+            ): "PREPARAZIONE INTERFACCIA UTENTE",
+            (
+                "CONFIG",
+                "SETTING",
+                "PATH",
+                "AMBIENTE",
+                "DIPENDENZE",
+                "VALIDAZIONE",
+            ): "CARICAMENTO CONFIGURAZIONI",
+            ("DIPENDENTI", "ANAGRAFICA", "PERSONALE", "DIRECTORY", "SCHEDE"): "VERIFICA ARCHIVIO PERSONALE",
+            ("ODA", "ORDINI", "STORICO"): "ANALISI STORICO ORDINI",
+            ("PDL", "SYNC", "DATAEASE", "BRIDGE"): "SINCRONIZZAZIONE DATI ESTERNI",
+            ("LICENZA", "LICENSE", "HWID", "IDENTIT", "HANDSHAKE", "CERTIFICATI"): "SICUREZZA E LICENZA",
+            ("LOGGING", "LOG"): "SISTEMA DI LOGGING",
+            ("PLAYWRIGHT", "WEBDRIVER", "PDF", "EXCEL", "OTTIMIZZAZIONE", "MOTORI"): "OTTIMIZZAZIONE RISORSE",
+            ("ORE", "REPOSITORY"): "CARICAMENTO REPOSITORY ORE",
+            ("ASSET",): "REGISTRO ASSET AZIENDALI",
+            ("NOTIFICA",): "SISTEMA DI NOTIFICHE",
+            ("MANUALE",): "MANUALE OPERATIVO",
+            ("CONSUNTIVO",): "ELABORAZIONE CONSUNTIVI",
+        }
 
-        if prog >= threshold_success:
-            self.indicator.setStyleSheet(f"background:{COLORS['success_green']}; border-radius:4px;")
-        elif prog >= threshold_blue:
-            self.indicator.setStyleSheet(f"background:{COLORS['primary_blue']}; border-radius:4px;")
+        for keys, status in mapping.items():
+            if any(k in msg_upper for k in keys):
+                return status
+
+        if prog >= 95:
+            return "SISTEMA PRONTO"
+        if prog <= 15:
+            return "INIZIALIZZAZIONE SISTEMA"
+
+        return "OTTIMIZZAZIONE AMBIENTE"
+
+    def _update_indicators(self, prog: int) -> None:
+        """Aggiorna i colori degli indicatori visuali in base al progresso."""
+        if not hasattr(self, "loading_pulse"):
+            return
+        if prog >= 90:
+            self.loading_pulse.color = QColor(COLORS["success_green"])
+        elif prog >= 50:
+            self.loading_pulse.color = QColor(COLORS["primary_blue"])
         else:
-            self.indicator.setStyleSheet(f"background:{COLORS['warning_orange']}; border-radius:4px;")
+            self.loading_pulse.color = QColor(COLORS["warning_orange"])
 
-        self.current_logs.append(full_entry)
-        max_log_history = 5
-        if len(self.current_logs) > max_log_history:
+    def _append_console_log(self, message: str) -> None:
+        """Aggiunge un nuovo log alla console con effetto typewriter."""
+        self.current_logs.append(f"> {message}")
+        if len(self.current_logs) > 5:
             self.current_logs.pop(0)
 
-        for i in range(max_log_history):
+        for i, lbl in enumerate(self.log_labels):
             if i < len(self.current_logs):
                 is_last = i == len(self.current_logs) - 1
-                opacity = 1.0 if is_last else 0.2 + i * 0.15
-
-                self.log_labels[i].setStyleSheet(
-                    f"font-size:10px; font-family:'Consolas',monospace; color:white; opacity:{opacity};"
+                lbl.setStyleSheet(
+                    f"font-size:10px; font-family:'Consolas',monospace; color:white; opacity:{1.0 if is_last else 0.4};"
                 )
-
                 if is_last:
-                    anim_speed = 15
-                    self.log_labels[i].set_text_animated(self.current_logs[i], speed=anim_speed)
+                    lbl.set_text_animated(self.current_logs[i])
                 else:
-                    self.log_labels[i].set_text_instant(self.current_logs[i])
+                    lbl.set_text_instant(self.current_logs[i])
             else:
-                self.log_labels[i].set_text_instant("")
+                lbl.set_text_instant("")
 
-        self.progress.setValue(prog)
+    def _update_clock(self) -> None:
+        """Aggiorna la label dell'orologio con l'ora attuale."""
+        from datetime import datetime
+
+        self.clock_label.setText(datetime.now().strftime("%H:%M:%S"))
 
     def _on_finished(self, success: bool) -> None:
         self._init_result = success
@@ -446,8 +722,12 @@ class StartupDialog(QDialog):
             self.particles.timer.stop()
             self.border.timer.stop()
             self.progress.timer.stop()
-            self._dot_timer.stop()
-            self._pulse_timer.stop()
+            if hasattr(self, "clock_timer"):
+                self.clock_timer.stop()
+            if hasattr(self, "ticker"):
+                self.ticker.cycle_timer.stop()
+                if hasattr(self.ticker, "fade_anim"):
+                    self.ticker.fade_anim.stop()
             for lbl in self.log_labels:
                 lbl._timer.stop()
             if self._thread and self._thread.isRunning():

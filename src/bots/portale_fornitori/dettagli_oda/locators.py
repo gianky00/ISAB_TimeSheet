@@ -17,14 +17,17 @@ class DettagliOdALocators:
         "//span[contains(@class, 'x-btn-inner')][text()='Oda']",
     )
 
-    # Filters
-    SUPPLIER_INPUT = (By.NAME, "CodiceFornitore")
-    """Campo input del fornitore (rilevato: CodiceFornitore)."""
+    SUPPLIER_INPUT = (
+        By.XPATH,
+        "//input[@name='CodiceFornitore' or @name='FornitoreSap' or @name='Fornitore']",
+    )
+    """Campo input del fornitore (supporta CodiceFornitore, FornitoreSap e Fornitore)."""
 
     SUPPLIER_ARROW = (
         By.XPATH,
-        "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]",
+        "//input[@name='CodiceFornitore' or @name='FornitoreSap' or @name='Fornitore']/ancestor::div[contains(@class, 'x-form-trigger-wrap') or contains(@class, 'x-form-item-body')]//div[contains(@class, 'x-form-arrow-trigger')]",
     )
+
 
     # Input Fields (Specific to Portale ISAB)
     ODA_NUMBER_FIELD = (By.CSS_SELECTOR, "input[name='NumeroOdA']")

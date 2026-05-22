@@ -5,7 +5,7 @@ Segue SRP isolando PySide6.
 """
 
 import os
-import subprocess
+import subprocess  # nosec B404
 from contextlib import suppress
 from typing import Any, cast
 
@@ -60,5 +60,7 @@ class TelegramGUIBridge(ScreenshotProvider, AppStatusProvider):
     def restart_application(self) -> None:
         """Esegue il restart fisico."""
         with suppress(Exception):
-            subprocess.Popen(["cmd.exe", "/c", "start", os.path.abspath("avvio.bat")])
+            system_root = os.environ.get("SYSTEMROOT", "C:\\Windows")
+            cmd_path = os.path.join(system_root, "System32\\cmd.exe")
+            subprocess.Popen([cmd_path, "/c", "start", os.path.abspath("avvio.bat")])  # nosec B603
             QApplication.quit()

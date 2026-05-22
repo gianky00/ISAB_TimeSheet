@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "syncrojob"
-version = "1.47.0"
+version = "1.49.0"
 description = "ISAB TimeSheet application"
 authors = ["Giancarlo Allegretti"]
 packages = [
@@ -199,7 +199,7 @@ max-complexity = 10
 "*.py" = ["PTH"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["src"]
+known-first-party = ["src", "admin"]
 force-single-line = false
 combine-as-imports = true
 
@@ -293,7 +293,7 @@ ignore_missing_imports = true
 
 
 [tool.deptry]
-known_first_party = ["src"]
+known_first_party = ["src", "admin"]
 exclude = [".venv", "build", "dist", "temp", "admin", "scripts", "site", "docs", "graveyard", "mutants", "scratch"]
 
 [tool.deptry.per_rule_ignores]
@@ -341,16 +341,23 @@ quiet = false
 color = true
 
 [tool.bandit]
-skips = ["B608", "B603", "B606", "B607", "B404", "B311", "B101", "B110", "B112", "B105", "B106", "B107"]
-exclude = ["src/bots/safework/pdl/search_bot.py"]
+skips = ["B608"]
+exclude_dirs = [".venv", "tests", "docs", "build", "dist", "temp", "admin", "scripts"]
+# Soppressione granulare tramite # nosec nel codice per casi verificati.
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "1.47.0"
+version = "1.49.0"
 tag_format = "v$version"
 changelog_file = "CHANGELOG.md"
 update_changelog_on_bump = true
 version_files = [
     "src/core/version.py:__version__",
     "pyproject.toml:version"
+]
+
+[tool.refurb]
+ignore = [
+    "FURB111", # Redundant lambda (Pericoloso con segnali PySide6/Qt)
+    "FURB184", # Chained statements (Peggiore leggibilità in casi complessi)
 ]

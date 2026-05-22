@@ -133,7 +133,7 @@ class StructuredLogger:
         except UnicodeEncodeError:
             safe_line = console_line.encode("ascii", "replace").decode("ascii")
             print(safe_line)
-        except Exception:  # noqa: S110
+        except Exception:  # nosec B110 # noqa: S110
             pass
 
         if exception:

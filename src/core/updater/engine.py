@@ -7,7 +7,7 @@ import contextlib
 import json
 import logging
 import os
-import subprocess
+import subprocess  # nosec B404
 import sys
 import tempfile
 import time
@@ -61,7 +61,7 @@ class DownloadWorker(QThread):
 
     # Costanti per il controllo del flusso (Ottimizzazione GUI)
     PROGRESS_INTERVAL = 0.1  # 10 Hz (100ms)
-    EMA_ALPHA = 0.1  # Coefficiente di smoothing per la velocit
+    EMA_ALPHA = 0.1  # Coefficiente di smoothing per la velocità
 
     def stop(self) -> None:
         """Richiede l'interruzione del download."""
@@ -90,7 +90,7 @@ class DownloadWorker(QThread):
 
             total_size = src_path.stat().st_size
             downloaded = 0
-            # Granularit  a 128KB (molto fluida anche su connessioni lente ~0.6MB/s)
+            # Granularità a 128KB (molto fluida anche su connessioni lente ~0.6MB/s)
             chunk_size = 128 * 1024
 
             with open(self.url_or_path, "rb") as f_src, open(setup_path, "wb") as f_dst:
@@ -252,24 +252,33 @@ def run_installer_and_exit(setup_path: str) -> None:
             flags = subprocess.DETACHED_PROCESS if os.name == "nt" else 0
 
             if os.name == "nt":
-                # Avvio tramite cmd per il timeout, garantisce che l'app corrente sia chiusa prima che l'installer agisca
-                args = [
-                    "cmd.exe",
-                    "/c",
-                    f'timeout /t 2 /nobreak > NUL && "{setup_path}" /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS',
-                ]
-                subprocess.Popen(
-                    args, shell=False, creationflags=flags, close_fds=True, stdin=subprocess.DEVNULL
+                # Sostituito 'timeout' con 'ping' perche 'timeout' fallisce con input reindirizzato (DEVNULL)
+                # 'ping -n 3' attende circa 2 secondi.
+                cmd = f'ping -n 3 127.0.0.1 > NUL && "{setup_path}" /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS'
+                subprocess.Popen(  # nosec B602 # noqa: S602
+                    cmd,
+                    shell=True,
+                    creationflags=flags,
+                    close_fds=True,
+                    stdin=subprocess.DEVNULL,
                 )
             else:
-                subprocess.Popen(
+                subprocess.Popen(  # nosec B603
                     [setup_path, "/CLOSEAPPLICATIONS", "/RESTARTAPPLICATIONS"],
                     close_fds=True,
                 )
         except Exception:
             logger.exception("Errore durante l'avvio dell'installer")
+    else:
+        logger.error("Installer non trovato nel percorso previsto: %s", setup_path)
+        # PLC0415: Import locale per evitare import circolari con la GUI
+        from src.gui.widgets.toast import ToastManager  # noqa: PLC0415
 
-        sys.exit(0)
+        with contextlib.suppress(Exception):
+            ToastManager.instance().show("Errore: Installer non trovato. Riprova il download.", "error")
+
+    # In ogni caso usciamo, per evitare stati incoerenti
+    sys.exit(0)
 
 
 def run_pending_installer() -> None:
@@ -280,13 +289,15 @@ def run_pending_installer() -> None:
         try:
             # Usa DETACHED_PROCESS per slegarsi dal ciclo di vita dell'app corrente
             flags = subprocess.DETACHED_PROCESS if os.name == "nt" else 0
-            # Avvio tramite cmd per il timeout, ma con quoting rinforzato
-            args = [
-                "cmd.exe",
-                "/c",
-                f'timeout /t 3 /nobreak > NUL && "{_pending_installer_path}" /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS',
-            ]
-            subprocess.Popen(args, shell=False, creationflags=flags, close_fds=True, stdin=subprocess.DEVNULL)
+            # Sostituito 'timeout' con 'ping' per robustezza (vedi run_installer_and_exit)
+            cmd = f'ping -n 3 127.0.0.1 > NUL && "{_pending_installer_path}" /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS'
+            subprocess.Popen(  # nosec B602 # noqa: S602
+                cmd,
+                shell=True,
+                creationflags=flags,
+                close_fds=True,
+                stdin=subprocess.DEVNULL,
+            )
         except Exception:
             logger.exception("Errore durante l'avvio dell'installer pendente")
 

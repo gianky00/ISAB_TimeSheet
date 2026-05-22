@@ -220,7 +220,7 @@ class BotParametersWidget(QWidget):
         self.settings_btn.setIconSize(QSize(20, 20))
         self.settings_btn.setFixedSize(38, 38)
         self.settings_btn.setToolTip("Gestisci fornitori")
-        self.settings_btn.clicked.connect(lambda: self.settings_requested.emit())
+        self.settings_btn.clicked.connect(self.settings_requested.emit)
         self.settings_btn.setStyleSheet(self._get_icon_btn_style())
         hbox.addWidget(self.settings_btn)
 

@@ -2,15 +2,15 @@
 SyncroJob - Service Controller
 Controller per il coordinamento dei servizi di background, l'automazione dei report e la gestione del parallelismo bot.
 Implementa una logica di scheduling intelligente che permette l'esecuzione contemporanea di bot su portali diversi
-(es. Portale Fornitori e SafeWork) garantendo al contempo la sequenzialit  delle operazioni sullo stesso sito.
+(es. Portale Fornitori e SafeWork) garantendo al contempo la sequenzialità delle operazioni sullo stesso sito.
 Gestisce inoltre l'inoltro automatico delle notifiche critiche al bot Telegram e il check periodico degli aggiornamenti.
 """
 
 import logging
-import os
 import sys
 from contextlib import suppress
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, Final
 
 from PySide6.QtCore import QObject, QTimer
@@ -202,7 +202,7 @@ class ServiceController(QObject):
     def _run_certificati_autopilot(self, config: dict[str, Any]) -> None:
         """Avvia il worker per l'aggiornamento dei certificati campione."""
         cert_path = config.get("certificati_campione_path", "")
-        if not cert_path or not os.path.exists(cert_path):
+        if not cert_path or not Path(cert_path).exists():
             logger.warning("Autopilot Certificati: Path non configurato o non valido.")
             return
 
@@ -301,9 +301,7 @@ class ServiceController(QObject):
 
         certs_to_report = []
         for certs in groups.values():
-            latest = sorted(certs, key=lambda x: str(x[ContabilitaQueries.CERT_IDX_EMISSIONE]), reverse=True)[
-                0
-            ]
+            latest = max(certs, key=lambda x: str(x[ContabilitaQueries.CERT_IDX_EMISSIONE]))
             matricola = str(latest[ContabilitaQueries.CERT_IDX_MATRICOLA]).strip()
 
             if matricola in engine._exclusions:

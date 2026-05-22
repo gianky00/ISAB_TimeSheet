@@ -97,9 +97,6 @@ class ScaricoOrePanel(QWidget):
         )
         layout.addWidget(self.tabs)
 
-        # Assicuriamo che il layout gestisca la sovrapposizione correttamente (usando un stacked layout o posizionamento assoluto se necessario)
-        # Per ora manteniamo il posizionamento indipendente
-
     def _perform_search(self, text: str) -> None:
         """
         Applica i filtri testuali e per colonna al modello dati.
@@ -112,6 +109,8 @@ class ScaricoOrePanel(QWidget):
 
     def _start_update(self) -> None:
         """Avvia la procedura di sincronizzazione/importazione dei dati via controller."""
+
+
         path = config_manager.load_config().get("dataease_path", "")
         if not path:
             ConfirmationDialog.show_warning(

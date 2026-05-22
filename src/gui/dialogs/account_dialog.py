@@ -22,7 +22,7 @@ class AccountDialog(QDialog):
         self,
         parent: QWidget | None = None,
         username: str = "",
-        password: str = "",
+        password: str = "",  # nosec B107
         account_type: str = "",
         show_type: bool = False,
     ) -> None:

@@ -55,6 +55,7 @@ class AnagraficaPage(QWidget):
             "CODICE FISCALE",
             "ID\nBADGE",
             "DATA\nASSUNZIONE",
+            "ULTIMO ACCESSO\nISAB",
         ]
         self.model = FastTableModel([], self.headers)
 
@@ -84,7 +85,7 @@ class AnagraficaPage(QWidget):
         content_layout.setSpacing(10)
 
         self.table = EmployeeTableView(self.model)
-        self.table.configure_columns([80, 100, 200, 150, 180, 100, 145])
+        self.table.configure_columns([80, 100, 200, 150, 180, 100, 130, 160])
         self.table.employee_selected.connect(self._on_selection_changed)
         self.table.monitoring_toggled.connect(self._on_monitoring_toggled)
         content_layout.addWidget(self.table)
@@ -149,9 +150,9 @@ class AnagraficaPage(QWidget):
         col_cod_fiscale = 4
         col_badge = 5
         col_data_assunzione = 6
-        col_data_nascita = 7
-        col_data_import = 8
-        col_cognome = 9
+        col_data_nascita = 8
+        col_data_import = 9
+        col_cognome = 10
 
         mapping = {
             "ID Risorsa": col_id_risorsa,

@@ -1,3 +1,5 @@
+"""Script di utilità per correggere le chiamate di logging obsolete nel codice sorgente."""
+
 import os
 import re
 from pathlib import Path

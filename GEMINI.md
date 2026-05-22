@@ -21,11 +21,15 @@ Prima di ogni commit o conclusione di task, devono essere superati i seguenti co
 - **Native Crash:** `faulthandler` deve essere attivo per catturare eccezioni C++ della GUI.
 - **Secrets:** Non loggare MAI dati sensibili.
 
-### 4. Testing & Validazione
+### 4. Integrità Segnali PySide6 (QT)
+- **Signal Safety:** Non rimuovere MAI le `lambda` dalle connessioni dei segnali (es. FURB111) a meno che mittente e destinatario non abbiano la stessa firma. La stabilità della UI prevale sulla brevità del codice.
+- **Explicit Disconnect:** Disconnetti sempre i segnali se il widget viene riutilizzato dinamicamente.
+
+### 5. Testing & Validazione
 - **Regressione:** Ogni fix richiede un nuovo test in `tests/`.
 - **Robustezza:** Usa `tests/run_robust_tests.py` per validare l'intera suite prima del rilascio.
 
-### 5. Versionamento Dinamico
+### 6. Versionamento Dinamico
 - La versione è gestita via `commitizen` e `pyproject.toml`. Non modificarla manualmente se non richiesto esplicitamente.
 
 ## 📂 STRUTTURA DOCUMENTALE

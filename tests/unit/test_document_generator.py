@@ -23,7 +23,7 @@ class TestDocumentGenerator:
 
         # Verify printer configuration
         mock_printer.setOutputFileName.assert_called_with("output.pdf")
-        mock_doc.print.assert_called_with(mock_printer)
+        mock_doc.print_.assert_called_with(mock_printer)
 
     @patch("src.utils.document_generator.QPrinter")
     @patch("src.utils.document_generator.QTextDocument")

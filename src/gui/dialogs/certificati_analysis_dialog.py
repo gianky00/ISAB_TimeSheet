@@ -388,7 +388,7 @@ class ScadenzeAnalysisDialog(QDialog):
         try:
             # 1. Importazione win32com
             try:
-                import win32com.client
+                import win32com.client  # nosec B403
 
                 win32com.client.Dispatch("Outlook.Application")
             except ImportError as err:
@@ -532,7 +532,7 @@ class ScadenzeAnalysisDialog(QDialog):
         """Rimuove i file temporanei delle immagini."""
         for p in paths:
             with suppress(Exception):
-                os.remove(p)
+                Path(p).unlink()
 
     def _capture_widgets_as_images(self) -> list[str]:
         """Cattura solo gli screenshot delle sezioni critiche."""
@@ -545,7 +545,7 @@ class ScadenzeAnalysisDialog(QDialog):
                     title_label = w.findChild(QLabel)
                     if title_label:
                         text = title_label.text().upper()
-                        if any(x in text for x in ["SCADUTI", "IN SCADENZA", "DATA NON DISPONIBILE"]):
+                        if any(x in text for x in ("SCADUTI", "IN SCADENZA", "DATA NON DISPONIBILE")):
                             widgets.append(w)
         paths = []
         temp_dir = tempfile.gettempdir()

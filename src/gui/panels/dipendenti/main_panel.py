@@ -68,8 +68,14 @@ class DipendentiPanel(QWidget):
 
         # Sincronizzazione dati tra tab
         self.manager_page.data_changed.connect(self.anagrafica_page.refresh_data)
+        self.tabs.currentChanged.connect(self._on_tab_changed)
 
         main_layout.addWidget(self.tabs)
+
+    def _on_tab_changed(self, index: int) -> None:
+        """Esegue il refresh automatico dei dati quando si cambia tab."""
+        if index == 0:  # Tab Monitoraggio
+            self.anagrafica_page.refresh_data()
 
     def set_current_tab(self, index: int | None = None) -> None:
         """Cambia il tab visualizzato in base all'indice fornito."""

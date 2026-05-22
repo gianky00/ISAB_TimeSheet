@@ -46,6 +46,7 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
 
     def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs: Any) -> None:
         """Inizializza il bot con i parametri temporali e il fornitore."""
+        kwargs.pop("societa", None)
         super().__init__(**kwargs)
         self.data_da = data_da
         self.data_a = data_a
@@ -77,31 +78,61 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
 
         return True, ""
 
+    def _normalize_ranges(self, data: list[dict[str, Any]] | dict[str, Any]) -> list[dict[str, Any]]:
+        """
+        Normalizza i dati di input in una lista di intervalli temporali.
+
+        Args:
+          data: Dati grezzi ricevuti dal worker.
+
+        Returns:
+          list: Lista di dizionari contenenti data_da, data_a e fornitore.
+        """
+        from typing import cast
+
+        rows = data if isinstance(data, list) else data.get("rows", [])
+        if rows:
+            # Se abbiamo più righe, le trattiamo come una coda di intervalli
+            return [
+                {
+                    "data_da": row.get("data_da", self.data_da),
+                    "data_a": row.get("data_a", self.data_a),
+                    "fornitore": row.get("fornitore", self.fornitore),
+                }
+                for row in rows
+            ]
+
+        if isinstance(data, dict) and data.get("ranges"):
+            # Modalità esplicita multi-range (usata da Crea Database)
+            self.fornitore = data.get("fornitore", self.fornitore)
+            return cast("list[dict[str, Any]]", data["ranges"])
+
+        # Fallback singolo range (default)
+        return [
+            {
+                "data_da": (data.get("data_da") if isinstance(data, dict) else None) or self.data_da,
+                "data_a": (data.get("data_a") if isinstance(data, dict) else None) or self.data_a,
+                "fornitore": (data.get("fornitore") if isinstance(data, dict) else None) or self.fornitore,
+            }
+        ]
+
     def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Esegue il workflow completo di recuperòe importazione delle timbrature."""
         self.update_step("login", StepStatus.COMPLETED)
 
-        rows = data if isinstance(data, list) else data.get("rows", [])
-        if rows:
-            row = rows[0]
-            self.data_da = row.get("data_da", self.data_da)
-            self.data_a = row.get("data_a", self.data_a)
-            self.fornitore = row.get("fornitore", self.fornitore)
-        elif isinstance(data, dict):
-            self.data_da = data.get("data_da", self.data_da)
-            self.data_a = data.get("data_a", self.data_a)
-            self.fornitore = data.get("fornitore", self.fornitore)
+        # Gestione parametri da input (modalità singola o multi-range)
+        ranges = self._normalize_ranges(data)
 
-        self.log(
-            f"[AVVIO] Inizio recuperòtimbrature (PW) per {self.fornitore} ({self.data_da} - {self.data_a})..."
-        )
+        if not ranges:
+            self.log("❌ Nessun intervallo temporale specificato.")
+            return False
 
         if not self.page:
             return False
 
         page_obj = PlaywrightTimbraturePage(self.page, self.log, self.download_path)
 
-        # 1. Navigation
+        # 1. Navigation (una sola volta per sessione)
         self.update_step("nav", StepStatus.RUNNING)
         if not page_obj.navigate_to_timbrature():
             self.log("❌ Non riesco a raggiungere la sezione Timbrature.")
@@ -109,37 +140,59 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
             return False
         self.update_step("nav", StepStatus.COMPLETED)
 
-        # 2. Filter & Download
-        self.update_step("filter", StepStatus.RUNNING)
-        if not page_obj.set_filters(self.fornitore, self.data_da, self.data_a):
-            self.log("❌ Filtri non applicati correttamente.")
-            self.update_step("filter", StepStatus.ERROR)
-            return False
-        self.update_step("filter", StepStatus.COMPLETED)
+        # 2. Ciclo di scarico per ogni intervallo
+        success_count = self._process_download_ranges(page_obj, ranges)
 
-        self.update_step("download", StepStatus.RUNNING)
-        excel_path = page_obj.download_excel()
+        self.log(f"ℹ️ Procedura conclusa. Periodi scaricati: {success_count}/{len(ranges)}")
+        return success_count > 0
 
-        # 3. Process File
-        if excel_path:
-            self.update_step("download", StepStatus.COMPLETED)
-            self.update_step("import", StepStatus.RUNNING)
-            self.log("✅ Report scaricato! Sto analizzando i dati...")
-            try:
-                self.storage.import_excel(excel_path, self.log)
-                self.log("   Dati salvati nel database con successo.")
-                self.update_step("import", StepStatus.COMPLETED)
-            except Exception as e:
-                self.log(f"❌ Errore durante il salvataggio: {e}")
-                self.update_step("import", StepStatus.ERROR)
-            finally:
-                p = Path(excel_path)
-                if p.exists():
+    def _process_download_ranges(self, page_obj: PlaywrightTimbraturePage, ranges: list[dict[str, Any]]) -> int:
+        """
+        Cicla sugli intervalli e gestisce download e importazione.
+
+        Args:
+          page_obj: Page Object per l'interazione Playwright.
+          ranges: Lista di intervalli da processare.
+
+        Returns:
+          int: Numero di periodi scaricati e importati con successo.
+        """
+        success_count = 0
+        total_ranges = len(ranges)
+
+        for i, rng in enumerate(ranges, 1):
+            d_da, d_a = rng["data_da"], rng["data_a"]
+            forn = rng.get("fornitore", self.fornitore)
+
+            self.log(f"[BATCH {i}/{total_ranges}] Scarico periodo: {d_da} - {d_a}")
+
+            # Filtro
+            self.update_step("filter", StepStatus.RUNNING)
+            if not page_obj.set_filters(forn, d_da, d_a):
+                self.log(f"⚠️ Filtri falliti per {d_da}-{d_a}. Passo al prossimo.")
+                self.update_step("filter", StepStatus.ERROR)
+                continue
+            self.update_step("filter", StepStatus.COMPLETED)
+
+            # Download
+            self.update_step("download", StepStatus.RUNNING)
+            excel_path = page_obj.download_excel()
+
+            if excel_path:
+                self.update_step("download", StepStatus.COMPLETED)
+                # Import
+                self.update_step("import", StepStatus.RUNNING)
+                try:
+                    self.storage.import_excel(excel_path, self.log)
+                    success_count += 1
+                    self.update_step("import", StepStatus.COMPLETED)
+                except Exception as e:
+                    self.log(f"❌ Errore import {Path(excel_path).name}: {e}")
+                    self.update_step("import", StepStatus.ERROR)
+                finally:
                     with suppress(Exception):
-                        p.unlink()
-        else:
-            self.log("⚠️ Non ho trovato dati o il download non  partito.")
-            self.update_step("download", StepStatus.ERROR)
-
-        self.log("ℹ️ Procedura conclusa.")
-        return True
+                        Path(excel_path).unlink()
+            else:
+                self.log(f"⚠️ Nessun dato trovato per il periodo {d_da} - {d_a}")
+                self.update_step("download", StepStatus.ERROR)
+        return success_count
