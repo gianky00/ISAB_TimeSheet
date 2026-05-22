@@ -9,6 +9,7 @@ from src.core.bots.services.base_service import BaseBotService
 
 class PrenotaBPService(BaseBotService):
     """Implementazione del servizio per la prenotazione BP."""
+
     def __init__(self) -> None:
         super().__init__("prenota_bp")
 

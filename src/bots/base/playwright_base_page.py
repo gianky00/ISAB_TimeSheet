@@ -134,4 +134,3 @@ class PlaywrightBasePage:
             return False
         else:
             return True
-

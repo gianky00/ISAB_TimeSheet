@@ -55,9 +55,7 @@ class ExtractMetadataStep(ProcessingStep):
         # Controlla se il foglio ha righe di dati valide
         if self._is_sheet_empty(ws):
             context["is_empty"] = True
-            context["metadata"] = TimesheetMetadata(
-                odc=odc, pos_values=set(), first_pos_cleaned=""
-            )
+            context["metadata"] = TimesheetMetadata(odc=odc, pos_values=set(), first_pos_cleaned="")
             logger.info("File Timesheet privo di record di dati.")
             return
 

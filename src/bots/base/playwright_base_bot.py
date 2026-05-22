@@ -184,7 +184,10 @@ class PlaywrightBaseBot(BaseBot, ABC):
                 # Se fallisce il lancio, forziamo il reset del profilo per ripristinare database SQL/lock corrotti
                 if attempt < max_retries - 1:
                     with suppress(Exception):
-                        self.log("[RECOVERY] Rilevato fallimento avvio. Forzatura reset profilo per recupero da corruzioni...", "WARNING")
+                        self.log(
+                            "[RECOVERY] Rilevato fallimento avvio. Forzatura reset profilo per recupero da corruzioni...",
+                            "WARNING",
+                        )
                         if emergency_profile_reset(user_data_dir):
                             patch_browser_profile(user_data_dir, download_dir=downloads_dir)
 

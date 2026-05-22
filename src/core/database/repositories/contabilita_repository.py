@@ -75,15 +75,11 @@ class ContabilitaRepository:
             return []
 
     @overload
-    def get_giornaliere_by_year(
-        self, year: int, as_objects: Literal[True] = ...
-    ) -> list[GiornalieraRecord]:
+    def get_giornaliere_by_year(self, year: int, as_objects: Literal[True] = ...) -> list[GiornalieraRecord]:
         """Restituisce i record di giornaliera come oggetti."""
 
     @overload
-    def get_giornaliere_by_year(
-        self, year: int, as_objects: Literal[False] = ...
-    ) -> list[tuple[Any, ...]]:
+    def get_giornaliere_by_year(self, year: int, as_objects: Literal[False] = ...) -> list[tuple[Any, ...]]:
         """Restituisce i record di giornaliera come tuple."""
 
     def get_giornaliere_by_year(
@@ -117,7 +113,9 @@ class ContabilitaRepository:
                     "ore",
                     "nome_file",
                 ]
-                query = f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"  # nosec B608
+                query = (
+                    f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"  # nosec B608
+                )
                 cursor.execute(
                     query,
                     (year,),
@@ -129,9 +127,7 @@ class ContabilitaRepository:
             return []
 
     @overload
-    def get_attivita_programmate(
-        self, as_objects: Literal[True] = ...
-    ) -> list[AttivitaProgrammataRecord]:
+    def get_attivita_programmate(self, as_objects: Literal[True] = ...) -> list[AttivitaProgrammataRecord]:
         """Restituisce le attività programmate come oggetti."""
 
     @overload
@@ -164,9 +160,7 @@ class ContabilitaRepository:
             return []
 
     @overload
-    def get_certificati_campione(
-        self, as_objects: Literal[True] = ...
-    ) -> list[CertificatoCampioneRecord]:
+    def get_certificati_campione(self, as_objects: Literal[True] = ...) -> list[CertificatoCampioneRecord]:
         """Restituisce i certificati campione come oggetti."""
 
     @overload

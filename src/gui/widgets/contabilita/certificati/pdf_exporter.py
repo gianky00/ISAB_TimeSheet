@@ -187,7 +187,9 @@ class CertificatiPdfExporter:
         painter.drawText(footer_rect, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, page_text)
         painter.restore()
 
-    def _build_paginated_html(self, doc: QTextDocument, width_pt: float, height_pt: float) -> tuple[list[str], bool]:
+    def _build_paginated_html(
+        self, doc: QTextDocument, width_pt: float, height_pt: float
+    ) -> tuple[list[str], bool]:
         """Costruisce i blocchi HTML divisi per pagina e segnala se ci sono strumenti N/D."""
         all_parents, raw_data_for_stats = self._gather_and_sort_data()
         stats = CertificatiEngine.get_statistics(raw_data_for_stats)

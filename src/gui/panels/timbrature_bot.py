@@ -96,12 +96,13 @@ class TimbratureBotPanel(BaseBotPanel):
 
         # Inserimento Pulsante "Crea Database"
         from src.gui.widgets.modern_button import ModernButton
+
         self.create_db_btn = ModernButton(
-            "CREA DATABASE",
-            variant=ModernButton.Variant.SECONDARY,
-            size=ModernButton.Size.SMALL
+            "CREA DATABASE", variant=ModernButton.Variant.SECONDARY, size=ModernButton.Size.SMALL
         )
-        self.create_db_btn.setToolTip("Analizza e scarica le timbrature mancanti per un intero anno (trimestre per trimestre)")
+        self.create_db_btn.setToolTip(
+            "Analizza e scarica le timbrature mancanti per un intero anno (trimestre per trimestre)"
+        )
         self.create_db_btn.clicked.connect(self._on_create_database_clicked)
 
         # Lo aggiungiamo al widget parametri accanto a DATA FINE
@@ -261,8 +262,12 @@ class TimbratureBotPanel(BaseBotPanel):
 
         current_year = datetime.now(UTC).year
         start_year, ok = QInputDialog.getInt(
-            self, "Crea Database Storico", "Anno di inizio ricostruzione:",
-            current_year - 1, 2000, current_year
+            self,
+            "Crea Database Storico",
+            "Anno di inizio ricostruzione:",
+            current_year - 1,
+            2000,
+            current_year,
         )
 
         if not ok:
@@ -283,10 +288,12 @@ class TimbratureBotPanel(BaseBotPanel):
         params_override = {
             "ranges": ranges,
             "fornitore": fornitore,
-            "societa": self.params_widget.get_societa()
+            "societa": self.params_widget.get_societa(),
         }
 
-        self.log_widget.append(f"🚀 Ricostruzione DATABASE dal {start_year} ad oggi ({len(ranges)} trimestri)")
+        self.log_widget.append(
+            f"🚀 Ricostruzione DATABASE dal {start_year} ad oggi ({len(ranges)} trimestri)"
+        )
         self._on_start(params_override=params_override)
 
     def _generate_quarterly_ranges(self, start_year: int) -> list[dict[str, str]]:
@@ -317,9 +324,8 @@ class TimbratureBotPanel(BaseBotPanel):
                 # Se il trimestre finisce nel futuro, lo limitiamo ad oggi
                 q_end = min(q_end, today)
 
-                valid_ranges.append({
-                    "data_da": q_start.strftime("%d.%m.%Y"),
-                    "data_a": q_end.strftime("%d.%m.%Y")
-                })
+                valid_ranges.append(
+                    {"data_da": q_start.strftime("%d.%m.%Y"), "data_a": q_end.strftime("%d.%m.%Y")}
+                )
 
         return valid_ranges

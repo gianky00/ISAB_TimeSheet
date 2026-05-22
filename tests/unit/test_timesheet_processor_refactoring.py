@@ -62,6 +62,7 @@ def test_process_and_move_missing_odc(tmp_path):
     assert success is False
     assert "mancante" in msg
 
+
 def test_process_and_move_success_single_pos(sample_timesheet, tmp_path):
     dest_dir = tmp_path / "dest"
     success, _msg = TimesheetProcessor.process_and_move(sample_timesheet, dest_dir)

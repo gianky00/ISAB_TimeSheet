@@ -239,9 +239,11 @@ class AppInitializer:
             # 4. Riscaldamento WMI (psutil) e Pulizia Preventiva
             logger.info("[INIT CORE] Riscaldamento sottosistema processi (WMI/psutil)...")
             from src.utils.helpers import cleanup_bot_processes  # noqa: PLC0415
+
             cleanup_bot_processes()
 
             from playwright.sync_api import sync_playwright  # noqa: PLC0415
+
             pw = sync_playwright().start()
             try:
                 browser = pw.chromium.launch(headless=True)

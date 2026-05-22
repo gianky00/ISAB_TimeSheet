@@ -15,7 +15,6 @@ class TestScaricoOrePanelDeep:
         p = ScaricoOrePanel(controller=mock_controller)
         return p
 
-
     def test_update_selection_totals(self, panel):
         """Verifica il calcolo della somma ore per la selezione."""
         # In V9.0 il metodo riceve direttamente il totale

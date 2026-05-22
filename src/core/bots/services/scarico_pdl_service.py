@@ -12,6 +12,7 @@ logger = get_logger(__name__)
 
 class ScaricoPDLService(BaseBotService):
     """Implementazione del servizio per lo scarico PDL."""
+
     def __init__(self) -> None:
         super().__init__("scarico_pdl")
 

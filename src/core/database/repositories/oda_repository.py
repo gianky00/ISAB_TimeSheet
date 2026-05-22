@@ -70,7 +70,7 @@ class OdaRepository:
             return []
 
         query = f"SELECT {', '.join(self.columns)} FROM storico_oda WHERE 1=1"  # nosec B608
-  # nosec B608
+        # nosec B608
         params = []
 
         if search_text:

@@ -50,8 +50,10 @@ class ModernCard(QFrame):
         """Applica l'effetto ombra e prepara le animazioni."""
         import os
         import sys
+
         if "pytest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST"):
             from unittest.mock import MagicMock
+
             self.shadow = MagicMock()
             self.shadow_anim = MagicMock()
             return

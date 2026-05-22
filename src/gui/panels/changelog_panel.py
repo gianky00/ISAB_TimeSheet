@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 class DiagnosticsWorker(QThread):
     """Worker in background per caricare lo SHA di Git e i dati hardware in modo asincrono."""
+
     finished = Signal(str, str)  # Invia (sha, platform)
 
     def run(self) -> None:
@@ -44,6 +45,7 @@ class DiagnosticsWorker(QThread):
         sha = "dev"
         try:
             from admin.release import ROOT_DIR, find_git_executable
+
             git_bin = find_git_executable()
             res = subprocess.run(  # nosec B603
                 [git_bin, "rev-parse", "--short", "HEAD"],
@@ -124,7 +126,7 @@ class ReleaseCard(QFrame):
         version_badge = QLabel(version_text)
         version_badge.setStyleSheet(f"""
             background-color: {self.border_color};
-            color: {COLORS['bg_white']};
+            color: {COLORS["bg_white"]};
             border-radius: 6px;
             font-size: 13px;
             font-weight: 800;
@@ -155,11 +157,11 @@ class ReleaseCard(QFrame):
             self.copy_btn.setStyleSheet(f"""
                 QPushButton {{
                     background: transparent;
-                    border: 1px solid {COLORS['border_light']};
+                    border: 1px solid {COLORS["border_light"]};
                     border-radius: 6px;
                 }}
                 QPushButton:hover {{
-                    background-color: {COLORS['glass_border']};
+                    background-color: {COLORS["glass_border"]};
                     border-color: {self.border_color};
                 }}
             """)
@@ -240,7 +242,7 @@ class ReleaseCard(QFrame):
             "purple": f"background-color: {COLORS['bg_info_pastel']}; color: {COLORS['purple']}; border: 1px solid {COLORS['purple']}; border-radius: 4px; font-size: 10px; font-weight: 800;",
             "warning": f"background-color: {COLORS['bg_warning_pastel']}; color: {COLORS['warning_orange']}; border: 1px solid {COLORS['warning_light']}; border-radius: 4px; font-size: 10px; font-weight: 800;",
             "info": f"background-color: {COLORS['bg_info_pastel']}; color: {COLORS['info_blue']}; border: 1px solid {COLORS['info_blue']}; border-radius: 4px; font-size: 10px; font-weight: 800;",
-            "secondary": f"background-color: {COLORS['bg_light']}; color: {COLORS['text_secondary']}; border: 1px solid {COLORS['border_dark']}; border-radius: 4px; font-size: 10px; font-weight: 800;"
+            "secondary": f"background-color: {COLORS['bg_light']}; color: {COLORS['text_secondary']}; border: 1px solid {COLORS['border_dark']}; border-radius: 4px; font-size: 10px; font-weight: 800;",
         }
         pill.setStyleSheet(styles.get(style_type, styles["info"]))
         return pill
@@ -259,9 +261,12 @@ class ReleaseCard(QFrame):
 
         # Feedback visivo sul bottone
         self.copy_btn.setIcon(get_colored_icon(get_asset_path(Icons.ACTIVITY), COLORS["success_green"]))
-        QTimer.singleShot(1500, lambda: self.copy_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.COPY), COLORS["text_secondary"])
-        ))
+        QTimer.singleShot(
+            1500,
+            lambda: self.copy_btn.setIcon(
+                get_colored_icon(get_asset_path(Icons.COPY), COLORS["text_secondary"])
+            ),
+        )
 
     def filter_notes(self, category_filter: str, search_text: str = "") -> bool:
         """
@@ -286,8 +291,8 @@ class ReleaseCard(QFrame):
                     if isinstance(text_widget, QLabel):
                         note_text = text_widget.text().lower()
 
-            category_match = (category_filter in ("all", category))
-            text_match = (not search_text or search_text in note_text)
+            category_match = category_filter in ("all", category)
+            text_match = not search_text or search_text in note_text
 
             if category_match and text_match:
                 note_widget.show()
@@ -356,22 +361,24 @@ class ChangelogPanel(QWidget):
         self.search_bar.setFixedHeight(24)
         self.search_bar.setStyleSheet(f"""
             QLineEdit {{
-                background-color: {COLORS['bg_white']};
-                color: {COLORS['text_dark']};
-                border: 1px solid {COLORS['border_light']};
+                background-color: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
+                border: 1px solid {COLORS["border_light"]};
                 border-radius: 12px;
                 padding: 2px 10px 2px 26px;
                 font-size: 11px;
                 font-weight: 600;
             }}
             QLineEdit:focus {{
-                border: 1px solid {COLORS['primary_blue']};
+                border: 1px solid {COLORS["primary_blue"]};
             }}
         """)
 
         # Icona lente di ingrandimento
         search_icon = QLabel(self.search_bar)
-        search_icon.setPixmap(get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_secondary"]).pixmap(12, 12))
+        search_icon.setPixmap(
+            get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_secondary"]).pixmap(12, 12)
+        )
         search_icon.setStyleSheet("background: transparent; border: none;")
         search_icon.setGeometry(8, 6, 12, 12)
 
@@ -435,9 +442,9 @@ class ChangelogPanel(QWidget):
         # Configurazione Stile Tooltip Light Premium
         self.setStyleSheet(f"""
             QToolTip {{
-                background-color: {COLORS['bg_white']};
-                color: {COLORS['text_dark']};
-                border: 1px solid {COLORS['border_light']};
+                background-color: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
+                border: 1px solid {COLORS["border_light"]};
                 border-radius: 6px;
                 padding: 6px 10px;
                 font-size: 12px;
@@ -469,7 +476,9 @@ class ChangelogPanel(QWidget):
             "warning": (COLORS["bg_warning_pastel"], COLORS["warning_orange"]),
         }
 
-        bg_active, text_active = active_styles.get(cat_type, (COLORS["bg_info_pastel"], COLORS["primary_blue"]))
+        bg_active, text_active = active_styles.get(
+            cat_type, (COLORS["bg_info_pastel"], COLORS["primary_blue"])
+        )
 
         if active:
             btn.setStyleSheet(f"""
@@ -486,16 +495,16 @@ class ChangelogPanel(QWidget):
         else:
             btn.setStyleSheet(f"""
                 QPushButton {{
-                    background-color: {COLORS['bg_white']};
-                    color: {COLORS['text_dark']};
-                    border: 1px solid {COLORS['border_light']};
+                    background-color: {COLORS["bg_white"]};
+                    color: {COLORS["text_dark"]};
+                    border: 1px solid {COLORS["border_light"]};
                     border-radius: 12px;
                     padding: 4px 14px;
                     font-size: 11px;
                     font-weight: 700;
                 }}
                 QPushButton:hover {{
-                    background-color: {COLORS['bg_light']};
+                    background-color: {COLORS["bg_light"]};
                     border-color: {text_active};
                     color: {text_active};
                 }}
@@ -530,6 +539,7 @@ class ChangelogPanel(QWidget):
         """Recupera lo short commit SHA attuale dal repository Git locale."""
         try:
             from admin.release import ROOT_DIR, find_git_executable
+
             git_bin = find_git_executable()
             res = subprocess.run(  # nosec B603
                 [git_bin, "rev-parse", "--short", "HEAD"],
@@ -564,6 +574,7 @@ class ChangelogPanel(QWidget):
     def _get_last_update_date(self) -> str:
         """Restituisce la data dell'ultimo aggiornamento disponibile in formato GG/MM/AAAA."""
         import contextlib
+
         changelog_path = Path(__file__).resolve().parent.parent.parent / "core" / "changelog.json"
 
         if changelog_path.exists():
@@ -688,7 +699,7 @@ class ChangelogPanel(QWidget):
         )
         led.setStyleSheet(f"""
             background-color: {led_color};
-            border: 2px solid {COLORS['bg_white']};
+            border: 2px solid {COLORS["bg_white"]};
             border-radius: 7px;
         """)
         timeline_layout.addWidget(led, 0, Qt.AlignmentFlag.AlignCenter)
@@ -729,7 +740,9 @@ class ChangelogPanel(QWidget):
                 {
                     "version": __version__,
                     "date": "2026-05-20",
-                    "notes": ["Release iniziale della versione corrente. Changelog in fase di indicizzazione."]
+                    "notes": [
+                        "Release iniziale della versione corrente. Changelog in fase di indicizzazione."
+                    ],
                 }
             ]
         return changelog_data
@@ -780,9 +793,9 @@ class ChangelogPanel(QWidget):
                     or "roadmap" in str(release.get("date", "")).lower()
                     or "arrivo" in str(release.get("date", "")).lower()
                 )
-                is_latest_real = (i == first_stable_index)
-                is_first_real = (i == 0)
-                is_last_real = (i == total_real - 1)
+                is_latest_real = i == first_stable_index
+                is_first_real = i == 0
+                is_last_real = i == total_real - 1
 
                 self._add_release_row(
                     release,
@@ -794,4 +807,3 @@ class ChangelogPanel(QWidget):
 
         # Spazio elastico in fondo
         self.scroll_layout.addStretch()
-

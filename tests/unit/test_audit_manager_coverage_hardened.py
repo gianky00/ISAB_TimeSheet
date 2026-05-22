@@ -76,7 +76,9 @@ class TestAuditManager:
 
         # Impostiamo una data molto vecchia in formato compatibile SQLite
         with sqlite3.connect(manager.db.db_path) as conn:
-            conn.execute("UPDATE audit_logs SET timestamp = '2020-01-01 00:00:00' WHERE action = 'Old Action'")
+            conn.execute(
+                "UPDATE audit_logs SET timestamp = '2020-01-01 00:00:00' WHERE action = 'Old Action'"
+            )
             conn.commit()
 
         # Esegui retention (days=1 significa elimina tutto ciò che è più vecchio di ieri)

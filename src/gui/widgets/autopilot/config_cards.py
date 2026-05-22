@@ -23,6 +23,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 class BotVisualInfo(TypedDict):
     """Informazioni visuali per la rappresentazione di un bot nell'Autopilot."""
+
     bot_id: str
     bot_name: str
     icon_path: str

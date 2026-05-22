@@ -12,6 +12,7 @@ from src.core.processing.base import ProcessingStep
 
 class LoadWorkbookStep(ProcessingStep):
     """Carica il file Excel e individua il foglio Timesheet."""
+
     def execute(self, context: dict[str, Any]) -> None:
         """Esegue il caricamento del file."""
         file_path = context["file_path"]
@@ -24,6 +25,7 @@ class LoadWorkbookStep(ProcessingStep):
 
 class TransformSheetStep(ProcessingStep):
     """Esegue la trasformazione strutturale del foglio (rinomina intestazioni, elimina colonne)."""
+
     def execute(self, context: dict[str, Any]) -> None:
         """Esegue la trasformazione dei dati nel foglio."""
         ws = context["ws"]
@@ -62,6 +64,7 @@ class TransformSheetStep(ProcessingStep):
 
 class SaveWorkbookStep(ProcessingStep):
     """Salva il file Excel elaborato nella directory di destinazione."""
+
     def execute(self, context: dict[str, Any]) -> None:
         """Esegue il salvataggio del file Excel."""
         wb = context["wb"]
@@ -81,6 +84,7 @@ class SaveWorkbookStep(ProcessingStep):
 
 class CleanupStep(ProcessingStep):
     """Rimuove il file sorgente temporaneo se diverso dal file di destinazione."""
+
     def execute(self, context: dict[str, Any]) -> None:
         """Esegue la pulizia dei file temporanei."""
         src = context["file_path"]

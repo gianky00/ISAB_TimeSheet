@@ -74,7 +74,9 @@ class AnagraficaController:
 
         return dtos, counts
 
-    def _get_timbrature_maps(self) -> tuple[dict[str, tuple[int, str]], dict[tuple[str, str], tuple[int, str]], Any]:
+    def _get_timbrature_maps(
+        self,
+    ) -> tuple[dict[str, tuple[int, str]], dict[tuple[str, str], tuple[int, str]], Any]:
         """Recupera le mappe delle timbrature dal DB."""
         query_timb = "SELECT cognome, nome, codice_fiscale, data FROM timbrature"
         accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)

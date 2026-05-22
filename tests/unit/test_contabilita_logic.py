@@ -15,10 +15,12 @@ class TestContabilitaLogic:
         with (
             patch(
                 "src.core.contabilita.importer_service.ExcelReadStep.execute",
-                side_effect=lambda ctx: ctx.update({"success": True, "rows": mock_rows, "years": [2024]})
+                side_effect=lambda ctx: ctx.update({"success": True, "rows": mock_rows, "years": [2024]}),
             ),
-            patch("src.core.contabilita.importer_service.DatabaseSyncStep.execute",
-                  side_effect=lambda ctx: ctx.update({"success": True, "total_added": 1, "total_removed": 0})),
+            patch(
+                "src.core.contabilita.importer_service.DatabaseSyncStep.execute",
+                side_effect=lambda ctx: ctx.update({"success": True, "total_added": 1, "total_removed": 0}),
+            ),
         ):
             success, _msg, added, _removed = manager.import_data_from_excel("mock.xlsx")
             assert success is True
@@ -49,7 +51,10 @@ class TestContabilitaLogic:
         mock_giornaliere = [("2024-01-01", "P1", "T", "D", "PREV-001", "ODC", "P", "08", "17", 8.0, "F")]
 
         with (
-            patch("src.core.contabilita.stats_service.ContabilitaQueries.get_data_by_year", return_value=mock_oda),
+            patch(
+                "src.core.contabilita.stats_service.ContabilitaQueries.get_data_by_year",
+                return_value=mock_oda,
+            ),
             patch(
                 "src.core.contabilita.stats_service.ContabilitaQueries.get_giornaliere_by_year",
                 return_value=mock_giornaliere,
@@ -72,7 +77,10 @@ class TestContabilitaLogic:
                 return_value=(True, "OK", [], [2024]),
             ),
             patch("src.core.data_synchronizer.DataSynchronizer.sync_giornaliere", return_value=(1, 0)),
-            patch("src.core.contabilita.importer_service.ContabilitaImporterService._prepare_odc_lookup_map", return_value={}),
+            patch(
+                "src.core.contabilita.importer_service.ContabilitaImporterService._prepare_odc_lookup_map",
+                return_value={},
+            ),
         ):
             success, _msg, added, _removed = manager.import_giornaliere(str(tmp_path))
             assert success is True

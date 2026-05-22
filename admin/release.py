@@ -267,6 +267,7 @@ def update_json_changelog(version: str, git_bin: str) -> None:
     changelog_data = [entry for entry in changelog_data if entry.get("version") != version]
 
     from datetime import datetime
+
     new_entry = {
         "version": version,
         "date": datetime.now().strftime("%Y-%m-%d"),
@@ -275,7 +276,9 @@ def update_json_changelog(version: str, git_bin: str) -> None:
     changelog_data.insert(0, new_entry)
 
     try:
-        changelog_path.write_text(json.dumps(changelog_data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        changelog_path.write_text(
+            json.dumps(changelog_data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
         print(f"✓ Changelog JSON strutturato aggiornato in: {changelog_path.name}")
     except Exception as e:
         print(f"⚠️ Impossibile salvare il changelog JSON: {e}")
@@ -305,19 +308,19 @@ def prompt_interactive_release(args: argparse.Namespace) -> None:
 
     # 2. Skip tests
     skip_ans = input("\nDesideri saltare la suite dei test di qualità pre-flight? (s/N): ").strip().lower()
-    args.skip_tests = (skip_ans == "s")
+    args.skip_tests = skip_ans == "s"
 
     # 3. Nuitka or PyInstaller
     nuitka_ans = input("\nDesideri compilare con Nuitka invece di PyInstaller? (s/N): ").strip().lower()
-    args.nuitka = (nuitka_ans == "s")
+    args.nuitka = nuitka_ans == "s"
 
     # 4. Deploy
     deploy_ans = input("\nDesideri eseguire il deploy su Netlify? (s/N): ").strip().lower()
-    args.deploy = (deploy_ans == "s")
+    args.deploy = deploy_ans == "s"
 
     # 5. Push remote
     push_ans = input("\nDesideri eseguire il push remoto automatico su origin/main? (S/n): ").strip().lower()
-    args.push = (push_ans != "n")
+    args.push = push_ans != "n"
 
     print("\n" + "=" * 60 + "\n")
 

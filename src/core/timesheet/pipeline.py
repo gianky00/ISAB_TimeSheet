@@ -14,6 +14,7 @@ from src.core.timesheet.steps.excel_steps import (
 
 class TimesheetPipeline(Pipeline):
     """Pipeline per la trasformazione strutturale dei file Excel Timesheet."""
+
     def __init__(self) -> None:
         super().__init__()
         self.add_step(LoadWorkbookStep())

@@ -54,4 +54,3 @@ class PageIndex(IntEnum):
 
     CHANGELOG = 13
     """Pannello delle note di rilascio e novità di versione."""
-

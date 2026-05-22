@@ -28,7 +28,6 @@ class DettagliOdALocators:
         "//input[@name='CodiceFornitore' or @name='FornitoreSap' or @name='Fornitore']/ancestor::div[contains(@class, 'x-form-trigger-wrap') or contains(@class, 'x-form-item-body')]//div[contains(@class, 'x-form-arrow-trigger')]",
     )
 
-
     # Input Fields (Specific to Portale ISAB)
     ODA_NUMBER_FIELD = (By.CSS_SELECTOR, "input[name='NumeroOdA']")
     CONTRACT_FIELD = (By.CSS_SELECTOR, "input[name='NumeroContratto']")

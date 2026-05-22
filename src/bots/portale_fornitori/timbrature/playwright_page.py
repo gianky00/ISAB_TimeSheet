@@ -49,7 +49,9 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
 
                 # Inserimento "Report Timbrature"
                 inp.click(force=True, timeout=2000)
-                inp.evaluate("el => { el.value = ''; el.dispatchEvent(new Event('input', {bubbles: true})); }")
+                inp.evaluate(
+                    "el => { el.value = ''; el.dispatchEvent(new Event('input', {bubbles: true})); }"
+                )
                 inp.type("Report Timbrature", delay=30)
                 self.page.wait_for_timeout(300)
                 inp.press("Enter")
@@ -60,7 +62,9 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
                 self._wait_overlay()
                 self.log("[NAVIGAZIONE] Reindirizzamento tramite ricerca globale riuscito!")
             except Exception as e:
-                self.log(f"[NAVIGAZIONE] Ricerca globale non disponibile o fallita ({str(e)[:30]}). Procedo con navigazione menu...")
+                self.log(
+                    f"[NAVIGAZIONE] Ricerca globale non disponibile o fallita ({str(e)[:30]}). Procedo con navigazione menu..."
+                )
             else:
                 return True
 

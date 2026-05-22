@@ -26,6 +26,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 class EventInfo(TypedDict):
     """Informazioni su un evento programmato dell'Autopilot."""
+
     id: str
     name: str
     time: str

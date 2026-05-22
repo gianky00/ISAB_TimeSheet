@@ -110,7 +110,6 @@ class ScaricoOrePanel(QWidget):
     def _start_update(self) -> None:
         """Avvia la procedura di sincronizzazione/importazione dei dati via controller."""
 
-
         path = config_manager.load_config().get("dataease_path", "")
         if not path:
             ConfirmationDialog.show_warning(

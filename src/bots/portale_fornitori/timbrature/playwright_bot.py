@@ -146,7 +146,9 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
         self.log(f"ℹ️ Procedura conclusa. Periodi scaricati: {success_count}/{len(ranges)}")
         return success_count > 0
 
-    def _process_download_ranges(self, page_obj: PlaywrightTimbraturePage, ranges: list[dict[str, Any]]) -> int:
+    def _process_download_ranges(
+        self, page_obj: PlaywrightTimbraturePage, ranges: list[dict[str, Any]]
+    ) -> int:
         """
         Cicla sugli intervalli e gestisce download e importazione.
 

@@ -367,6 +367,7 @@ class WeatherWidget(ModernCard):
         self._is_loading = False
         self._current_weather_style = "default"
         from src.core.config_manager import get_config_value
+
         self._showing_details = bool(get_config_value("weather_show_details", False))
         self._transitioning = False
 
@@ -834,6 +835,7 @@ class WeatherWidget(ModernCard):
                     self.panel_details.setGraphicsEffect(None)  # type: ignore[arg-type]
                     # Salva lo stato
                     from src.core.config_manager import set_config_value
+
                     set_config_value("weather_show_details", True)
 
                 self.anim_fade_det.finished.connect(on_det_fade_finished)
@@ -891,6 +893,7 @@ class WeatherWidget(ModernCard):
                     self.don_ciro.set_yaw_angle(0.0)
                     # Salva lo stato
                     from src.core.config_manager import set_config_value
+
                     set_config_value("weather_show_details", False)
 
                 self.anim_fade_std.finished.connect(on_std_fade_in_finished)

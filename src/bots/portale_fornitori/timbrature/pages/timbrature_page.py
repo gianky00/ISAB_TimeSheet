@@ -127,7 +127,6 @@ class TimbraturePage:
         else:
             return True
 
-
     def set_filters(self, fornitore: str, data_da: str, data_a: str) -> bool:
         """Sets the search filters."""
         try:

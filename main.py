@@ -286,6 +286,7 @@ def _send_license_to_splash(send_lic_fn: Callable[[str, str, str], None]) -> Non
     """Invia in modo sicuro i dati di licenza (in cache o reali) allo splash screen."""
     try:
         from src.core.license_validator import get_hardware_id, get_license_client, get_license_expiry
+
         cliente = get_license_client()
         hw_id = get_hardware_id()
         scadenza = get_license_expiry()

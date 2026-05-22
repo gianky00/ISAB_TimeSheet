@@ -97,6 +97,7 @@ class SearchInput(QLineEdit):
         self.setPlaceholderText(placeholder)
         import os
         import sys
+
         if not ("pytest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST")):
             self.setClearButtonEnabled(True)
         self._apply_style()

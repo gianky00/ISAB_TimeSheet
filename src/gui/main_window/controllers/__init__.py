@@ -1,2 +1,1 @@
 """Inizializzazione del pacchetto controllers."""
-

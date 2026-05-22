@@ -10,6 +10,7 @@ from src.core.timesheet.pipeline import TimesheetPipeline
 
 class TimesheetService:
     """Servizio per il processamento dei file Timesheet."""
+
     def __init__(self) -> None:
         self.pipeline = TimesheetPipeline()
 

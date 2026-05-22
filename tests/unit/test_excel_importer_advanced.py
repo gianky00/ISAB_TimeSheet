@@ -85,7 +85,7 @@ class TestExcelImporterAdvanced:
 
         with (
             patch("src.core.processing.giornaliere.steps.pd.read_excel", return_value=df_giorn),
-            patch("src.core.importers.giornaliere.SyncGiornaliereStep.execute", return_value=None)
+            patch("src.core.importers.giornaliere.SyncGiornaliereStep.execute", return_value=None),
         ):
             _year, rows, err = GiornaliereImporter._process_single_giornaliera((2026, Path("test.xlsx"), {}))
             assert err is None
@@ -113,7 +113,7 @@ class TestExcelImporterAdvanced:
 
         with (
             patch("src.core.processing.giornaliere.steps.pd.read_excel", return_value=df),
-            patch("src.core.importers.giornaliere.SyncGiornaliereStep.execute", return_value=None)
+            patch("src.core.importers.giornaliere.SyncGiornaliereStep.execute", return_value=None),
         ):
             _year, rows, _err = GiornaliereImporter._process_single_giornaliera(
                 (2026, Path("f.xlsx"), lookup)
@@ -133,7 +133,7 @@ class TestExcelImporterAdvanced:
         for i in range(11):
             cell = MagicMock()
             cell.value = f"val_{i}"
-            if i in {3, 4, 7}: # odc, pos, tot non devono essere zero/vuoti per passare validazione
+            if i in {3, 4, 7}:  # odc, pos, tot non devono essere zero/vuoti per passare validazione
                 cell.value = "10"
 
             # Setup font color
