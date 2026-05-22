@@ -73,15 +73,15 @@ class DettagliOdAPage:
             self.log("Navigazione menu Report -> Oda...")
 
             report_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.REPORT_MENU))
-            self.driver.execute_script("arguments[0].click();", report_btn)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].click();", report_btn)
 
             if not is_first_row:
-                self.driver.execute_script("arguments[0].click();", report_btn)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].click();", report_btn)
 
             self._wait_for_overlay()
 
             oda_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.DETTAGLI_MENU))
-            self.driver.execute_script("arguments[0].click();", oda_btn)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].click();", oda_btn)
 
             self.wait.until(EC.visibility_of_element_located(DettagliOdALocators.SUPPLIER_ARROW))
             self._wait_for_overlay()
@@ -119,8 +119,8 @@ class DettagliOdAPage:
 
                 option_xpath = f"//li[contains(text(), '{supplier}')]"
                 option = self.long_wait.until(EC.presence_of_element_located((By.XPATH, option_xpath)))
-                self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)  # type: ignore[no-untyped-call]
-                self.driver.execute_script("arguments[0].click();", option)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
+                self.driver.execute_script("arguments[0].click();", option)
             else:
                 # Inserimento diretto nell'input (senza freccia fisica)
                 self.log("   Freccia non rilevata. Tento l'inserimento manuale forzato.")
@@ -129,9 +129,9 @@ class DettagliOdAPage:
                 try:
                     inp.click()
                 except Exception:
-                    self.driver.execute_script("arguments[0].click();", inp)  # type: ignore[no-untyped-call]
+                    self.driver.execute_script("arguments[0].click();", inp)
 
-                self.driver.execute_script("arguments[0].value = '';", inp)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].value = '';", inp)
                 inp.send_keys(supplier)
                 time.sleep(0.5)
                 inp.send_keys(Keys.ENTER)
@@ -150,10 +150,10 @@ class DettagliOdAPage:
             settings_btn = self.wait.until(
                 EC.element_to_be_clickable(DettagliOdALocators.LOGOUT_SETTINGS_BUTTON)
             )
-            self.driver.execute_script("arguments[0].click();", settings_btn)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].click();", settings_btn)
             try:
                 logout_btn = self.wait.until(EC.visibility_of_element_located(CommonLocators.LOGOUT_OPTION))
-                self.driver.execute_script("arguments[0].click();", logout_btn)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].click();", logout_btn)
             except TimeoutException:
                 self.log("   Opzione Logout non apparsa nel menu.")
                 return False
@@ -161,7 +161,7 @@ class DettagliOdAPage:
             try:
                 self.log(" Attesa conferma logout...")
                 yes_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.LOGOUT_CONFIRM_YES))
-                self.driver.execute_script("arguments[0].click();", yes_btn)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].click();", yes_btn)
                 self.log(" Conferma cliccata.")
                 self.wait.until(EC.visibility_of_element_located(LoginLocators.USERNAME_FIELD))
                 self.log("  Logout completato con successo.")
@@ -180,7 +180,7 @@ class DettagliOdAPage:
             expand_btn = self.driver.find_element(*DettagliOdALocators.SIDEBAR_EXPAND_BUTTON)
             if expand_btn.is_displayed():
                 self.log(" Menu laterale collassato, espansione in corso...")
-                self.driver.execute_script("arguments[0].click();", expand_btn)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].click();", expand_btn)
                 self.log(" Menu espanso.")
 
     def process_oda(  # noqa: PLR0913, PLR0915
@@ -206,26 +206,26 @@ class DettagliOdAPage:
                 field_oda = self.wait.until(
                     EC.presence_of_element_located(DettagliOdALocators.ODA_NUMBER_FIELD)
                 )
-                self.driver.execute_script(js_set_value, field_oda, oda)  # type: ignore[no-untyped-call]
+                self.driver.execute_script(js_set_value, field_oda, oda)
 
             field_date_da = self.wait.until(
                 EC.presence_of_element_located(DettagliOdALocators.DATE_FROM_FIELD)
             )
-            self.driver.execute_script(js_set_value, field_date_da, date_da)  # type: ignore[no-untyped-call]
+            self.driver.execute_script(js_set_value, field_date_da, date_da)
 
             field_date_a = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.DATE_A_FIELD))
-            self.driver.execute_script(js_set_value, field_date_a, date_a)  # type: ignore[no-untyped-call]
+            self.driver.execute_script(js_set_value, field_date_a, date_a)
 
             if contract:
                 self.log(f" Inserimento contratto: {contract}")
                 field_contract = self.wait.until(
                     EC.presence_of_element_located(DettagliOdALocators.CONTRACT_FIELD)
                 )
-                self.driver.execute_script(js_set_value, field_contract, contract)  # type: ignore[no-untyped-call]
+                self.driver.execute_script(js_set_value, field_contract, contract)
 
             checkbox = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.CHECKBOX_FIELD))
             if not checkbox.is_selected():
-                self.driver.execute_script("arguments[0].click();", checkbox)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].click();", checkbox)
             self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.SEARCH_BUTTON)).click()
             self.log(" Cerca cliccato...")
             self._wait_for_overlay(wait_for_appearance=True)
@@ -250,7 +250,7 @@ class DettagliOdAPage:
             if oda:
                 self.log(" Apertura dettagli (OdA specifico)...")
                 details_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.DETAILS_ICON))
-                self.driver.execute_script("arguments[0].click();", details_btn)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].click();", details_btn)
                 self._wait_for_overlay()
                 export_btn_locator = DettagliOdALocators.EXPORT_EXCEL_TEXT
                 target_filename = f"dettaglio_oda_{sanitize_filename(oda)}.xlsx"
@@ -277,7 +277,7 @@ class DettagliOdAPage:
                 try:
                     close_btn = self.driver.find_element(*DettagliOdALocators.TAB_CLOSE_BTN)
                     if close_btn.is_displayed():
-                        self.driver.execute_script("arguments[0].click();", close_btn)  # type: ignore[no-untyped-call]
+                        self.driver.execute_script("arguments[0].click();", close_btn)
                     else:
                         break
                 except Exception:
@@ -352,13 +352,13 @@ class DettagliOdAPage:
         """Tenta di cliccare il pulsante di esportazione Excel gestendo intercettazioni."""
         try:
             btn = self.wait.until(EC.presence_of_element_located(locator))
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
             # Piccola attesa post-scroll
             time.sleep(Timeouts.UI_DELAY)
             try:
                 btn.click()
             except Exception:
-                self.driver.execute_script("arguments[0].click();", btn)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].click();", btn)
         except Exception as e:
             self.log(f" ⚠️ Errore click esportazione: {e}")
             return False
