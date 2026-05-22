@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "syncrojob"
-version = "1.48.0"
+version = "1.49.0"
 description = "ISAB TimeSheet application"
 authors = ["Giancarlo Allegretti"]
 packages = [
@@ -347,7 +347,7 @@ exclude_dirs = [".venv", "tests", "docs", "build", "dist", "temp", "admin", "scr
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "1.48.0"
+version = "1.49.0"
 tag_format = "v$version"
 changelog_file = "CHANGELOG.md"
 update_changelog_on_bump = true
