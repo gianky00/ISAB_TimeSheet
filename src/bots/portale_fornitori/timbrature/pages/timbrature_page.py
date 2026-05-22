@@ -1,5 +1,5 @@
-"""
-SyncroJob - Timbrature Page
+"""SyncroJob - Timbrature Page.
+
 Page Object Model for the Timbrature section of the ISAB portal.
 """
 
@@ -37,6 +37,13 @@ class TimbraturePage:
         log_callback: Callable[[str], None] | None = None,
         download_path: str = "",
     ) -> None:
+        """Inizializza la classe.
+
+        Args:
+          driver: WebDriver per l'automazione.
+          log_callback: Funzione per il logging.
+          download_path: Percorso per i download.
+        """
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)
@@ -59,8 +66,7 @@ class TimbraturePage:
             self.log("⚠️ Timeout attesa overlay.")
 
     def navigate_to_timbrature(self) -> bool:
-        """
-        Naviga verso la pagina delle timbrature tramite ricerca globale o fallback del menu.
+        """Naviga verso la pagina delle timbrature tramite ricerca globale o fallback del menu.
 
         Returns:
             bool: True se la navigazione ha successo, False altrimenti.
@@ -173,9 +179,7 @@ class TimbraturePage:
             return True
 
     def download_timbrature(self, fornitore: str, data_da: str, data_a: str, download_path: str = "") -> str:
-        """
-        Metodo high-level per gestire l'intero flusso: filtri -> download.
-        """
+        """Metodo high-level per gestire l'intero flusso: filtri -> download."""
         if download_path:
             self.download_path = download_path
 

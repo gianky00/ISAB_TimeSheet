@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Stats Worker
+"""SyncroJob - PDL Stats Worker.
+
 Worker asincrono per il calcolo delle metriche PDL.
 """
 
@@ -13,9 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class PDLStatsWorker(QThread):
-    """
-    Worker che ricalcola le metriche e i trend dei PDL in background.
-    """
+    """Worker che ricalcola le metriche e i trend dei PDL in background."""
 
     finished_signal = Signal(object)  # Invia PDLMetrics
     error_signal = Signal(str)

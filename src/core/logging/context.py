@@ -1,6 +1,4 @@
-"""
-Context management per correlation e tracing.
-"""
+"""Context management per correlation e tracing."""
 
 import threading
 import uuid
@@ -10,8 +8,7 @@ from typing import Any
 
 
 class LoggingContext:
-    """
-    Thread-safe context storage per correlation IDs e metadata.
+    """Thread-safe context storage per correlation IDs e metadata.
 
     Ogni thread ha il proprio context isolato.
     """
@@ -65,8 +62,7 @@ def get_context() -> LoggingContext:
 
 @contextmanager
 def with_context(**context_data: Any) -> Generator[None, None, None]:
-    """
-    Context manager per aggiungere metadata temporanei ai log.
+    """Context manager per aggiungere metadata temporanei ai log.
 
     Usage:
       with with_context(trace_id="abc123", bot_type="scarico_ts"):
@@ -99,8 +95,7 @@ def with_context(**context_data: Any) -> Generator[None, None, None]:
 
 
 def generate_trace_id() -> str:
-    """
-    Genera un trace ID univoco.
+    """Genera un trace ID univoco.
 
     Returns:
       String univoca per identificare trace (es: "trace_abc123def456")
@@ -109,8 +104,7 @@ def generate_trace_id() -> str:
 
 
 def generate_span_id() -> str:
-    """
-    Genera uno span ID univoco.
+    """Genera uno span ID univoco.
 
     Returns:
       String univoca per identificare span (es: "span_abc123")
@@ -119,8 +113,7 @@ def generate_span_id() -> str:
 
 
 def get_current_trace_id() -> str | None:
-    """
-    Restituisce il trace_id corrente, se esiste.
+    """Restituisce il trace_id corrente, se esiste.
 
     Returns:
       Trace ID corrente o None
@@ -130,8 +123,7 @@ def get_current_trace_id() -> str | None:
 
 
 def get_current_span_id() -> str | None:
-    """
-    Restituisce lo span_id corrente, se esiste.
+    """Restituisce lo span_id corrente, se esiste.
 
     Returns:
       Span ID corrente o None
@@ -141,8 +133,7 @@ def get_current_span_id() -> str | None:
 
 
 def set_audit_id(audit_id: int) -> None:
-    """
-    Imposta l'audit_id nel context corrente.
+    """Imposta l'audit_id nel context corrente.
 
     Args:
       audit_id: ID dell'entry audit (rowid da AuditDatabase)
@@ -151,8 +142,7 @@ def set_audit_id(audit_id: int) -> None:
 
 
 def get_current_audit_id() -> int | None:
-    """
-    Restituisce l'audit_id corrente, se esiste.
+    """Restituisce l'audit_id corrente, se esiste.
 
     Returns:
       Audit ID corrente o None

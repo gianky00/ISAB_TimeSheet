@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright Carico TS Page
+"""SyncroJob - Playwright Carico TS Page.
+
 Page Object Model per Carico TS usando Playwright.
 """
 
@@ -15,8 +15,7 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
     """Gestisce le interazioni con la pagina Carico TS usando Playwright."""
 
     def __init__(self, page: Page, log_callback: Callable[[str], None] | None = None) -> None:
-        """
-        Inizializza la pagina di caricamento timesheet.
+        """Inizializza la pagina di caricamento timesheet.
 
         Args:
           page: Oggetto Page di Playwright.
@@ -38,8 +37,7 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
             return True
 
     def select_supplier(self, supplier: str) -> bool:
-        """
-        Seleziona il fornitore dal menu a discesa della pagina in modo robusto.
+        """Seleziona il fornitore dal menu a discesa della pagina in modo robusto.
 
         Args:
           supplier: Nome del fornitore da selezionare.
@@ -65,8 +63,7 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
             return True
 
     def process_oda(self, oda: str) -> bool:
-        """
-        Inserisce il numero OdA nel campo di input e avvia l'estrazione.
+        """Inserisce il numero OdA nel campo di input e avvia l'estrazione.
 
         Args:
           oda: Numero dell'ordine di acquisto da processare.

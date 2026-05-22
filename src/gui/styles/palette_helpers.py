@@ -1,5 +1,5 @@
-"""
-SyncroJob - Palette Helpers
+"""SyncroJob - Palette Helpers.
+
 Utility per la manipolazione dinamica dei colori e generazione di stili QSS.
 """
 

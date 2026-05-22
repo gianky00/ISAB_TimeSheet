@@ -1,5 +1,5 @@
-"""
-Password Manager con encryption moderna.
+"""Password Manager con encryption moderna.
+
 Usa Argon2/Scrypt per key derivation.
 """
 

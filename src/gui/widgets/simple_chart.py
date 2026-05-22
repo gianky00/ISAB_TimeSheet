@@ -1,3 +1,5 @@
+"""Modulo Simple Chart."""
+
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPaintEvent, QPen
 from PySide6.QtWidgets import (
@@ -10,11 +12,10 @@ from src.gui.styles import COLORS
 
 
 class DonutChart(QWidget):
-    """
-    Grafico a ciambella leggero disegnato con QPainter.
-    """
+    """Grafico a ciambella leggero disegnato con QPainter."""
 
     def __init__(self, title: str = "Success Rate", parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.title = title
         self.values = [0, 0]  # [Success, Error]
@@ -22,8 +23,7 @@ class DonutChart(QWidget):
         self.setMinimumSize(200, 200)
 
     def set_data(self, success_count: int, error_count: int) -> None:
-        """
-        Imposta i nuovi dati di successo/errore e aggiorna il grafico.
+        """Imposta i nuovi dati di successo/errore e aggiorna il grafico.
 
         Args:
           success_count: Numero di successi.
@@ -103,6 +103,7 @@ class StatCard(QWidget):
     """Container per il grafico con titolo."""
 
     def __init__(self, title: str, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)

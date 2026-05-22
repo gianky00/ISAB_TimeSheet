@@ -1,5 +1,5 @@
-"""
-SyncroJob - Contabilità AttivitàProgrammate
+"""SyncroJob - Contabilità AttivitàProgrammate.
+
 Tab specializzato per la visualizzazione delle attivitàprogrammate settimanali.
 Include filtri avanzati per PS, PO, Area e Stato PdL.
 """
@@ -38,8 +38,8 @@ from src.gui.workers.contabilita_data_worker import ContabilitaDataWorker
 
 
 class AttivitaProgrammateTab(QWidget):
-    """
-    Tab per la visualizzazione e il filtraggio delle AttivitàProgrammate.
+    """Tab per la visualizzazione e il filtraggio delle AttivitàProgrammate.
+
     Utilizza una tabella ad alte prestazioni per mostrare lo stato delle PdL e la pianificazione settimanale.
     """
 
@@ -63,8 +63,7 @@ class AttivitaProgrammateTab(QWidget):
     ]
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il tab delle attivitàprogrammate.
+        """Inizializza il tab delle attivitàprogrammate.
 
         Args:
           parent: Widget genitore.
@@ -333,8 +332,7 @@ class AttivitaProgrammateTab(QWidget):
         self.apply_filters()
 
     def filter_data(self, text: str) -> None:
-        """
-        Esegue una ricerca testuale globale su tutte le righe non già nascoste dai filtri.
+        """Esegue una ricerca testuale globale su tutte le righe non già nascoste dai filtri.
 
         Args:
           text: Testo di ricerca.

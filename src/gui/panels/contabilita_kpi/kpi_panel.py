@@ -1,3 +1,5 @@
+"""Modulo Kpi Panel."""
+
 from contextlib import suppress
 from typing import Any
 

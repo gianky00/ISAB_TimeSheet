@@ -1,5 +1,5 @@
-"""
-SyncroJob - Resource Monitor
+"""SyncroJob - Resource Monitor.
+
 HUD per il monitoraggio in tempo reale di RAM e CPU durante l'avvio.
 """
 
@@ -21,6 +21,7 @@ class ResourceMonitor(QWidget):
     """HUD Monitor per Risorse (RAM/CPU Activity)."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.setFixedSize(140, 38)
 

@@ -1,5 +1,4 @@
-"""
-Baseline tests for Scarico Ore Components.
+"""Baseline tests for Scarico Ore Components.
 Ensures data processing and tree building logic remains consistent during refactoring.
 """
 

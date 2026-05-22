@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Controller
+"""SyncroJob - PDL Controller.
+
 Logica di business per il caricamento, filtraggio e processing dei dati PDL SafeWork.
 """
 
@@ -16,6 +16,7 @@ class PDLController:
     """Controller per la gestione dei dati del database PDL."""
 
     def __init__(self) -> None:
+        """Inizializza la classe."""
         self.repository = PdlRepository()
         self._cache: dict[str, list[PdlRowDTO]] = {}
 

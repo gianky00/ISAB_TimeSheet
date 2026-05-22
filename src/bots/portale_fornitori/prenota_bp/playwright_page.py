@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright Prenota BP Page
+"""SyncroJob - Playwright Prenota BP Page.
+
 Page Object Model per la gestione Prenotazioni BP usando Playwright.
 """
 
@@ -17,8 +17,7 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
     """Gestisce le interazioni con la pagina Prenotazioni BP usando Playwright."""
 
     def __init__(self, page: Page, log_callback: Callable[[str], None] | None = None) -> None:
-        """
-        Inizializza la pagina di prenotazione BP.
+        """Inizializza la pagina di prenotazione BP.
 
         Args:
           page: Oggetto Page di Playwright.
@@ -57,8 +56,7 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
         data_da: str | None = None,
         data_a: str | None = None,
     ) -> None:
-        """
-        Imposta i filtri di ricerca per individuare il buono di prelievo.
+        """Imposta i filtri di ricerca per individuare il buono di prelievo.
 
         Args:
           fornitore: Nome del fornitore da selezionare.
@@ -116,8 +114,7 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
         self._wait_overlay()
 
     def gestisci_creazione_richiesta(self, note: str) -> None:
-        """
-        Orchestra il flusso di analisi disponibilita', selezione materiali e creazione richiesta.
+        """Orchestra il flusso di analisi disponibilita', selezione materiali e creazione richiesta.
 
         Args:
           note: Testo da inserire nel campo note della richiesta.

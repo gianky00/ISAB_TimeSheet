@@ -1,5 +1,5 @@
-"""
-SyncroJob - Certificati Analysis Dialog
+"""SyncroJob - Certificati Analysis Dialog.
+
 Modulo specializzato per la visualizzazione e l'esportazione delle scadenze certificati.
 """
 

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Backup Tab (Next-Gen)
+"""SyncroJob - Backup Tab (Next-Gen).
+
 Pannello per la gestione dei backup e dei log strutturato a Card.
 """
 
@@ -30,8 +30,7 @@ class SettingCard(QFrame):
     """Container a card con ombra e stile moderno per un gruppo di impostazioni."""
 
     def __init__(self, title: str, subtitle: str, icon_key: str, content_widget: QWidget) -> None:
-        """
-        Inizializza la card di impostazione.
+        """Inizializza la card di impostazione.
 
         Args:
           title: Titolo della sezione.
@@ -97,14 +96,13 @@ class SettingCard(QFrame):
 
 
 class BackupTab(QWidget):
-    """
-    Tab dedicato alla sicurezza dei dati.
+    """Tab dedicato alla sicurezza dei dati.
+
     Permette la gestione dei backup del database e la pulizia dei log operativi.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il tab di backup.
+        """Inizializza il tab di backup.
 
         Args:
           parent: Widget genitore.
@@ -232,8 +230,7 @@ class BackupTab(QWidget):
             card.setVisible(match or not search_term)
 
     def load_from_config(self, config: dict[str, Any]) -> None:
-        """
-        Carica i metadati del backup dalla configurazione.
+        """Carica i metadati del backup dalla configurazione.
 
         Args:
           config: Dizionario di configurazione.

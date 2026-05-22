@@ -1,3 +1,5 @@
+"""Modulo Header."""
+
 from typing import Any
 
 from PySide6.QtCore import QPoint, Qt, Signal
@@ -9,14 +11,15 @@ from src.gui.components.scarico_ore.filters.popup_list import ListFilterPopupWid
 
 
 class FilterHeaderView(QHeaderView):
-    """
-    Header personalizzato con supporto per menu di filtraggio a discesa.
+    """Header personalizzato con supporto per menu di filtraggio a discesa.
+
     Permette di cliccare sulle intestazioni per aprire popup di filtro specifici per colonna.
     """
 
     filterChanged = Signal(int, object)  # col, values  # noqa: N815
 
     def __init__(self, orientation: Qt.Orientation, parent: Any | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(orientation, parent)
         self.setSectionsClickable(True)
         self.setHighlightSections(True)

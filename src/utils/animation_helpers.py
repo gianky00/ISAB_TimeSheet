@@ -1,5 +1,5 @@
-"""
-SyncroJob - Helper per Animazioni PySide6
+"""SyncroJob - Helper per Animazioni PySide6.
+
 Funzioni centralizzate per creare e gestire animazioni UI.
 """
 
@@ -24,8 +24,7 @@ from src.gui.styles.constants import ANIMATION_TIMINGS
 
 
 def create_opacity_effect(widget: QWidget) -> QGraphicsOpacityEffect:
-    """
-    Crea e applica un effetto di opacit  a un widget.
+    """Crea e applica un effetto di opacit  a un widget.
 
     Args:
       widget: Il widget a cui applicare l'effetto
@@ -45,8 +44,7 @@ def create_fade_animation(
     duration: int = ANIMATION_TIMINGS["fade_normal"],
     easing: QEasingCurve.Type = QEasingCurve.Type.InOutQuad,
 ) -> QPropertyAnimation:
-    """
-    Crea un'animazione di fade (opacit ).
+    """Crea un'animazione di fade (opacit ).
 
     Args:
       effect: L'effetto di opacit  da animare
@@ -73,8 +71,7 @@ def create_pulse_animation(
     duration: int = ANIMATION_TIMINGS["pulse_slow"],
     loop: bool = True,
 ) -> QPropertyAnimation:
-    """
-    Crea un'animazione di pulsazione (fade in/out continuo).
+    """Crea un'animazione di pulsazione (fade in/out continuo).
 
     Args:
       effect: L'effetto di opacit  da animare
@@ -103,8 +100,7 @@ def create_position_animation(
     duration: int = ANIMATION_TIMINGS["fade_normal"],
     easing: QEasingCurve.Type = QEasingCurve.Type.OutCubic,
 ) -> QPropertyAnimation:
-    """
-    Crea un'animazione di posizione.
+    """Crea un'animazione di posizione.
 
     Args:
       widget: Il widget da animare
@@ -125,8 +121,7 @@ def create_position_animation(
 
 
 def cleanup_animation_safely(anim: QAbstractAnimation | None) -> None:
-    """
-    Ferma e pulisce un'animazione in modo sicuro.
+    """Ferma e pulisce un'animazione in modo sicuro.
 
     Args:
       anim: L'animazione da pulire (pu  essere None)
@@ -141,8 +136,7 @@ def cleanup_animation_safely(anim: QAbstractAnimation | None) -> None:
 
 
 def cleanup_effect_safely(widget: QWidget | None, effect: QGraphicsOpacityEffect | None) -> None:
-    """
-    Rimuove e pulisce un effetto grafico in modo sicuro.
+    """Rimuove e pulisce un effetto grafico in modo sicuro.
 
     Args:
       widget: Il widget con l'effetto
@@ -156,8 +150,7 @@ def cleanup_effect_safely(widget: QWidget | None, effect: QGraphicsOpacityEffect
 
 
 def clear_layout_safely(layout: QLayout, process_events: bool = True) -> None:
-    """
-    Pulisce un layout rimuovendo tutti i widget in modo sicuro.
+    """Pulisce un layout rimuovendo tutti i widget in modo sicuro.
 
     Chiama cleanup() sui widget che lo supportano prima di eliminarli.
 
@@ -196,8 +189,7 @@ def clear_layout_safely(layout: QLayout, process_events: bool = True) -> None:
 
 
 def stop_layout_animations(layout: QLayout) -> None:
-    """
-    Ferma ricorsivamente tutte le animazioni nei widget di un layout.
+    """Ferma ricorsivamente tutte le animazioni nei widget di un layout.
 
     Args:
       layout: Il layout da processare
@@ -231,8 +223,7 @@ def create_animation_timer(
     interval: int = ANIMATION_TIMINGS["fps_60"],
     single_shot: bool = False,
 ) -> QTimer:
-    """
-    Crea un timer per animazioni.
+    """Crea un timer per animazioni.
 
     Args:
       parent: Il widget parent
@@ -252,8 +243,7 @@ def create_animation_timer(
 
 
 def delayed_call(callback: Callable[[], None], delay: int = 100, parent: QWidget | None = None) -> None:
-    """
-    Esegue una funzione dopo un ritardo.
+    """Esegue una funzione dopo un ritardo.
 
     Args:
       callback: La funzione da chiamare
@@ -271,8 +261,7 @@ def staggered_fade_in(
     delay_between: int = 50,
     fade_duration: int = ANIMATION_TIMINGS["fade_normal"],
 ) -> list[QPropertyAnimation]:
-    """
-    Crea animazioni di fade-in sfalsate per una lista di widget.
+    """Crea animazioni di fade-in sfalsate per una lista di widget.
 
     Args:
       widgets: Lista di widget da animare

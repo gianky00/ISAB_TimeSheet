@@ -1,5 +1,5 @@
-"""
-SyncroJob - ROI Settings Tab
+"""SyncroJob - ROI Settings Tab.
+
 Pannello per la configurazione dei pesi ROI (minuti manuali stimati).
 Consente all'utente di definire quanto tempo risparmia ogni singola operazione bot.
 """
@@ -29,6 +29,7 @@ class ROIWeightsPage(QWidget):
     settings_changed = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 
@@ -159,6 +160,7 @@ class ROITab(QWidget):
     settings_changed = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 

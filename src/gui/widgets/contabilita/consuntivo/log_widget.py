@@ -1,5 +1,5 @@
-"""
-SyncroJob - Consuntivo Operations Log Widget
+"""SyncroJob - Consuntivo Operations Log Widget.
+
 Console chiara per il tracciamento delle operazioni in tempo reale.
 """
 
@@ -25,8 +25,7 @@ class OperationLogWidget(QFrame):
     """Console professionale in Light Mode per i log delle operazioni."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza la console di log.
+        """Inizializza la console di log.
 
         Args:
           parent: Widget genitore opzionale.
@@ -40,6 +39,7 @@ class OperationLogWidget(QFrame):
         border-radius: 12px;
       }}
     """)
+
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(10)
         shadow.setOffset(0, 2)
@@ -76,6 +76,7 @@ class OperationLogWidget(QFrame):
         color: {COLORS["text_dark"]};
       }}
     """)
+
         clear_btn.clicked.connect(self.clear)
         header_row.addWidget(clear_btn)
         layout.addLayout(header_row)
@@ -95,11 +96,11 @@ class OperationLogWidget(QFrame):
       QScrollBar:vertical {{ border: none; background: transparent; width: 6px; }}
       QScrollBar::handle:vertical {{ background: {COLORS["border_medium"]}; border-radius: 3px; }}
     """)
+
         layout.addWidget(self._log_text)
 
     def append_log(self, message: str, level: str = "info") -> None:
-        """
-        Aggiunge una riga alla console con formattazione semantica.
+        """Aggiunge una riga alla console con formattazione semantica.
 
         Args:
           message: Il testo da visualizzare.

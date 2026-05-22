@@ -1,5 +1,5 @@
-"""
-Bot TS - Login Page Object
+"""Bot TS - Login Page Object.
+
 Gestisce le interazioni con la pagina di login del portale ISAB.
 """
 
@@ -21,9 +21,7 @@ from src.core.constants import Timeouts
 
 
 class LoginPage:
-    """
-    Page Object per la gestione della pagina di login.
-    """
+    """Page Object per la gestione della pagina di login."""
 
     def __init__(
         self,
@@ -39,9 +37,7 @@ class LoginPage:
         self.isab_url = isab_url
 
     def _attendi_scomparsa_overlay(self, timeout_secondi: int = Timeouts.OVERLAY) -> bool:
-        """
-        Waits for Ext JS loading overlays to disappear.
-        """
+        """Waits for Ext JS loading overlays to disappear."""
         try:
             overlay_wait: WebDriverWait[WebDriver] = WebDriverWait(self.driver, timeout_secondi)
             xpath_combined = f"{CommonLocators.LOADING_MASK[1]} | {CommonLocators.LOADING_TEXT[1]}"
@@ -125,8 +121,8 @@ class LoginPage:
         return False
 
     def login(self, username: str, password: str, company: str = "ISAB") -> bool:  # noqa: PLR0911
-        """
-        Esegue il login al portale ISAB.
+        """Esegue il login al portale ISAB.
+
         Ritorna False se viene rilevato un Proxy Error.
         """
         self.log(f"Navigazione a: {self.isab_url}")

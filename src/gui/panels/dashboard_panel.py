@@ -1,5 +1,5 @@
-"""
-SyncroJob - Dashboard Panel
+"""SyncroJob - Dashboard Panel.
+
 Pannello di controllo principale (Home) dell'applicazione.
 Refactored V9.7: Integrated PDL Stats Widget with Trends and Interactive Areas.
 """
@@ -33,12 +33,13 @@ from src.gui.widgets.quick_actions import QuickActions
 
 
 class DashboardPanel(QWidget):
-    """
-    Dashboard Home evoluta.
+    """Dashboard Home evoluta.
+
     Sostituisce le card statiche con indicatori dinamici di valore (ROI) e contesto (Meteo/PDL).
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)

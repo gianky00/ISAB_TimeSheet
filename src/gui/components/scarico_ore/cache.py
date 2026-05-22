@@ -1,3 +1,5 @@
+"""Modulo Cache."""
+
 import json
 from collections.abc import Callable
 from pathlib import Path
@@ -17,8 +19,8 @@ FIELDS_LIMIT = 11
 
 
 class CacheWorker(QThread):
-    """
-      BOLT OPTIMIZATION: Background worker for heavy cache operations.
+    """BOLT OPTIMIZATION: Background worker for heavy cache operations.
+
     Handles file I/O (JSON) and data processing.
     Now builds a PRE-FORMATTED display cache for max speed.
     """

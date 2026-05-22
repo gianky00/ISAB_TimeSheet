@@ -1,5 +1,5 @@
-"""
-SyncroJob - Scarico Ore Filter Bar
+"""SyncroJob - Scarico Ore Filter Bar.
+
 Componente UI per la visualizzazione delle statistiche e dei filtri di ricerca.
 """
 
@@ -21,6 +21,7 @@ class ScaricoOreFilterBar(ModernCard):
     update_requested = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(elevation=10, parent=parent)
         self.setObjectName("filterBar")
         self._setup_ui()

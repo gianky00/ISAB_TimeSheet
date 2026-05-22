@@ -1,5 +1,5 @@
-"""
-Timeline Widget Professionale - Standard Cyber-Stepper V5 (Cyber-Rail Ultra).
+"""Timeline Widget Professionale - Standard Cyber-Stepper V5 (Cyber-Rail Ultra).
+
 Design d'élite con trasparenze reali, bordi neon e ombre portate.
 """
 
@@ -39,14 +39,13 @@ from src.gui.styles.constants import UI_SIZES
 
 
 class TimelineNode:
-    """
-    Rappresenta un singolo nodo all'interno della timeline delle attività.
+    """Rappresenta un singolo nodo all'interno della timeline delle attività.
+
     Mantiene lo stato, il tempo di inizio e la durata dell'operazione.
     """
 
     def __init__(self, name: str) -> None:
-        """
-        Inizializza un nuovo nodo.
+        """Inizializza un nuovo nodo.
 
         Args:
             name: Nome visualizzato dello step.
@@ -58,8 +57,8 @@ class TimelineNode:
 
 
 class ActivityTimelineWidget(QWidget):
-    """
-    Widget grafico avanzato (Cyber-Stepper V5) per il monitoraggio dei bot.
+    """Widget grafico avanzato (Cyber-Stepper V5) per il monitoraggio dei bot.
+
     Visualizza una timeline verticale con animazioni neon, griglia tattica e flussi dati.
     """
 
@@ -67,8 +66,7 @@ class ActivityTimelineWidget(QWidget):
     pulse_value_changed = Signal(float)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il widget e configura le animazioni e i colori.
+        """Inizializza il widget e configura le animazioni e i colori.
 
         Args:
             parent: Widget genitore.
@@ -140,8 +138,7 @@ class ActivityTimelineWidget(QWidget):
         self._border_pulse_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
 
     def enterEvent(self, event: QEnterEvent) -> None:
-        """
-        Avvia la pulsazione del bordo al passaggio del mouse.
+        """Avvia la pulsazione del bordo al passaggio del mouse.
 
         Args:
             event: Evento di ingresso.
@@ -150,8 +147,7 @@ class ActivityTimelineWidget(QWidget):
         super().enterEvent(event)
 
     def leaveEvent(self, event: QEvent) -> None:
-        """
-        Ferma la pulsazione e ripristina il bordo solido.
+        """Ferma la pulsazione e ripristina il bordo solido.
 
         Args:
             event: Evento di uscita.
@@ -199,8 +195,7 @@ class ActivityTimelineWidget(QWidget):
     pulse_value = Property(float, fget=get_pulse_value, fset=set_pulse_value, notify=pulse_value_changed)
 
     def set_steps(self, steps: list[tuple[str, str]]) -> None:
-        """
-        Inizializza la lista degli step da visualizzare.
+        """Inizializza la lista degli step da visualizzare.
 
         Args:
             steps: Lista di tuple (ID, Nome) degli step.
@@ -210,8 +205,7 @@ class ActivityTimelineWidget(QWidget):
 
     @Slot(int, str, object)
     def on_step_changed(self, index: int, name: str, status: StepStatus | int) -> None:
-        """
-        Slot chiamato quando lo stato di uno step del bot cambia.
+        """Slot chiamato quando lo stato di uno step del bot cambia.
 
         Args:
             index: Indice dello step.
@@ -251,8 +245,8 @@ class ActivityTimelineWidget(QWidget):
         self._cached_grid_path = None
 
     def paintEvent(self, event: QPaintEvent) -> None:
-        """
-        Gestisce il disegno personalizzato del widget (Grid, Connectors, Nodes).
+        """Gestisce il disegno personalizzato del widget (Grid, Connectors, Nodes).
+
         Ottimizzato tramite caching dei path.
         """
         painter = QPainter(self)
@@ -316,8 +310,8 @@ class ActivityTimelineWidget(QWidget):
             painter.end()
 
     def _draw_grid(self, painter: QPainter, rect: QRectF) -> None:
-        """
-        Disegna la griglia tattica animata sullo sfondo.
+        """Disegna la griglia tattica animata sullo sfondo.
+
         Utilizza un'ulteriore trasformazione per evitare il ricalcolo dei segmenti.
         """
         painter.save()
@@ -340,8 +334,7 @@ class ActivityTimelineWidget(QWidget):
     def _draw_connector_v5(  # noqa: PLR0913
         self, painter: QPainter, x: float, y1: float, y2: float, n1: TimelineNode, n2: TimelineNode
     ) -> None:
-        """
-        Disegna la linea di connessione tra due nodi con effetti di flusso dati.
+        """Disegna la linea di connessione tra due nodi con effetti di flusso dati.
 
         Args:
             painter: Oggetto QPainter.
@@ -369,8 +362,7 @@ class ActivityTimelineWidget(QWidget):
     def _draw_node_v5(
         self, painter: QPainter, x: float, y: float, node: TimelineNode, container_rect: QRectF
     ) -> None:
-        """
-        Disegna un singolo nodo della timeline con i relativi effetti di stato.
+        """Disegna un singolo nodo della timeline con i relativi effetti di stato.
 
         Args:
             painter: Oggetto QPainter.
@@ -432,8 +424,7 @@ class ActivityTimelineWidget(QWidget):
             painter.drawText(text_x, int(y + 16), msg)
 
     def _draw_empty(self, painter: QPainter) -> None:
-        """
-        Disegna lo stato vuoto del widget quando non ci sono step.
+        """Disegna lo stato vuoto del widget quando non ci sono step.
 
         Args:
             painter: Oggetto QPainter.

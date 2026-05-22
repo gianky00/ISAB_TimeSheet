@@ -1,5 +1,5 @@
-"""
-SyncroJob - Status Indicator
+"""SyncroJob - Status Indicator.
+
 Indicatore di stato circolare animato.
 """
 
@@ -22,12 +22,13 @@ QToolTip {
 
 
 class StatusIndicator(QWidget):
-    """
-    Indicatore di stato circolare con animazione di pulsazione.
+    """Indicatore di stato circolare con animazione di pulsazione.
+
     Stati supportati: 'idle', 'running', 'success', 'error'.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.setFixedSize(20, 20)
         self.setStyleSheet(TOOLTIP_CSS)
@@ -46,8 +47,7 @@ class StatusIndicator(QWidget):
         self.setToolTip("Pronto")
 
     def set_status(self, status: str, message: str = "") -> None:
-        """
-        Aggiorna il colore e l'animazione dell'indicatore.
+        """Aggiorna il colore e l'animazione dell'indicatore.
 
         Args:
           status: Il nuovo stato (running, success, error, idle).

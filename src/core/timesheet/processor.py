@@ -1,5 +1,5 @@
-"""
-Timesheet Module Facade.
+"""Timesheet Module Facade.
+
 Maintains backward compatibility for the existing TimesheetProcessor API.
 """
 
@@ -9,8 +9,8 @@ from src.core.timesheet.service import TimesheetService
 
 
 class TimesheetProcessor:
-    """
-    Facade class for Timesheet processing.
+    """Facade class for Timesheet processing.
+
     Delegates to the new architecture while preserving original API.
     """
 

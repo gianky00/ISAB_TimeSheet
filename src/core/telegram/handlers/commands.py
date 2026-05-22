@@ -1,3 +1,5 @@
+"""Modulo Commands."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -14,8 +16,8 @@ if TYPE_CHECKING:
 
 
 async def cmd_start(service: TelegramService, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Handles the /start command.
+    """Handles the /start command.
+
     Checks authentication status and displays the main menu or pairing prompt.
     """
     if not update.effective_chat:
@@ -51,8 +53,8 @@ async def _handle_initial_pairing(
     config: dict[str, Any],
     chat_id: str,
 ) -> bool:
-    """
-    Manages the initial device pairing process using an OTP code.
+    """Manages the initial device pairing process using an OTP code.
+
     Returns True if pairing is successful, False otherwise.
     """
     args = context.args
@@ -80,8 +82,8 @@ async def _handle_initial_pairing(
 
 
 async def cmd_status(service: TelegramService, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Handles the /status command.
+    """Handles the /status command.
+
     Triggers a status report request to the desktop application to be sent back via callback.
     """
     if not await service._check_auth(update):
@@ -91,8 +93,8 @@ async def cmd_status(service: TelegramService, update: Update, context: ContextT
 
 
 async def cmd_stop(service: TelegramService, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Handles the /stop command.
+    """Handles the /stop command.
+
     Sends a 'stop_all' signal to the desktop application to halt all running operations.
     """
     if not await service._check_auth(update):

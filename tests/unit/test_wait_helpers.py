@@ -1,5 +1,4 @@
-"""
-Unit Tests for Selenium Wait Helpers
+"""Unit Tests for Selenium Wait Helpers
 =====================================
 Test suite per wait_helpers.py usando mock WebDriver e Temporary Directory.
 """

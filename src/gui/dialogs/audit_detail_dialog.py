@@ -1,3 +1,5 @@
+"""Modulo Audit Detail Dialog."""
+
 import json
 from contextlib import suppress
 from datetime import datetime
@@ -27,6 +29,7 @@ class AuditDetailDialog(QDialog):
     """Dialog per visualizzare i dettagli completi di un log."""
 
     def __init__(self, log_data: dict[str, Any], parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.log_data = log_data
         self.setWindowTitle("Dettagli Audit Log")

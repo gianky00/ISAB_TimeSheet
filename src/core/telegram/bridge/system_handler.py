@@ -1,5 +1,5 @@
-"""
-SyncroJob - Telegram Bridge System Handler (Refactored)
+"""SyncroJob - Telegram Bridge System Handler (Refactored).
+
 Gestisce screenshot, report PDF e stati via interfacce agnostiche.
 Agnostico rispetto a PySide6.
 """

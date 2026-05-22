@@ -1,3 +1,5 @@
+"""Modulo Database."""
+
 import logging
 import sqlite3
 from contextlib import suppress
@@ -28,6 +30,7 @@ class AuditDatabase:
         self._db_path_override = value
 
     def __init__(self) -> None:
+        """Inizializza il gestore del database di audit."""
         self._init_db()
 
     def _init_db(self) -> None:
@@ -94,8 +97,7 @@ class AuditDatabase:
             return "0" * 64
 
     def insert_log(self, data: tuple[Any, ...]) -> int:
-        """
-        Inserisce un nuovo record di audit.
+        """Inserisce un nuovo record di audit.
 
         Args:
           data: Tupla contenente i valori per le colonne del log.
@@ -104,6 +106,7 @@ class AuditDatabase:
           int: ID della riga inserita.
         """
         query = """INSERT INTO audit_logs
+
           (timestamp, user_id, action, category, entity, params, status, severity,
           duration_ms, module, error_code, row_hash)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
@@ -122,8 +125,7 @@ class AuditDatabase:
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[dict[str, Any]], int]:
-        """
-        Esegue una ricerca filtrata nei log di audit.
+        """Esegue una ricerca filtrata nei log di audit.
 
         Args:
           start_date: Data minima.
@@ -194,8 +196,7 @@ class AuditDatabase:
             return []
 
     def delete_older_than(self, cutoff_iso: str) -> int:
-        """
-        Elimina i log più vecchi della data specificata.
+        """Elimina i log più vecchi della data specificata.
 
         Args:
           cutoff_iso: Data limite in formato ISO.

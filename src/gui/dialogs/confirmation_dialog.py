@@ -1,5 +1,5 @@
-"""
-SyncroJob - Confirmation Dialog
+"""SyncroJob - Confirmation Dialog.
+
 Dialogo standard per le conferme (Sì/No) o messaggi importanti.
 Sostituisce QMessageBox per mantenere uno stile coerente con il design d'élite del progetto.
 """
@@ -22,8 +22,8 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class ConfirmationDialog(QDialog):
-    """
-    Dialogo versatile per conferme e avvisi.
+    """Dialogo versatile per conferme e avvisi.
+
     Supporta diverse varianti (INFO, WARNING, ERROR, QUESTION) con icone e colori tematici.
     """
 
@@ -43,8 +43,7 @@ class ConfirmationDialog(QDialog):
         variant: str = Variant.QUESTION,
         is_rich_text: bool = False,
     ) -> None:
-        """
-        Inizializza il dialogo di conferma.
+        """Inizializza il dialogo di conferma.
 
         Args:
           parent: Widget genitore.
@@ -163,8 +162,7 @@ class ConfirmationDialog(QDialog):
 
     @staticmethod
     def confirm(parent: QWidget | None, title: str, message: str, is_rich_text: bool = False) -> bool:
-        """
-        Helper statico per mostrare rapidamente una richiesta di conferma Sì/No.
+        """Helper statico per mostrare rapidamente una richiesta di conferma Sì/No.
 
         Args:
           parent: Widget genitore.

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Consuntivo Modifica Esistente Tab
+"""SyncroJob - Consuntivo Modifica Esistente Tab.
+
 Tab intelligente per la scansione, auto-fill e manipolazione di file esistenti.
 """
 
@@ -44,6 +44,7 @@ class ModificaEsistenteTab(QWidget):
     _scan_error = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.macro_worker: MacroWorker | None = None
         self.loaded_file: str | None = None

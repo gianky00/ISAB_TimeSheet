@@ -1,3 +1,5 @@
+"""Modulo Base."""
+
 import io
 import re
 import warnings
@@ -33,7 +35,7 @@ class BaseImporter:
 
     @staticmethod
     def _get_pd() -> Any:
-        """Restituisce pandas"""
+        """Restituisce pandas."""
         return pd
 
     @staticmethod

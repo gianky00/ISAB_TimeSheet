@@ -1,3 +1,5 @@
+"""Modulo Statistics Widget."""
+
 from datetime import datetime
 from typing import Any
 
@@ -28,6 +30,7 @@ class StatisticsWidget(QWidget):
     """Widget per visualizzare le statistiche di utilizzo."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 

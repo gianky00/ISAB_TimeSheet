@@ -1,5 +1,5 @@
-"""
-SyncroJob - Bot Efficiency Widget
+"""SyncroJob - Bot Efficiency Widget.
+
 Visualizza le metriche di efficienza e affidabilità delle automazioni su tutto lo storico.
 V4.0: Storico totale, nuove metriche di successo e affidabilità con barre di progresso.
 """
@@ -33,16 +33,15 @@ class KPICardConfig(NamedTuple):
 
 
 class BotSavingsWidget(ModernCard):
-    """
-    Widget premium per la visualizzazione dell'efficienza delle automazioni.
+    """Widget premium per la visualizzazione dell'efficienza delle automazioni.
+
     Calcola il tempo risparmiato, il tasso di successo e l'affidabilità basandosi sullo storico totale.
     """
 
     stats_updated = Signal(object)  # ROIMetrics
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il widget Efficienza.
+        """Inizializza il widget Efficienza.
 
         Args:
           parent: Widget genitore opzionale.
@@ -308,8 +307,7 @@ class BotSavingsWidget(ModernCard):
         self.stats_updated.emit(metrics)
 
     def _update_ui(self, metrics: ROIMetrics) -> None:
-        """
-        Aggiorna gli elementi grafici con le nuove metriche calcolate.
+        """Aggiorna gli elementi grafici con le nuove metriche calcolate.
 
         Args:
           metrics: Oggetto ROIMetrics contenente i dati elaborati.

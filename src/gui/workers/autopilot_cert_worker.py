@@ -1,5 +1,5 @@
-"""
-SyncroJob - Autopilot Certificati Worker
+"""SyncroJob - Autopilot Certificati Worker.
+
 Worker asincrono per l'analisi automatica delle scadenze certificati.
 Evita il freeze della GUI durante le query SQL e l'automazione Outlook (Fallback).
 """
@@ -17,9 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class AutopilotCertWorker(QThread):
-    """
-    Worker che esegue l'analisi dei certificati in background quando la UI non  accessibile.
-    """
+    """Worker che esegue l'analisi dei certificati in background quando la UI non  accessibile."""
 
     finished_signal = Signal(bool)
 

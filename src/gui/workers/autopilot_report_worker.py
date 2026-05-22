@@ -1,5 +1,5 @@
-"""
-SyncroJob - Autopilot Report Worker
+"""SyncroJob - Autopilot Report Worker.
+
 Worker asincrono per l'invio automatico del report accessi.
 Evita il freeze della GUI durante le query SQL massive e l'automazione Outlook.
 """
@@ -14,9 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class AutopilotReportWorker(QThread):
-    """
-    Worker che esegue il workflow di invio report programmato in background.
-    """
+    """Worker che esegue il workflow di invio report programmato in background."""
 
     finished_signal = Signal(bool)
 

@@ -1,5 +1,5 @@
-"""
-Bot TS - Configuration Manager
+"""Bot TS - Configuration Manager.
+
 Gestione della configurazione dell'applicazione.
 Refactored V9.0: Modularized architecture.
 """
@@ -123,8 +123,8 @@ def _load_base_config() -> dict[str, Any]:
 
 
 def save_config(config: dict[str, Any], async_save: bool = True) -> bool:
-    """
-    Salva la configurazione su file.
+    """Salva la configurazione su file.
+
     Se async_save è True (default), l'operazione di I/O (inclusa la cifratura)
     viene delegata a un thread di background per non bloccare il Main Thread della GUI.
     """
@@ -215,8 +215,8 @@ def set_config_values(updates: dict[str, Any]) -> bool:
 
 
 def get_download_path() -> str:
-    """
-    Restituisce il percorso della cartella download configurata o quella predefinita di sistema.
+    """Restituisce il percorso della cartella download configurata o quella predefinita di sistema.
+
     Esegue una validazione di esistenza per evitare percorsi hardcoded non validi.
     """
     # Supporta sia la vecchia chiave che quella corretta per retrocompatibilità

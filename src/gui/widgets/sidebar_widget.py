@@ -1,5 +1,5 @@
-"""
-SyncroJob - Sidebar Widget (Refactored V8.8 - Performance Optimized V4)
+"""SyncroJob - Sidebar Widget (Refactored V8.8 - Performance Optimized V4).
+
 Navigazione magnetica professionale a 3 livelli.
 Risolti bug di sovrapposizione e artefatti grafici. Massima fluidità garantita.
 """
@@ -36,8 +36,8 @@ logger = logging.getLogger(__name__)
 
 
 class SidebarWidget(QFrame):
-    """
-    Orchestratore della Sidebar con navigazione profonda e track magnetico.
+    """Orchestratore della Sidebar con navigazione profonda e track magnetico.
+
     Gestisce l'espansione automatica all'hover e la gerarchia dei menu a 3 livelli.
     """
 
@@ -45,8 +45,7 @@ class SidebarWidget(QFrame):
     palette_requested = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il componente sidebar.
+        """Inizializza il componente sidebar.
 
         Args:
           parent: Widget genitore opzionale.

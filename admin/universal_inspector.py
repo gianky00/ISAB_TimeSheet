@@ -34,8 +34,7 @@ URL_MAP = {
 
 
 class BotArchitect:
-    """
-    Automated inspector tool for capturing web application states and DOM structures.
+    """Automated inspector tool for capturing web application states and DOM structures.
     Used for creating datasets for AI training or debugging Selenium workflows.
     """
 
@@ -176,8 +175,7 @@ class BotArchitect:
             self.log_to_console(f"⚠️ Errore durante il login automatico: {e}")
 
     def capture_state(self, state_name) -> None:
-        """
-        Captures the current browser state (Screenshot, DOM, JSON mapping).
+        """Captures the current browser state (Screenshot, DOM, JSON mapping).
         Creates a new directory in log_inspector for the snapshot.
         """
         self.state_counter += 1
@@ -207,8 +205,7 @@ class BotArchitect:
         self._record_entry("STATE_CHANGE", state_name, folder_name)
 
     def record_action(self, action_desc: str) -> None:
-        """
-        Registra una descrizione testuale di un'azione utente nel manifest del workflow.
+        """Registra una descrizione testuale di un'azione utente nel manifest del workflow.
 
         Args:
             action_desc: Descrizione dell'azione compiuta (es. 'Click su Login').
@@ -269,8 +266,7 @@ class BotArchitect:
         """
 
     def run(self) -> None:
-        """
-        Main execution loop.
+        """Main execution loop.
         Initializes driver, performs login, and enters interactive command loop.
         """
         name, url = self.get_user_choice()

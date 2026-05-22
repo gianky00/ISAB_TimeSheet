@@ -1,5 +1,5 @@
-"""
-SyncroJob - ODA Data Worker
+"""SyncroJob - ODA Data Worker.
+
 Worker asincrono per il recupero e raggruppamento degli Ordini di Acquisto.
 Garantisce la fluidità della GUI durante la consultazione dello storico ODA.
 """
@@ -14,16 +14,13 @@ logger = logging.getLogger(__name__)
 
 
 class ODADataWorker(QThread):
-    """
-    Worker che esegue query ODA e raggruppamento dati in background.
-    """
+    """Worker che esegue query ODA e raggruppamento dati in background."""
 
     finished_signal = Signal(list)
     error_signal = Signal(str)
 
     def __init__(self, controller: ODAController, search_text: str = "") -> None:
-        """
-        Inizializza il worker.
+        """Inizializza il worker.
 
         Args:
           controller: Istanza di ODAController.

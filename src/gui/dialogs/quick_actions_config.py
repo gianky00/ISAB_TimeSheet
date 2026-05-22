@@ -1,3 +1,5 @@
+"""Modulo Quick Actions Config."""
+
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
@@ -20,6 +22,7 @@ class QuickActionsConfigDialog(QDialog):
     """Dialogo per configurare quali azioni rapide mostrare (ad Albero)."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.setWindowTitle("Configura Azioni Rapide")
         dialog_width = 450
@@ -144,7 +147,6 @@ class QuickActionsConfigDialog(QDialog):
 
     def _populate_tree(self) -> None:
         """Costruisce l'albero basandosi sulla struttura 'path'."""
-
         # 1. Build a simplified node structure
         # nodes = { "root_name": { "child_name": { ... "leaves": [(key, text)] } } }
 

@@ -1,3 +1,5 @@
+"""Modulo Command Registry."""
+
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Optional
@@ -5,8 +7,8 @@ from typing import Any, Optional
 
 @dataclass
 class CommandNode:
-    """
-    Rappresenta un nodo nell'albero dei comandi della Palette.
+    """Rappresenta un nodo nell'albero dei comandi della Palette.
+
     Pu  essere una foglia (azione) o un ramo (menu).
     """
 
@@ -49,9 +51,7 @@ class CommandNode:
 
 
 class CommandRegistry:
-    """
-    Singleton per definire e recuperare l'albero dei comandi.
-    """
+    """Singleton per definire e recuperare l'albero dei comandi."""
 
     _instance: Optional["CommandRegistry"] = None
     _root: Optional["CommandNode"] = None

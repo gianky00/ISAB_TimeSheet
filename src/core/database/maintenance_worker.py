@@ -1,5 +1,5 @@
-"""
-SyncroJob - Database Maintenance Worker
+"""SyncroJob - Database Maintenance Worker.
+
 Worker asincrono per l'ottimizzazione e manutenzione periodica dei database SQLite e pulizia log/file.
 """
 
@@ -15,11 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class DatabaseMaintenanceWorker(Thread):
-    """
-    Worker in background per eseguire operazioni di manutenzione database e pulizia file.
-    """
+    """Worker in background per eseguire operazioni di manutenzione database e pulizia file."""
 
     def __init__(self) -> None:
+        """Inizializza la classe."""
         super().__init__(daemon=True, name="DatabaseMaintenanceWorker")
         self.databases = [
             db_manager.DB_CONTABILITA,

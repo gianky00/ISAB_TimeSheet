@@ -1,5 +1,5 @@
-"""
-SyncroJob - Splash Screen
+"""SyncroJob - Splash Screen.
+
 Gestisce l'inizializzazione dell'applicazione con animazioni fluide e effetti 3D.
 """
 
@@ -68,6 +68,7 @@ class StartupDialog(QDialog):
     _drag_pos: QPoint | None
 
     def __init__(self) -> None:
+        """Inizializza la classe."""
         super().__init__()
         self.setMouseTracking(True)  # Fondamentale per il Tilt 3D
         self._init_window()
@@ -705,7 +706,7 @@ class StartupDialog(QDialog):
             self._thread.quit()
             thread_wait_ms = 500
             self._thread.wait(thread_wait_ms)
-        close_delay_ms = 400
+        close_delay_ms = 50
         QTimer.singleShot(close_delay_ms, self.accept)
 
     def get_result(self) -> bool:

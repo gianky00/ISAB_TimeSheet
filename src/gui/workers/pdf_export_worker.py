@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDF Export Worker
+"""SyncroJob - PDF Export Worker.
+
 Worker asincrono per l'esportazione di report PDF.
 Evita il freeze della GUI durante la generazione di documenti complessi con paginazione.
 """
@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 class PDFExportWorker(QThread):
-    """
-    Worker che delega l'esportazione PDF a un thread secondario.
+    """Worker che delega l'esportazione PDF a un thread secondario.
+
     Nota: Sebbene QPdfWriter richieda un QPainter (che di solito è Main Thread),
     la preparazione dei dati e dei documenti può essere asincrona.
     """
@@ -22,8 +22,7 @@ class PDFExportWorker(QThread):
     finished_signal = Signal(bool, str)  # (success, message)
 
     def __init__(self, exporter_instance: Any, file_path: str) -> None:
-        """
-        Inizializza il worker.
+        """Inizializza il worker.
 
         Args:
           exporter_instance: Istanza di CertificatiPdfExporter o simile.

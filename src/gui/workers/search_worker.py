@@ -1,5 +1,5 @@
-"""
-SyncroJob - Search Worker
+"""SyncroJob - Search Worker.
+
 Thread worker per l'esecuzione asincrona delle ricerche universali.
 """
 
@@ -16,8 +16,7 @@ class SearchWorker(QThread):
     results_ready = Signal(dict)
 
     def __init__(self, query: str, limit: int = 10, parent: Any = None) -> None:
-        """
-        Inizializza il worker di ricerca.
+        """Inizializza il worker di ricerca.
 
         Args:
           query: Stringa di ricerca.

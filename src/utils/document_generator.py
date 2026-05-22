@@ -1,6 +1,4 @@
-"""
-Generatore di documenti PDF da HTML.
-"""
+"""Generatore di documenti PDF da HTML."""
 
 import logging
 

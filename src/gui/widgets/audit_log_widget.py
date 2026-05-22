@@ -1,6 +1,5 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
-"""
-SyncroJob - Audit Log Widget
+"""SyncroJob - Audit Log Widget.
+
 Widget riutilizzato per la visualizzazione dell'audit log.
 Refactoring modulare V2.
 """
@@ -49,8 +48,8 @@ logger = logging.getLogger(__name__)
 
 
 class AuditLogWidget(QWidget):
-    """
-    Dashboard avanzata per l'Audit Log V2.
+    """Dashboard avanzata per l'Audit Log V2.
+
     Widget modulare con filtri, paginazione e Live Mode.
     """
 
@@ -167,8 +166,7 @@ class AuditLogWidget(QWidget):
         self.filter_bar.set_categories(cats)
 
     def _toggle_live_mode(self, state: int | Qt.CheckState) -> None:
-        """
-        Attiva o disattiva la modalità live.
+        """Attiva o disattiva la modalità live.
 
         Args:
           state: Stato della checkbox.
@@ -192,8 +190,7 @@ class AuditLogWidget(QWidget):
             self.refresh(reset_page=True)
 
     def _on_page_changed(self, delta: int) -> None:
-        """
-        Gestisce il cambio pagina.
+        """Gestisce il cambio pagina.
 
         Args:
           delta: Spostamento pagina (+1 o -1).
@@ -202,8 +199,7 @@ class AuditLogWidget(QWidget):
         self.refresh()
 
     def refresh(self, reset_page: bool = False) -> None:
-        """
-        Rinfresca i dati visualizzati applicando i filtri correnti.
+        """Rinfresca i dati visualizzati applicando i filtri correnti.
 
         Args:
           reset_page: Se True, torna alla prima pagina.
@@ -255,8 +251,7 @@ class AuditLogWidget(QWidget):
 
     @Slot(QModelIndex)
     def _on_row_double_click(self, index: QModelIndex) -> None:
-        """
-        Gestisce il doppio click su una riga.
+        """Gestisce il doppio click su una riga.
 
         Args:
           index: Indice della cella cliccata.

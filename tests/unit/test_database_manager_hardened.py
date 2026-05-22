@@ -1,5 +1,4 @@
-"""
-Hardened tests for DatabaseManager.
+"""Hardened tests for DatabaseManager.
 Verifies thread safety, WAL mode, and migration logic.
 """
 
@@ -39,7 +38,6 @@ class TestDatabaseManagerHardened:
 
     def test_retry_logic_on_locked(self, manager, db_path):
         """Verifica che il manager riprovi se il database è occupato."""
-
         # Patchiamo get_connection in modo che sollevi OperationalError
         with patch.object(
             manager, "get_connection", side_effect=sqlite3.OperationalError("database is locked")

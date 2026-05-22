@@ -1,5 +1,5 @@
-"""
-SyncroJob - Bot Controller
+"""SyncroJob - Bot Controller.
+
 Orchestratore per il coordinamento delle attività dei bot Selenium e l'aggiornamento dinamico della UI.
 Gestisce il bridge tra i segnali emessi dai pannelli bot, il servizio di messaggistica Telegram
 e le card di stato globali presenti nel footer della MainWindow.
@@ -14,8 +14,8 @@ from PySide6.QtWidgets import QWidget
 
 
 class BotController(QObject):
-    """
-    Controller centrale per il monitoraggio e la notifica dello stato delle automazioni.
+    """Controller centrale per il monitoraggio e la notifica dello stato delle automazioni.
+
     Si occupa di:
     - Collegare i segnali di stato di ogni pannello bot alle card informative (Portale/SafeWork).
     - Inoltrare i file prodotti dai bot (es. PDF dei PDL) direttamente sul canale Telegram.
@@ -23,8 +23,7 @@ class BotController(QObject):
     """
 
     def __init__(self, main_window: Any, telegram_service: Any) -> None:
-        """
-        Inizializza il bot controller.
+        """Inizializza il bot controller.
 
         Args:
           main_window: Riferimento alla MainWindow (per accesso alle status card).
@@ -36,8 +35,7 @@ class BotController(QObject):
         self.panels: list[Any] = []
 
     def register_panels(self, panels: list[Any]) -> None:
-        """
-        Sottoscrive il controller ai segnali di ogni pannello bot registrato.
+        """Sottoscrive il controller ai segnali di ogni pannello bot registrato.
 
         Args:
           panels: Lista di widget bot (che ereditano tipicamente da BaseBotPanel).
@@ -52,8 +50,8 @@ class BotController(QObject):
                 panel.autopilot_changed.connect(self._on_autopilot_trigger)
 
     def _handle_bot_results(self, bot_id: str, results: list[str]) -> None:
-        """
-        Reagisce al completamento di un bot inviando i file prodotti a Telegram.
+        """Reagisce al completamento di un bot inviando i file prodotti a Telegram.
+
         Specializzato per lo scarico PDL.
 
         Args:
@@ -69,8 +67,7 @@ class BotController(QObject):
                     )
 
     def _on_panel_status_changed(self, status: str, message: str) -> None:
-        """
-        Aggiorna le card di stato nel footer in base all'appartenenza del bot (Portale o SafeWork).
+        """Aggiorna le card di stato nel footer in base all'appartenenza del bot (Portale o SafeWork).
 
         Args:
           status: Codice colore HEX per l'indicatore visuale.
@@ -97,8 +94,7 @@ class BotController(QObject):
             self.mw.dashboard_panel.refresh_live_data()
 
     def _get_active_bot_panel(self) -> QWidget | None:
-        """
-        Individua il pannello bot attualmente visualizzato dall'utente navigando tra i tab.
+        """Individua il pannello bot attualmente visualizzato dall'utente navigando tra i tab.
 
         Returns:
           Optional[QWidget]: Il pannello attivo o None se non identificato.

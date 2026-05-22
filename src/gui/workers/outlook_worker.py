@@ -1,5 +1,5 @@
-"""
-SyncroJob - Outlook Email Worker
+"""SyncroJob - Outlook Email Worker.
+
 Worker asincrono per l'invio di email tramite Outlook (win32com).
 Evita il freeze della GUI durante l'automazione COM e il caricamento di Outlook.
 """
@@ -13,15 +13,12 @@ logger = logging.getLogger(__name__)
 
 
 class OutlookEmailWorker(QThread):
-    """
-    Worker che gestisce l'apertura e l'invio di email Outlook in background.
-    """
+    """Worker che gestisce l'apertura e l'invio di email Outlook in background."""
 
     finished_signal = Signal(bool, str)  # (success, error_message)
 
     def __init__(self, email_func: Callable[[], None]) -> None:
-        """
-        Inizializza il worker.
+        """Inizializza il worker.
 
         Args:
           email_func: La funzione che esegue l'invio della mail (già configurata).

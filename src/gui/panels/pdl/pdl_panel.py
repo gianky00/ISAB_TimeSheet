@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Database Panel (Refactored)
+"""SyncroJob - PDL Database Panel (Refactored).
+
 Pannello coordinato per la gestione del Database PDL SafeWork.
 Utilizza PDLController per la logica di business e PDLTableView per la griglia.
 """
@@ -45,8 +45,7 @@ class PDLDBPanel(QWidget):
     """Orchestratore del modulo PDL con architettura Master-Detail modularizzata."""
 
     def __init__(self, controller: PDLController, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello del database PDL con iniezione del controller.
+        """Inizializza il pannello del database PDL con iniezione del controller.
 
         Args:
           controller: Istanza del controller per la logica di business.
@@ -214,8 +213,7 @@ class PDLDBPanel(QWidget):
     def set_filters(
         self, site: str | None = None, area: str | None = None, search: str | None = None
     ) -> None:
-        """
-        Imposta i filtri del pannello programmaticamente.
+        """Imposta i filtri del pannello programmaticamente.
 
         Args:
           site: Nome del sito da selezionare.

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Certificati Worker
+"""SyncroJob - Certificati Worker.
+
 Worker asincrono per il caricamento e raggruppamento dei certificati campione.
 Evita il freeze della GUI durante l'elaborazione di migliaia di record.
 """
@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class CertificatiWorker(QThread):
-    """
-    Worker per il caricamento asincrono dei certificati.
+    """Worker per il caricamento asincrono dei certificati.
+
     Delega l'elaborazione pesante (SQL, Raggruppamento, Priorità) a un thread secondario.
     """
 
@@ -24,8 +24,7 @@ class CertificatiWorker(QThread):
     error_signal = Signal(str)
 
     def __init__(self, engine: CertificatiEngine) -> None:
-        """
-        Inizializza il worker.
+        """Inizializza il worker.
 
         Args:
           engine: Istanza di CertificatiEngine da utilizzare per il raggruppamento.

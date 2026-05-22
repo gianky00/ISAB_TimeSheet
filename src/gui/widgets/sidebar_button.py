@@ -1,5 +1,5 @@
-"""
-SyncroJob - Sidebar Button (Premium V6 - Ultra Optimized)
+"""SyncroJob - Sidebar Button (Premium V6 - Ultra Optimized).
+
 Rimosso QGraphicsDropShadowEffect per garantire 60fps costanti anche su hardware datato.
 """
 
@@ -19,14 +19,15 @@ from src.utils.helpers import get_colored_icon
 
 
 class SidebarButton(QPushButton):
-    """
-    Pulsante ultra-moderno per la sidebar.
+    """Pulsante ultra-moderno per la sidebar.
+
     Ottimizzato per la fluidità estrema rimuovendo gli effetti grafici costosi.
     """
 
     text_opacity_changed = Signal(float)
 
     def __init__(self, text: str, icon_path: str = "", parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.label_text = text
         self.icon_path = icon_path

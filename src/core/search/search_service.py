@@ -1,5 +1,5 @@
-"""
-SyncroJob - Universal Search Service
+"""SyncroJob - Universal Search Service.
+
 Servizio CORE per l'esecuzione di ricerche centralizzate su tutti i database.
 Agnostico rispetto alla GUI.
 """
@@ -22,8 +22,7 @@ class SearchService:
 
     @staticmethod
     def search_all(query: str, limit: int = 10) -> dict[str, Any]:
-        """
-        Esegue la ricerca su tutti i database supportati.
+        """Esegue la ricerca su tutti i database supportati.
 
         Args:
           query: La stringa di ricerca.

@@ -164,6 +164,7 @@ select = [
     "TRY",   # tryceratops
     "PL",    # pylint
     "C90",   # mccabe complexity
+    "D",     # pydocstyle
 ]
 
 ignore = [
@@ -177,7 +178,15 @@ ignore = [
     "RUF001", # ambiguous-unicode-character-string: emoji sono intenzionali nella GUI
     "ANN401", # dynamically-typed-expression: Any is widely used and accepted in PySide/args
     "TRY003", # avoid-long-exception-messages: troppo verboso forzare classi custom per ogni messaggio
+    "D100",   # missing-docstring-in-public-module: gia' gestito da interrogate
+    "D104",   # missing-docstring-in-public-package: gia' gestito da interrogate
+    "D107",   # missing-docstring-in-method: gestito da interrogate
+    "D203",   # one-blank-line-before-class: incompatibile con D211
+    "D213",   # multi-line-summary-second-line: preferiamo D212
 ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10

@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Programmazione Table Widget
+"""SyncroJob - PDL Programmazione Table Widget.
+
 Componente specializzato per la visualizzazione della griglia di programmazione.
 """
 
@@ -29,6 +29,7 @@ class ProgrammazioneTableWidget(StandardTable):
     selection_changed_custom = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(0, 0, parent)
         self._setup_ui()
 

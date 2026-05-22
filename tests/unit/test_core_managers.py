@@ -1,6 +1,4 @@
-"""
-Tests for src.core managers.
-"""
+"""Tests for src.core managers."""
 
 import json
 from datetime import UTC

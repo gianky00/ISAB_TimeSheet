@@ -1,5 +1,5 @@
-"""
-SyncroJob - Scarico TS Panel
+"""SyncroJob - Scarico TS Panel.
+
 Pannello per il bot Scarico TS.
 """
 
@@ -30,8 +30,7 @@ class ScaricaTSPanel(BaseBotPanel):
     """Pannello per il bot Scarico TS."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello Scarico TS.
+        """Inizializza il pannello Scarico TS.
 
         Args:
             parent: Widget genitore.
@@ -80,9 +79,7 @@ class ScaricaTSPanel(BaseBotPanel):
             QTimer.singleShot(10, self._safe_load_data)
 
     def get_bot_class(self) -> type[BaseBot]:
-        """
-        Restituisce la classe ScaricaTSBot associata a questo pannello.
-        """
+        """Restituisce la classe ScaricaTSBot associata a questo pannello."""
         from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
 
         return ScaricaTSBot
@@ -252,8 +249,7 @@ class ScaricaTSPanel(BaseBotPanel):
             self._save_data()
 
     def validate_ready(self) -> tuple[bool, str]:
-        """
-        Verifica se tutti i campi necessari sono stati compilati correttamente.
+        """Verifica se tutti i campi necessari sono stati compilati correttamente.
 
         Returns:
             tuple: (bool successo, str messaggio errore)
@@ -263,8 +259,7 @@ class ScaricaTSPanel(BaseBotPanel):
         return True, ""
 
     def _on_start(self, params_override: dict[str, Any] | None = None) -> None:
-        """
-        Avvia l'esecuzione del bot Scarico TS gestendo il controller.
+        """Avvia l'esecuzione del bot Scarico TS gestendo il controller.
 
         Args:
             params_override: Parametri opzionali per sovrascrivere l'UI.

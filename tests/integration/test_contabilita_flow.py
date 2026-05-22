@@ -33,7 +33,6 @@ class TestContabilitaIntegration:
     @patch("src.core.importers.ExcelImporter.import_contabilita_dati")
     def test_full_import_sync_flow(self, mock_import):
         """Testa il flusso completo: Import Excel -> Sincronizzazione DB -> Status Tracker."""
-
         # 1. Mock dati in ingresso da Excel (year as first column)
         mock_data = [
             (
@@ -88,7 +87,6 @@ class TestContabilitaIntegration:
     @patch("src.core.importers.ExcelImporter.import_giornaliere")
     def test_giornaliere_import_sync_flow(self, mock_import_g):
         """Testa il flusso di importazione delle giornaliere."""
-
         # Setup dati base nel DB Contabilita per il lookup ODC
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Empty State Widget
+"""SyncroJob - Empty State Widget.
+
 Visualizzazione elegante quando una ricerca o una tabella non contengono dati.
 """
 
@@ -12,9 +12,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class EmptyStateWidget(QWidget):
-    """
-    Mostra un'icona stilizzata e un messaggio quando non ci sono dati.
-    """
+    """Mostra un'icona stilizzata e un messaggio quando non ci sono dati."""
 
     def __init__(
         self,
@@ -45,6 +43,7 @@ class EmptyStateWidget(QWidget):
       font-weight: bold;
       color: {COLORS["text_dark"]};
     """)
+
         self.title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.title_lbl)
 
@@ -54,6 +53,7 @@ class EmptyStateWidget(QWidget):
       font-size: 13px;
       color: {COLORS["text_muted"]};
     """)
+
         self.msg_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.msg_lbl.setWordWrap(True)
         self.msg_lbl.setMaximumWidth(300)

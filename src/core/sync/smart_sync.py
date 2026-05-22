@@ -1,5 +1,5 @@
-"""
-SyncroJob - Smart Sync Engine
+"""SyncroJob - Smart Sync Engine.
+
 Gestisce sincronizzazioni intelligenti (UPSERT) con calcolo esatto del delta via EXCEPT.
 """
 
@@ -113,6 +113,7 @@ class SmartSyncEngine(BaseSyncEngine):
         SELECT {safe_cast_cols} FROM {safe_table}
       )
     """  # nosec B608
+
         cursor.execute(q_diff)
         return int(cursor.fetchone()[0])
 
@@ -184,6 +185,7 @@ class SmartSyncEngine(BaseSyncEngine):
         SELECT "{main_id_col}" FROM {temp_table}
       )
     """  # nosec B608
+
         cursor.execute(q_mirror)
         return int(cursor.rowcount)
 

@@ -1,3 +1,5 @@
+"""Modulo Manager."""
+
 import getpass
 import json
 import os
@@ -21,8 +23,8 @@ logger = get_logger(__name__)
 
 
 class AuditManager:
-    """
-    Manager per l'Audit Log con meccanismi di integrità e severità.
+    """Manager per l'Audit Log con meccanismi di integrità e severità.
+
     Implementazione rifattorizzata e modulare con supporto asincrono per evitare lag UI.
     """
 
@@ -109,9 +111,7 @@ class AuditManager:
         notify: bool = False,
         trace_id: str | None = None,
     ) -> None:
-        """
-        Inoda un'azione dettagliata nell'audit log (Asincrono).
-        """
+        """Inoda un'azione dettagliata nell'audit log (Asincrono)."""
         # Auto-recupera trace_id dal context SE siamo nel thread principale
         if trace_id is None:
             with suppress(Exception):

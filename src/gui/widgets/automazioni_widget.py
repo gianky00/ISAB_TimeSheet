@@ -1,5 +1,5 @@
-"""
-SyncroJob - Automazioni Widget (Refactored)
+"""SyncroJob - Automazioni Widget (Refactored).
+
 Pannello raggruppato per i Bot con animazioni integrate e controlli locali.
 Gestisce l'orchestrazione dei bot Selenium per Portale Fornitori e SafeWork.
 """
@@ -29,14 +29,13 @@ if TYPE_CHECKING:
 
 
 class AutomazioniWidget(QWidget):
-    """
-    Pannello raggruppato per i Bot con animazioni Snapshot-Fade.
+    """Pannello raggruppato per i Bot con animazioni Snapshot-Fade.
+
     Centralizza l'accesso a tutti i processi di automazione web.
     """
 
     def __init__(self, main_window: MainWindow) -> None:
-        """
-        Inizializza il widget delle automazioni.
+        """Inizializza il widget delle automazioni.
 
         Args:
           main_window: Riferimento alla finestra principale per la registrazione dei pannelli.
@@ -145,8 +144,7 @@ class AutomazioniWidget(QWidget):
                 target.setCurrentIndex(bot_index)
 
     def set_active_tab(self, main_idx: int, sub_idx: int) -> None:
-        """
-        Imposta programmaticamente il tab e il sottomenu attivi.
+        """Imposta programmaticamente il tab e il sottomenu attivi.
 
         Args:
           main_idx: Indice del portale (0: Fornitori, 1: SafeWork).
@@ -161,8 +159,7 @@ class AutomazioniWidget(QWidget):
         return self.main_tabs.currentIndex()
 
     def setCurrentIndex(self, index: int) -> None:
-        """
-        Cambia il portale attivo.
+        """Cambia il portale attivo.
 
         Args:
           index: Nuovo indice.
@@ -170,8 +167,7 @@ class AutomazioniWidget(QWidget):
         self.main_tabs.setCurrentIndex(index)
 
     def get_bot_panel(self, main_idx: int, sub_idx: int) -> QWidget | None:
-        """
-        Restituisce l'istanza del pannello bot all'indice specificato.
+        """Restituisce l'istanza del pannello bot all'indice specificato.
 
         Args:
           main_idx: Indice del portale (0: Fornitori, 1: SafeWork).

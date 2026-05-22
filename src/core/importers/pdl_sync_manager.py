@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Programming Sync Manager
+"""SyncroJob - PDL Programming Sync Manager.
+
 Gestisce l'elaborazione dei file Excel di programmazione e il file Master aziendale.
 """
 
@@ -29,6 +29,7 @@ class ProgrammingSyncManager:
     FOGLI_PDL: ClassVar[list[str]] = ["A1", "A2", "A3", "CTE", "BLENDING", "TAS", "IGCC"]
 
     def __init__(self, master_path: str) -> None:
+        """Inizializza la classe."""
         self.master_path = master_path
         self.excel_app: Any = None
         self.wb_master: Any = None

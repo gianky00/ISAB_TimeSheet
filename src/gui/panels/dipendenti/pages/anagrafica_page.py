@@ -1,5 +1,5 @@
-"""
-SyncroJob - Anagrafica Page (Refactored)
+"""SyncroJob - Anagrafica Page (Refactored).
+
 Pagina coordinata per la gestione anagrafica dipendenti.
 """
 
@@ -36,8 +36,7 @@ class AnagraficaPage(QWidget):
     """Pagina per la visualizzazione e gestione anagrafica dipendenti - Versione Modularizzata."""
 
     def __init__(self, controller: AnagraficaController, parent: QWidget | None = None) -> None:
-        """
-        Inizializza la pagina anagrafica con iniezione del controller.
+        """Inizializza la pagina anagrafica con iniezione del controller.
 
         Args:
           controller: Istanza del controller per la logica di business.

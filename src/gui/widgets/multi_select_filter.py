@@ -1,5 +1,5 @@
-"""
-SyncroJob - MultiSelect Filter Widget
+"""SyncroJob - MultiSelect Filter Widget.
+
 Widget professionale per la selezione multipla con ricerca e chip.
 """
 
@@ -95,8 +95,7 @@ class MultiSelectDialog(QDialog):
                 item.setCheckState(state)
 
     def get_selected(self) -> list[str]:
-        """
-        Recupera la lista delle stringhe attualmente selezionate (checked).
+        """Recupera la lista delle stringhe attualmente selezionate (checked).
 
         Returns:
           list[str]: Lista di testi degli elementi selezionati.
@@ -115,6 +114,7 @@ class MultiSelectFilter(QWidget):
     changed = Signal(list)
 
     def __init__(self, label: str, placeholder: str = "Seleziona...", parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.label_text = label
         self.placeholder = placeholder
@@ -135,8 +135,7 @@ class MultiSelectFilter(QWidget):
         layout.addWidget(self.btn_select)
 
     def set_items(self, items: list[str]) -> None:
-        """
-        Imposta i possibili elementi selezionabili nel filtro.
+        """Imposta i possibili elementi selezionabili nel filtro.
 
         Args:
           items: Lista di stringhe.
@@ -147,8 +146,7 @@ class MultiSelectFilter(QWidget):
         self._update_button_text()
 
     def set_selected(self, selected: list[str]) -> None:
-        """
-        Imposta gli elementi attualmente selezionati.
+        """Imposta gli elementi attualmente selezionati.
 
         Args:
           selected: Lista di stringhe selezionate.

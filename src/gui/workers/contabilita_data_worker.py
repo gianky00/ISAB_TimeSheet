@@ -1,5 +1,5 @@
-"""
-SyncroJob - Contabilita Data Worker
+"""SyncroJob - Contabilita Data Worker.
+
 Worker versatile per il recupero asincrono di dati dal modulo Contabilità.
 Supporta Giornaliere, Attività Programmate e Scarico Ore.
 """
@@ -15,16 +15,13 @@ logger = logging.getLogger(__name__)
 
 
 class ContabilitaDataWorker(QThread):
-    """
-    Worker per il caricamento generico di liste dati dal database contabilità.
-    """
+    """Worker per il caricamento generico di liste dati dal database contabilità."""
 
     finished_signal = Signal(list)
     error_signal = Signal(str)
 
     def __init__(self, fetch_func_name: str, *args: Any, **kwargs: Any) -> None:
-        """
-        Inizializza il worker.
+        """Inizializza il worker.
 
         Args:
           fetch_func_name: Nome del metodo di ContabilitaManager da chiamare.

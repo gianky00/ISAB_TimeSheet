@@ -1,5 +1,5 @@
-"""
-SyncroJob - Timbrature Bot Panel
+"""SyncroJob - Timbrature Bot Panel.
+
 Interfaccia operativa dedicata all'automazione del download e della gestione delle timbrature del personale.
 Permette di selezionare il fornitore, definire il periodo temporale e monitorare l'avanzamento dello scarico dati dal portale.
 Integra segnali per l'aggiornamento dinamico delle statistiche e della dashboard.
@@ -23,8 +23,8 @@ if TYPE_CHECKING:
 
 
 class TimbratureBotPanel(BaseBotPanel):
-    """
-    Pannello operativo per il bot Timbrature.
+    """Pannello operativo per il bot Timbrature.
+
     Gestisce la configurazione dei parametri di ricerca (fornitore e date) e il ciclo di vita del worker Selenium.
     Emette segnali per notificare il completamento delle operazioni e i cambi di stato dell'Autopilot.
     """
@@ -36,8 +36,7 @@ class TimbratureBotPanel(BaseBotPanel):
     """Segnale emesso quando cambia lo stato del bot (stato, messaggio)."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello e prepara il caricamento dei dati salvati.
+        """Inizializza il pannello e prepara il caricamento dei dati salvati.
 
         Args:
           parent: Widget genitore.
@@ -153,8 +152,7 @@ class TimbratureBotPanel(BaseBotPanel):
         config_manager.set_config_value("last_timbrature_date_a", date_a)
 
     def validate_ready(self) -> tuple[bool, str]:
-        """
-        Valida i requisiti per l'avvio: credenziali presenti e fornitore selezionato.
+        """Valida i requisiti per l'avvio: credenziali presenti e fornitore selezionato.
 
         Returns:
           tuple: (bool pronto, messaggio errore).

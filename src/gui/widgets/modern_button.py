@@ -1,6 +1,4 @@
-"""
-Pulsante moderno con varianti e stati.
-"""
+"""Pulsante moderno con varianti e stati."""
 
 from __future__ import annotations
 

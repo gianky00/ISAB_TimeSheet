@@ -1,6 +1,4 @@
-"""
-Tests for robust DocumentProcessor merge logic.
-"""
+"""Tests for robust DocumentProcessor merge logic."""
 
 from unittest.mock import MagicMock
 

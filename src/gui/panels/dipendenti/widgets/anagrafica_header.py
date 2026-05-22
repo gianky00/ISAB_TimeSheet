@@ -1,5 +1,5 @@
-"""
-SyncroJob - Anagrafica Header Widget
+"""SyncroJob - Anagrafica Header Widget.
+
 Widget che racchiude la barra di ricerca, i pulsanti di azione e le card statistiche.
 """
 
@@ -28,8 +28,7 @@ class AnagraficaHeaderWidget(QWidget):
     filter_changed = Signal(str)  # tipo filtro ("ok", "warning", etc.)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza l'header dell'anagrafica.
+        """Inizializza l'header dell'anagrafica.
 
         Args:
           parent: Widget genitore opzionale.
@@ -57,6 +56,7 @@ class AnagraficaHeaderWidget(QWidget):
                 border-radius: 12px;
             }}
         """)
+
         filter_layout = QHBoxLayout(self.filter_card)
         filter_layout.setContentsMargins(15, 10, 15, 10)
         filter_layout.setSpacing(15)
@@ -154,8 +154,7 @@ class AnagraficaHeaderWidget(QWidget):
         layout.addWidget(self.cards_container)
 
     def set_sync_status(self, text: str) -> None:
-        """
-        Aggiorna il testo informativo dell'ultimo sync.
+        """Aggiorna il testo informativo dell'ultimo sync.
 
         Args:
           text: Testo formattato da visualizzare.
@@ -163,8 +162,7 @@ class AnagraficaHeaderWidget(QWidget):
         self.lbl_sync_status.setText(text)
 
     def update_counts(self, counts: dict[str, int]) -> None:
-        """
-        Aggiorna i contatori numerici sulle card statistiche.
+        """Aggiorna i contatori numerici sulle card statistiche.
 
         Args:
           counts: Dizionario con chiavi 'ok', 'warning', 'expired', 'excluded'.
@@ -175,8 +173,7 @@ class AnagraficaHeaderWidget(QWidget):
         self.card_excluded.setValue(counts.get("excluded", 0))
 
     def update_card_styles(self, current_filter: str | None) -> None:
-        """
-        Evidenzia la card corrispondente al filtro attualmente attivo.
+        """Evidenzia la card corrispondente al filtro attualmente attivo.
 
         Args:
           current_filter: Tipo di filtro selezionato.

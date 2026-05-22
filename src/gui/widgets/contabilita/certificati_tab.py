@@ -1,5 +1,5 @@
-"""
-SyncroJob - Certificati Campione Tab (Refactored)
+"""SyncroJob - Certificati Campione Tab (Refactored).
+
 Gestore dell'interfaccia per il monitoraggio dei certificati campione.
 Coordina l'uso del CertificatiEngine e del CertificatiTreeWidget.
 """
@@ -41,8 +41,7 @@ class CertificatiCampioneTab(QWidget):
     """Tab per Certificati Campione (Tree View) - Versione Modularizzata."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il tab dei certificati caricano i filtri persistenti.
+        """Inizializza il tab dei certificati caricano i filtri persistenti.
 
         Args:
             parent: Widget genitore opzionale.
@@ -215,6 +214,7 @@ class CertificatiCampioneTab(QWidget):
             }}
             QPushButton:hover {{ background-color: {COLORS["bg_hover"]}; border-color: {COLORS["primary_dark"]}; }}
         """)
+
         return btn
 
     def _expand_all(self) -> None:

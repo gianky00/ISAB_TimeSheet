@@ -1,6 +1,4 @@
-"""
-Configurazione sistema di logging.
-"""
+"""Configurazione sistema di logging."""
 
 from pathlib import Path
 from typing import Final
@@ -13,6 +11,7 @@ class LoggingConfig:
     """Configurazione centralizzata per il sistema di logging."""
 
     def __init__(self) -> None:
+        """Inizializza la classe."""
         # Base directory: C:\Users\gianc\AppData\Local\SyncroJob\logs
         self.base_dir: Final[Path] = LOGS_DIR
 
@@ -59,8 +58,8 @@ class LoggingConfig:
             directory.mkdir(parents=True, exist_ok=True)
 
     def get_bot_log_path(self, bot_name: str, trace_id: str | None = None) -> Path:
-        """
-        Restituisce path per log specifico bot.
+        """Restituisce path per log specifico bot.
+
         Organizza i log in sottocartelle per bot_name.
 
         Args:

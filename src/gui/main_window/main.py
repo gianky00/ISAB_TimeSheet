@@ -1,5 +1,5 @@
-"""
-SyncroJob - Main Window
+"""SyncroJob - Main Window.
+
 Finestra principale dell'applicazione che coordina tutti i servizi, i controller e i componenti dell'interfaccia utente.
 Refactored V9.0: Orchestration with modular Workflow and Monitoring Controllers.
 """
@@ -57,8 +57,8 @@ logger = logging.getLogger("MainWindow")
 
 
 class MainWindow(QMainWindow):
-    """
-    Finestra principale dell'applicazione (Facade).
+    """Finestra principale dell'applicazione (Facade).
+
     Coordina i componenti modulari e i controller, fungendo da punto centrale di orchestrazione.
     """
 
@@ -79,6 +79,7 @@ class MainWindow(QMainWindow):
         return self.stacked_widget
 
     def __init__(self) -> None:
+        """Inizializza la classe."""
         super().__init__()
         self.setWindowTitle(f"SyncroJob v{VERSION}")
 
@@ -269,8 +270,7 @@ class MainWindow(QMainWindow):
         self.app_status_controller.switch_headless()
 
     def show_toast(self, message: str, level: str = "info") -> None:
-        """
-        Visualizza un messaggio toast.
+        """Visualizza un messaggio toast.
 
         Args:
             message: Il messaggio da visualizzare.
@@ -283,8 +283,7 @@ class MainWindow(QMainWindow):
         self.navigation_controller.navigate_to(PageIndex.SETTINGS)
 
     def trigger_pdl_print(self, pdl_numbers: list[str]) -> None:
-        """
-        Coordina la stampa dei PDL selezionati navigando al bot di scarico.
+        """Coordina la stampa dei PDL selezionati navigando al bot di scarico.
 
         Args:
             pdl_numbers: Lista di numeri PDL da stampare.

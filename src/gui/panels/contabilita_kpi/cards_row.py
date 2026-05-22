@@ -1,3 +1,5 @@
+"""Modulo Cards Row."""
+
 from PySide6.QtWidgets import QHBoxLayout, QWidget
 
 from src.gui.widgets.info_widgets import KPIBigCard
@@ -7,6 +9,7 @@ class KPICardsRow(QWidget):
     """Widget che raggruppa una riga di KPiùcards."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.main_layout = QHBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -14,8 +17,7 @@ class KPICardsRow(QWidget):
         self.cards: list[KPIBigCard] = []
 
     def add_card(self, title: str, value: str, color: str, subtitle: str | None = None) -> KPIBigCard:
-        """
-        Crea e aggiunge una nuova card KPI alla riga.
+        """Crea e aggiunge una nuova card KPI alla riga.
 
         Args:
           title: Titolo della card.

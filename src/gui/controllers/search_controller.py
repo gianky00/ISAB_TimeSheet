@@ -1,5 +1,5 @@
-"""
-SyncroJob - Search Controller (Refactored)
+"""SyncroJob - Search Controller (Refactored).
+
 Controller per la ricerca universale asincrona con debouncing.
 Garantisce la fluidit  della GUI delegando le query al SearchWorker.
 """
@@ -20,8 +20,7 @@ class SearchController(QObject):
     """Controller per la ricerca universale e la navigazione ai risultati."""
 
     def __init__(self, main_window: Any) -> None:
-        """
-        Inizializza il controller di ricerca.
+        """Inizializza il controller di ricerca.
 
         Args:
           main_window: Riferimento alla finestra principale per navigazione e posizionamento menu.
@@ -37,8 +36,7 @@ class SearchController(QObject):
         self._last_query = ""
 
     def perform_search(self, query: str) -> None:
-        """
-        Avvia il processo di ricerca con debouncing.
+        """Avvia il processo di ricerca con debouncing.
 
         Args:
           query: La stringa digitata dall'utente.
@@ -69,8 +67,7 @@ class SearchController(QObject):
         self.worker.start()
 
     def _show_results_menu(self, results: dict[str, Any]) -> None:
-        """
-        Costruisce e mostra il menu contestuale con i risultati della ricerca.
+        """Costruisce e mostra il menu contestuale con i risultati della ricerca.
 
         Args:
           results: Dizionario dei risultati prodotto dal SearchService.

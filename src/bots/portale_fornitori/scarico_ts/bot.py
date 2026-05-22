@@ -1,5 +1,5 @@
-"""
-SyncroJob - Scarico TS Bot
+"""SyncroJob - Scarico TS Bot.
+
 Bot per il download automatico dei timesheet dal portale ISAB.
 Sincronizzato con la logica stabile del branch main e arricchito con STEPS per Cyber-Stepper V5.
 """
@@ -25,9 +25,7 @@ from src.utils.helpers import sanitize_filename
 
 
 class ScaricaTSBot(SeleniumBaseBot):
-    """
-    Bot per lo scarico automatico dei timesheet dal portale ISAB.
-    """
+    """Bot per lo scarico automatico dei timesheet dal portale ISAB."""
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login Portale ISAB"),
@@ -76,9 +74,7 @@ class ScaricaTSBot(SeleniumBaseBot):
         elabora_ts: bool = False,
         **kwargs: Any,
     ) -> None:
-        """
-        Inizializza il bot Scarico TS.
-        """
+        """Inizializza il bot Scarico TS."""
         super().__init__(username, password, config)
         self.data_da = data_da or f"01.01.{datetime.now(UTC).year}"
         self.fornitore = fornitore

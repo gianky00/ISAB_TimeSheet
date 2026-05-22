@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright SafeWork Visualizza AttivitàPage
+"""SyncroJob - Playwright SafeWork Visualizza AttivitàPage.
+
 Gestione della pagina Visualizza Attivitàper la programmazione usando Playwright.
 """
 
@@ -17,6 +17,12 @@ class PlaywrightVisualizzaAttivitaPage(PlaywrightBasePage):
     """Gestisce le interazioni con la pagina Visualizza Attivitàusando Playwright."""
 
     def __init__(self, page: Page, log_func: Callable[[str], None]) -> None:
+        """Inizializza la pagina Visualizza Attività Playwright.
+
+        Args:
+            page: Pagina Playwright.
+            log_func: Funzione per il logging.
+        """
         super().__init__(page, log_func)
 
     def pulisci_pdl(self) -> None:

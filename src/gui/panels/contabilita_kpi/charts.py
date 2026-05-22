@@ -1,5 +1,5 @@
-"""
-SyncroJob - KPI Charts
+"""SyncroJob - KPI Charts.
+
 Gestione dei grafici KPI per la contabilità tramite Matplotlib.
 """
 
@@ -64,8 +64,7 @@ class ChartContainer(QWidget):
         info_callback: Callable[[], str] | None = None,
         parent: QWidget | None = None,
     ) -> None:
-        """
-        Inizializza il container stilizzato.
+        """Inizializza il container stilizzato.
 
         Args:
           canvas: Il widget contenente il grafico Matplotlib.
@@ -123,8 +122,7 @@ class KPIChartsManager:
     """Gestore per la creazione e l'aggiornamento dei grafici KPI."""
 
     def __init__(self, HOURLY_COST_STD: float) -> None:
-        """
-        Inizializza il manager dei grafici.
+        """Inizializza il manager dei grafici.
 
         Args:
           HOURLY_COST_STD: Costo orario standard per il calcolo dei margini.

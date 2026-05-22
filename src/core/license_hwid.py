@@ -1,5 +1,5 @@
-"""
-SyncroJob - License HWID
+"""SyncroJob - License HWID.
+
 Utility per l'estrazione dell'Hardware ID (HWID) del sistema.
 Isolato per evitare dipendenze circolari tra LicenseValidator e SecretsManager.
 """
@@ -13,13 +13,13 @@ from pathlib import Path
 
 
 def get_hardware_id() -> str:
-    """
-    Recupera un identificativo hardware univoco per la macchina corrente.
+    """Recupera un identificativo hardware univoco per la macchina corrente.
+
     Tenta in ordine:
     1. Serial number del disco primario (Windows/Linux)
     2. UUID del sistema (Windows)
     3. Machine-ID (Linux)
-    4. Node ID (Fallback Universale)
+    4. Node ID (Fallback Universale).
     """
     raw_id = ""
     if platform.system() == "Windows":

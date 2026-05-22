@@ -1,3 +1,5 @@
+"""Modulo Detail View."""
+
 from collections.abc import Sequence
 from contextlib import suppress
 from datetime import UTC, datetime
@@ -10,11 +12,10 @@ from src.gui.styles import COLORS
 
 
 class TimbratureDetailView(QWidget):
-    """
-    Componente per la visualizzazione dei dettagli di una timbratura.
-    """
+    """Componente per la visualizzazione dei dettagli di una timbratura."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.detail_labels: dict[str, QLabel] = {}
         # Mapping completo per il Dettaglio (Tutte le 18 colonne rilevate)
@@ -68,8 +69,8 @@ class TimbratureDetailView(QWidget):
         detail_layout.addWidget(scroll)
 
     def display_data(self, data: Sequence[Any] | None) -> None:
-        """
-        Visualizza i dati passati.
+        """Visualizza i dati passati.
+
         Args:
           data: Tuple o list contenente i dati grezzi della riga.
         """

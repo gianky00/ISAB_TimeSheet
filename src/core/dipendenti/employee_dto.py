@@ -1,5 +1,5 @@
-"""
-SyncroJob - Employee DTO
+"""SyncroJob - Employee DTO.
+
 Oggetti di trasporto dati per il modulo Dipendenti.
 Garantisce l'incapsulamento e previene la data leakage verso la GUI.
 """

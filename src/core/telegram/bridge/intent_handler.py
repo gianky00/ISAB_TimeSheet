@@ -1,5 +1,5 @@
-"""
-SyncroJob - Telegram Bridge Intent Handler
+"""SyncroJob - Telegram Bridge Intent Handler.
+
 Traduce gli intenti estratti dall'AI in azioni concrete sulla UI.
 """
 
@@ -25,6 +25,7 @@ class TelegramIntentHandler(QObject):
     """Gestisce la logica di business derivante dagli intenti AI di Telegram."""
 
     def __init__(self, main_window: "MainWindow", telegram_service: Any, system_handler: Any = None) -> None:
+        """Inizializza la classe."""
         super().__init__(main_window)
         self.mw = main_window
         self.telegram = telegram_service

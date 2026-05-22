@@ -1,5 +1,4 @@
-"""
-Hardened tests for SecretsManager.
+"""Hardened tests for SecretsManager.
 Verifies secure storage and retrieval of credentials.
 """
 

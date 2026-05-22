@@ -1,3 +1,5 @@
+"""Modulo Account Dialog."""
+
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import (
     QDialog,
@@ -111,6 +113,7 @@ class AccountDialog(QDialog):
         border-color: {COLORS["border_dark"]};
       }}
     """)
+
         self.toggle_pass_btn.clicked.connect(self._toggle_password_visibility)
         pass_layout.addWidget(self.toggle_pass_btn)
 

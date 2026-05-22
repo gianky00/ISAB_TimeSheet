@@ -1,5 +1,5 @@
-"""
-SyncroJob - Carico TS Page
+"""SyncroJob - Carico TS Page.
+
 Page Object Model for Carico TS.
 """
 
@@ -17,15 +17,13 @@ from src.core.constants import Timeouts
 
 
 class CaricoTSPage:
-    """
-    Page Object Model per la gestione del caricamento dei TimeSheet.
+    """Page Object Model per la gestione del caricamento dei TimeSheet.
+
     Fornisce strumenti per navigare nell'area gestione e interagire con gli ordini.
     """
 
     def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None) -> None:
-        """
-        Inizializza la pagina con il driver e la callback di logging.
-        """
+        """Inizializza la pagina con il driver e la callback di logging."""
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.log = log_callback or print
@@ -51,11 +49,11 @@ class CaricoTSPage:
             return True
 
     def select_supplier(self, supplier: str) -> bool:
-        """
-        Seleziona il fornitore indicato dal menu a discesa.
+        """Seleziona il fornitore indicato dal menu a discesa.
 
         Args:
           supplier: Nome del fornitore.
+
         Returns:
           bool: True se la selezione ha avuto successo.
         """
@@ -76,11 +74,11 @@ class CaricoTSPage:
             return True
 
     def process_oda(self, oda: str) -> bool:
-        """
-        Inserisce il numero OdA nel campo di input e avvia l'estrazione.
+        """Inserisce il numero OdA nel campo di input e avvia l'estrazione.
 
         Args:
           oda: Numero dell'Ordine di Acquisto.
+
         Returns:
           bool: True se l'input  stato inviato correttamente.
         """

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Changelog Panel (Next-Gen)
+"""SyncroJob - Changelog Panel (Next-Gen).
+
 Pannello Premium per la visualizzazione dinamica e strutturata delle note di rilascio e novità.
 """
 
@@ -74,8 +74,8 @@ class DiagnosticsWorker(QThread):
 
 
 class ReleaseCard(QFrame):
-    """
-    Card grafica associata ad un singolo rilascio di versione.
+    """Card grafica associata ad un singolo rilascio di versione.
+
     Supporta micro-interazioni di sollevamento 3D/bagliore al passaggio del mouse e copia negli appunti.
     """
 
@@ -133,6 +133,7 @@ class ReleaseCard(QFrame):
             font-weight: 800;
             padding: 4px 8px;
         """)
+
         card_header_layout.addWidget(version_badge)
 
         # Data Rilascio
@@ -166,6 +167,7 @@ class ReleaseCard(QFrame):
                     border-color: {self.border_color};
                 }}
             """)
+
             self.copy_btn.setIcon(get_colored_icon(get_asset_path(Icons.COPY), COLORS["text_secondary"]))
             self.copy_btn.setToolTip("Copia note negli appunti")
             self.copy_btn.clicked.connect(self._copy_to_clipboard)
@@ -270,8 +272,7 @@ class ReleaseCard(QFrame):
         )
 
     def filter_notes(self, category_filter: str, search_text: str = "") -> bool:
-        """
-        Filtra le note interne e restituisce True se la card contiene almeno una nota visibile.
+        """Filtra le note interne e restituisce True se la card contiene almeno una nota visibile.
 
         Args:
           category_filter: Categoria per filtrare le note.
@@ -324,14 +325,15 @@ class ReleaseCard(QFrame):
 
 
 class ChangelogPanel(QWidget):
-    """
-    Pannello Novità & Note di Rilascio.
+    """Pannello Novità & Note di Rilascio.
+
     Rendering dinamico ed estetico del changelog strutturato con timeline DevOps e filtri sticky.
     """
 
     _changelog_cache: list[dict[str, Any]] | None = None
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.release_rows: list[tuple[QWidget, ReleaseCard]] = []
         self.active_filter = "all"
@@ -493,6 +495,7 @@ class ChangelogPanel(QWidget):
                     font-weight: 800;
                 }}
             """)
+
         else:
             btn.setStyleSheet(f"""
                 QPushButton {{
@@ -703,6 +706,7 @@ class ChangelogPanel(QWidget):
             border: 2px solid {COLORS["bg_white"]};
             border-radius: 7px;
         """)
+
         timeline_layout.addWidget(led, 0, Qt.AlignmentFlag.AlignCenter)
 
         # Linea Inferiore

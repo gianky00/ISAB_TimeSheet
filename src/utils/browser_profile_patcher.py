@@ -1,5 +1,5 @@
-"""
-SyncroJob - Browser Profile Patcher
+"""SyncroJob - Browser Profile Patcher.
+
 Utility per forzare le impostazioni di sicurezza e privacy nel profilo Chromium.
 Risolve il problema dei popup nativi "Password Compromessa" e "Leak Detection".
 """
@@ -13,8 +13,8 @@ logger = logging.getLogger("ProfilePatcher")
 
 
 def patch_browser_profile(user_data_dir: Path | str, download_dir: Path | str | None = None) -> bool:
-    """
-    Applica patch aggressive al file Preferences del profilo Chromium per disabilitare
+    """Applica patch aggressive al file Preferences del profilo Chromium per disabilitare.
+
     il gestore password, il rilevamento dei leak e altre notifiche bloccanti.
     """
     user_data_path = Path(user_data_dir)
@@ -106,8 +106,8 @@ def _patch_file(path: Path, download_path: Path) -> bool:
 
 
 def _set_nested_value(dic: dict[str, Any], keys: str, value: Any) -> bool:
-    """
-    Imposta un valore in un dizionario annidato usando la dot notation (es. 'a.b.c').
+    """Imposta un valore in un dizionario annidato usando la dot notation (es. 'a.b.c').
+
     Ritorna True se il valore  stato cambiato o aggiunto.
     """
     parts = keys.split(".")

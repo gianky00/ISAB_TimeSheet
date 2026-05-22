@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright SafeWork Programmazione Bot
+"""SyncroJob - Playwright SafeWork Programmazione Bot.
+
 Versione Playwright del bot per il monitoraggio della programmazione settimanale.
 """
 
@@ -26,9 +26,7 @@ IDX_AREA: Final[int] = 24
 
 
 class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
-    """
-    Bot per monitorare i flag TCL/TGO della settimana usando Playwright.
-    """
+    """Bot per monitorare i flag TCL/TGO della settimana usando Playwright."""
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),

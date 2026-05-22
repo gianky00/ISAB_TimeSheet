@@ -1,5 +1,5 @@
-"""
-SyncroJob - Ricerca PDL Panel
+"""SyncroJob - Ricerca PDL Panel.
+
 Pannello per il bot Ricerca PDL (SafeWork).
 """
 
@@ -31,15 +31,12 @@ if TYPE_CHECKING:
 
 
 class RicercaPDLPanel(BaseBotPanel):
-    """
-    Pannello per la ricerca ed esportazione massiva dei PDL da SafeWork.
-    """
+    """Pannello per la ricerca ed esportazione massiva dei PDL da SafeWork."""
 
     data_updated = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello Ricerca PDL.
+        """Inizializza il pannello Ricerca PDL.
 
         Args:
           parent: Widget genitore.
@@ -100,6 +97,7 @@ class RicercaPDLPanel(BaseBotPanel):
                 border: 1px solid {COLORS["border_light"]};
             }}
         """)
+
         UIEffectsManager.apply_shadow(params_container, blur=CARD_SHADOW_BLUR, color=CARD_SHADOW_COLOR)
         UIEffectsManager.animate_fade(params_container, duration=400)
 

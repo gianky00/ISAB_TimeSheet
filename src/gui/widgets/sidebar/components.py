@@ -1,5 +1,5 @@
-"""
-SyncroJob - Sidebar Components
+"""SyncroJob - Sidebar Components.
+
 Raccolta di widget per la gerarchia della Sidebar (Gruppi, Sottogruppi e Bot).
 """
 
@@ -37,8 +37,7 @@ class SidebarSubGroup(QWidget):
     """Sottogruppo di secondo livello (es. Portale Fornitori sotto Automazioni)."""
 
     def __init__(self, title: str, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il sottogruppo della sidebar.
+        """Inizializza il sottogruppo della sidebar.
 
         Args:
           title: Titolo del sottogruppo.
@@ -69,8 +68,7 @@ class SidebarSubGroup(QWidget):
         self.content_area.setVisible(not is_visible)
 
     def add_child(self, btn: SidebarButton) -> None:
-        """
-        Aggiunge un pulsante figlio al sottogruppo.
+        """Aggiunge un pulsante figlio al sottogruppo.
 
         Args:
           btn: Il pulsante da aggiungere.
@@ -85,8 +83,7 @@ class SidebarSubGroup(QWidget):
         self.children_btns.append(btn)
 
     def set_collapsed(self, collapsed: bool) -> None:
-        """
-        Imposta lo stato di contrazione del sottogruppo.
+        """Imposta lo stato di contrazione del sottogruppo.
 
         Args:
           collapsed: True per contrarre, False per espandere.
@@ -109,8 +106,7 @@ class SidebarGroup(QWidget):
     expanded = Signal(object)
 
     def __init__(self, title: str, icon_path: str, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il gruppo principale della sidebar.
+        """Inizializza il gruppo principale della sidebar.
 
         Args:
           title: Titolo del gruppo.
@@ -174,8 +170,7 @@ class SidebarGroup(QWidget):
         self._set_arrow_icon(False)
 
     def add_child(self, widget: QWidget) -> None:
-        """
-        Aggiunge un elemento figlio (pulsante o sottogruppo).
+        """Aggiunge un elemento figlio (pulsante o sottogruppo).
 
         Args:
           widget: Il widget da aggiungere.
@@ -184,8 +179,7 @@ class SidebarGroup(QWidget):
         self.children_elements.append(widget)
 
     def set_collapsed(self, collapsed: bool) -> None:
-        """
-        Imposta lo stato di contrazione del gruppo.
+        """Imposta lo stato di contrazione del gruppo.
 
         Args:
           collapsed: True per contrarre, False per espandere.
@@ -221,8 +215,7 @@ class SidebarGroup(QWidget):
         self._set_arrow_icon(self.content_area.isVisible() and not collapsed)
 
     def set_active_index(self, index: int, group_indices: Sequence[int]) -> None:
-        """
-        Imposta il pulsante attivo all'interno del gruppo.
+        """Imposta il pulsante attivo all'interno del gruppo.
 
         Args:
           index: Indice della pagina corrente.

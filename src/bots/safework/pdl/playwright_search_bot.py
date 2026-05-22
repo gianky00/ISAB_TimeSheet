@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright SafeWork PDL Search Bot
+"""SyncroJob - Playwright SafeWork PDL Search Bot.
+
 Versione Playwright del bot per la ricerca massiva ed esportazione Excel dei PDL.
 """
 
@@ -24,9 +24,7 @@ if TYPE_CHECKING:
 
 
 class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
-    """
-    Bot per la ricerca massiva ed esportazione Excel dei PDL usando Playwright.
-    """
+    """Bot per la ricerca massiva ed esportazione Excel dei PDL usando Playwright."""
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
@@ -41,16 +39,24 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
         config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
+        """Inizializza il bot di ricerca PDL con Playwright.
+
+        Args:
+            config: Configurazione del bot.
+            account_type: Tipo di account SafeWork.
+        """
         super().__init__(config, account_type=account_type)
         self.sites = ["IGCC", "ISAB Nord", "ISAB Sud"]
         self.ricerca_pdl_page: PlaywrightRicercaPDLPage | None = None
 
     @property
     def name(self) -> str:
+        """Nome del bot."""
         return "Ricerca PDL (PW)"
 
     @property
     def description(self) -> str:
+        """Descrizione del bot."""
         return "Ricerca massiva e aggiornamento database PDL (Playwright)"
 
     @staticmethod

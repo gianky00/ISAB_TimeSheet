@@ -11,8 +11,8 @@ from PySide6.QtCore import QAbstractTableModel, QModelIndex, QPersistentModelInd
 
 
 def format_currency_smart(value: Any) -> str:
-    """
-    Formatta numeri in stile Euro contabile:
+    """Formatta numeri in stile Euro contabile:
+
     - 1200.00 -> 1.200
     - 1200.50 -> 1.200,50
     Elimina il rumore floating point (es. .00000000001) arrotondando a 2 decimali.
@@ -128,8 +128,8 @@ def _get_sort_key_value(val: Any, _column: int) -> tuple[int, Any]:
 
 
 class FastTableModel(QAbstractTableModel):
-    """
-    Modello dati ottimizzato con supporto per:
+    """Modello dati ottimizzato con supporto per:
+
     - Formattazione specifica per colonna (DisplayRole).
     - Ordinamento nativo sui dati grezzi.
     - Allineamento intelligente (Numeri a destra).

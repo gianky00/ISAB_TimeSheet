@@ -260,7 +260,7 @@ class SplashPipeWriter:
             with contextlib.suppress(OSError):
                 self.sp.stdin.close()
             try:
-                self.sp.wait(1.5)
+                self.sp.wait(0.1)
             except subprocess.TimeoutExpired:
                 self.sp.kill()
 

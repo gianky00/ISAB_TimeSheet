@@ -1,5 +1,5 @@
-"""
-Componenti per la gestione dei pannelli sganciati (Pop-out).
+"""Componenti per la gestione dei pannelli sganciati (Pop-out).
+
 Consente di separare i widget dallo stack centrale della MainWindow e renderizzarli in finestre di livello OS.
 """
 
@@ -34,8 +34,8 @@ logger = logging.getLogger(__name__)
 
 
 class DetachedPanelWindow(QMainWindow):
-    """
-    Finestra indipendente che ospita un pannello precedentemente residente nello SlidingStackedWidget.
+    """Finestra indipendente che ospita un pannello precedentemente residente nello SlidingStackedWidget.
+
     Utilizza il frame di sistema OS per prevenire il noto crash PySide6 (Access Violation) durante il reparenting C++.
     """
 
@@ -58,9 +58,7 @@ class DetachedPanelWindow(QMainWindow):
         self.panel.show()
 
     def closeEvent(self, event: QCloseEvent | None) -> None:
-        """
-        Intercetta la chiusura della finestra per avviare il riaggancio.
-        """
+        """Intercetta la chiusura della finestra per avviare il riaggancio."""
         if event:
             logger.info("Popout finestra esterna chiusa, innesco reattach...")
             self.panel_closed_signal.emit(self.original_index)
@@ -71,6 +69,7 @@ class PopoutPlaceholderWidget(QWidget):
     """Placeholder per lo stack centrale."""
 
     def __init__(self, title: str, on_reattach: Callable[[], None], parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui(title, on_reattach)
 
@@ -90,6 +89,7 @@ class PopoutPlaceholderWidget(QWidget):
       }}
       QLabel {{ border: none; background: transparent; }}
     """)
+
         self.card.setFixedWidth(560)
 
         shadow = QGraphicsDropShadowEffect(self)

@@ -15,6 +15,7 @@ class OdaRepository:
     """Repository per l'accesso ai dati dello Storico OdA."""
 
     def __init__(self, db_manager_instance: Any = None) -> None:
+        """Inizializza la classe."""
         self.db = db_manager_instance or db_manager
         self.columns = [
             "org_acq",
@@ -52,14 +53,12 @@ class OdaRepository:
         ]
 
     @overload
-    def get_all(self, search_text: str | None = ..., as_objects: Literal[True] = ...) -> list[OdaRecord]:
-        """Recupera tutti gli OdA come oggetti."""
+    def get_all(self, search_text: str | None = ..., as_objects: Literal[True] = ...) -> list[OdaRecord]: ...
 
     @overload
     def get_all(
         self, search_text: str | None = ..., as_objects: Literal[False] = ...
-    ) -> list[tuple[Any, ...]]:
-        """Recupera tutti gli OdA come tuple."""
+    ) -> list[tuple[Any, ...]]: ...
 
     def get_all(
         self, search_text: str | None = None, as_objects: bool = True

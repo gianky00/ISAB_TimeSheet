@@ -1,5 +1,5 @@
-"""
-Timesheet Service
+"""Timesheet Service.
+
 Coordinate the timesheet processing pipeline.
 """
 

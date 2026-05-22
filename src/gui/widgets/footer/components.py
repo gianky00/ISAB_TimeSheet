@@ -1,5 +1,5 @@
-"""
-SyncroJob - Footer UI Components
+"""SyncroJob - Footer UI Components.
+
 Collezione di widget e componenti grafici utilizzati per comporre la barra di stato (footer).
 """
 
@@ -18,16 +18,15 @@ from src.gui.styles import COLORS
 
 
 class FooterItemWidget(QWidget):
-    """
-    Elemento informativo composto da un tag (etichetta) e un valore.
+    """Elemento informativo composto da un tag (etichetta) e un valore.
+
     Usato per visualizzare metadati semplici nel footer.
     """
 
     def __init__(
         self, label: str, value: str = "", color: str | None = None, parent: QWidget | None = None
     ) -> None:
-        """
-        Inizializza l'elemento del footer.
+        """Inizializza l'elemento del footer.
 
         Args:
           label: Etichetta del dato.
@@ -50,8 +49,7 @@ class FooterItemWidget(QWidget):
         layout.addWidget(self.lbl_val)
 
     def set_text(self, text: str) -> None:
-        """
-        Aggiorna il testo del valore.
+        """Aggiorna il testo del valore.
 
         Args:
           text: Nuovo testo da visualizzare.
@@ -60,14 +58,13 @@ class FooterItemWidget(QWidget):
 
 
 class StartupConsole(QLabel):
-    """
-    Console per log di sistema nel footer (FASE 1: Boot).
+    """Console per log di sistema nel footer (FASE 1: Boot).
+
     Visualizza i messaggi di inizializzazione durante l'avvio dell'applicazione.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza la console di startup.
+        """Inizializza la console di startup.
 
         Args:
           parent: Widget genitore.
@@ -81,8 +78,7 @@ class StartupConsole(QLabel):
         self._log_queue: list[tuple[str, bool]] = []
 
     def log(self, message: str, is_error: bool = False) -> None:
-        """
-        Invia un messaggio alla console del footer.
+        """Invia un messaggio alla console del footer.
 
         Args:
           message: Testo del log.
@@ -99,16 +95,15 @@ class StartupConsole(QLabel):
 
 
 class ClickableLabel(QLabel):
-    """
-    Label interattiva con effetti hover e segnale di click.
+    """Label interattiva con effetti hover e segnale di click.
+
     Utilizzata per i dati del footer che richiedono un'azione (es. cambio account).
     """
 
     clicked = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza la label cliccabile.
+        """Inizializza la label cliccabile.
 
         Args:
           parent: Widget genitore.
@@ -118,8 +113,7 @@ class ClickableLabel(QLabel):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
     def setBaseStyle(self, style: str) -> None:
-        """
-        Imposta lo stile base CSS.
+        """Imposta lo stile base CSS.
 
         Args:
           style: Stringa di stili CSS.
@@ -148,13 +142,10 @@ class ClickableLabel(QLabel):
 
 
 class StatsCard(QFrame):
-    """
-    Widget card per la visualizzazione di una singola metrica statistica nel footer espandibile.
-    """
+    """Widget card per la visualizzazione di una singola metrica statistica nel footer espandibile."""
 
     def __init__(self, title: str, value: str, icon: Any, parent: QWidget | None = None) -> None:
-        """
-        Inizializza la card statistica.
+        """Inizializza la card statistica.
 
         Args:
           title: Titolo della metrica.

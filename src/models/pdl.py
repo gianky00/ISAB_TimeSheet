@@ -1,3 +1,5 @@
+"""Modulo Pdl."""
+
 from dataclasses import dataclass
 
 

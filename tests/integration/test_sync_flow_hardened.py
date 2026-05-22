@@ -41,7 +41,6 @@ class TestSyncFlowHardened(unittest.TestCase):
 
     def test_full_certificati_sync_cycle(self):
         """Simula un ciclo completo: Import Excel -> Sync DB -> Verifica Query."""
-
         # 1. Mock dei dati Excel (simulati come se venissero dall'importer)
         # Formato: Modello, Costruttore, Matricola, Range, Errore, Certificato, Scadenza, Emissione, ID, Stato
         imported_rows = [

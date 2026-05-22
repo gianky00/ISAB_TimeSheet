@@ -1,6 +1,4 @@
-"""
-Tests for BaseBot CDP command integration.
-"""
+"""Tests for BaseBot CDP command integration."""
 
 from pathlib import Path
 from unittest.mock import MagicMock

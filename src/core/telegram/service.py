@@ -1,3 +1,5 @@
+"""Modulo Service."""
+
 import asyncio
 import threading
 import time
@@ -25,8 +27,8 @@ from src.utils.helpers import get_asset_path
 
 
 class TelegramService(QObject):
-    """
-    Bridge intelligente tra Telegram e l'applicazione PySide6.
+    """Bridge intelligente tra Telegram e l'applicazione PySide6.
+
     Supporta comandi vocali, NLU e dialoghi contestuali.
     Refactored per delegare la logica ai moduli handlers/.
     """
@@ -41,6 +43,7 @@ class TelegramService(QObject):
     intent_received = Signal(str, dict)
 
     def __init__(self) -> None:
+        """Inizializza la classe."""
         super().__init__()
         self.app: Application[Any, Any, Any, Any, Any, Any] | None = None
         self.loop: asyncio.AbstractEventLoop | None = None

@@ -1,5 +1,5 @@
-"""
-Script di pulizia finale:
+"""Script di pulizia finale:
+
 1. Rimuove import PySide6 orfani (widget ora gestiti da core_widgets)
 2. Rimuove setStyleSheet() duplicati dove il wrapper già li applica
 Usa ast.parse per validazione post-modifica.
@@ -71,8 +71,7 @@ def remove_orphan_imports(content: str) -> str:
 
 
 def process_file(filepath: str) -> None:
-    """
-    Analizza e pulisce un singolo file sorgente.
+    """Analizza e pulisce un singolo file sorgente.
 
     Args:
       filepath: Percorso del file da processare.

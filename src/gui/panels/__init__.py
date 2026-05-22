@@ -1,5 +1,5 @@
-"""
-SyncroJob - GUI Panels Module
+"""SyncroJob - GUI Panels Module.
+
 Facade per retrocompatibilit .
 """
 

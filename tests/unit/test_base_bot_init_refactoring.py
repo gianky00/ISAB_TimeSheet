@@ -1,5 +1,4 @@
-"""
-Tests for BaseBot._init_driver refactoring.
+"""Tests for BaseBot._init_driver refactoring.
 Ensures 100% coverage and parity before refactoring.
 """
 

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Timbrature Data Worker
+"""SyncroJob - Timbrature Data Worker.
+
 Worker asincrono per il recupero dei dati delle timbrature e il popolamento dei filtri.
 Garantisce la fluidità della GUI durante le query SQL sul database timbrature.
 """
@@ -15,9 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class TimbratureDataWorker(QThread):
-    """
-    Worker per l'esecuzione di query sulle timbrature in background.
-    """
+    """Worker per l'esecuzione di query sulle timbrature in background."""
 
     data_ready = Signal(list)  # Dati per la tabella
     filters_ready = Signal(dict)  # Liste per i filtri (reparti, cantieri, anni)
@@ -25,14 +23,16 @@ class TimbratureDataWorker(QThread):
     error_signal = Signal(str)
 
     def __init__(self, storage: TimbratureStorage, mode: str, *args: Any, **kwargs: Any) -> None:
-        """
-        Inizializza il worker.
+        """Inizializza il worker.
 
         Args:
           storage: Istanza di TimbratureStorage.
           mode: 'fetch_data', 'fetch_filters' o 'import_excel'.
+          *args: Argomenti posizionali aggiuntivi.
+          **kwargs: Argomenti nominali per il filtraggio (filter_text, ecc).
         """
         super().__init__()
+
         self.storage = storage
         self.mode = mode
         self.args = args

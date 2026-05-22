@@ -1,5 +1,5 @@
-"""
-SyncroJob - Updater Engine
+"""SyncroJob - Updater Engine.
+
 Business logic for checking and downloading updates.
 """
 
@@ -52,6 +52,7 @@ class DownloadWorker(QThread):
     retrying = Signal(int)
 
     def __init__(self, url_or_path: str) -> None:
+        """Inizializza la classe."""
         super().__init__()
         self.url_or_path = url_or_path
         self._is_cancelled = False

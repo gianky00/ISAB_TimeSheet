@@ -1,6 +1,4 @@
-"""
-Baseline tests for Icon Generator.
-"""
+"""Baseline tests for Icon Generator."""
 
 import sys
 from pathlib import Path

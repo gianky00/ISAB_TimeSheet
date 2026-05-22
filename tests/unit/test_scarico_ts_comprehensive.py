@@ -1,5 +1,4 @@
-"""
-Scarico Timesheet Bot - Comprehensive Test Suite (2026 Edition)
+"""Scarico Timesheet Bot - Comprehensive Test Suite (2026 Edition)
 ============================================================
 Copre il loop di scarico multi-OdA, la rinomina unica dei file e il cleanup.
 

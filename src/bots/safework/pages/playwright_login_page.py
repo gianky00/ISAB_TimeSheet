@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright SafeWork Login Page
+"""SyncroJob - Playwright SafeWork Login Page.
+
 Encapsulamento della logica di login SafeWork usando Playwright.
 """
 
@@ -16,12 +16,16 @@ class PlaywrightSafeWorkLoginPage(PlaywrightBasePage):
     """Gestisce l'accesso al portale SafeWork usando Playwright."""
 
     def __init__(self, page: Page, log_func: Callable[[str], None]) -> None:
+        """Inizializza la pagina di login SafeWork Playwright.
+
+        Args:
+            page: Pagina Playwright.
+            log_func: Funzione per il logging.
+        """
         super().__init__(page, log_func)
 
     def login(self, username: str, password: str, account_type: str = "Esecutore") -> bool:
-        """
-        Esegue il login con strategia differenziata in base al tipo di account.
-        """
+        """Esegue il login con strategia differenziata in base al tipo di account."""
         try:
             # 1. Azioni Comuni
             self._procedura_comune_login(username, password)

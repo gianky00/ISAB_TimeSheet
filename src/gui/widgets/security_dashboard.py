@@ -1,3 +1,5 @@
+"""Modulo Security Dashboard."""
+
 from typing import Any
 
 from PySide6.QtCore import Qt, QThreadPool, QTimer, Slot
@@ -32,12 +34,13 @@ QToolTip {
 
 
 class SecurityDashboard(QWidget):
-    """
-    Dashboard di sicurezza e audit log.
+    """Dashboard di sicurezza e audit log.
+
     Visualizza statistiche, grafici semplificati e log critici.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.audit_manager = AuditManager.instance()
         self.setStyleSheet(TOOLTIP_CSS)

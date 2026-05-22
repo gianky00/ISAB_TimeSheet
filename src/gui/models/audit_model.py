@@ -1,5 +1,5 @@
-"""
-SyncroJob - Audit Table Model
+"""SyncroJob - Audit Table Model.
+
 Modello per la visualizzazione tabellare dell'Audit Log di sistema.
 Gestisce la formattazione, i colori e le icone degli eventi di audit.
 """
@@ -17,8 +17,8 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class AuditTableModel(QAbstractTableModel):
-    """
-    Modello dati avanzato per la tabella Audit V2.
+    """Modello dati avanzato per la tabella Audit V2.
+
     Fornisce decorazioni visuali (icone di stato, colori di sfondo per errori)
     e formattazione dei metadati (durata, timestamp).
     """
@@ -44,8 +44,7 @@ class AuditTableModel(QAbstractTableModel):
     COL_MESSAGE = 7
 
     def __init__(self, logs: list[dict[str, Any]] | None = None) -> None:
-        """
-        Inizializza il modello audit.
+        """Inizializza il modello audit.
 
         Args:
           logs: Lista iniziale di dizionari log.
@@ -62,8 +61,7 @@ class AuditTableModel(QAbstractTableModel):
         }
 
     def update_data(self, logs: list[dict[str, Any]]) -> None:
-        """
-        Aggiorna l'intero set di dati del modello.
+        """Aggiorna l'intero set di dati del modello.
 
         Args:
           logs: Nuova lista di log da visualizzare.
@@ -87,8 +85,8 @@ class AuditTableModel(QAbstractTableModel):
     def data(  # noqa: PLR0911
         self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole
     ) -> Any:
-        """
-        Fornisce i dati per la cella specificata in base al ruolo richiesto.
+        """Fornisce i dati per la cella specificata in base al ruolo richiesto.
+
         Gestisce testo, icone, font e colori.
         """
         if not index.isValid():
@@ -231,8 +229,7 @@ class AuditTableModel(QAbstractTableModel):
             return str(p_str)
 
     def get_log_at(self, row: int) -> dict[str, Any] | None:
-        """
-        Restituisce i dati completi del log alla riga specificata.
+        """Restituisce i dati completi del log alla riga specificata.
 
         Args:
           row: Indice della riga.

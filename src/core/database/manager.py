@@ -1,5 +1,5 @@
-"""
-SyncroJob - Database Manager
+"""SyncroJob - Database Manager.
+
 Centralized SQLite database management with Thread Safety.
 """
 
@@ -44,8 +44,8 @@ logger = get_logger(__name__)
 
 
 class DatabaseManager:
-    """
-    Singleton class to manage SQLite connections with thread safety and WAL mode.
+    """Singleton class to manage SQLite connections with thread safety and WAL mode.
+
     Implements a write lock to prevent contention.
     """
 
@@ -111,9 +111,7 @@ class DatabaseManager:
     def get_connection(
         self, db_path: Path, read_only: bool = False
     ) -> Generator[sqlite3.Connection, None, None]:
-        """
-        Provides a thread-safe connection with automatic WAL mode and transaction handling.
-        """
+        """Provides a thread-safe connection with automatic WAL mode and transaction handling."""
         if read_only:
             # Per sola lettura, usiamo URI mode per garantire l'accesso se possibile
             db_uri = f"file:{db_path.as_posix()}?mode=ro"
@@ -138,18 +136,14 @@ class DatabaseManager:
 
     @contextmanager
     def get_write_connection(self, db_path: Path) -> Generator[sqlite3.Connection, None, None]:
-        """
-        Provides a connection with an exclusive write lock to prevent 'database is locked' errors.
-        """
+        """Provides a connection with an exclusive write lock to prevent 'database is locked' errors."""
         with self._write_lock, self.get_connection(db_path) as conn:
             yield conn
 
     def execute_query(
         self, db_path: Path, query: str, params: tuple[Any, ...] = (), retry_count: int = 3
     ) -> list[sqlite3.Row]:
-        """
-        Safely executes a read query with automatic retries on busy.
-        """
+        """Safely executes a read query with automatic retries on busy."""
         last_error = None
         for i in range(retry_count):
             try:
@@ -191,9 +185,7 @@ class DatabaseManager:
     def _run_migrations(
         self, db_path: Path, migrations: dict[int, Callable[[sqlite3.Connection], None]], db_name: str
     ) -> None:
-        """
-        Executes pending migrations for a specific database.
-        """
+        """Executes pending migrations for a specific database."""
         # Creazione directory se non esiste
         db_path.parent.mkdir(parents=True, exist_ok=True)
 

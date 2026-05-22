@@ -1,5 +1,5 @@
-"""
-SyncroJob - Animated Tab Widget (Premium Stylized)
+"""SyncroJob - Animated Tab Widget (Premium Stylized).
+
 Componente universale con animazioni di lusso, gradienti e glow effect.
 Fornisce una navigazione tra schede fluida con indicatore di selezione dinamico.
 """
@@ -24,8 +24,8 @@ from src.gui.styles import COLORS
 
 
 class AnimatedTabWidget(QWidget):
-    """
-    Sostituto d' lite di QTabWidget con transizioni Snapshot-Fade
+    """Sostituto d' lite di QTabWidget con transizioni Snapshot-Fade.
+
     e indicatore di selezione con effetto 'Illumination'.
 
     Supporta il posizionamento dei tab (North/South) e garantisce performance a 60 FPS
@@ -36,8 +36,7 @@ class AnimatedTabWidget(QWidget):
     """Segnale emesso quando il tab attivo cambia."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza the widget dei tab animati.
+        """Inizializza the widget dei tab animati.
 
         Args:
           parent: Widget genitore opzionale.
@@ -115,8 +114,7 @@ class AnimatedTabWidget(QWidget):
             self.tab_bar.setStyleSheet(self._get_default_style())
 
     def setTabPosition(self, position: QTabWidget.TabPosition) -> None:
-        """
-        Imposta la posizione della barra dei tab.
+        """Imposta la posizione della barra dei tab.
 
         Args:
           position: Posizione desiderata (North o South).
@@ -143,8 +141,7 @@ class AnimatedTabWidget(QWidget):
         QTimer.singleShot(10, self._update_indicator_instant)
 
     def addTab(self, widget: QWidget, *args: Any) -> int:
-        """
-        Aggiunge un nuovo tab.
+        """Aggiunge un nuovo tab.
 
         Args:
           widget: Il widget da visualizzare nella scheda.
@@ -158,8 +155,7 @@ class AnimatedTabWidget(QWidget):
         return index
 
     def removeTab(self, index: int) -> None:
-        """
-        Rimuove un tab e il relativo widget dallo stack.
+        """Rimuove un tab e il relativo widget dallo stack.
 
         Args:
           index: Indice del tab da rimuovere.
@@ -184,8 +180,7 @@ class AnimatedTabWidget(QWidget):
         self.indicator.hide()
 
     def _on_tab_bar_changed(self, index: int) -> None:
-        """
-        Gestisce internamente il cambio di tab nella barra.
+        """Gestisce internamente il cambio di tab nella barra.
 
         Args:
           index: Nuovo indice selezionato.
@@ -199,8 +194,7 @@ class AnimatedTabWidget(QWidget):
             self.currentChanged.emit(index)
 
     def _animate_indicator(self, index: int) -> None:
-        """
-        Avvia l'animazione dell'indicatore verso il tab specificato.
+        """Avvia l'animazione dell'indicatore verso il tab specificato.
 
         Args:
           index: Indice di destinazione.
@@ -252,8 +246,7 @@ class AnimatedTabWidget(QWidget):
         return self.stack.currentWidget()
 
     def setCurrentIndex(self, index: int) -> None:
-        """
-        Imposta programmaticamente il tab corrente.
+        """Imposta programmaticamente il tab corrente.
 
         Args:
           index: Indice da attivare.

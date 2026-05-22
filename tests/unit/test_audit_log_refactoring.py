@@ -1,5 +1,4 @@
-"""
-Baseline tests for AuditLogWidget refresh logic.
+"""Baseline tests for AuditLogWidget refresh logic.
 Updated for modular V2 structure.
 """
 

@@ -1,3 +1,5 @@
+"""Modulo Oda Detail View."""
+
 from collections.abc import Sequence
 from contextlib import suppress
 from typing import Any
@@ -20,6 +22,7 @@ class OdaDetailView(QWidget):
     """Widget per la visualizzazione del dettaglio completo di un OdA."""
 
     def __init__(self, headers: list[str], parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.headers = headers
         self.detail_labels: dict[str, QLabel] = {}

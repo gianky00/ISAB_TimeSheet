@@ -1,5 +1,5 @@
-"""
-SyncroJob - Timbrature Locators
+"""SyncroJob - Timbrature Locators.
+
 Specific selectors for the Timbrature bot.
 """
 
@@ -7,8 +7,8 @@ from selenium.webdriver.common.by import By
 
 
 class TimbratureLocators:
-    """
-    Locators for the Timbrature page and elements.
+    """Locators for the Timbrature page and elements.
+
     Definisce i puntatori agli elementi dell'interfaccia Report Timbrature.
     """
 

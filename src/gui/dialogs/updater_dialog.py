@@ -1,5 +1,5 @@
-"""
-SyncroJob - Updater Dialog
+"""SyncroJob - Updater Dialog.
+
 UI components for update notifications and progress.
 Moved from core/updater/gui.py to follow SRP.
 """
@@ -45,8 +45,7 @@ class UpdateProgressDialog(QDialog):
     """Progress dialog for update downloads or network transfers."""
 
     def __init__(self, url_or_path: str, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il dialog di progresso.
+        """Inizializza il dialog di progresso.
 
         Args:
           url_or_path: URL o percorso locale del file da scaricare/trasferire.

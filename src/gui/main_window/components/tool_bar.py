@@ -1,5 +1,5 @@
-"""
-SyncroJob - ToolBar Component
+"""SyncroJob - ToolBar Component.
+
 Gestore degli elementi di navigazione e ricerca superiore e laterale.
 Inizializza la sidebar, il banner degli aggiornamenti e la barra di ricerca globale.
 """
@@ -29,6 +29,7 @@ class AnimatedSplitButton(QPushButton):
     """Pulsante Split personalizzato con sfondo bianco, massimo contrasto e animazione al passaggio del mouse."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.setFixedWidth(45)
         self.setFixedHeight(40)
@@ -62,6 +63,7 @@ class AnimatedSplitButton(QPushButton):
           padding-top: 2px;
         }
       """)
+
             icon_path = get_asset_path(Icons.CHEVRON_DOWN)
             self.setIcon(get_colored_icon(icon_path, "#1B5E20"))
         else:
@@ -81,6 +83,7 @@ class AnimatedSplitButton(QPushButton):
           padding-top: 2px;
         }
       """)
+
             icon_path = get_asset_path(Icons.SPLIT_WINDOW)
             self.setIcon(get_colored_icon(icon_path, "#212121"))
 
@@ -104,14 +107,13 @@ class AnimatedSplitButton(QPushButton):
 
 
 class ToolBarComponent(QObject):
-    """
-    Coordina la creazione e il posizionamento dei componenti di navigazione principali.
+    """Coordina la creazione e il posizionamento dei componenti di navigazione principali.
+
     Gestisce la comunicazione tra la barra di ricerca globale e il SearchController.
     """
 
     def __init__(self, main_window: MainWindow) -> None:
-        """
-        Inizializza il componente ToolBar.
+        """Inizializza il componente ToolBar.
 
         Args:
           main_window: Riferimento alla MainWindow dell'applicazione.
@@ -124,8 +126,7 @@ class ToolBarComponent(QObject):
         self.detach_btn: AnimatedSplitButton | None = None
 
     def setup_sidebar(self, parent_widget: QWidget) -> SidebarWidget:
-        """
-        Crea la sidebar per l'uso come overlay.
+        """Crea la sidebar per l'uso come overlay.
 
         Args:
           parent_widget: Il widget genitore.
@@ -137,8 +138,7 @@ class ToolBarComponent(QObject):
         return self.sidebar
 
     def setup_content_toolbar(self, layout: QVBoxLayout) -> tuple[UpdateBanner, QLineEdit]:
-        """
-        Crea la barra superiore nell'area dei contenuti (Banner + Ricerca).
+        """Crea la barra superiore nell'area dei contenuti (Banner + Ricerca).
 
         Args:
           layout: Il layout verticale dell'area centrale.
@@ -146,7 +146,6 @@ class ToolBarComponent(QObject):
         Returns:
           tuple: (Istanza UpdateBanner, Istanza QLineEdit della ricerca).
         """
-
         self.update_banner = UpdateBanner()
         self.update_banner.download_requested.connect(self.main_window._on_download_update_clicked)
         layout.addWidget(self.update_banner)

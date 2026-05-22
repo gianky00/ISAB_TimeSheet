@@ -16,7 +16,6 @@ def mock_pdl_repository():
 
 def test_pdl_controller_returns_dtos_with_mocked_db(mock_pdl_repository):
     """Verifica che il controller agisca come ponte convertendo i dati grezzi in DTO."""
-
     # 1. Arrange (Preparazione Mock)
     # Simuliamo 10.000 righe fittizie dal database per testare le performance di mapping
     mock_record = PdlRecord(

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Telegram Tab (Next-Gen)
+"""SyncroJob - Telegram Tab (Next-Gen).
+
 Pannello per la configurazione del bridge Telegram strutturato a Card.
 """
 
@@ -30,14 +30,13 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class SettingCard(QFrame):
-    """
-    Container a card con ombra e stile moderno per un gruppo di impostazioni.
+    """Container a card con ombra e stile moderno per un gruppo di impostazioni.
+
     Fornisce coerenza visiva in tutto il pannello.
     """
 
     def __init__(self, title: str, subtitle: str, icon_key: str, content_widget: QWidget) -> None:
-        """
-        Inizializza la card di impostazione.
+        """Inizializza la card di impostazione.
 
         Args:
           title: Titolo principale.
@@ -103,8 +102,8 @@ class SettingCard(QFrame):
 
 
 class TelegramTab(QWidget):
-    """
-    Tab dedicato all'integrazione con il bot Telegram.
+    """Tab dedicato all'integrazione con il bot Telegram.
+
     Gestisce token, chat ID e fornisce strumenti di test per la connettività remota.
     """
 
@@ -112,8 +111,7 @@ class TelegramTab(QWidget):
     """Segnale emesso quando le credenziali Telegram vengono modificate."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il tab di Telegram.
+        """Inizializza il tab di Telegram.
 
         Args:
           parent: Widget genitore.
@@ -241,8 +239,7 @@ class TelegramTab(QWidget):
             card.setVisible(match or not search_term)
 
     def load_from_config(self, config: dict[str, Any]) -> None:
-        """
-        Carica i parametri Telegram dalla configurazione attuale.
+        """Carica i parametri Telegram dalla configurazione attuale.
 
         Args:
           config: Dizionario di configurazione.
@@ -251,8 +248,7 @@ class TelegramTab(QWidget):
         self.chat_id_edit.setText(config.get("telegram_chat_id", ""))
 
     def save_to_config(self, config: dict[str, Any]) -> None:
-        """
-        Salva i parametri Telegram nel dizionario di configurazione.
+        """Salva i parametri Telegram nel dizionario di configurazione.
 
         Args:
           config: Dizionario di configurazione globale.

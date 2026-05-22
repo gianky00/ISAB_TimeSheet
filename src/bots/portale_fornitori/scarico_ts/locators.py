@@ -1,5 +1,5 @@
-"""
-SyncroJob - Scarico TS Locators
+"""SyncroJob - Scarico TS Locators.
+
 Selectors for the Scarico TS bot.
 """
 

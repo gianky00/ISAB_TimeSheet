@@ -1,5 +1,5 @@
-"""
-SyncroJob - App Event Handler
+"""SyncroJob - App Event Handler.
+
 Controller dedicato alla gestione degli eventi globali dell'applicazione (chiusura, shortcut, backup).
 """
 
@@ -17,15 +17,14 @@ if TYPE_CHECKING:
 
 
 class AppEventHandler(QObject):
-    """
-    Gestisce la logica di alto livello per gli eventi della MainWindow.
+    """Gestisce la logica di alto livello per gli eventi della MainWindow.
+
     Include la gestione della chiusura (nascondi vs esci), il trigger del backup automatico
     e l'intercettazione delle scorciatoie da tastiera globali.
     """
 
     def __init__(self, main_window: MainWindow) -> None:
-        """
-        Inizializza l'event handler.
+        """Inizializza l'event handler.
 
         Args:
             main_window: Riferimento alla MainWindow dell'applicazione.
@@ -40,8 +39,8 @@ class AppEventHandler(QObject):
         self.main_window.close()
 
     def handle_close_event(self, event: Any) -> None:
-        """
-        Gestisce l'evento di chiusura della finestra.
+        """Gestisce l'evento di chiusura della finestra.
+
         Se la chiusura non è forzata, nasconde l'applicazione nel tray invece di terminarla.
         Allo spegnimento definitivo, esegue il backup automatico e ferma i servizi.
 

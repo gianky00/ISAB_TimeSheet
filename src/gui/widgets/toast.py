@@ -1,6 +1,4 @@
-"""
-Sistema di notifiche toast non-blocking con supporto hover e tempi differenziati.
-"""
+"""Sistema di notifiche toast non-blocking con supporto hover e tempi differenziati."""
 
 from __future__ import annotations
 
@@ -154,7 +152,6 @@ class Toast(QWidget):
 
     def _sanitize_html(self, html: str) -> str:
         """Rimuove tag pericolosi dall'HTML del toast."""
-
         clean = re.sub(r"<script.*?>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
         clean = re.sub(
             r"<(script|iframe|object|embed|applet|meta|link|style).*?>",
@@ -252,8 +249,8 @@ class ToastManager(QObject):
         pulse: bool = False,
         is_rich_text: bool = False,
     ) -> None:
-        """
-        Crea e visualizza un nuovo toast, calcolando la posizione corretta nello stack.
+        """Crea e visualizza un nuovo toast, calcolando la posizione corretta nello stack.
+
         Ottimizzato per limitare l'overhead di rendering su flussi massivi.
         """
         # Pulisce la lista dei toast non più visibili

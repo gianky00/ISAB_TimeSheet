@@ -1,6 +1,4 @@
-"""
-Logger sicuro che maschera informazioni sensibili.
-"""
+"""Logger sicuro che maschera informazioni sensibili."""
 
 import logging
 import re

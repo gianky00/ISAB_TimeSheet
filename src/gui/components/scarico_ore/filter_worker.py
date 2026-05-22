@@ -1,5 +1,5 @@
-"""
-SyncroJob - Filter Worker
+"""SyncroJob - Filter Worker.
+
 Thread worker per l'esecuzione asincrona dei filtri su grandi volumi di dati.
 """
 
@@ -19,8 +19,7 @@ class FilterWorker(QThread):
         col_filters: dict[int, set[str]] | None = None,
         parent: QObject | None = None,
     ) -> None:
-        """
-        Inizializza il worker per il filtraggio.
+        """Inizializza il worker per il filtraggio.
 
         Args:
           search_index: Indice di ricerca globalizzato.

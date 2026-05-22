@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Stats Widget
+"""SyncroJob - PDL Stats Widget.
+
 Card avanzata per la visualizzazione delle metriche PDL, trend e aree interattive.
 V10.0: Logica colori invertita (Incremento=Rosso), percentuali intere e stile elegante.
 """
@@ -98,13 +98,12 @@ class AreaBadge(QPushButton):
         font-size: 10px;
       }}
     """)
+
         self.clicked.connect(lambda: self.clicked_area.emit(name))
 
 
 class PDLStatsWidget(ModernCard):
-    """
-    Widget premium per il monitoraggio dei PDL con logica di allerta carico.
-    """
+    """Widget premium per il monitoraggio dei PDL con logica di allerta carico."""
 
     stats_updated = Signal(object)
     area_selected = Signal(str)

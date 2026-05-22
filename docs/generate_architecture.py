@@ -1,5 +1,4 @@
-"""
-SyncroJob - Architecture Generator (V2.2 - High Resolution & Clean Layout)
+"""SyncroJob - Architecture Generator (V2.2 - High Resolution & Clean Layout)
 Genera il diagramma dell'architettura enterprise in alta risoluzione (300 DPI).
 """
 

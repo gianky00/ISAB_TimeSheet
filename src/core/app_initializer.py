@@ -1,5 +1,5 @@
-"""
-SyncroJob - App Initializer
+"""SyncroJob - App Initializer.
+
 Gestisce il ciclo di vita dell'avvio dell'applicazione.
 Agnostico rispetto alla GUI (non importa PyQt direttamente nelle funzioni core).
 """
@@ -34,9 +34,7 @@ logger = get_logger("AppInitializer")
 
 
 class AppInitializer:
-    """
-    Orchestratore della sequenza di bootstrap dell'intero sistema.
-    """
+    """Orchestratore della sequenza di bootstrap dell'intero sistema."""
 
     _core_initialized = False
     _startup_alerts: ClassVar[list[tuple[str, str]]] = []

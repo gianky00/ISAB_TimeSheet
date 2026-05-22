@@ -1,5 +1,5 @@
-"""
-SyncroJob - Employees Main Panel
+"""SyncroJob - Employees Main Panel.
+
 Pannello principale per la gestione del personale che orchestra i tab di monitoraggio e configurazione.
 Funge da punto di ingresso unico per tutte le funzionalità relative ai dipendenti.
 """
@@ -23,16 +23,15 @@ logger = logging.getLogger(__name__)
 
 
 class DipendentiPanel(QWidget):
-    """
-    Pannello principale Dipendenti (Facade).
+    """Pannello principale Dipendenti (Facade).
+
     Coordina i sotto-pannelli organizzati in tab:
     - Monitoraggio: Analisi abilitazioni e accessi.
     - Configurazione: Gestione anagrafica (CRUD).
     """
 
     def __init__(self, controller: "AnagraficaController", parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello dipendenti con iniezione del controller.
+        """Inizializza il pannello dipendenti con iniezione del controller.
 
         Args:
           controller: Istanza del controller per la logica di business.
@@ -83,8 +82,8 @@ class DipendentiPanel(QWidget):
             self.tabs.setCurrentIndex(index)
 
     def refresh_data(self) -> None:
-        """
-        Aggiorna i dati del pannello.
+        """Aggiorna i dati del pannello.
+
         Metodo pubblico chiamato dal NavigationController o in risposta ad eventi globali.
         Innesca il refresh sul widget del tab attualmente attivo.
         """

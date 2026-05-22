@@ -1,5 +1,5 @@
-"""
-SyncroJob - ROI Engine
+"""SyncroJob - ROI Engine.
+
 Calcola il risparmio di tempo e risorse basando l'analisi sui log di auditing.
 """
 
@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 class ROIEngine:
-    """
-    Motore analitico per la misurazione del Ritorno sull'Investimento (ROI).
+    """Motore analitico per la misurazione del Ritorno sull'Investimento (ROI).
+
     Analizza i log di auditing per stimare il tempo risparmiato dall'automazione.
     """
 
@@ -31,7 +31,6 @@ class ROIEngine:
     @staticmethod
     def get_weights() -> dict[str, float]:
         """Recupera i pesi (minuti risparmiati per operazione) dalla configurazione."""
-
         default_weights = {
             "Scarico TS": 15.0,
             "Carico TS": 5.0,

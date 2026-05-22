@@ -1,5 +1,5 @@
-"""
-SyncroJob - Input Validators
+"""SyncroJob - Input Validators.
+
 Framework di validazione centralizzato per garantire l'integrità dei dati inseriti dall'utente.
 Include controlli per OdA, PDL, Codici Fiscali e date.
 """
@@ -12,8 +12,7 @@ from typing import ClassVar
 
 @dataclass
 class ValidationResult:
-    """
-    Rappresenta l'esito di un'operazione di validazione.
+    """Rappresenta l'esito di un'operazione di validazione.
 
     Attributes:
       valid: True se il valore  conforme al pattern richiesto.
@@ -27,8 +26,8 @@ class ValidationResult:
 
 
 class InputValidator:
-    """
-    Validatore centralizzato per tutti gli input utente.
+    """Validatore centralizzato per tutti gli input utente.
+
     Contiene pattern regex standard e logica di validazione complessa (es. checksum CF).
     """
 
@@ -51,8 +50,8 @@ class InputValidator:
 
     @classmethod
     def validate_pdl(cls, value: str) -> ValidationResult:
-        """
-        Valida numero PDL (6 cifre + /C o /S).
+        """Valida numero PDL (6 cifre + /C o /S).
+
         Se vengono fornite solo 6 cifre, aggiunge automaticamente il suffisso in base al numero.
 
         Args:
@@ -83,8 +82,7 @@ class InputValidator:
 
     @classmethod
     def validate_oda(cls, value: str) -> ValidationResult:
-        """
-        Valida la correttezza formale di un numero di Ordine d'Acquisto.
+        """Valida la correttezza formale di un numero di Ordine d'Acquisto.
 
         Args:
           value: Numero OdA inserito.
@@ -107,8 +105,7 @@ class InputValidator:
 
     @classmethod
     def validate_codice_fiscale(cls, value: str) -> ValidationResult:
-        """
-        Valida un Codice Fiscale italiano controllando formato e carattere di controllo.
+        """Valida un Codice Fiscale italiano controllando formato e carattere di controllo.
 
         Args:
           value: CF da validare.
@@ -135,8 +132,7 @@ class InputValidator:
 
     @staticmethod
     def _validate_cf_checksum(cf: str) -> bool:
-        """
-        Implementa l'algoritmo di calcolo del carattere di controllo per il Codice Fiscale.
+        """Implementa l'algoritmo di calcolo del carattere di controllo per il Codice Fiscale.
 
         Args:
           cf: Il codice fiscale completo (16 caratteri).
@@ -233,8 +229,7 @@ class InputValidator:
 
     @classmethod
     def validate_date_italian(cls, value: str) -> ValidationResult:
-        """
-        Valida una data in formato italiano (GG.MM.AAAA).
+        """Valida una data in formato italiano (GG.MM.AAAA).
 
         Args:
           value: La data inserita.
@@ -260,8 +255,7 @@ class InputValidator:
 
     @classmethod
     def sanitize_sql_string(cls, value: str) -> str:
-        """
-        Rimuove caratteri non stampabili per prevenire errori in query SQL.
+        """Rimuove caratteri non stampabili per prevenire errori in query SQL.
 
         Args:
           value: Stringa da pulire.

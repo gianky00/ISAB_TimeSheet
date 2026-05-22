@@ -1,3 +1,1 @@
-"""
-SyncroJob - Main Window Package
-"""
+"""SyncroJob - Main Window Package."""

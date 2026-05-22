@@ -1,5 +1,5 @@
-"""
-SyncroJob - Contabilita Controller
+"""SyncroJob - Contabilita Controller.
+
 Gestore della logica di interfaccia per il modulo Contabilità.
 Separa la gestione dei dati e dei worker dalla visualizzazione (ContabilitaPanel).
 """
@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 class ContabilitaController(QObject):
-    """
-    Controller dedicato al modulo Contabilità.
+    """Controller dedicato al modulo Contabilità.
+
     Gestisce l'orchestrazione dei dati, l'avvio dei worker di importazione
     e la comunicazione tra la logica di business e la UI.
     """
@@ -33,6 +33,7 @@ class ContabilitaController(QObject):
     data_refreshed = Signal()  # Notifica che i dati sono stati ricaricati
 
     def __init__(self, panel: ContabilitaPanel) -> None:
+        """Inizializza la classe."""
         super().__init__(panel)
         self.panel = panel
         self.repository = ContabilitaRepository()

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Telegram Bridge UI Commands
+"""SyncroJob - Telegram Bridge UI Commands.
+
 Gestisce l'attivazione dei bot e la navigazione UI richiesta da Telegram.
 """
 
@@ -18,6 +18,7 @@ class TelegramUICommands(QObject):
     """Esegue comandi di navigazione e avvio bot desktop."""
 
     def __init__(self, main_window: "MainWindow", telegram_service: Any) -> None:
+        """Inizializza la classe."""
         super().__init__(main_window)
         self.mw = main_window
         self.telegram = telegram_service

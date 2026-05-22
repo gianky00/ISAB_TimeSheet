@@ -1,3 +1,5 @@
+"""Modulo Stats Manager."""
+
 import copy
 import json
 import logging
@@ -13,8 +15,8 @@ from src.core.constants import FileNames
 
 
 class StatsManager:
-    """
-    Gestore singleton per le metriche di utilizzo delle automazioni.
+    """Gestore singleton per le metriche di utilizzo delle automazioni.
+
     Supporta salvataggi asincroni per non bloccare il thread principale.
     """
 
@@ -37,8 +39,8 @@ class StatsManager:
         self._worker_thread.start()
 
     def _load_stats(self) -> dict[str, Any]:
-        """
-        Carica le statistiche dal gestore di configurazione.
+        """Carica le statistiche dal gestore di configurazione.
+
         Include un meccanismo di migrazione per recuperare dati da versioni legacy (statistics.json).
 
         Returns:
@@ -80,8 +82,8 @@ class StatsManager:
         self._save_queue.put(copy.deepcopy(self.stats))
 
     def increment_usage(self, bot_id: str) -> None:
-        """
-        Incrementa il contatore delle esecuzioni (runs) per un determinato bot.
+        """Incrementa il contatore delle esecuzioni (runs) per un determinato bot.
+
         Aggiorna inoltre il timestamp dell'ultima attivitàrilevata.
 
         Args:
@@ -99,8 +101,7 @@ class StatsManager:
         self._save_stats()
 
     def increment_error(self, bot_id: str) -> None:
-        """
-        Registra un fallimento o un errore critico per un determinato bot.
+        """Registra un fallimento o un errore critico per un determinato bot.
 
         Args:
           bot_id: Identificativo unico dell'automazione.
@@ -114,8 +115,7 @@ class StatsManager:
         self._save_stats()
 
     def get_all_stats(self) -> dict[str, Any]:
-        """
-        Restituisce l'intero dataset delle statistiche di utilizzo.
+        """Restituisce l'intero dataset delle statistiche di utilizzo.
 
         Returns:
           dict: Mappa bot_id -> {runs, errors, last_run}.

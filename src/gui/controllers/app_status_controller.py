@@ -1,5 +1,5 @@
-"""
-SyncroJob - App Status Controller
+"""SyncroJob - App Status Controller.
+
 Gestisce la rotazione degli account e le impostazioni del motore di automazione.
 Aderisce al principio SRP separando la gestione dello stato dell'app dalla MainWindow.
 """
@@ -22,8 +22,7 @@ class AppStatusController:
     """Controller per la gestione degli stati e delle impostazioni globali dell'applicazione."""
 
     def __init__(self, main_window: MainWindow) -> None:
-        """
-        Inizializza il controller di stato.
+        """Inizializza il controller di stato.
 
         Args:
             main_window: Riferimento alla finestra principale per l'aggiornamento dell'UI.

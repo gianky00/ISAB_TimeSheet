@@ -1,5 +1,5 @@
-"""
-SyncroJob - Storico OdA Panel (Refactored)
+"""SyncroJob - Storico OdA Panel (Refactored).
+
 Pannello coordinato per la gestione dello Storico OdA.
 Utilizza ODAController per la logica di business e ODATreeView per la gerarchia.
 Refactored V9.4: Bold on selection and context menu for details.
@@ -41,8 +41,7 @@ class StoricoOdaPanel(QWidget):
     """Orchestratore dello Storico OdA con architettura Master-Detail modularizzata."""
 
     def __init__(self, controller: ODAController, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello dello storico OdA con iniezione del controller.
+        """Inizializza il pannello dello storico OdA con iniezione del controller.
 
         Args:
           controller: Istanza del controller per la logica di business.
@@ -255,8 +254,7 @@ class StoricoOdaPanel(QWidget):
                     it.setFont(font)
 
     def _show_context_menu(self, pos: QPoint) -> None:
-        """
-        Mostra il menu contestuale per l'elemento selezionato.
+        """Mostra il menu contestuale per l'elemento selezionato.
 
         Args:
           pos: Posizione del clic del mouse.

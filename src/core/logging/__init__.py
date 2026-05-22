@@ -1,5 +1,5 @@
-"""
-SyncroJob - Enterprise Logging System
+"""SyncroJob - Enterprise Logging System.
+
 AI-ready structured logging con context propagation e performance monitoring.
 """
 

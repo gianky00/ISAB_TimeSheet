@@ -1,5 +1,5 @@
-"""
-SyncroJob - Bots Module
+"""SyncroJob - Bots Module.
+
 Registry e factory per tutti i bot disponibili.
 Supporta motori di automazione multipli (Selenium, Playwright).
 """
@@ -205,8 +205,8 @@ def get_bot_info(bot_id: str) -> dict[str, Any] | None:
 
 
 def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:
-    """
-    Crea un'istanza di un bot, scegliendo il motore in base alla configurazione.
+    """Crea un'istanza di un bot, scegliendo il motore in base alla configurazione.
+
     Gestisce la conversione dei parametri in SeleniumBotConfig per la nuova architettura.
     """
     bot_info = BOT_REGISTRY.get(bot_id)

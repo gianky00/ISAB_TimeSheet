@@ -1,5 +1,5 @@
-"""
-SyncroJob - Footer Status Bar
+"""SyncroJob - Footer Status Bar.
+
 Widget per la parte destra della barra di stato, contenente indicatori di progresso e stato dei portali.
 """
 
@@ -11,16 +11,15 @@ from src.gui.widgets.animated_progress_bar import AnimatedProgressBar
 
 
 class FooterRightWidget(QWidget):
-    """
-    Parte destra del footer: contiene la Progress Bar globale e le Status Cards dei Bot.
+    """Parte destra del footer: contiene la Progress Bar globale e le Status Cards dei Bot.
+
     Gestisce il passaggio tra la modalità di caricamento e quella operativa.
     """
 
     def __init__(
         self, status_portale: QWidget, status_safework: QWidget, parent: QWidget | None = None
     ) -> None:
-        """
-        Inizializza il widget del footer destro.
+        """Inizializza il widget del footer destro.
 
         Args:
           status_portale: Widget che visualizza lo stato del portale ISAB.
@@ -50,8 +49,7 @@ class FooterRightWidget(QWidget):
         layout.addWidget(status_safework)
 
     def set_global_progress(self, value: int) -> None:
-        """
-        Aggiorna il valore della barra di progresso globale.
+        """Aggiorna il valore della barra di progresso globale.
 
         Args:
           value: Valore intero (0-100).

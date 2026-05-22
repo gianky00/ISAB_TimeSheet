@@ -1,3 +1,5 @@
+"""Modulo Contabilita."""
+
 import re
 import zipfile
 from collections.abc import Callable
@@ -65,9 +67,7 @@ class ContabilitaImporter(BaseImporter):
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, list[tuple[Any, ...]], list[int]]:
-        """
-        Importa i dati dal file Excel specificato (Tabella Dati).
-        """
+        """Importa i dati dal file Excel specificato (Tabella Dati)."""
         path = Path(file_path)
         if not path.exists():
             return False, f"File non trovato: {file_path}", [], []

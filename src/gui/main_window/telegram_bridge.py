@@ -1,5 +1,5 @@
-"""
-SyncroJob - Screenshot Bridge
+"""SyncroJob - Screenshot Bridge.
+
 Implementazione GUI delle interfacce Telegram per cattura screenshot e stato.
 Segue SRP isolando PySide6.
 """

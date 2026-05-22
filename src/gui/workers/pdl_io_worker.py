@@ -1,5 +1,5 @@
-"""
-SyncroJob - Pdl IO Worker
+"""SyncroJob - Pdl IO Worker.
+
 Thread worker per l'esportazione asincrona dei PDL in Excel.
 """
 
@@ -26,8 +26,7 @@ class PdlIOWorker(QThread):
     def __init__(
         self, file_path: str, data: list[PdlRowDTO], headers: list[str], parent: QObject | None = None
     ) -> None:
-        """
-        Inizializza il worker.
+        """Inizializza il worker.
 
         Args:
           file_path: Percorso del file Excel di destinazione.

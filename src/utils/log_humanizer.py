@@ -1,5 +1,5 @@
-"""
-SyncroJob - Log Humanizer
+"""SyncroJob - Log Humanizer.
+
 Converte messaggi di log tecnici in frasi pulite e professionali.
 Rimosso il sistema casuale per garantire coerenza e precisione.
 """

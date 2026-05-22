@@ -1,5 +1,5 @@
-"""
-SyncroJob - Certificati Tree Widget
+"""SyncroJob - Certificati Tree Widget.
+
 Componente specializzato per la visualizzazione gerarchica dei certificati campione.
 """
 
@@ -28,6 +28,7 @@ class UbicazioneDelegate(QStyledItemDelegate):
     """Delegate per la selezione dell'ubicazione tramite ComboBox."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.items = [
             UbicazioneStrumenti.ASSENTE.value,
@@ -127,6 +128,7 @@ class CertificatiTreeWidget(StandardTreeWidget):
     ) = range(12)
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
         self.itemChanged.connect(self._on_item_changed)

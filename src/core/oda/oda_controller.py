@@ -1,5 +1,5 @@
-"""
-SyncroJob - ODA Controller
+"""SyncroJob - ODA Controller.
+
 Logica di business per il caricamento, raggruppamento e processing degli Ordini di Acquisto.
 Agnostico rispetto alla GUI.
 """
@@ -18,6 +18,7 @@ class ODAController:
     """Servizio per gestire la logica di business dei dati OdA."""
 
     def __init__(self) -> None:
+        """Inizializza il controller degli OdA."""
         self.repository = OdaRepository()
 
     def get_grouped_data(self, search_text: str = "") -> list[dict[str, Any]]:

@@ -1,5 +1,5 @@
-"""
-SyncroJob - SafeWork Programmazione Sync Bot
+"""SyncroJob - SafeWork Programmazione Sync Bot.
+
 Bot per il download massivo del report di programmazione Excel.
 """
 
@@ -15,8 +15,8 @@ from src.bots.safework.base import SafeworkBaseBot
 
 
 class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
-    """
-    Bot per scaricare il report Excel delle attività da SafeWork.
+    """Bot per scaricare il report Excel delle attività da SafeWork.
+
     Automatizza la navigazione alla sezione 'Visualizza Attività' ed esporta il report periodico.
     """
 
@@ -35,9 +35,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         account_type: str = "Esecutore",
         **kwargs: Any,
     ) -> None:
-        """
-        Inizializza il bot di sincronizzazione programmazione.
-        """
+        """Inizializza il bot di sincronizzazione programmazione."""
         super().__init__(username, password, config, account_type=account_type)
         self.downloaded_file: str | None = None
 
@@ -62,8 +60,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         return []
 
     def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
-        """
-        Esegue il download del report Excel.
+        """Esegue il download del report Excel.
 
         Args:
           data: Parametri della sessione (richiedenti, date).

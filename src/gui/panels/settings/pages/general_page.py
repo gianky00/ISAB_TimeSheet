@@ -1,3 +1,5 @@
+"""Modulo General Page."""
+
 from typing import Any
 
 from PySide6.QtCore import Signal
@@ -23,6 +25,7 @@ class GeneralPage(QWidget):
     settings_changed = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 

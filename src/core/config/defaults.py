@@ -1,5 +1,5 @@
-"""
-SyncroJob - Config Defaults
+"""SyncroJob - Config Defaults.
+
 Definizioni predefinite per la configurazione dell'applicazione.
 """
 

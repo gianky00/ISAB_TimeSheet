@@ -1,5 +1,4 @@
-"""
-SyncroJob - Test Service Controller (Final Corrected)
+"""SyncroJob - Test Service Controller (Final Corrected)
 Verifica l'integrità del ServiceController con i giusti path di mock.
 """
 

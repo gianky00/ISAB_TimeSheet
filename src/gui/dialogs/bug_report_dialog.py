@@ -1,5 +1,5 @@
-"""
-SyncroJob - Bug Report Dialog
+"""SyncroJob - Bug Report Dialog.
+
 Interfaccia avanzata per la raccolta diagnostica e la segnalazione di anomalie tecniche.
 Gestisce la creazione di pacchetti ZIP contenenti log, analytics e audit trail, con integrazione Outlook.
 """
@@ -45,8 +45,8 @@ logger = logging.getLogger(__name__)
 
 
 class ReportWorker(QThread):
-    """
-    Worker thread dedicato alla generazione del report diagnostico.
+    """Worker thread dedicato alla generazione del report diagnostico.
+
     Esegue la raccolta dei file e la compressione ZIP in background per non bloccare l'interfaccia utente.
     """
 
@@ -60,8 +60,7 @@ class ReportWorker(QThread):
         include_audit: bool,
         trace_id: str | None = None,
     ) -> None:
-        """
-        Inizializza il worker con le opzioni di inclusione.
+        """Inizializza il worker con le opzioni di inclusione.
 
         Args:
           include_logs: Se includere i file log dell'applicazione.
@@ -90,15 +89,14 @@ class ReportWorker(QThread):
 
 
 class BugReportDialog(QDialog):
-    """
-    Dialog interattivo per la segnalazione di bug.
+    """Dialog interattivo per la segnalazione di bug.
+
     Permette all'utente di descrivere il problema e scegliere quali dati diagnostici inviare.
     Supporta l'invio automatico tramite Outlook o il salvataggio manuale del file ZIP.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il dialogo e configura l'interfaccia utente.
+        """Inizializza il dialogo e configura l'interfaccia utente.
 
         Args:
           parent: Widget genitore.
@@ -314,8 +312,8 @@ class BugReportDialog(QDialog):
         self.worker.start()
 
     def on_report_generated(self, success: bool, msg: str, file_path: str, files: list[str]) -> None:
-        """
-        Gestisce il completamento della generazione del report.
+        """Gestisce il completamento della generazione del report.
+
         Tenta l'invio tramite Outlook o propone il salvataggio manuale.
         """
         self.progress.setVisible(False)
@@ -353,8 +351,8 @@ class BugReportDialog(QDialog):
         self.txt_trace_id.setDisabled(False)
 
     def open_outlook(self, attachment_path: str, description: str) -> bool:
-        """
-        Apre una nuova mail in Outlook con destinatario, oggetto precompilato e allegato ZIP.
+        """Apre una nuova mail in Outlook con destinatario, oggetto precompilato e allegato ZIP.
+
         Utilizza automazione COM via win32com.
 
         Args:
@@ -464,8 +462,7 @@ class BugReportDialog(QDialog):
         """
 
     def save_manually(self, source_path: str) -> None:
-        """
-        Fallback per consentire all'utente di salvare il report ZIP in una posizione scelta manualmente.
+        """Fallback per consentire all'utente di salvare il report ZIP in una posizione scelta manualmente.
 
         Args:
           source_path: Percorso del file ZIP temporaneo generato.

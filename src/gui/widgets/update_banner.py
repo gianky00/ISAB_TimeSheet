@@ -1,3 +1,5 @@
+"""Modulo Update Banner."""
+
 from PySide6.QtCore import (
     Property,
     QEasingCurve,
@@ -50,6 +52,7 @@ class UpdateBanner(QFrame):
       }}
       {TOOLTIP_CSS}
     """)
+
         self.setVisible(False)
         self._download_url = ""
         self._is_complete = False

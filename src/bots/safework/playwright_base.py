@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright Safework Base Bot
+"""SyncroJob - Playwright Safework Base Bot.
+
 Classe base specifica per SafeWork usando Playwright.
 """
 
@@ -19,8 +19,8 @@ if TYPE_CHECKING:
 
 
 class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
-    """
-    Classe base specifica per SafeWork (Playwright).
+    """Classe base specifica per SafeWork (Playwright).
+
     Isola le logiche SafeWork da quelle del Portale Fornitori.
     """
 
@@ -32,6 +32,12 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
         config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
+        """Inizializza il bot base SafeWork Playwright.
+
+        Args:
+            config: Configurazione del bot.
+            account_type: Tipo di account SafeWork.
+        """
         super().__init__(config)
         self.account_type = account_type
         self.safework_login_page: PlaywrightSafeWorkLoginPage | None = None

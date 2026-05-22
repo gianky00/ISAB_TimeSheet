@@ -1,5 +1,4 @@
-"""
-SyncroJob - Analytics Engine
+"""SyncroJob - Analytics Engine.
 
 Anomaly detection, pattern detection e health scoring per log analysis.
 """
@@ -55,8 +54,7 @@ class AnalyticsReport:
 
 
 class AnomalyDetector:
-    """
-    Rileva anomalie nei log basandosi su baseline statistiche.
+    """Rileva anomalie nei log basandosi su baseline statistiche.
 
     Tipi di anomalie rilevate:
     - Error rate spike (aumento improvviso errori)
@@ -74,6 +72,7 @@ class AnomalyDetector:
     FAILURE_CRITICAL_THRESHOLD: Final[float] = 50.0
 
     def __init__(self, viewer: LogViewer | None = None) -> None:
+        """Inizializza la classe."""
         self.viewer = viewer or LogViewer()
 
         # Baseline thresholds (configurabili)
@@ -90,8 +89,7 @@ class AnomalyDetector:
         return anomalies
 
     def detect_error_rate_spike(self, hours: int = 24) -> list[Anomaly]:
-        """
-        Rileva spike nel tasso di errori.
+        """Rileva spike nel tasso di errori.
 
         Returns:
           Lista di anomalie se error rate > threshold
@@ -125,8 +123,7 @@ class AnomalyDetector:
         return anomalies
 
     def detect_slow_operations(self, hours: int = 24) -> list[Anomaly]:
-        """
-        Rileva operazioni più lente del normale.
+        """Rileva operazioni più lente del normale.
 
         Returns:
           Lista di anomalie per operazioni lente
@@ -161,8 +158,7 @@ class AnomalyDetector:
         return anomalies
 
     def detect_high_failure_rate(self, hours: int = 24) -> list[Anomaly]:
-        """
-        Rileva tasso di fallimento bot elevato.
+        """Rileva tasso di fallimento bot elevato.
 
         Returns:
           Lista di anomalie se failure rate > threshold
@@ -201,8 +197,7 @@ class AnomalyDetector:
 
 
 class PatternDetector:
-    """
-    Rileva pattern ricorrenti nei log.
+    """Rileva pattern ricorrenti nei log.
 
     Tipi di pattern rilevati:
     - Errori ripetuti (stesso messaggio più volte)
@@ -210,6 +205,7 @@ class PatternDetector:
     """
 
     def __init__(self, viewer: LogViewer | None = None) -> None:
+        """Inizializza la classe."""
         self.viewer = viewer or LogViewer()
         self.min_count = 3  # Minimo occorrenze per pattern
 
@@ -220,8 +216,7 @@ class PatternDetector:
         return patterns
 
     def find_repeated_errors(self, hours: int = 24, min_count: int | None = None) -> list[Pattern]:
-        """
-        Trova errori che si ripetono frequentemente.
+        """Trova errori che si ripetono frequentemente.
 
         Returns:
           Lista di pattern di errori ripetuti
@@ -258,8 +253,7 @@ class HealthScorer:
         error_rate: float = 0,
         bot_success_rate: float = 100,
     ) -> int:
-        """
-        Calcola health score.
+        """Calcola health score.
 
         Args:
           anomalies: Lista anomalie rilevate
@@ -294,8 +288,7 @@ class HealthScorer:
 
 
 def generate_analytics_report(hours: int = 24) -> AnalyticsReport:
-    """
-    Genera report completo di analytics.
+    """Genera report completo di analytics.
 
     Args:
       hours: Ore di lookback per analisi

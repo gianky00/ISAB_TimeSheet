@@ -1,5 +1,5 @@
-"""
-Selettori per il bot Prenota BP (Portale Fornitori ISAB).
+"""Selettori per il bot Prenota BP (Portale Fornitori ISAB).
+
 Estratti tramite Universal Inspector.
 """
 

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Employee Worker
+"""SyncroJob - Employee Worker.
+
 Worker asincrono per il caricamento e processing dei dati anagrafici.
 Evita il freeze della GUI durante il calcolo degli stati di migliaia di dipendenti.
 """
@@ -14,9 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class EmployeeWorker(QThread):
-    """
-    Worker che gestisce l'estrazione e il processing dei dati dipendenti in background.
-    """
+    """Worker che gestisce l'estrazione e il processing dei dati dipendenti in background."""
 
     finished_signal = Signal(list, dict)  # (dtos, counts)
     error_signal = Signal(str)
@@ -24,8 +22,7 @@ class EmployeeWorker(QThread):
     def __init__(
         self, controller: AnagraficaController, search_text: str, current_filter: str | None
     ) -> None:
-        """
-        Inizializza il worker.
+        """Inizializza il worker.
 
         Args:
           controller: Istanza di AnagraficaController.

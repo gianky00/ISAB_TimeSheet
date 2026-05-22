@@ -1,3 +1,5 @@
+"""Modulo Pipeline."""
+
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +16,7 @@ class TimesheetProcessingPipeline:
     """Pipeline per l'elaborazione dei file Timesheet."""
 
     def __init__(self) -> None:
+        """Inizializza la classe."""
         self.pipeline = Pipeline()
         self.pipeline.add_step(LoadWorkbookStep())
         self.pipeline.add_step(ExtractMetadataStep())

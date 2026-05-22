@@ -1,5 +1,4 @@
-r"""
-Debug script per diagnosticare problemi di importazione Giornaliere.
+r"""Debug script per diagnosticare problemi di importazione Giornaliere.
 Esegui con: .venv\Scripts\python.exe scripts\debug_giornaliere.py
 """
 

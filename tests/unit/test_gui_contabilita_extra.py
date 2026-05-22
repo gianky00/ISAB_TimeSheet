@@ -4,8 +4,7 @@ from PySide6.QtWidgets import QWidget
 
 
 class TestContabilitaExtra:
-    """
-    Test suite for ContabilitaPanel container logic.
+    """Test suite for ContabilitaPanel container logic.
     Uses extensive mocking to avoid instantiating heavy child tabs.
     """
 

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright SafeWork PDL Download Bot
+"""SyncroJob - Playwright SafeWork PDL Download Bot.
+
 Versione Playwright del bot per lo scarico e la stampa dei PDL.
 """
 
@@ -45,15 +45,23 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
         config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
+        """Inizializza il bot di scarico PDL con Playwright.
+
+        Args:
+            config: Configurazione del bot.
+            account_type: Tipo di account SafeWork.
+        """
         super().__init__(config, account_type=account_type)
         self.downloaded_files: list[str] = []
 
     @property
     def name(self) -> str:
+        """Nome del bot."""
         return "Scarico PDL (PW)"
 
     @property
     def description(self) -> str:
+        """Descrizione del bot."""
         return "Scarica e stampa Permessi di Lavoro da SafeWork (Playwright)"
 
     @staticmethod

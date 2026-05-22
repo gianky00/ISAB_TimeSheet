@@ -1,5 +1,5 @@
-"""
-SyncroJob - Dettagli OdA Page
+"""SyncroJob - Dettagli OdA Page.
+
 Page Object Model for Dettagli OdA.
 """
 
@@ -25,8 +25,8 @@ from src.utils.helpers import cleanup_chrome_temp_files, sanitize_filename
 
 
 class DettagliOdAPage:
-    """
-    Page Object Model per la gestione della pagina Dettagli OdA (Ordini di Acquisto).
+    """Page Object Model per la gestione della pagina Dettagli OdA (Ordini di Acquisto).
+
     Fornisce metodi per navigare, filtrare ed esportare i dettagli degli ordini.
     """
 
@@ -42,8 +42,7 @@ class DettagliOdAPage:
         self._log(msg)
 
     def _wait_for_overlay(self, timeout: int | None = None, wait_for_appearance: bool = False) -> None:
-        """
-        Attende che gli overlay di caricamento di ExtJS (maschere) siano invisibili.
+        """Attende che gli overlay di caricamento di ExtJS (maschere) siano invisibili.
 
         Args:
           timeout: Secondi massimi di attesa. Default: Timeouts.OVERLAY.
@@ -92,8 +91,7 @@ class DettagliOdAPage:
             return True
 
     def setup_supplier(self, supplier: str) -> bool:
-        """
-        Seleziona il fornitore dal menu a discesa della pagina o tramite inserimento diretto.
+        """Seleziona il fornitore dal menu a discesa della pagina o tramite inserimento diretto.
 
         Args:
             supplier: Ragione sociale del fornitore.

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Contabilità Stats Helper
+"""SyncroJob - Contabilità Stats Helper.
+
 Utility per il calcolo dei totali ore e statistiche basate sulla selezione delle tabelle.
 """
 
@@ -14,9 +14,9 @@ class ContabilitaStatsHelper:
 
     @staticmethod
     def calculate_selection_stats(widget: QWidget) -> tuple[int, str]:
-        """
-        Esegue il calcolo granulare delle ore selezionate filtrando le righe nascoste.
-        Returns: (numero_righe, totale_ore_formattato)
+        """Esegue il calcolo granulare delle ore selezionate filtrando le righe nascoste.
+
+        Returns: (numero_righe, totale_ore_formattato).
         """
         with suppress(Exception):
             if isinstance(widget, QTreeWidget):

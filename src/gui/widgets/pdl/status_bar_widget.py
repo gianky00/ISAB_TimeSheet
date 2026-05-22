@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Programming Status Widget
+"""SyncroJob - PDL Programming Status Widget.
+
 Widget elegante che mostra una barra di stato verde/arancione per TCL e TGO nelle celle Gantt.
 """
 

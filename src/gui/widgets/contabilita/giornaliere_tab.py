@@ -1,3 +1,5 @@
+"""Modulo Giornaliere Tab."""
+
 from __future__ import annotations
 
 import os
@@ -51,6 +53,7 @@ class GiornaliereYearTab(QWidget):
     IDX_NOMEFILE: int = 10
 
     def __init__(self, year: int, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.year = year
         self.worker: ContabilitaDataWorker | None = None

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Status Bar Component
+"""SyncroJob - Status Bar Component.
+
 Gestore della barra di stato principale che coordina telemetria, info licenza e stato bot.
 Gestisce le transizioni visive tra la fase di avvio e quella operativa dell'applicazione.
 """
@@ -33,15 +33,14 @@ if TYPE_CHECKING:
 
 
 class StatusBarComponent(QObject):
-    """
-    Componente responsabile della gestione della QStatusBar.
+    """Componente responsabile della gestione della QStatusBar.
+
     Organizza i widget del footer in zone (Sinistra: Info/Telemetria, Centro: Console, Destra: Stati Bot).
     Implementa logica di aggiornamento per licenza e countdown Autopilot.
     """
 
     def __init__(self, main_window: MainWindow) -> None:
-        """
-        Inizializza il componente della barra di stato.
+        """Inizializza il componente della barra di stato.
 
         Args:
           main_window: Riferimento alla MainWindow dell'applicazione.
@@ -151,8 +150,8 @@ class StatusBarComponent(QObject):
             self.footer_left.setVisible(True)
 
     def show_operational_state(self) -> None:
-        """
-        Transiziona la barra di stato alla modalità operativa.
+        """Transiziona la barra di stato alla modalità operativa.
+
         Esegue animazioni di fade-out sui widget di avvio e attiva quelli di monitoraggio.
         """
         import logging
@@ -199,8 +198,8 @@ class StatusBarComponent(QObject):
             logger.critical(f"Error in show_operational_state: {e}", exc_info=True)
 
     def update_autopilot_ui(self) -> None:
-        """
-        Analizza i bot programmati nell'Autopilot e calcola il countdown per il task più imminente.
+        """Analizza i bot programmati nell'Autopilot e calcola il countdown per il task più imminente.
+
         Aggiorna le card di stato nella parte destra della barra.
         """
         from PySide6.QtCore import QTime

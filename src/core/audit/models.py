@@ -1,3 +1,5 @@
+"""Modulo Models."""
+
 from enum import IntEnum
 
 from PySide6.QtCore import QEnum

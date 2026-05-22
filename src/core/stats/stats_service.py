@@ -1,5 +1,5 @@
-"""
-SyncroJob - Stats Service
+"""SyncroJob - Stats Service.
+
 Servizio CORE per il calcolo delle statistiche KPI e manipolazione dati Pandas.
 Agnostico rispetto alla GUI.
 """
@@ -17,8 +17,7 @@ class StatsService:
 
     @staticmethod
     def prepare_kpi_data(df: pd.DataFrame, hourly_cost_std: float) -> dict[str, Any]:
-        """
-        Prepara tutti i dati necessari per i grafici KPI partendo dal dataframe grezzo.
+        """Prepara tutti i dati necessari per i grafici KPI partendo dal dataframe grezzo.
 
         Args:
           df: Dataframe contabilità.

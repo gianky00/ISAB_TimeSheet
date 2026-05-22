@@ -1,5 +1,5 @@
-"""
-SyncroJob - Notification Styling Engine.
+"""SyncroJob - Notification Styling Engine.
+
 Definisce le palette colori, i gradienti e le icone per i diversi livelli di notifica.
 """
 

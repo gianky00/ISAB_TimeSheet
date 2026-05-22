@@ -1,6 +1,4 @@
-"""
-Baseline tests for Responsive Layouts.
-"""
+"""Baseline tests for Responsive Layouts."""
 
 from PySide6.QtWidgets import QLabel
 

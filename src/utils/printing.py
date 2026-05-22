@@ -1,3 +1,5 @@
+"""Modulo Printing."""
+
 import logging
 import os
 import subprocess  # nosec B404
@@ -50,8 +52,8 @@ def _run_powershell(command: str) -> subprocess.CompletedProcess[str] | None:
 
 
 def _set_printer_duplex_powershell(printer_name: str, mode: str = "OneSided") -> bool:
-    """
-    Tenta di forzare la modalità via PowerShell.
+    """Tenta di forzare la modalità via PowerShell.
+
     Non  critico se fallisce, poich  la strategià'Split Jobs' garantir  comunque fogli separati.
     """
     try:
@@ -65,8 +67,8 @@ def _set_printer_duplex_powershell(printer_name: str, mode: str = "OneSided") ->
 
 
 def print_pdf(file_path: str, printer_name: str) -> bool:
-    """
-    Stampa un PDF usando la stampante specificata.
+    """Stampa un PDF usando la stampante specificata.
+
     STRATEGIA 'NUCLEAR' PER SIMPLEX:
     Invia ogni pagina del PDF come un lavoro di stampa (Job) separato.
     Questo impedisce fisicamente alla stampante di fare fronte-retro tra le pagine,

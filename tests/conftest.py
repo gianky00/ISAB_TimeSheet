@@ -1,6 +1,5 @@
 # ruff: noqa: N802
-"""
-Bot TS - Test Configuration
+"""Bot TS - Test Configuration
 Shared fixtures and configuration.
 """
 
@@ -109,9 +108,7 @@ except (ImportError, RuntimeError):
 
 
 def pytest_configure(config):
-    """
-    Setup global mocks and patches.
-    """
+    """Setup global mocks and patches."""
     patcher = patch("os.getlogin", return_value="testuser")
     patcher.start()
 
@@ -140,8 +137,7 @@ def temp_dir(tmp_path):
 
 @pytest.fixture(autouse=True)
 def _isolate_config(tmp_path, monkeypatch):
-    """
-    Global isolation for configuration and data.
+    """Global isolation for configuration and data.
     Ensures NO test ever writes to real user directories.
     """
     from src.core import (

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Carico TS Bot
+"""SyncroJob - Carico TS Bot.
+
 Bot for Carico TS using POM.
 """
 
@@ -69,15 +69,16 @@ class CaricoTSBot(SeleniumBaseBot):
 
     @property
     def name(self) -> str:
+        """Restituisce il nome del bot."""
         return "Carico TS"
 
     @property
     def description(self) -> str:
+        """Restituisce la descrizione del bot."""
         return "Caricamento automatico timesheet"
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
-        """
-        Esegue la validazione dei dati pre-caricamento.
+        """Esegue la validazione dei dati pre-caricamento.
 
         Args:
           data: Lista di righe o dizionario dati.
@@ -100,8 +101,7 @@ class CaricoTSBot(SeleniumBaseBot):
         return True, ""
 
     def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
-        """
-        Esegue il workflow principale di caricamento TS.
+        """Esegue il workflow principale di caricamento TS.
 
         Args:
           data: Dati da caricare.

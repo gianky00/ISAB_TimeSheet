@@ -1,3 +1,5 @@
+"""Modulo Paths Page."""
+
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -30,6 +32,7 @@ class PathsPage(QWidget):
     settings_changed = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 
@@ -129,6 +132,7 @@ class PathsPage(QWidget):
       }}
       QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
     """)
+
         btn_open.clicked.connect(lambda: self._open_path(edit.text()))
         row.addWidget(btn_open)
 

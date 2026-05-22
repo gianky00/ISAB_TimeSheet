@@ -1,5 +1,5 @@
-"""
-SyncroJob - Consuntivo DTO
+"""SyncroJob - Consuntivo DTO.
+
 Oggetti di trasporto dati per il modulo Consuntivi.
 Garantisce l'incapsulamento e la separazione CORE-GUI.
 """

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Bot Execution Controller
+"""SyncroJob - Bot Execution Controller.
+
 Gestore universale per il coordinamento tra GUI e BotWorker.
 Aderisce al principio SRP separando la gestione dello stato dalla visualizzazione.
 """
@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 
 
 class BotExecutionController(QObject):
-    """
-    Controller universale per la gestione dell'esecuzione dei bot.
+    """Controller universale per la gestione dell'esecuzione dei bot.
+
     Centralizza la logica di avvio, stop e gestione dei segnali.
     """
 
@@ -31,8 +31,7 @@ class BotExecutionController(QObject):
     input_requested = Signal(str, dict, object)  # prompt, result_container, event
 
     def __init__(self, bot_id: str, parent: QObject | None = None) -> None:
-        """
-        Inizializza il controller.
+        """Inizializza il controller.
 
         Args:
             bot_id: Identificativo del bot da gestire.
@@ -53,8 +52,7 @@ class BotExecutionController(QObject):
         data: list[dict[str, Any]] | dict[str, Any],
         telegram_service: Any | None = None,
     ) -> bool:
-        """
-        Avvia l'esecuzione asincrona del bot.
+        """Avvia l'esecuzione asincrona del bot.
 
         Args:
             bot_params: Parametri di configurazione del bot.

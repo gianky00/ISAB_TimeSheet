@@ -1,5 +1,5 @@
-"""
-SyncroJob - Calendar Widgets
+"""SyncroJob - Calendar Widgets.
+
 QDateEdit personalizzato con popup calendario.
 """
 
@@ -14,6 +14,7 @@ class CalendarDateEdit(QDateEdit):
     """QDateEdit con popup calendario e stile personalizzato."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.setCalendarPopup(True)
         self.setDisplayFormat("dd.MM.yyyy")

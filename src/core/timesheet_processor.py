@@ -1,5 +1,5 @@
-"""
-SyncroJob - Timesheet Processing Logic (VBA Replacement)
+"""SyncroJob - Timesheet Processing Logic (VBA Replacement).
+
 Replica fedelmente la logica VBA "ProcessTimesheetFiles" per elaborazione, pulizia e rinomina.
 """
 
@@ -17,9 +17,7 @@ class TimesheetProcessor:
 
     @staticmethod
     def process_and_move(file_path: Path, dest_dir: Path) -> tuple[bool, str]:
-        """
-        Elabora il file Excel utilizzando la pipeline e lo salva nella destinazione.
-        """
+        """Elabora il file Excel utilizzando la pipeline e lo salva nella destinazione."""
         if not file_path.exists():
             return False, f"File sorgente non trovato: {file_path}"
 

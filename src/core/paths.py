@@ -1,5 +1,5 @@
-"""
-SyncroJob - Path Management
+"""SyncroJob - Path Management.
+
 Centralized path definitions for the application.
 """
 

@@ -1,6 +1,4 @@
-"""
-Bot per la prenotazione automatica dei Badge Provvisori (BP) sul Portale Fornitori ISAB.
-"""
+"""Bot per la prenotazione automatica dei Badge Provvisori (BP) sul Portale Fornitori ISAB."""
 
 from datetime import UTC, datetime
 from typing import Any, ClassVar

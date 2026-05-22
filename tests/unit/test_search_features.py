@@ -1,5 +1,4 @@
-"""
-Unit Tests for Universal Search Features
+"""Unit Tests for Universal Search Features
 Tests extended search capabilities across ContabilitaManager and TimbratureStorage.
 """
 

@@ -1,5 +1,5 @@
-"""
-Bot TS - Contabilita Queries
+"""Bot TS - Contabilita Queries.
+
 Gestisce tutte le query di lettura per i dati della Contabilità Strumentale.
 Delegato al ContabilitaRepository per l'accesso ai dati.
 """

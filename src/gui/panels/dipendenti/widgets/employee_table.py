@@ -1,5 +1,5 @@
-"""
-SyncroJob - Employee Table Widget
+"""SyncroJob - Employee Table Widget.
+
 Widget specializzato per la visualizzazione della griglia anagrafica dipendenti.
 """
 
@@ -31,8 +31,7 @@ class EmployeeTableView(QTableView):
     employee_selected = Signal(int)  # row_idx
 
     def __init__(self, model: Any, parent: QWidget | None = None) -> None:
-        """
-        Inizializza la tabella dipendenti.
+        """Inizializza la tabella dipendenti.
 
         Args:
           model: Il modello dati (FastTableModel).
@@ -77,8 +76,7 @@ class EmployeeTableView(QTableView):
     """)
 
     def configure_columns(self, widths: list[int]) -> None:
-        """
-        Configura la larghezza fissa delle colonne.
+        """Configura la larghezza fissa delle colonne.
 
         Args:
           widths: Lista di interi rappresentanti i pixel per ogni colonna.
@@ -102,8 +100,7 @@ class EmployeeTableView(QTableView):
             self.employee_selected.emit(indexes[0].row())
 
     def _show_context_menu(self, position: QPoint) -> None:
-        """
-        Mostra il menu contestuale per attivare/disattivare il monitoraggio del dipendente.
+        """Mostra il menu contestuale per attivare/disattivare il monitoraggio del dipendente.
 
         Args:
           position: Posizione del clic del mouse.

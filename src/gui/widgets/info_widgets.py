@@ -1,5 +1,5 @@
-"""
-SyncroJob - Info Widgets
+"""SyncroJob - Info Widgets.
+
 Dialoghi e card informative.
 """
 
@@ -27,6 +27,7 @@ class DetailedInfoDialog(QDialog):
     """Dialogo modale per spiegazioni dettagliate KPI."""
 
     def __init__(self, title: str, content: str, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.setWindowTitle("Dettaglio KPI")
         self.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)

@@ -1,5 +1,5 @@
-"""
-Facade for backward compatibility.
+"""Facade for backward compatibility.
+
 Delegates to the new modular package src.core.importers.
 """
 

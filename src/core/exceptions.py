@@ -1,3 +1,6 @@
+"""Modulo Exceptions."""
+
+
 class SyncroJobError(Exception):
     """Base exception for all SyncroJob errors."""
 
@@ -6,6 +9,7 @@ class BrowserInitError(SyncroJobError, RuntimeError):
     """Eccezione sollevata quando l'inizializzazione del browser fallisce."""
 
     def __init__(self, message: str = "Page or Context not initialized") -> None:
+        """Inizializza la classe."""
         super().__init__(message)
 
 

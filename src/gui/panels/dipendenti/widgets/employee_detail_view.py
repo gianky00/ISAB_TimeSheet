@@ -1,3 +1,5 @@
+"""Modulo Employee Detail View."""
+
 import logging
 from typing import Any
 
@@ -22,6 +24,7 @@ class EmployeeDetailView(QWidget):
     """Pannello laterale per la visualizzazione dei dettagli del dipendente."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.setFixedWidth(360)
         self.setStyleSheet(f"QWidget {{ background-color: {COLORS['bg_light']}; }}")
@@ -146,10 +149,10 @@ class EmployeeDetailView(QWidget):
         return container
 
     def update_data(self, data_dict: dict[str, Any], access_info: tuple[str, int, str] | None = None) -> None:
-        """
-        Aggiorna i campi visualizzati.
+        """Aggiorna i campi visualizzati.
+
         :param data_dict: Dizionario {NomeCampo: Valore}
-        :param access_info: Tupla (testo, giorni, colore) per l'ultimo accesso
+        :param access_info: Tupla (testo, giorni, colore) per l'ultimo accesso.
         """
         for label, widget in self.detail_labels.items():
             val = data_dict.get(label, "")

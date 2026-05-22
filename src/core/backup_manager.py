@@ -1,5 +1,5 @@
-"""
-SyncroJob - Backup Manager
+"""SyncroJob - Backup Manager.
+
 Gestisce il backup e ripristino dei dati critici su cloud locale (OneDrive/Drive).
 """
 
@@ -19,8 +19,8 @@ logger = get_logger(__name__)
 
 
 class BackupManager:
-    """
-    Manager specializzato nella creazione e ripristino di backup dell'applicazione.
+    """Manager specializzato nella creazione e ripristino di backup dell'applicazione.
+
     Supporta il rilevamento automatico dei percorsi OneDrive e Google Drive.
     """
 
@@ -192,8 +192,7 @@ class BackupManager:
 
     @staticmethod
     def _cleanup_old_backups(target_dir: Path, keep: int = 5) -> None:
-        """
-        Mantiene solo gli ultimi N backup nel database, eliminando i più vecchi.
+        """Mantiene solo gli ultimi N backup nel database, eliminando i più vecchi.
 
         Args:
           target_dir: Cartella dove risiedono i backup.

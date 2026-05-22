@@ -1,5 +1,5 @@
-"""
-SyncroJob - Message Bubble Widget
+"""SyncroJob - Message Bubble Widget.
+
 Widget per bolle di messaggio in chat, con supporto Markdown.
 Estratto da lyra_panel.py per riutilizzabilit .
 """
@@ -18,8 +18,7 @@ from src.gui.styles import COLORS
 
 
 class MessageBubble(QFrame):
-    """
-    Widget per una singola bolla di messaggio nella chat.
+    """Widget per una singola bolla di messaggio nella chat.
 
     Supporta:
     - Allineamento differenziato (AI a sinistra, utente a destra)
@@ -35,6 +34,7 @@ class MessageBubble(QFrame):
     """
 
     def __init__(self, sender: str, text: str, is_lyra: bool = True, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.is_lyra = is_lyra
         self._setup_ui(sender, text)

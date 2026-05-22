@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Stats Engine
+"""SyncroJob - PDL Stats Engine.
+
 Calcola le metriche e i trend per i Permessi di Lavoro (PDL).
 V7.0: Aggiunta Trend Settimanale (Week-over-Week).
 """

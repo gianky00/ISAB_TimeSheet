@@ -1,5 +1,5 @@
-"""
-SyncroJob - Log Viewer & Query Utility
+"""SyncroJob - Log Viewer & Query Utility.
+
 Fornisce strumenti avanzati per l'interrogazione, l'analisi e la ricostruzione dei log JSON dell'applicazione.
 Include un Query Builder fluido e utility per generare report sulla salute del sistema.
 """
@@ -21,14 +21,13 @@ if TYPE_CHECKING:
 
 
 class LogQuery:
-    """
-    Query builder per file di log in formato JSON.
+    """Query builder per file di log in formato JSON.
+
     Permette di concatenare filtri per livello, messaggio, contesto, trace_id e range temporale.
     """
 
     def __init__(self, log_file: Path) -> None:
-        """
-        Inizializza il query builder su un file specifico.
+        """Inizializza il query builder su un file specifico.
 
         Args:
           log_file: Percorso del file .json o .log da interrogare.
@@ -39,8 +38,7 @@ class LogQuery:
         self._offset: int = 0
 
     def level(self, *levels: str) -> "LogQuery":
-        """
-        Filtra le entry in base ai livelli specificati (es. INFO, ERROR).
+        """Filtra le entry in base ai livelli specificati (es. INFO, ERROR).
 
         Args:
           *levels: Uno o più livelli di log desiderati.
@@ -52,8 +50,7 @@ class LogQuery:
         return self
 
     def contains_message(self, text: str, case_sensitive: bool = False) -> "LogQuery":
-        """
-        Filtra i log il cui messaggio contiene la stringa specificata.
+        """Filtra i log il cui messaggio contiene la stringa specificata.
 
         Args:
           text: Sottostringa da cercare.
@@ -74,8 +71,7 @@ class LogQuery:
         return self
 
     def context_match(self, **kwargs: object) -> "LogQuery":
-        """
-        Filtra in base ai campi contenuti nell'oggetto 'context' del log JSON.
+        """Filtra in base ai campi contenuti nell'oggetto 'context' del log JSON.
 
         Args:
           **kwargs: Coppie chiave=valore da matchare nel contesto.
@@ -101,8 +97,7 @@ class LogQuery:
         return self.context_match(bot_type=bot_type)
 
     def time_range(self, start: datetime | None = None, end: datetime | None = None) -> "LogQuery":
-        """
-        Filtra i log all'interno di una finestra temporale.
+        """Filtra i log all'interno di una finestra temporale.
 
         Args:
           start: Data/ora iniziale (inclusa).
@@ -155,8 +150,7 @@ class LogQuery:
         return self
 
     def execute(self) -> list[dict[str, Any]]:
-        """
-        Esegue la query leggendo il file riga per riga e applicando i filtri.
+        """Esegue la query leggendo il file riga per riga e applicando i filtri.
 
         Returns:
           list: Lista di dizionari log che soddisfano tutti i criteri.
@@ -178,8 +172,7 @@ class LogQuery:
         return results
 
     def count(self) -> int:
-        """
-        Conta il numero totale di log che matchano la query senza caricarli in memoria.
+        """Conta il numero totale di log che matchano la query senza caricarli in memoria.
 
         Returns:
           int: Numero di occorrenze.
@@ -196,8 +189,8 @@ class LogQuery:
 
 
 class LogViewer:
-    """
-    Interfaccia ad alto livello per l'analisi dei log applicativi.
+    """Interfaccia ad alto livello per l'analisi dei log applicativi.
+
     Fornisce metodi aggregati per statistiche, analisi errori e monitoraggio performance.
     """
 
@@ -209,8 +202,7 @@ class LogViewer:
         self.config = config or get_config()
 
     def query(self, log_type: str = "application") -> LogQuery:
-        """
-        Crea un nuovo query builder per il tipo di log specificato.
+        """Crea un nuovo query builder per il tipo di log specificato.
 
         Args:
           log_type: "application" per i log generali, "errors" per i soli errori.

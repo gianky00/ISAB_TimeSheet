@@ -1,5 +1,5 @@
-"""
-SyncroJob - Costanti di Stile Centralizzate
+"""SyncroJob - Costanti di Stile Centralizzate.
+
 Colori operativi, timing animazioni e costanti UI usate in tutta l'applicazione.
 
 Nota: Questi colori estendono la palette Material in src/gui/design/colors.py

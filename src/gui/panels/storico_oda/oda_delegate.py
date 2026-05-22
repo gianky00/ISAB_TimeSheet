@@ -1,3 +1,5 @@
+"""Modulo Oda Delegate."""
+
 from typing import cast
 
 from PySide6.QtCore import QModelIndex, QPersistentModelIndex, Qt

@@ -1,5 +1,5 @@
-"""
-SyncroJob - MultiWindow Status Widget
+"""SyncroJob - MultiWindow Status Widget.
+
 Visualizza nella dashboard un riepilogo delle finestre attualmente sganciate, permettendo di riagganciarle.
 """
 
@@ -37,6 +37,7 @@ class DetachedModuleItem(QFrame):
     reattach_requested = Signal(int)
 
     def __init__(self, index: int, title: str, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.index = index
         self.title = title
@@ -90,13 +91,14 @@ class DetachedModuleItem(QFrame):
         color: white;
       }}
     """)
+
         self.btn.clicked.connect(lambda: self.reattach_requested.emit(self.index))
         layout.addWidget(self.btn)
 
 
 class MultiWindowStatusWidget(QFrame):
-    """
-    Card della Dashboard che mostra i moduli attualmente in esecuzione in finestre esterne.
+    """Card della Dashboard che mostra i moduli attualmente in esecuzione in finestre esterne.
+
     Sìnasconde automaticamente se non ci sono moduli sganciati.
     """
 
@@ -104,6 +106,7 @@ class MultiWindowStatusWidget(QFrame):
     reattach_single_requested = Signal(int)
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.setObjectName("multiWindowStatusCard")
         self.setStyleSheet(card_style())
@@ -164,14 +167,14 @@ class MultiWindowStatusWidget(QFrame):
         color: #1976D2;
       }}
     """)
+
         self.reattach_all_btn.clicked.connect(lambda: self.reattach_all_requested.emit())
         header_layout.addWidget(self.reattach_all_btn)
 
         self.main_layout.addLayout(header_layout)
 
     def update_modules(self, detached_panels: dict[int, dict[str, "typing.Any"]]) -> None:
-        """
-        Aggiorna la lista dei moduli sganciati. Mostra/Nasconde la card di conseguenza.
+        """Aggiorna la lista dei moduli sganciati. Mostra/Nasconde la card di conseguenza.
 
         Args:
           detached_panels: Dizionario con chiavi index e valori dict contenenti "panel", "title" o la window.

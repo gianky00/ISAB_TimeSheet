@@ -1,6 +1,4 @@
-"""
-SyncroJob - Dettagli OdA Bot
-"""
+"""SyncroJob - Dettagli OdA Bot."""
 
 import concurrent.futures
 from datetime import UTC, datetime
@@ -66,6 +64,17 @@ class DettagliOdABot(SeleniumBaseBot):
         fornitore: str | None = None,
         **kwargs: Any,
     ) -> None:
+        """Inizializza il bot Dettagli OdA.
+
+        Args:
+          username: Nome utente per il login.
+          password: Password per il login.
+          config: Configurazione del bot.
+          data_da: Data di inizio ricerca.
+          data_a: Data di fine ricerca.
+          fornitore: Fornitore da selezionare.
+          **kwargs: Argomenti aggiuntivi.
+        """
         super().__init__(username, password, config)
         current_year = datetime.now(UTC).astimezone().year
 
@@ -180,7 +189,6 @@ class DettagliOdABot(SeleniumBaseBot):
 
     def _import_oda_to_db(self, downloaded_path: Path) -> None:
         """Helper per l'importazione nel database. Utilizza un ProcessPool per non bloccare il GIL della GUI."""
-
         try:
             self.log(
                 f"   Avvio importazione in Storico OdA da {downloaded_path.name}... (Potrebbe richiedere alcuni secondi)"

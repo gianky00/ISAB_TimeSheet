@@ -1,5 +1,5 @@
-"""
-SyncroJob - Command Palette Dialog
+"""SyncroJob - Command Palette Dialog.
+
 Dialogo 'Quick Open' interattivo ispirato a VSCode per l'accesso rapido a comandi e funzioni.
 Supporta navigazione gerarchica, ricerca globale ricorsiva e modalità di input interattivo.
 """
@@ -43,8 +43,8 @@ if TYPE_CHECKING:
 
 
 class CommandPaletteDialog(QDialog):
-    """
-    Dialogo 'Quick Open' in sovraimpressione.
+    """Dialogo 'Quick Open' in sovraimpressione.
+
     Permette di navigare nell'albero dei comandi (Root -> Submenu -> Action)
     o di cercare globalmente qualsiasi funzione registrata nel sistema.
     """
@@ -53,8 +53,7 @@ class CommandPaletteDialog(QDialog):
     """Segnale emesso quando il dialogo completa l'animazione di chiusura."""
 
     def __init__(self, parent: QWidget | None = None, root_nodes: list[CommandNode] | None = None) -> None:
-        """
-        Inizializza la command palette.
+        """Inizializza la command palette.
 
         Args:
           parent: Widget genitore per il posizionamento.

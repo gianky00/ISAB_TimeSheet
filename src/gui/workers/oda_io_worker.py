@@ -1,5 +1,5 @@
-"""
-SyncroJob - Oda IO Worker
+"""SyncroJob - Oda IO Worker.
+
 Thread worker per l'importazione ed esportazione asincrona dei dati OdA.
 """
 
@@ -28,8 +28,7 @@ class OdaIOWorker(QThread):
         extra_data: dict[str, Any] | None = None,
         parent: QObject | None = None,
     ) -> None:
-        """
-        Inizializza il worker.
+        """Inizializza il worker.
 
         Args:
           mode: 'import' o 'export'.

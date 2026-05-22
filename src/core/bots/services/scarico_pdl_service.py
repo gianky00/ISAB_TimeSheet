@@ -14,6 +14,7 @@ class ScaricoPDLService(BaseBotService):
     """Implementazione del servizio per lo scarico PDL."""
 
     def __init__(self) -> None:
+        """Inizializza il servizio di scarico PDL."""
         super().__init__("scarico_pdl")
 
     def load_config(self) -> dict[str, Any]:
@@ -51,8 +52,7 @@ class ScaricoPDLService(BaseBotService):
         data: list[dict[str, Any]],
         overrides: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
-        """
-        Prepara i dati per l'esecuzione del bot Scarico PDL.
+        """Prepara i dati per l'esecuzione del bot Scarico PDL.
 
         Args:
           credentials: Tupla (username, password, tipo).

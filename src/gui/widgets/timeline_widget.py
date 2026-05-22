@@ -1,5 +1,5 @@
-"""
-SyncroJob - Enterprise Log Console
+"""SyncroJob - Enterprise Log Console.
+
 Visualizzatore di log testuali pulito e professionale per SyncroJob.
 Sostituisce l'estetica HUD con un design moderno coerente con il sistema.
 """
@@ -31,6 +31,7 @@ class StandardTimelineFrame(QFrame):
     """Frame pulito ed elegante per i log in stile Enterprise."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.setStyleSheet(f"background-color: {COLORS['bg_white']}; border-radius: 12px;")
 
@@ -53,6 +54,7 @@ class LogEntryWidget(QWidget):
     """Riga di log con timestamp e feedback cromatico per livello."""
 
     def __init__(self, text: str, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(10, 4, 10, 4)
@@ -109,6 +111,7 @@ class EnterpriseLogConsole(QWidget):
     log_added = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 
@@ -178,6 +181,7 @@ class MissionReportCard(QFrame):
         border-radius: 10px;
       }}
     """)
+
         layout = QVBoxLayout(self)
         title = QLabel("MISSION REPORT" if success else "MISSION FAILED")
         title.setStyleSheet(f"font-weight: bold; color: {COLORS['text_dark']};")

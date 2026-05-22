@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright Timbrature Page
+"""SyncroJob - Playwright Timbrature Page.
+
 Page Object Model per la sezione Timbrature usando Playwright.
 """
 
@@ -23,8 +23,7 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
         log_callback: Callable[[str], None] | None = None,
         download_path: str = "",
     ) -> None:
-        """
-        Inizializza la pagina delle timbrature.
+        """Inizializza la pagina delle timbrature.
 
         Args:
           page: Oggetto Page di Playwright.

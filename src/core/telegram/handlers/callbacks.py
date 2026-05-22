@@ -1,3 +1,5 @@
+"""Modulo Callbacks."""
+
 from typing import TYPE_CHECKING, Any
 
 from telegram import Update, constants

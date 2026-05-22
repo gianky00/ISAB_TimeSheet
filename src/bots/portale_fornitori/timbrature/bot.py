@@ -1,5 +1,5 @@
-"""
-SyncroJob - Timbrature Bot
+"""SyncroJob - Timbrature Bot.
+
 Bot for accessing Timbrature section using Page Object Model.
 """
 
@@ -18,8 +18,8 @@ from .storage import TimbratureStorage
 
 
 class TimbratureBot(SeleniumBaseBot):
-    """
-    Bot per lo scarico automatico delle timbrature dipendenti.
+    """Bot per lo scarico automatico delle timbrature dipendenti.
+
     Semplificato e uniformato al nuovo pattern asincrono.
     """
 
@@ -70,8 +70,7 @@ class TimbratureBot(SeleniumBaseBot):
         return []
 
     def _normalize_ranges(self, data: list[dict[str, Any]] | dict[str, Any]) -> list[dict[str, Any]]:
-        """
-        Normalizza i dati di input in una lista di intervalli temporali.
+        """Normalizza i dati di input in una lista di intervalli temporali.
 
         Args:
           data: Dati grezzi ricevuti dal worker.
@@ -100,8 +99,8 @@ class TimbratureBot(SeleniumBaseBot):
         return [{"data_da": self.data_da, "data_a": self.data_a}]
 
     def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
-        """
-        Workflow principale per lo scarico delle timbrature.
+        """Workflow principale per lo scarico delle timbrature.
+
         Supporta modalità singola o multi-range (per Crea Database).
         """
         self.update_step("login", StepStatus.COMPLETED)
@@ -136,8 +135,7 @@ class TimbratureBot(SeleniumBaseBot):
             return success_count > 0
 
     def _process_download_ranges(self, page: TimbraturePage, ranges: list[dict[str, Any]]) -> int:
-        """
-        Cicla sugli intervalli e gestisce download e importazione.
+        """Cicla sugli intervalli e gestisce download e importazione.
 
         Args:
           page: Page Object per l'interazione con il portale.
@@ -177,7 +175,5 @@ class TimbratureBot(SeleniumBaseBot):
 
     @staticmethod
     def import_to_db_static(excel_path: str, db_path: Path, log_callback: Any = None) -> Any:
-        """
-        Static method for manual import (GUI).
-        """
+        """Static method for manual import (GUI)."""
         return TimbratureStorage(db_path).import_excel(excel_path, log_callback)

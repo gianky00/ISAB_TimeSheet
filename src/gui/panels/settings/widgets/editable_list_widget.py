@@ -1,5 +1,5 @@
-"""
-SyncroJob - Editable List Widget
+"""SyncroJob - Editable List Widget.
+
 Widget riutilizzabile per la gestione di liste testuali semplici (Aggiungi, Modifica, Rimuovi).
 """
 
@@ -31,16 +31,15 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class EditableListWidget(QWidget):
-    """
-    Widget che gestisce una lista di stringhe con controlli CRUD.
+    """Widget che gestisce una lista di stringhe con controlli CRUD.
+
     Supporta l'interazione tramite pulsanti dedicati o menu contestuale.
     """
 
     changed = Signal()
 
     def __init__(self, title: str, input_label: str, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il widget lista modificabile.
+        """Inizializza il widget lista modificabile.
 
         Args:
           title: Titolo del gruppo visualizzato.
@@ -133,8 +132,7 @@ class EditableListWidget(QWidget):
         return items
 
     def set_items(self, items: Sequence[str]) -> None:
-        """
-        Popola la lista con le stringhe fornite.
+        """Popola la lista con le stringhe fornite.
 
         Args:
           items: Sequenza di stringhe da aggiungere.

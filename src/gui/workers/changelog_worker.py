@@ -1,5 +1,5 @@
-"""
-SyncroJob - Changelog Worker
+"""SyncroJob - Changelog Worker.
+
 Worker asincrono per il caricamento e parsing del file changelog.json.
 """
 
@@ -16,9 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class ChangelogWorker(QThread):
-    """
-    Worker che legge il file changelog da disco e prepara i dati per il rendering.
-    """
+    """Worker che legge il file changelog da disco e prepara i dati per il rendering."""
 
     finished_signal = Signal(list)  # Invia lista di release
     error_signal = Signal(str)

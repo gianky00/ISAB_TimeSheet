@@ -1,3 +1,5 @@
+"""Modulo Settings Tab."""
+
 from typing import Any
 
 from PySide6.QtCore import Qt, Signal
@@ -21,13 +23,12 @@ from src.gui.widgets.modern_button import ModernButton
 
 
 class TimbratureSettingsTab(QWidget):
-    """
-    Tab per la gestione delle impostazioni (Dipendenti, Reparti, Cantieri).
-    """
+    """Tab per la gestione delle impostazioni (Dipendenti, Reparti, Cantieri)."""
 
     settings_changed = Signal()  # Emesso quando cambiano le liste o i dati
 
     def __init__(self, storage: Any, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.storage = storage
         self.lists = self.storage.get_lists()
@@ -88,6 +89,7 @@ class TimbratureSettingsTab(QWidget):
         border-bottom: 1px solid {COLORS["border_light"]};
       }}
     """)
+
         v_header = self.settings_table.verticalHeader()
         if v_header is not None:
             v_header.setVisible(False)

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright Timbrature Bot
+"""SyncroJob - Playwright Timbrature Bot.
+
 Versione Playwright del bot per lo scarico delle timbrature.
 """
 
@@ -79,8 +79,7 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
         return True, ""
 
     def _normalize_ranges(self, data: list[dict[str, Any]] | dict[str, Any]) -> list[dict[str, Any]]:
-        """
-        Normalizza i dati di input in una lista di intervalli temporali.
+        """Normalizza i dati di input in una lista di intervalli temporali.
 
         Args:
           data: Dati grezzi ricevuti dal worker.
@@ -149,8 +148,7 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
     def _process_download_ranges(
         self, page_obj: PlaywrightTimbraturePage, ranges: list[dict[str, Any]]
     ) -> int:
-        """
-        Cicla sugli intervalli e gestisce download e importazione.
+        """Cicla sugli intervalli e gestisce download e importazione.
 
         Args:
           page_obj: Page Object per l'interazione Playwright.

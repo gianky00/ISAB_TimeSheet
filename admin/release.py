@@ -1,5 +1,4 @@
-"""
-SyncroJob - Professional Release Tool
+"""SyncroJob - Professional Release Tool
 Sostituisce i vecchi script .bat con un processo robusto e cross-platform.
 """
 

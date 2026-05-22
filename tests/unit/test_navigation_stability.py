@@ -1,5 +1,4 @@
-"""
-Tests for NavigationController stability.
+"""Tests for NavigationController stability.
 Refactored for V9.0 architecture.
 """
 

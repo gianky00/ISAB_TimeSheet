@@ -1,5 +1,4 @@
-"""
-Tests for TimesheetProcessor.process_and_move.
+"""Tests for TimesheetProcessor.process_and_move.
 Aims for 100% coverage and parity before refactoring.
 """
 

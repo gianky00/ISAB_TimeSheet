@@ -1,5 +1,5 @@
-"""
-SyncroJob - Scarico Ore Panel
+"""SyncroJob - Scarico Ore Panel.
+
 Interfaccia ad alte prestazioni per la consultazione e la gestione dello Scarico Ore Cantiere.
 Refactored V9.5: Modular architecture with Controller and specialized Widgets.
 """
@@ -28,14 +28,13 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class ScaricoOrePanel(QWidget):
-    """
-    Orchestratore dello Scarico Ore coordinato dal ScaricoOreController.
+    """Orchestratore dello Scarico Ore coordinato dal ScaricoOreController.
+
     Gestisce il caricamento asincrono, il filtraggio avanzato e la visualizzazione delle ore.
     """
 
     def __init__(self, controller: ScaricoOreController, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello dello scarico ore con iniezione del controller.
+        """Inizializza il pannello dello scarico ore con iniezione del controller.
 
         Args:
           controller: Istanza del controller per la logica di business.
@@ -98,8 +97,7 @@ class ScaricoOrePanel(QWidget):
         layout.addWidget(self.tabs)
 
     def _perform_search(self, text: str) -> None:
-        """
-        Applica i filtri testuali e per colonna al modello dati.
+        """Applica i filtri testuali e per colonna al modello dati.
 
         Args:
           text: Testo di ricerca globale.
@@ -109,7 +107,6 @@ class ScaricoOrePanel(QWidget):
 
     def _start_update(self) -> None:
         """Avvia la procedura di sincronizzazione/importazione dei dati via controller."""
-
         path = config_manager.load_config().get("dataease_path", "")
         if not path:
             ConfirmationDialog.show_warning(
@@ -125,8 +122,7 @@ class ScaricoOrePanel(QWidget):
         self.controller.start_import(path)
 
     def _on_update_finished(self, success: bool, status_msg: str) -> None:
-        """
-        Gestisce la finalizzazione del processo di aggiornamento.
+        """Gestisce la finalizzazione del processo di aggiornamento.
 
         Args:
           success: True se l'operazione  andata a buon fine.
@@ -190,8 +186,7 @@ class ScaricoOrePanel(QWidget):
         )
 
     def _update_selection_totals(self, total: float) -> None:
-        """
-        Aggiorna l'indicatore delle ore totali per le righe selezionate.
+        """Aggiorna l'indicatore delle ore totali per le righe selezionate.
 
         Args:
           total: Somma delle ore selezionate.
@@ -199,8 +194,7 @@ class ScaricoOrePanel(QWidget):
         self.filters.lbl_selection.setText(f"Totale selezionato: {self.controller.format_number(total)}")
 
     def _on_header_filter_changed(self, col: int, values: list[str]) -> None:
-        """
-        Gestisce l'attivazione di filtri specifici per singola colonna.
+        """Gestisce l'attivazione di filtri specifici per singola colonna.
 
         Args:
           col: Indice della colonna interessata.
@@ -213,8 +207,7 @@ class ScaricoOrePanel(QWidget):
         self._perform_search(self.filters.search_input.text())
 
     def _set_ui_loading(self, loading: bool) -> None:
-        """
-        Mostra o nasconde l'interfaccia di caricamento (shimmer).
+        """Mostra o nasconde l'interfaccia di caricamento (shimmer).
 
         Args:
           loading: True per mostrare l'effetto shimmer, False per la tabella.
@@ -240,8 +233,7 @@ class ScaricoOrePanel(QWidget):
         self.filters.status_label.setText(msg)
 
     def resizeEvent(self, event: QResizeEvent) -> None:
-        """
-        Aggiorna le dimensioni degli overlay (shimmer) al ridimensionamento del pannello.
+        """Aggiorna le dimensioni degli overlay (shimmer) al ridimensionamento del pannello.
 
         Args:
           event: Evento di ridimensionamento Qt.
@@ -251,8 +243,7 @@ class ScaricoOrePanel(QWidget):
             self.shimmer.resize(self.table_view.size())
 
     def set_search_query(self, text: str) -> None:
-        """
-        API pubblica per impostare una ricerca dall'esterno (es. NavigationController).
+        """API pubblica per impostare una ricerca dall'esterno (es. NavigationController).
 
         Args:
           text: Testo da cercare.

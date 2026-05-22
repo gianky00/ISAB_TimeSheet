@@ -1,5 +1,5 @@
-"""
-SyncroJob - Consuntivo Panel (Refactored)
+"""SyncroJob - Consuntivo Panel (Refactored).
+
 Pannello premium per la generazione e manipolazione dei consuntivi automatizzati.
 Struttura modulare che integra i widget specializzati per Nuovo, Esistente e Impostazioni.
 """
@@ -21,8 +21,7 @@ class ConsuntivoPanel(QWidget):
     """Pannello Root che organizza la suite Premium dei Consuntivi."""
 
     def __init__(self, controller: ConsuntivoController, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello consuntivo con iniezione del controller.
+        """Inizializza il pannello consuntivo con iniezione del controller.
 
         Args:
           controller: Istanza del controller per la logica di business.
@@ -101,7 +100,9 @@ class ConsuntivoPanel(QWidget):
 
     def _on_tab_changed(self, index: int) -> None:
         """Gestisce il refresh leggero dell'interfaccia al cambio scheda.
-        I tab ora gestiscono autonomamente il caching pesante."""
+
+        I tab ora gestiscono autonomamente il caching pesante.
+        """
         widget = self.tabs.widget(index)
 
         if isinstance(widget, CreaNuovoTab):

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Scarico Ore Table View
+"""SyncroJob - Scarico Ore Table View.
+
 Widget tabellare specializzato per grandi volumi di dati con filtri Excel-style.
 """
 
@@ -21,6 +21,7 @@ class ScaricoOreTableView(QTableView):
     filter_changed = Signal(int, list)
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self._saved_selection_real_ids: set[int] = set()
         self._setup_ui()

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Bot Queue Manager
+"""SyncroJob - Bot Queue Manager.
+
 Gestore della coda di esecuzione dei bot con vincoli di parallelismo per sito.
 Garantisce che venga eseguito un solo bot Selenium per volta sullo stesso portale.
 """
@@ -15,6 +15,7 @@ class BotQueueManager:
     """Gestisce l'accodamento e l'esecuzione sequenziale dei bot per sito."""
 
     def __init__(self) -> None:
+        """Inizializza la classe."""
         self.running_bots_by_site: dict[str, list[str]] = {"portale_fornitori": [], "safework": []}
         self.pending_bots_by_site: dict[str, list[tuple[str, Any, str]]] = {
             "portale_fornitori": [],

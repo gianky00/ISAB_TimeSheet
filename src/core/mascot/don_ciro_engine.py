@@ -1,5 +1,5 @@
-"""
-SyncroJob - Don Ciro Engine
+"""SyncroJob - Don Ciro Engine.
+
 Motore logico e fisico per la mascotte Don Ciro.
 Separa la simulazione del comportamento dalla visualizzazione UI.
 """
@@ -47,8 +47,8 @@ class WeatherCond(Enum):
 
 
 class DonCiroEngine(QObject):
-    """
-    Motore di simulazione per Don Ciro.
+    """Motore di simulazione per Don Ciro.
+
     Gestisce fisica, cinematica inversa e stati comportamentali.
     """
 
@@ -56,6 +56,7 @@ class DonCiroEngine(QObject):
     physics_updated = Signal()
 
     def __init__(self, parent: QObject | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
 
         # Parametri di Scala

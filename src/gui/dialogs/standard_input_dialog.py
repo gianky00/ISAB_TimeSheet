@@ -1,3 +1,5 @@
+"""Modulo Standard Input Dialog."""
+
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
@@ -13,8 +15,8 @@ from src.gui.widgets.modern_button import ModernButton
 
 
 class StandardInputDialog(QDialog):
-    """
-    Dialog standard per l'input di testo singolo.
+    """Dialog standard per l'input di testo singolo.
+
     Sostituisce QInputDialog per mantenere coerenza stilistica.
     """
 

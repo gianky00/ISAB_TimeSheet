@@ -1,5 +1,5 @@
-"""
-SyncroJob - ODA Adapter
+"""SyncroJob - ODA Adapter.
+
 Adapter per convertire i dati ODA in oggetti QStandardItem per la GUI.
 Isola le dipendenze PyQt dal CORE.
 """

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Contabilita Stats
+"""SyncroJob - Contabilita Stats.
+
 Gestisce il calcolo delle statistiche per i dati della Contabilità Strumentale.
 """
 

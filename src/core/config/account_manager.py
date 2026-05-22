@@ -1,5 +1,5 @@
-"""
-SyncroJob - Account Manager
+"""SyncroJob - Account Manager.
+
 Gestione degli account nella configurazione.
 """
 

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Excel Table Widgets (Refactored)
+"""SyncroJob - Excel Table Widgets (Refactored).
+
 Widget tabellari avanzati con supporto mixin per Clipboard.
 """
 
@@ -26,8 +26,8 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class ExcelTableWidget(QTableWidget):
-    """
-    QTableWidget con funzionalità Clipboard TSV.
+    """QTableWidget con funzionalità Clipboard TSV.
+
     Supporta la formattazione semantica delle righe.
     """
 
@@ -96,8 +96,7 @@ class ExcelTableWidget(QTableWidget):
             )
 
     def set_row_status(self, row: int, status: str) -> None:
-        """
-        Imposta il colore semantico della riga in base allo stato.
+        """Imposta il colore semantico della riga in base allo stato.
 
         Args:
           row: Indice della riga.
@@ -168,8 +167,7 @@ class EditableDataTable(QWidget):
     def __init__(
         self, columns: list[dict[str, Any]], parent: QWidget | None = None, initial_rows: int = 20
     ) -> None:
-        """
-        Inizializza la tabella modificabile.
+        """Inizializza la tabella modificabile.
 
         Args:
           columns: Elenco di configurazioni per le colonne (nome, tipo, opzioni).
@@ -316,8 +314,8 @@ class EditableDataTable(QWidget):
                     item.setText("")
 
     def set_data(self, data: list[dict[str, Any]]) -> None:
-        """
-        Popola la tabella con i dati forniti.
+        """Popola la tabella con i dati forniti.
+
         Utilizza un algoritmo di matching flessibile per le chiavi (ignora case, spazi e underscore).
 
         Args:
@@ -370,8 +368,7 @@ class EditableDataTable(QWidget):
                 item.setText(value)
 
     def update_cell(self, row: int, col: int, value: str, emit_signal: bool = True) -> None:
-        """
-        Aggiorna il contenuto di una cella specifica.
+        """Aggiorna il contenuto di una cella specifica.
 
         Args:
           row: Indice della riga.
@@ -405,8 +402,7 @@ class EditableDataTable(QWidget):
         self.table.setPlaceholderText(text)
 
     def set_row_status(self, row: int, status: str) -> None:
-        """
-        Proxy per impostare lo stato semantico della riga nella tabella.
+        """Proxy per impostare lo stato semantico della riga nella tabella.
 
         Args:
           row: Indice della riga.
@@ -415,8 +411,8 @@ class EditableDataTable(QWidget):
         self.table.set_row_status(row, status)
 
     def update_column_options(self, col: int, options: list[str]) -> None:
-        """
-        Aggiorna le opzioni di una colonna di tipo 'combò per tutte le righe esistenti.
+        """Aggiorna le opzioni di una colonna di tipo 'combò per tutte le righe esistenti.
+
         Aggiorna anche la definizione della colonna per le future righe.
 
         Args:

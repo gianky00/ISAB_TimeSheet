@@ -1,5 +1,5 @@
-"""
-SyncroJob - ODA Tree Widget
+"""SyncroJob - ODA Tree Widget.
+
 Widget specializzato per la visualizzazione gerarchica degli Ordini di Acquisto.
 """
 
@@ -18,6 +18,7 @@ class ODATreeView(QTreeView):
     context_menu_requested = Signal(object)  # pos
 
     def __init__(self, model: QAbstractItemModel, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.setModel(model)
         self._setup_ui()

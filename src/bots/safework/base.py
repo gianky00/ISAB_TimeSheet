@@ -1,3 +1,5 @@
+"""Modulo Base."""
+
 from contextlib import suppress
 
 from selenium.common.exceptions import TimeoutException
@@ -14,8 +16,8 @@ from src.core.constants import URLs
 
 
 class SafeworkBaseBot(SeleniumBaseBot):
-    """
-    Classe base specifica per SafeWork.
+    """Classe base specifica per SafeWork.
+
     Isola le logiche SafeWork da quelle del Portale Fornitori.
     """
 
@@ -53,9 +55,7 @@ class SafeworkBaseBot(SeleniumBaseBot):
         return False
 
     def click_robusto(self, locator: tuple[str, str], timeout: int = 10, label: str | None = None) -> None:
-        """
-        Tenta di cliccare un elemento gestendo overlay e intercettazioni.
-        """
+        """Tenta di cliccare un elemento gestendo overlay e intercettazioni."""
         if not self.driver:
             self.log("❌ Driver non inizializzato.")
             return
@@ -116,8 +116,8 @@ class SafeworkBaseBot(SeleniumBaseBot):
         return True
 
     def _attendi_caricamento_sistema(self, timeout: int = 420) -> None:
-        """
-        Attesa specifica per SafeWork: rileva lo span 'Caricamento...'
+        """Attesa specifica per SafeWork: rileva lo span 'Caricamento...'.
+
         e ne attende la scomparsa completa.
         """
         if not self.driver or not self.wait:

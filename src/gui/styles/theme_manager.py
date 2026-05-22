@@ -1,5 +1,5 @@
-"""
-SyncroJob - Theme and Style Manager
+"""SyncroJob - Theme and Style Manager.
+
 Gestisce l'applicazione di temi, palette e fogli di stile (QSS).
 """
 
@@ -37,8 +37,8 @@ class ThemeManager:
         return LIGHT
 
     def apply_theme(self, app: QApplication, theme_name: str = "light") -> None:
-        """
-        Applica il tema completo all'applicazione (FORZATO A LIGHT).
+        """Applica il tema completo all'applicazione (FORZATO A LIGHT).
+
         Configura la QPalette e carica i file QSS necessari.
         """
         # Forza sempre il tema light per standard aziendale

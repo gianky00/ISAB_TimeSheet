@@ -1,6 +1,4 @@
-"""
-Main logger implementation con multi-sink support.
-"""
+"""Main logger implementation con multi-sink support."""
 
 import inspect
 import sys
@@ -21,8 +19,7 @@ _initialized = False
 
 
 class StructuredLogger:
-    """
-    Logger professionale con structured logging e multi-sink.
+    """Logger professionale con structured logging e multi-sink.
 
     Features:
     - Output JSON per AI analysis
@@ -34,8 +31,7 @@ class StructuredLogger:
     """
 
     def __init__(self, name: str, config: Any = None) -> None:
-        """
-        Inizializza logger.
+        """Inizializza logger.
 
         Args:
           name: Nome logger (tipicamente __name__ del modulo)
@@ -67,8 +63,7 @@ class StructuredLogger:
         }.get(level_str.upper(), 20)
 
     def _get_source_info(self) -> dict[str, Any]:
-        """
-        Estrae informazioni sulla sorgente del log (file, funzione, linea).
+        """Estrae informazioni sulla sorgente del log (file, funzione, linea).
 
         Returns:
           Dict con file, function, line
@@ -181,8 +176,7 @@ class StructuredLogger:
         extra: dict[str, Any] | None = None,
         exception: Exception | None = None,
     ) -> None:
-        """
-        Log generico.
+        """Log generico.
 
         Args:
           level: Livello (DEBUG, INFO, WARNING, ERROR, CRITICAL)
@@ -216,8 +210,8 @@ class StructuredLogger:
         self.log("CRITICAL", message, extra=extra or None)
 
     def exception(self, message: str, exc: Exception | None = None, **extra: Any) -> None:
-        """
-        Log exception con stack trace completo.
+        """Log exception con stack trace completo.
+
         Se 'exc' non viene fornito, tenta di recuperarlo dal contesto corrente.
 
         Args:
@@ -234,8 +228,7 @@ class StructuredLogger:
 
 
 def configure_logging(config: Any = None) -> None:
-    """
-    Configura il sistema di logging globale.
+    """Configura il sistema di logging globale.
 
     Args:
       config: Configurazione custom (opzionale)
@@ -259,8 +252,7 @@ def configure_logging(config: Any = None) -> None:
 
 
 def get_logger(name: str, config: Any = None) -> StructuredLogger:
-    """
-    Factory per ottenere logger.
+    """Factory per ottenere logger.
 
     Usage:
       logger = get_logger(__name__)
@@ -285,8 +277,7 @@ def get_logger(name: str, config: Any = None) -> StructuredLogger:
 
 
 def set_level(level: str) -> None:
-    """
-    Imposta livello minimo di logging per tutti i logger.
+    """Imposta livello minimo di logging per tutti i logger.
 
     Args:
       level: Uno tra DEBUG, INFO, WARNING, ERROR, CRITICAL

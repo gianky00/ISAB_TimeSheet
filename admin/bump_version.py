@@ -1,5 +1,4 @@
-"""
-Bot TS - Version Bumper
+"""Bot TS - Version Bumper
 Incrementa la versione dell'applicazione.
 """
 
@@ -19,8 +18,7 @@ if sys.platform == "win32":
 
 
 def bump_version(part="patch"):
-    """
-    Incrementa la versione in src/core/version.py.
+    """Incrementa la versione in src/core/version.py.
 
     Args:
         part: 'major', 'minor', o 'patch'

@@ -1,5 +1,5 @@
-"""
-SyncroJob - License Heartbeat Worker
+"""SyncroJob - License Heartbeat Worker.
+
 Worker asincrono per la verifica periodica della licenza cloud.
 """
 
@@ -13,9 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class LicenseWorker(QThread):
-    """
-    Worker che sincronizza la licenza con GitHub in background.
-    """
+    """Worker che sincronizza la licenza con GitHub in background."""
 
     finished_signal = Signal(bool, str)  # (success, error_message)
 

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Bot Worker
+"""SyncroJob - Bot Worker.
+
 Thread dedicato all'esecuzione asincrona dei bot di automazione.
 Gestisce il ciclo di vita del driver, l'iniezione delle dipendenze e i segnali verso la GUI.
 """
@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 class BotWorker(QThread):
-    """
-    Thread worker per eseguire i bot in background.
+    """Thread worker per eseguire i bot in background.
+
     Gestisce l'inizializzazione del bot (pesante) e l'esecuzione.
     """
 
@@ -41,8 +41,7 @@ class BotWorker(QThread):
         data: Any | None = None,
         telegram_service: Any | None = None,
     ) -> None:
-        """
-        Inizializza il worker del bot.
+        """Inizializza il worker del bot.
 
         Args:
           bot_id: ID del bot da creare o istanza già creata.
@@ -105,8 +104,8 @@ class BotWorker(QThread):
                 self.bot.cleanup()
 
     def _request_input_wrapper(self, prompt: str) -> str:
-        """
-        Wrapper thread-safe per richiedere input all'utente tramite la GUI.
+        """Wrapper thread-safe per richiedere input all'utente tramite la GUI.
+
         Blocca l'esecuzione del bot finch  l'utente non risponde.
         """
         result_container: dict[str, str] = {}

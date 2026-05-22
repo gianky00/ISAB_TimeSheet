@@ -1,5 +1,5 @@
-"""
-SyncroJob - Base Panel Components
+"""SyncroJob - Base Panel Components.
+
 Classi base per i pannelli dei bot.
 Refactored V9.5: SRP Compliance via Composition.
 """
@@ -38,8 +38,8 @@ if TYPE_CHECKING:
 
 
 class BaseBotPanel(QWidget):
-    """
-    Classe base orchestratrice per i pannelli dei bot.
+    """Classe base orchestratrice per i pannelli dei bot.
+
     Gestisce il ciclo di vita del bot delegando logica e UI a componenti specializzati.
     """
 

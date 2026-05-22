@@ -1,5 +1,5 @@
-"""
-Componenti visuali per gli eventi dell'Autopilot.
+"""Componenti visuali per gli eventi dell'Autopilot.
+
 Visualizzazione dei countdown e dello stato di sincronizzazione dei database.
 """
 
@@ -48,8 +48,8 @@ QToolTip {
 
 
 class AutopilotEventCard(QFrame):
-    """
-    Card per visualizzare un singolo evento programmato del bot.
+    """Card per visualizzare un singolo evento programmato del bot.
+
     Include ora lo stato del database (freschezza dati) e un tasto di sync rapido.
     """
 
@@ -60,8 +60,7 @@ class AutopilotEventCard(QFrame):
         info: EventInfo,
         parent: QWidget | None = None,
     ) -> None:
-        """
-        Inizializza la card dell'evento autopilot.
+        """Inizializza la card dell'evento autopilot.
 
         Args:
           info: Dati dell'evento (ID, nome, ora, icona, colore).

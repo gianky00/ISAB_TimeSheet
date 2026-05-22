@@ -1,6 +1,4 @@
-"""
-Formatters per output log (JSON e Human-readable).
-"""
+"""Formatters per output log (JSON e Human-readable)."""
 
 import json
 import os
@@ -15,15 +13,13 @@ from .filters import SensitiveDataFilter
 
 
 class JSONFormatter:
-    """
-    Formatter per output JSON strutturato.
+    """Formatter per output JSON strutturato.
 
     Produce log in formato JSON parsabile, ottimizzato per AI analysis.
     """
 
     def __init__(self, mask_sensitive: bool = True) -> None:
-        """
-        Inizializza formatter.
+        """Inizializza formatter.
 
         Args:
           mask_sensitive: Se True, maschera dati sensibili
@@ -39,8 +35,7 @@ class JSONFormatter:
         exception: Exception | None = None,
         source_info: dict[str, Any] | None = None,
     ) -> str:
-        """
-        Formatta log entry come JSON.
+        """Formatta log entry come JSON.
 
         Args:
           level: Livello log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
@@ -140,15 +135,13 @@ class JSONFormatter:
 
 
 class HumanFormatter:
-    """
-    Formatter per output human-readable.
+    """Formatter per output human-readable.
 
     Produce log in formato leggibile per troubleshooting manuale.
     """
 
     def __init__(self, colorize: bool = True, show_context: bool = True) -> None:
-        """
-        Inizializza formatter.
+        """Inizializza formatter.
 
         Args:
           colorize: Se True, usa colori ANSI (solo per console)
@@ -174,8 +167,7 @@ class HumanFormatter:
         exception: Exception | None = None,
         source_info: dict[str, Any] | None = None,
     ) -> str:
-        """
-        Formatta log entry come stringa human-readable.
+        """Formatta log entry come stringa human-readable.
 
         Args:
           level: Livello log

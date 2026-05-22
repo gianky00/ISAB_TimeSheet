@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Data Worker
+"""SyncroJob - PDL Data Worker.
+
 Worker asincrono per il recupero dei dati PDL e il popolamento dinamico dei filtri.
 Garantisce la fluidità della GUI durante le query SQL sul database PDL.
 """
@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class PDLDataWorker(QThread):
-    """
-    Worker per l'esecuzione di query PDL in background.
+    """Worker per l'esecuzione di query PDL in background.
+
     Supporta sia il recupero dei dati tabellari che la query per i filtri.
     """
 
@@ -25,14 +25,15 @@ class PDLDataWorker(QThread):
     error_signal = Signal(str)
 
     def __init__(self, mode: str, *args: Any, **kwargs: Any) -> None:
-        """
-        Inizializza il worker.
+        """Inizializza il worker.
 
         Args:
           mode: 'fetch_data', 'update_areas', 'update_units' o 'initial_filters'.
-          *args: Argomenti per la query.
+          *args: Argomenti posizionali per la query.
+          **kwargs: Argomenti nominali per il controller e i filtri.
         """
         super().__init__()
+
         self.mode = mode
         self.args = args
         self.kwargs = kwargs

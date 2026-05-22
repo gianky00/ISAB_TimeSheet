@@ -1,5 +1,4 @@
-"""
-SyncroJob - Admin Secret Manager
+"""SyncroJob - Admin Secret Manager
 Gestione sicura delle API Key nel Keyring di Windows.
 """
 

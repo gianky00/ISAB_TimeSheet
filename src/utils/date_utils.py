@@ -1,5 +1,5 @@
-"""
-SyncroJob - Utility per Date
+"""SyncroJob - Utility per Date.
+
 Funzioni centralizzate per parsing, formattazione e calcoli su date.
 """
 
@@ -50,8 +50,7 @@ MAX_MONTHS: Final[int] = 12
 
 
 def parse_date_flexible(date_str: str | None, formats: list[str] | None = None) -> date | None:
-    """
-    Tenta di parsare una stringa data usando più formati.
+    """Tenta di parsare una stringa data usando più formati.
 
     Args:
       date_str: La stringa da parsare
@@ -75,8 +74,7 @@ def parse_date_flexible(date_str: str | None, formats: list[str] | None = None) 
 
 
 def parse_datetime_flexible(date_str: str | None, formats: list[str] | None = None) -> datetime | None:
-    """
-    Tenta di parsare una stringa datetime usando più formati.
+    """Tenta di parsare una stringa datetime usando più formati.
 
     Args:
       date_str: La stringa da parsare
@@ -100,8 +98,7 @@ def parse_datetime_flexible(date_str: str | None, formats: list[str] | None = No
 
 
 def format_date_it(date_obj: date | None, include_time: bool = False) -> str:
-    """
-    Formatta una data nel formato italiano.
+    """Formatta una data nel formato italiano.
 
     Args:
       date_obj: La data da formattare
@@ -120,8 +117,7 @@ def format_date_it(date_obj: date | None, include_time: bool = False) -> str:
 
 
 def format_date_iso(date_obj: date | None) -> str:
-    """
-    Formatta una data nel formato ISO (YYYY-MM-DD).
+    """Formatta una data nel formato ISO (YYYY-MM-DD).
 
     Args:
       date_obj: La data da formattare
@@ -136,8 +132,7 @@ def format_date_iso(date_obj: date | None) -> str:
 
 
 def calculate_days_diff(date_obj: date | None, from_date: date | None = None) -> int | None:
-    """
-    Calcola la differenza in giorni tra due date.
+    """Calcola la differenza in giorni tra due date.
 
     Args:
       date_obj: La data target
@@ -156,8 +151,7 @@ def calculate_days_diff(date_obj: date | None, from_date: date | None = None) ->
 
 
 def get_status_by_days(days: int | None, thresholds: tuple[int, int] | None = None) -> tuple[str, str]:
-    """
-    Determina lo status e il colore in base ai giorni trascorsi.
+    """Determina lo status e il colore in base ai giorni trascorsi.
 
     Args:
       days: Numero di giorni
@@ -187,8 +181,7 @@ def get_status_by_days(days: int | None, thresholds: tuple[int, int] | None = No
 
 
 def format_days_ago(days: int | None) -> str:
-    """
-    Formatta il numero di giorni in una stringa leggibile.
+    """Formatta il numero di giorni in una stringa leggibile.
 
     Args:
       days: Numero di giorni
@@ -207,8 +200,7 @@ def format_days_ago(days: int | None) -> str:
 
 
 def get_date_range(days_back: int, from_date: date | None = None) -> tuple[date, date]:
-    """
-    Calcola un range di date.
+    """Calcola un range di date.
 
     Args:
       days_back: Numero di giorni indietro
@@ -224,8 +216,7 @@ def get_date_range(days_back: int, from_date: date | None = None) -> tuple[date,
 
 
 def format_datetime_for_filename(dt: datetime | None = None) -> str:
-    """
-    Formatta datetime per uso in nomi file (senza caratteri speciali).
+    """Formatta datetime per uso in nomi file (senza caratteri speciali).
 
     Args:
       dt: Datetime da formattare (default: now)
@@ -237,8 +228,7 @@ def format_datetime_for_filename(dt: datetime | None = None) -> str:
 
 
 def is_same_day(dt1: datetime, dt2: datetime) -> bool:
-    """
-    Verifica se due datetime sono nello stesso giorno.
+    """Verifica se due datetime sono nello stesso giorno.
 
     Args:
       dt1: Prima datetime
@@ -251,8 +241,7 @@ def is_same_day(dt1: datetime, dt2: datetime) -> bool:
 
 
 def get_month_name_it(month: int, full: bool = False) -> str:
-    """
-    Ottiene il nome del mese in italiano.
+    """Ottiene il nome del mese in italiano.
 
     Args:
       month: Numero del mese (1-12)

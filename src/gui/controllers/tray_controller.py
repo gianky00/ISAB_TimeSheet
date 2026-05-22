@@ -1,6 +1,4 @@
-"""
-Controller per la gestione della System Tray Icon.
-"""
+"""Controller per la gestione della System Tray Icon."""
 
 from typing import Any
 
@@ -16,6 +14,7 @@ class TrayController:
     """Gestisce l'icona e il menu della system tray."""
 
     def __init__(self, main_window: Any) -> None:
+        """Inizializza la classe."""
         self.mw = main_window
         self.tray_icon = QSystemTrayIcon(self.mw)
         self._setup_tray_icon()

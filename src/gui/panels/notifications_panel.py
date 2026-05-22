@@ -1,5 +1,5 @@
-"""
-SyncroJob - Notifications Panel
+"""SyncroJob - Notifications Panel.
+
 Pannello per la visualizzazione delle notifiche di sistema, Audit Log e Health Score.
 Gestisce il filtraggio, la ricerca e il raggruppamento temporale dei messaggi.
 """
@@ -37,8 +37,8 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 @dataclass
 class FilterState:
-    """
-    Gestione dello stato dei filtri per le notifiche.
+    """Gestione dello stato dei filtri per le notifiche.
+
     Mantiene le preferenze dell'utente su livelli, categorie e visibilità.
     """
 
@@ -55,8 +55,8 @@ class FilterState:
 
 
 class NotificationsPanel(QWidget):
-    """
-    Pannello principale delle notifiche con architettura a schede (Tab).
+    """Pannello principale delle notifiche con architettura a schede (Tab).
+
     Include:
     - Notifiche: Feed interattivo dei messaggi di sistema.
     - Audit: Log dettagliato delle azioni utente e bot.
@@ -64,8 +64,7 @@ class NotificationsPanel(QWidget):
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello notifiche e collega il manager globale.
+        """Inizializza il pannello notifiche e collega il manager globale.
 
         Args:
             parent: Widget genitore.
@@ -238,8 +237,8 @@ class NotificationsPanel(QWidget):
             self.manager.clear_all()
 
     def refresh_notifications(self) -> None:
-        """
-        Ricarica la lista delle notifiche applicando filtri, ricerca e raggruppamento.
+        """Ricarica la lista delle notifiche applicando filtri, ricerca e raggruppamento.
+
         Ottimizza il rendering utilizzando la cache del filtraggio.
         """
         if not shiboken6.isValid(self):

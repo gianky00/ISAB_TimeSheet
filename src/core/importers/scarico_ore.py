@@ -1,3 +1,5 @@
+"""Modulo Scarico Ore."""
+
 import io
 import re
 import zipfile
@@ -53,8 +55,8 @@ class ScaricoOreImporter(BaseImporter):
 
     @classmethod
     def scan_scarico_ore_rows(cls, file_path: str) -> int:
-        """
-        Esegue una scansione rapida del file Excel per stimare il numero di righe totali.
+        """Esegue una scansione rapida del file Excel per stimare il numero di righe totali.
+
         Legge direttamente la struttura XML del file .xlsx per massima velocità.
 
         Args:
@@ -108,8 +110,7 @@ class ScaricoOreImporter(BaseImporter):
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, list[tuple[Any, ...]]]:
-        """
-        Importa i dati dal file Excel dello Scarico Ore Cantiere tramite Pipeline.
+        """Importa i dati dal file Excel dello Scarico Ore Cantiere tramite Pipeline.
 
         Args:
             file_path: Percorso del file da importare.

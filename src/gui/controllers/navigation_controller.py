@@ -1,5 +1,5 @@
-"""
-SyncroJob - Navigation Controller
+"""SyncroJob - Navigation Controller.
+
 Gestore centrale del routing e della navigazione tra i diversi pannelli dell'interfaccia utente.
 Implementa una strategiàdi 'Lazy Loading' (caricamento differito) per ridurre drasticamente i tempi di startup
 dell'applicazione, inizializzando i moduli funzionali solo quando vengono effettivamente richiesti dall'utente.
@@ -30,8 +30,8 @@ logger = logging.getLogger(__name__)
 
 
 class NavigationController(QObject):
-    """
-    Controller responsabile della commutazione tra le pagine nel QStackedWidget della MainWindow.
+    """Controller responsabile della commutazione tra le pagine nel QStackedWidget della MainWindow.
+
     Gestisce il routing e delega la creazione dei pannelli alla PanelFactory.
     """
 
@@ -39,8 +39,7 @@ class NavigationController(QObject):
     panel_reattached = Signal(int)  # index
 
     def __init__(self, main_window: MainWindow) -> None:
-        """
-        Inizializza il controller di navigazione e i componenti associati.
+        """Inizializza il controller di navigazione e i componenti associati.
 
         Args:
           main_window: Riferimento alla MainWindow dell'applicazione.
@@ -95,8 +94,8 @@ class NavigationController(QObject):
         return self.mw.stacked_widget
 
     def navigate_to(self, index: int, sub_index: int | None = None, bot_index: int | None = None) -> None:
-        """
-        Cambia la pagina attiva nel container principale.
+        """Cambia la pagina attiva nel container principale.
+
         Inizializza il pannello se non ancora creato.
         """
         if index < 0 or index >= self.stack.count():

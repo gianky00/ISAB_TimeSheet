@@ -1,5 +1,5 @@
-"""
-SyncroJob - Consuntivo Workers
+"""SyncroJob - Consuntivo Workers.
+
 Worker per operazioni asincrone nel modulo Consuntivi.
 """
 
@@ -14,6 +14,7 @@ class ProgWorker(QThread):
     finished = Signal(str)
 
     def __init__(self, controller: ConsuntivoController, year: str) -> None:
+        """Inizializza la classe."""
         super().__init__()
         self.controller = controller
         self.year = year

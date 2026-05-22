@@ -1,5 +1,5 @@
-"""
-SyncroJob - SafeWork PDL Download Bot
+"""SyncroJob - SafeWork PDL Download Bot.
+
 Bot modulare per lo scarico e la stampa dei PDL.
 """
 

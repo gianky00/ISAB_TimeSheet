@@ -1,5 +1,5 @@
-"""
-SyncroJob - Consuntivo Crea Nuovo Tab
+"""SyncroJob - Consuntivo Crea Nuovo Tab.
+
 Tab per la generazione di un nuovo consuntivo da template Master.
 """
 

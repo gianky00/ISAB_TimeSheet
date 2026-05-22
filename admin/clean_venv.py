@@ -1,5 +1,4 @@
-"""
-Script to clean up invalid distributions (directories starting with ~) in site-packages.
+"""Script to clean up invalid distributions (directories starting with ~) in site-packages.
 These are leftovers from failed pip operations and cause warnings.
 """
 

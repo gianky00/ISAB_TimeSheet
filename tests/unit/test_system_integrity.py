@@ -1,6 +1,4 @@
-"""
-Tests for system telemetry and audit retention.
-"""
+"""Tests for system telemetry and audit retention."""
 
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock

@@ -1,3 +1,5 @@
+"""Modulo Splash Standalone."""
+
 import json
 import logging
 import sys

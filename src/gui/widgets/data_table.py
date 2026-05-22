@@ -1,5 +1,5 @@
-"""
-SyncroJob - Editable Data Table
+"""SyncroJob - Editable Data Table.
+
 Widget universale per la visualizzazione e modifica di dati tabellari.
 Implementa feedback visivo avanzato, menu contestuali e validazione.
 """
@@ -27,8 +27,8 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class EditableDataTable(QWidget):
-    """
-    Una tabella interattiva che consente la modifica diretta delle celle.
+    """Una tabella interattiva che consente la modifica diretta delle celle.
+
     Supporta il salvataggio automatico e fornisce segnali per il tracciamento dei cambiamenti.
     """
 
@@ -36,8 +36,7 @@ class EditableDataTable(QWidget):
     """Segnale emesso ogni volta che i dati nella tabella vengono modificati."""
 
     def __init__(self, columns: list[dict[str, Any]], parent: QWidget | None = None) -> None:
-        """
-        Inizializza la tabella con le colonne specificate.
+        """Inizializza la tabella con le colonne specificate.
 
         Args:
           columns: Lista di dizionari definenti le colonne (name, label, type, etc.).

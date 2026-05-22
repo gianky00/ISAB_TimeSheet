@@ -1,5 +1,5 @@
-"""
-SyncroJob - # ruff: noqa: PLR0913, PLR0915, C901
+"""SyncroJob - # ruff: noqa: PLR0913, PLR0915, C901.
+
 Don Ciro - Widget Dashboard
 Interfaccia Premium per la mascotte Don Ciro.
 Refactored V9.1: Separazione completa tra Logica (Widget/Engine) e Rendering (DonCiroRenderer).
@@ -42,6 +42,7 @@ class DonCiroWidget(QWidget):
     label_phase_changed = Signal(float)
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         fixed_width = 280
         fixed_height = 180

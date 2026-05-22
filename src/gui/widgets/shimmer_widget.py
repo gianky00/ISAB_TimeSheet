@@ -1,5 +1,5 @@
-"""
-SyncroJob - Shimmer Widget (Skeleton Loading)
+"""SyncroJob - Shimmer Widget (Skeleton Loading).
+
 Effetto pulsante per indicare il caricamento dei dati in modo elegante.
 """
 
@@ -13,6 +13,7 @@ class ShimmerItem(QFrame):
     """Un singolo rettangolo pulsante che simula un contenuto in caricamento."""
 
     def __init__(self, height: int = 20, width: int | None = None, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         if width:
             self.setFixedWidth(width)
@@ -40,6 +41,7 @@ class ShimmerSkeleton(QWidget):
     """Un set di ShimmerItem che simula una card o una riga di tabella."""
 
     def __init__(self, rows: int = 3, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

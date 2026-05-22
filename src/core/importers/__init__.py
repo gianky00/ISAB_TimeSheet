@@ -12,8 +12,8 @@ from src.core.importers.storico_oda import StoricoOdaImporter
 
 
 class ExcelImporter:
-    """
-    Facade per l'importazione di dati da file Excel.
+    """Facade per l'importazione di dati da file Excel.
+
     Delega ai moduli specifici in src/core/importers/.
     Mantiene la compatibilit  con il codice esistente.
     """
@@ -27,8 +27,7 @@ class ExcelImporter:
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, list[tuple[Any, ...]], list[int]]:
-        """
-        Importa i dati di contabilità dal file specificato.
+        """Importa i dati di contabilità dal file specificato.
 
         Returns:
           Tuple: (success, message, data_rows, years_found)
@@ -45,8 +44,7 @@ class ExcelImporter:
         lookup_map: dict[str, str],
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, list[tuple[Any, ...]], list[int]]:
-        """
-        Importa le giornaliere ricorsivamente dalla root path.
+        """Importa le giornaliere ricorsivamente dalla root path.
 
         Returns:
           Tuple: (success, message, rows, years_cleared)

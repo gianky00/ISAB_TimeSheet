@@ -1,6 +1,7 @@
+"""Modulo Bug Reporter."""
+
 # ruff: noqa: TRY300, PLR2004
-"""
-SyncroJob - Enhanced Bug Reporter
+"""SyncroJob - Enhanced Bug Reporter.
 
 Raccoglie diagnostica completa per segnalazioni bug, integrando:
 - Log strutturati (app.json, app.log, errors.json)
@@ -35,8 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 class BugReporter:
-    """
-    Gestisce la raccolta di log e informazioni di debug per la segnalazione di bug.
+    """Gestisce la raccolta di log e informazioni di debug per la segnalazione di bug.
 
     Crea un pacchetto ZIP contenente:
     - Log strutturati (app.json, app.log, errors.json, performance.jsonl)
@@ -55,8 +55,7 @@ class BugReporter:
         hours: int = 24,
         **kwargs: Any,
     ) -> tuple[Path | None, str, list[str]]:
-        """
-        Raccoglie tutti i file diagnostici e crea un archivio ZIP.
+        """Raccoglie tutti i file diagnostici e crea un archivio ZIP.
 
         Args:
           include_structured_logs: Includi log strutturati
@@ -64,6 +63,7 @@ class BugReporter:
           include_audit: Includi audit trail recente
           trace_id: Trace ID specifico per debug mirato (opzionale)
           hours: Ore di log da includere
+          **kwargs: Argomenti aggiuntivi per supporto retrocompatibilità.
 
         Returns:
           Tuple[Path, str, List[str]]: (Path ZIP, messaggio, lista file inclusi)

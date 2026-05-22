@@ -1,5 +1,5 @@
-"""
-SyncroJob - SafeWork Visualizza AttivitàPage
+"""SyncroJob - SafeWork Visualizza AttivitàPage.
+
 Gestione della pagina Visualizza Attivitàper la programmazione.
 """
 
@@ -22,6 +22,13 @@ class VisualizzaAttivitaPage:
     def __init__(
         self, driver: webdriver.Chrome, wait: WebDriverWait[webdriver.Chrome], log_func: Callable[[str], None]
     ) -> None:
+        """Inizializza la pagina Visualizza Attività.
+
+        Args:
+            driver: Istanza del driver Selenium.
+            wait: Istanza di WebDriverWait.
+            log_func: Funzione per il logging.
+        """
         self.driver = driver
         self.wait = wait
         self.log = log_func

@@ -1,3 +1,5 @@
+"""Modulo Diag Page."""
+
 from typing import Any
 
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
@@ -16,6 +18,7 @@ class DiagPage(QWidget):
     """Pagina Diagnostica e Licenza."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 

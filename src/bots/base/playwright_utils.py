@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright Utilities
+"""SyncroJob - Playwright Utilities.
+
 Funzioni di utilit  condivise per i bot Playwright.
 """
 
@@ -7,8 +7,7 @@ from selenium.webdriver.common.by import By
 
 
 def get_playwright_selector(locator: tuple[str, str]) -> str:
-    """
-    Converte un locatore Selenium (By, value) in un selettore Playwright CSS/XPath valido.
+    """Converte un locatore Selenium (By, value) in un selettore Playwright CSS/XPath valido.
 
     Args:
       locator: Tupla (By, valore) del locatore Selenium.

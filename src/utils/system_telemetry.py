@@ -1,5 +1,5 @@
-"""
-SyncroJob - System Telemetry Utilities
+"""SyncroJob - System Telemetry Utilities.
+
 Monitoraggio risorse di sistema (RAM, CPU) tramite API native Windows.
 """
 
@@ -43,8 +43,8 @@ class FILETIME(Structure):
 
 
 def get_current_process_ram_mb() -> float:
-    """
-    Restituisce l'uso attuale della RAM (Working Set) del processo corrente in MB.
+    """Restituisce l'uso attuale della RAM (Working Set) del processo corrente in MB.
+
     Funziona solo su Windows tramite psapi.dll.
     """
     try:

@@ -1,5 +1,5 @@
-"""
-SyncroJob - SafeWork Common Locators
+"""SyncroJob - SafeWork Common Locators.
+
 Centralizzazione dei selettori Selenium per il portale SafeWork.
 """
 

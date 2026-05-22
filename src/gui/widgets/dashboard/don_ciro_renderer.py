@@ -1,5 +1,5 @@
-"""
-SyncroJob - Don Ciro Renderer
+"""SyncroJob - Don Ciro Renderer.
+
 Gestore del rendering 3D isometrico e dei calcoli IK per la mascotte Don Ciro.
 Separato dal widget per rispettare il Single Responsibility Principle (SRP).
 """
@@ -39,6 +39,7 @@ class DonCiroRenderer:
     """Motore di rendering per Don Ciro."""
 
     def __init__(self) -> None:
+        """Inizializza la classe."""
         # Palette Cinematic (Copiate dal widget originale)
         self.C_SKIN = QColor("#FFDAB9")
         self.C_SUIT = QColor("#223344")

@@ -1,5 +1,5 @@
-"""
-SyncroJob - KPI Worker
+"""SyncroJob - KPI Worker.
+
 Worker asincrono per l'elaborazione dei dati KPI e la generazione di statistiche in background.
 Evita il freeze della GUI durante il calcolo massivo con Pandas.
 """
@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 class KPIWorker(QThread):
-    """
-    Worker dedicato al calcolo delle statistiche KPI.
+    """Worker dedicato al calcolo delle statistiche KPI.
+
     Esegue query SQL e analisi Pandas in un thread separato.
     """
 
@@ -25,8 +25,7 @@ class KPIWorker(QThread):
     error_signal = Signal(str)
 
     def __init__(self, year: int, hourly_cost_std: float) -> None:
-        """
-        Inizializza il worker.
+        """Inizializza il worker.
 
         Args:
           year: L'anno di riferimento per l'analisi.

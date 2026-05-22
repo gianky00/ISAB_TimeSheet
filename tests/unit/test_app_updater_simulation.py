@@ -1,5 +1,4 @@
-"""
-Tests for AppUpdater Simulation.
+"""Tests for AppUpdater Simulation.
 Verifies version check and update notification using direct function mocking.
 """
 

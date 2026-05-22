@@ -1,5 +1,5 @@
-"""
-SyncroJob - SafeWork Programmazione Bot
+"""SyncroJob - SafeWork Programmazione Bot.
+
 Bot modulare per il monitoraggio della programmazione settimanale tramite Export Excel (Ricerca Massiva).
 """
 
@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 
 
 class SafeWorkProgrammazioneBot(SafeworkBaseBot):
-    """
-    Bot per monitorare i flag TCL/TGO della settimana tramite Export Excel.
+    """Bot per monitorare i flag TCL/TGO della settimana tramite Export Excel.
+
     Naviga nell'area Attivita', filtra per ditta e richiedenti, ed esporta i dati per l'analisi.
     """
 
@@ -41,9 +41,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         account_type: str = "Esecutore",
         **kwargs: Any,
     ) -> None:
-        """
-        Inizializza il bot di programmazione.
-        """
+        """Inizializza il bot di programmazione."""
         super().__init__(username, password, config, account_type=account_type)
         self.results: list[dict[str, Any]] = []
 
@@ -68,8 +66,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         return "Monitoraggio programmazione settimanale SafeWork"
 
     def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
-        """
-        Esegue il workflow di monitoraggio programmazione.
+        """Esegue il workflow di monitoraggio programmazione.
 
         Args:
           data: Parametri della sessione (richiedenti, date).
@@ -156,8 +153,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         return None
 
     def _parse_excel_results(self, file_path: str) -> None:
-        """
-        Legge i dati dall'Excel scaricato e popola self.results.
+        """Legge i dati dall'Excel scaricato e popola self.results.
 
         Args:
           file_path: Percorso del file Excel.

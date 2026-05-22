@@ -1,5 +1,5 @@
-"""
-Bot TS - Scarico TS Page
+"""Bot TS - Scarico TS Page.
+
 Page Object Model for the Scarico TS section.
 """
 
@@ -26,6 +26,7 @@ class ScaricoTSPage:
     """Encapsulates interactions with the Scarico TS page."""
 
     def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None) -> None:
+        """Inizializza la classe."""
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)

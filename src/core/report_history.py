@@ -1,5 +1,4 @@
-"""
-Gestione storico dei report email per calcolo trend e confronti.
+"""Gestione storico dei report email per calcolo trend e confronti.
 
 Salva snapshot di ogni report inviato e permette il confronto con il precedente.
 """
@@ -55,8 +54,7 @@ class ReportHistory:
 
     @classmethod
     def save_report(cls, warning_list: list[dict[str, Any]], expired_list: list[dict[str, Any]]) -> None:
-        """
-        Salva snapshot del report corrente.
+        """Salva snapshot del report corrente.
 
         Args:
           warning_list: Lista dipendenti in scadenza (21-30 gg)
@@ -90,8 +88,7 @@ class ReportHistory:
 
     @classmethod
     def get_last_report(cls) -> dict[str, Any] | None:
-        """
-        Recupera l'ultimo report salvato.
+        """Recupera l'ultimo report salvato.
 
         Returns:
           Dict con i dati dell'ultimo report, o None se non esiste.
@@ -100,8 +97,7 @@ class ReportHistory:
 
     @classmethod
     def calculate_trend(cls, current_warning: int, current_expired: int) -> dict[str, Any] | None:
-        """
-        Calcola la differenza con il report precedente.
+        """Calcola la differenza con il report precedente.
 
         Args:
           current_warning: Numero attuale di dipendenti in scadenza
@@ -138,8 +134,7 @@ class ReportHistory:
 
     @classmethod
     def get_history(cls, limit: int = 10) -> list[dict[str, Any]]:
-        """
-        Recupera lo storico degli ultimi N report.
+        """Recupera lo storico degli ultimi N report.
 
         Args:
           limit: Numero massimo di report da recuperare

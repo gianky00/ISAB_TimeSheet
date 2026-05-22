@@ -1,5 +1,5 @@
-"""
-SyncroJob - Help Worker
+"""SyncroJob - Help Worker.
+
 Worker asincrono per il caricamento dei contenuti della guida.
 Garantisce la fluidità della GUI durante la preparazione della documentazione.
 """
@@ -13,16 +13,13 @@ logger = logging.getLogger(__name__)
 
 
 class HelpWorker(QThread):
-    """
-    Worker che prepara le sezioni della documentazione in background.
-    """
+    """Worker che prepara le sezioni della documentazione in background."""
 
     finished_signal = Signal(list)
     error_signal = Signal(str)
 
     def __init__(self, section_loaders: list[tuple[str, Callable[[], str], str]]) -> None:
-        """
-        Inizializza il worker con la lista dei loader.
+        """Inizializza il worker con la lista dei loader.
 
         Args:
           section_loaders: Lista di (Titolo, FunzioneLoader, IconKey).

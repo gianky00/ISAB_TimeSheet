@@ -1,5 +1,5 @@
-"""
-SyncroJob - Style Constants and Utilities
+"""SyncroJob - Style Constants and Utilities.
+
 Modulo per costanti di stile, colori operativi e timing animazioni.
 """
 

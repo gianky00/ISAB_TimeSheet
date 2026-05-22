@@ -1,5 +1,5 @@
-"""
-SyncroJob - Particle Background
+"""SyncroJob - Particle Background.
+
 Sfondo animato con particelle, connessioni neurali, circuiti e convergenza finale.
 """
 

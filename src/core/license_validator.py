@@ -1,5 +1,5 @@
-"""
-SyncroJob - License Validator
+"""SyncroJob - License Validator.
+
 Modulo core per la validazione della licenza e dell'integrità del software.
 Gestisce l'estrazione dell'Hardware ID (HWID), la decifratura asimmetrica dei certificati (.dat)
 e la verifica delle scadenze temporali tramite Trusted Time (Network Time).
@@ -107,8 +107,7 @@ def _check_and_migrate_local_license(target_paths: dict[str, Any]) -> bool:
 
 
 def get_license_info() -> dict[str, Any] | None:
-    """
-    Decifra il file config.dat e restituisce i dati strutturati della licenza.
+    """Decifra il file config.dat e restituisce i dati strutturati della licenza.
 
     Returns:
       dict: Metadati licenza (Cliente, Scadenza, HWID) o None se non valida.
@@ -145,8 +144,7 @@ def verify_license() -> tuple[bool, str]:
 
 
 def get_detailed_license_status() -> tuple[LicenseStatus, str]:
-    """
-    Esegue una verifica completa: presenza file, integrità hash, HWID matching e scadenza temporale.
+    """Esegue una verifica completa: presenza file, integrità hash, HWID matching e scadenza temporale.
 
     Returns:
       tuple: (LicenseStatus, messaggio descrittivo).

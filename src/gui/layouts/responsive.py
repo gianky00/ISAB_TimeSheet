@@ -1,6 +1,4 @@
-"""
-Layout responsivi che si adattano alle dimensioni finestra.
-"""
+"""Layout responsivi che si adattano alle dimensioni finestra."""
 
 from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import QHBoxLayout, QLayout, QVBoxLayout, QWidget

@@ -1,6 +1,4 @@
-"""
-Filtri per sicurezza e privacy.
-"""
+"""Filtri per sicurezza e privacy."""
 
 import re
 from collections.abc import Sequence
@@ -9,8 +7,7 @@ from typing import Any, ClassVar
 
 
 class SensitiveDataFilter:
-    """
-    Filtro per mascherare dati sensibili nei log.
+    """Filtro per mascherare dati sensibili nei log.
 
     Identifica e maschera:
     - Password, token, API keys
@@ -79,8 +76,7 @@ class SensitiveDataFilter:
 
     @classmethod
     def mask_string(cls, text: str) -> str:
-        """
-        Maschera dati sensibili in una stringa.
+        """Maschera dati sensibili in una stringa.
 
         Args:
           text: Stringa da processare
@@ -88,7 +84,6 @@ class SensitiveDataFilter:
         Returns:
           Stringa con dati sensibili mascherati
         """
-
         masked = text
         for pattern, replacement in cls.PATTERNS:
             masked = pattern.sub(replacement, masked)
@@ -97,8 +92,7 @@ class SensitiveDataFilter:
 
     @classmethod
     def mask_dict(cls, data: dict[str, Any]) -> dict[str, Any]:
-        """
-        Maschera dati sensibili in un dizionario (ricorsivo).
+        """Maschera dati sensibili in un dizionario (ricorsivo).
 
         Args:
           data: Dizionario da processare
@@ -106,7 +100,6 @@ class SensitiveDataFilter:
         Returns:
           Nuovo dizionario con dati sensibili mascherati
         """
-
         masked: dict[str, Any] = {}
         for key, value in data.items():
             # Se la chiave  sensibile, maschera il valore
@@ -126,8 +119,7 @@ class SensitiveDataFilter:
 
     @classmethod
     def mask_list(cls, data: Sequence[Any]) -> list[Any]:
-        """
-        Maschera dati sensibili in una lista (ricorsivo).
+        """Maschera dati sensibili in una lista (ricorsivo).
 
         Args:
           data: Lista da processare
@@ -135,7 +127,6 @@ class SensitiveDataFilter:
         Returns:
           Nuova lista con dati sensibili mascherati
         """
-
         masked: list[Any] = []
         for item in data:
             if isinstance(item, dict):
@@ -151,8 +142,7 @@ class SensitiveDataFilter:
 
     @classmethod
     def mask(cls, data: Any) -> Any:
-        """
-        Maschera dati sensibili in qualsiasi tipo di dato.
+        """Maschera dati sensibili in qualsiasi tipo di dato.
 
         Args:
           data: Dato da processare (str, dict, list, o altro)
@@ -170,15 +160,13 @@ class SensitiveDataFilter:
 
 
 class SamplingFilter:
-    """
-    Filtro per sampling dei log (riduce volume).
+    """Filtro per sampling dei log (riduce volume).
 
     Utile per log ad alto volume (es: ogni riga processata).
     """
 
     def __init__(self, sample_rate: float = 1.0) -> None:
-        """
-        Inizializza filter.
+        """Inizializza filter.
 
         Args:
           sample_rate: Percentuale di log da mantenere (0.0-1.0)
@@ -188,8 +176,7 @@ class SamplingFilter:
         self._counter = 0
 
     def should_log(self) -> bool:
-        """
-        Determina se il log corrente dovrebbe essere scritto.
+        """Determina se il log corrente dovrebbe essere scritto.
 
         Returns:
           True se il log deve essere scritto, False altrimenti

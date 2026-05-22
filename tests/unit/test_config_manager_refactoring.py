@@ -1,5 +1,4 @@
-"""
-Tests for load_config and save_config in config_manager.py.
+"""Tests for load_config and save_config in config_manager.py.
 Aims for 100% coverage and functional parity before refactoring.
 """
 

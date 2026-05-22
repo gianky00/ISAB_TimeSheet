@@ -1,5 +1,5 @@
-"""
-SyncroJob - Help Panel (Next-Gen)
+"""SyncroJob - Help Panel (Next-Gen).
+
 Pannello Guida interattivo con estetica 'Knowledge Hub', navigazione fluida e contenuti professionali.
 """
 
@@ -25,12 +25,13 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class HelpPanel(QWidget):
-    """
-    Knowledge Hub Enterprise.
+    """Knowledge Hub Enterprise.
+
     Un'esperienza immersiva per la documentazione operativa con stile moderno e contenuti ricchi.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.sections: list[tuple[str, str, str]] = []
         self._setup_ui()
@@ -58,6 +59,7 @@ class HelpPanel(QWidget):
         border-bottom: 1px solid {COLORS["glass_border"]};
       }}
     """)
+
         header_layout = QHBoxLayout(header)
         header_layout.setContentsMargins(40, 0, 40, 0)
 
@@ -157,6 +159,7 @@ class HelpPanel(QWidget):
       QListWidget::item:hover {{ background-color: {COLORS["bg_hover"]}; color: {COLORS["text_dark"]}; }}
       QListWidget::item:selected {{ background-color: {COLORS["teal_accent"]}; color: white; }}
     """)
+
         self.index_list.currentRowChanged.connect(self._on_index_changed)
         sidebar_layout.addWidget(self.index_list)
 
@@ -186,6 +189,7 @@ class HelpPanel(QWidget):
         font-size: 16px; color: {COLORS["text_dark"]};
       }}
     """)
+
         content_layout.addWidget(self.browser)
         return content_container
 

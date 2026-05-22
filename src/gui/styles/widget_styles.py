@@ -1,5 +1,5 @@
-"""
-SyncroJob - Stylesheet QSS Riutilizzabili
+"""SyncroJob - Stylesheet QSS Riutilizzabili.
+
 Definizioni centralizzate per widget comuni.
 """
 

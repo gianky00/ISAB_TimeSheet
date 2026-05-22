@@ -1,6 +1,4 @@
-"""
-Timesheet module
-"""
+"""Timesheet module."""
 
 from src.core.timesheet.processor import TimesheetProcessor
 

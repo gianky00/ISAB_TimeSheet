@@ -1,5 +1,5 @@
-"""
-Card di configurazione per il sistema Autopilot.
+"""Card di configurazione per il sistema Autopilot.
+
 Permettono all'utente di abilitare e programmare l'esecuzione automatica dei bot.
 """
 
@@ -31,9 +31,7 @@ class BotVisualInfo(TypedDict):
 
 
 class AutopilotConfigCard(QFrame):
-    """
-    Card per configurare un bot programmato.
-    """
+    """Card per configurare un bot programmato."""
 
     def __init__(
         self,
@@ -43,8 +41,8 @@ class AutopilotConfigCard(QFrame):
         color: str | None = None,
         parent: QWidget | None = None,
     ) -> None:
-        """
-        Inizializza la card di configurazione.
+        """Inizializza la card di configurazione.
+
         Supporta sia il nuovo pattern (info: BotVisualInfo) che quello legacy (bot_id, bot_name, icon, color).
 
         Args:
@@ -201,8 +199,8 @@ class AutopilotConfigCard(QFrame):
 
 
 class AutopilotConfigCardWithInterval(QFrame):
-    """
-    Card per configurare un task programmato con intervallo in giorni.
+    """Card per configurare un task programmato con intervallo in giorni.
+
     Usato per report email e altri task non giornalieri.
     """
 
@@ -214,8 +212,8 @@ class AutopilotConfigCardWithInterval(QFrame):
         color: str | None = None,
         parent: QWidget | None = None,
     ) -> None:
-        """
-        Inizializza la card di configurazione con intervallo.
+        """Inizializza la card di configurazione con intervallo.
+
         Supporta sia il nuovo pattern (info: BotVisualInfo) che quello legacy (bot_id, bot_name, icon, color).
 
         Args:

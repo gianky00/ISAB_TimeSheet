@@ -1,5 +1,4 @@
-r"""
-Script per rimuovere i duplicati dalla tabella attivita_programmate.
+r"""Script per rimuovere i duplicati dalla tabella attivita_programmate.
 Esegui con: .venv\Scripts\python.exe scripts\cleanup_duplicates.py
 """
 

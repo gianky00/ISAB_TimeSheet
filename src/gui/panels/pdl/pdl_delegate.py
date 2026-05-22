@@ -1,3 +1,5 @@
+"""Modulo Pdl Delegate."""
+
 from collections.abc import Sequence
 from typing import Any
 
@@ -9,6 +11,7 @@ class PDLDelegate(QStyledItemDelegate):
     """Delegate per gestire il wrap selettivo e l'allineamento nelle celle PDL."""
 
     def __init__(self, date_columns: Sequence[int], parent: Any | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.date_columns = date_columns
 

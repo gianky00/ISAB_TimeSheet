@@ -1,5 +1,5 @@
-"""
-SyncroJob - Autopilot Main Widget
+"""SyncroJob - Autopilot Main Widget.
+
 Widget coordinatore per la visualizzazione e configurazione dei bot programmati (Autopilot).
 Gestisce la pianificazione delle attivitàautomatiche e la loro visualizzazione in tempo reale.
 """
@@ -41,8 +41,8 @@ from .event_card import AutopilotEventCard, EventInfo
 
 
 class AutopilotWidget(QWidget):
-    """
-    Widget che mostra e configura gli eventi programmati dei bot (Autopilot).
+    """Widget che mostra e configura gli eventi programmati dei bot (Autopilot).
+
     Supporta una modalità di visualizzazione (Live) e una di configurazione.
     Utilizza animazioni per le transizioni e indicatori visivi per lo stato del sistema.
     """
@@ -50,8 +50,7 @@ class AutopilotWidget(QWidget):
     bot_sync_requested = Signal(str)  # Segnale per richiedere il sync di un bot specifico
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il widget Autopilot.
+        """Inizializza il widget Autopilot.
 
         Args:
           parent: Widget genitore.

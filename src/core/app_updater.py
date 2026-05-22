@@ -1,5 +1,5 @@
-"""
-SyncroJob - App Updater (Wrapper)
+"""SyncroJob - App Updater (Wrapper).
+
 Provides high-level update management by delegating to engine and gui modules.
 This file is part of the refactoring to keep modules under 400 lines.
 """

@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Service
+"""SyncroJob - PDL Service.
+
 Gestione della logica di business e delle query per i Permessi di Lavoro (PDL).
 Delegato al PdlRepository per l'accesso ai dati.
 """

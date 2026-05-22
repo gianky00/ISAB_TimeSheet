@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright SafeWork Programmazione Sync Bot
+"""SyncroJob - Playwright SafeWork Programmazione Sync Bot.
+
 Versione Playwright del bot per il download massivo del report di programmazione Excel.
 """
 
@@ -19,9 +19,7 @@ if TYPE_CHECKING:
 
 
 class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
-    """
-    Bot per il download massivo delle attività SafeWork (Syncro) usando Playwright.
-    """
+    """Bot per il download massivo delle attività SafeWork (Syncro) usando Playwright."""
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),

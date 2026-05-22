@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-SyncroJob - Log Analysis CLI Tool.
+"""SyncroJob - Log Analysis CLI Tool.
 
 Strumento command-line per l'analisi e l'esportazione dei log strutturati.
 Consente di eseguire query filtrate, ricostruire trace e visualizzare report di salute.
@@ -28,8 +27,7 @@ from src.core.logging import health_report, query_logs, view_trace  # noqa: E402
 
 
 def format_timestamp(ts: str) -> str:
-    """
-    Formatta un timestamp ISO in un formato leggibile dall'utente.
+    """Formatta un timestamp ISO in un formato leggibile dall'utente.
 
     Args:
         ts: Stringa del timestamp in formato ISO.
@@ -45,8 +43,7 @@ def format_timestamp(ts: str) -> str:
 
 
 def print_log_entry(entry: dict[str, Any], verbose: bool = False) -> None:
-    """
-    Stampa una singola entry di log formattata con colori ANSI per il terminale.
+    """Stampa una singola entry di log formattata con colori ANSI per il terminale.
 
     Args:
         entry: Dizionario dei dati del log.
@@ -81,8 +78,7 @@ def print_log_entry(entry: dict[str, Any], verbose: bool = False) -> None:
 
 
 def cmd_query(args: argparse.Namespace) -> None:
-    """
-    Esegue una query sui log utilizzando i filtri forniti tramite argomenti CLI.
+    """Esegue una query sui log utilizzando i filtri forniti tramite argomenti CLI.
 
     Args:
         args: Argomenti parsati da argparse.
@@ -122,8 +118,7 @@ def cmd_query(args: argparse.Namespace) -> None:
 
 
 def cmd_trace(args: argparse.Namespace) -> None:
-    """
-    Ricostruisce e visualizza la timeline di eventi associata a un trace_id specifico.
+    """Ricostruisce e visualizza la timeline di eventi associata a un trace_id specifico.
 
     Args:
         args: Argomenti parsati (deve contenere trace_id).
@@ -164,8 +159,7 @@ def cmd_trace(args: argparse.Namespace) -> None:
 
 
 def cmd_health(args: argparse.Namespace) -> None:
-    """
-    Genera e visualizza un report di salute del sistema basato sugli ultimi eventi di log.
+    """Genera e visualizza un report di salute del sistema basato sugli ultimi eventi di log.
 
     Args:
         args: Argomenti parsati (opzionale: hours).
@@ -221,8 +215,7 @@ def cmd_health(args: argparse.Namespace) -> None:
 
 
 def cmd_export(args: argparse.Namespace) -> None:
-    """
-    Esporta i log filtrati in formato JSON o CSV su file.
+    """Esporta i log filtrati in formato JSON o CSV su file.
 
     Args:
         args: Argomenti parsati (format, output, filters).

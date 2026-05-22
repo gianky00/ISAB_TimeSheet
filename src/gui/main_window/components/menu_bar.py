@@ -1,5 +1,5 @@
-"""
-SyncroJob - Menu Bar Component
+"""SyncroJob - Menu Bar Component.
+
 Componente responsabile della gestione delle scorciatoie globali e della Command Palette.
 Implementa il sistema di navigazione gerarchica 'Spotlight' per l'accesso rapido a tutte le funzioni.
 """
@@ -25,14 +25,13 @@ if TYPE_CHECKING:
 
 
 class MenuBarComponent(QObject):
-    """
-    Gestisce l'interazione con i comandi globali tramite tastiera e interfaccia Spotlight.
+    """Gestisce l'interazione con i comandi globali tramite tastiera e interfaccia Spotlight.
+
     Coordina l'inizializzazione della Command Palette e la costruzione dell'albero dei comandi.
     """
 
     def __init__(self, main_window: MainWindow) -> None:
-        """
-        Inizializza il componente menu e registra le scorciatoie.
+        """Inizializza il componente menu e registra le scorciatoie.
 
         Args:
           main_window: Riferimento alla MainWindow dell'applicazione.
@@ -113,8 +112,8 @@ class MenuBarComponent(QObject):
             self.command_palette = None
 
     def _build_menu_tree(self) -> list[CommandNode]:
-        """
-        Costruisce dinamicamente la struttura gerarchica dei comandi disponibili nell'applicazione.
+        """Costruisce dinamicamente la struttura gerarchica dei comandi disponibili nell'applicazione.
+
         Definisce azioni per esecuzione bot, navigazione pagine e manutenzione sistema.
 
         Returns:

@@ -1,5 +1,4 @@
-"""
-Bot TS - License Generator (Admin Tool)
+"""Bot TS - License Generator (Admin Tool)
 Genera file di licenza per i client.
 """
 
@@ -31,8 +30,7 @@ CLIENTS_FILE = current_dir / "clients.json"
 
 
 def derive_license_key(hw_id: str) -> bytes:
-    """
-    Deriva la chiave di cifratura dall'Hardware ID utilizzando la stessa logica del client.
+    """Deriva la chiave di cifratura dall'Hardware ID utilizzando la stessa logica del client.
     Garantisce che la chiave sia esattamente 32 byte url-safe base64-encoded.
     """
     from cryptography.hazmat.primitives import hashes

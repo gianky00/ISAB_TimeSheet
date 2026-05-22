@@ -1,5 +1,4 @@
-"""
-SyncroJob - Test Bot Queue Manager
+"""SyncroJob - Test Bot Queue Manager
 Verifica la logica di parallelismo e accodamento dei bot.
 """
 

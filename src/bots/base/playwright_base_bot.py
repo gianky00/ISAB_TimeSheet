@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright Base Bot
+"""SyncroJob - Playwright Base Bot.
+
 Implementazione della classe base per i bot Playwright.
 """
 
@@ -34,8 +34,8 @@ if TYPE_CHECKING:
 
 
 class PlaywrightBaseBot(BaseBot, ABC):
-    """
-    Classe base per i bot basati su Playwright.
+    """Classe base per i bot basati su Playwright.
+
     Centralizza la gestione del browser Chromium, la persistenza del profilo e i flag di sicurezza.
     """
 
@@ -44,8 +44,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
         config: SeleniumBotConfig,
         **kwargs: Any,
     ) -> None:
-        """
-        Inizializza le proprietà fondamentali del bot Playwright.
+        """Inizializza le proprietà fondamentali del bot Playwright.
 
         Args:
           config: Istanza di SeleniumBotConfig con le impostazioni del bot.
@@ -221,6 +220,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
       });
       observer.observe(document.documentElement, { childList: true, subtree: true });
     """)
+
         self.login_page = PlaywrightLoginPage(self.page, self.log, self.ISAB_URL)
 
     def cleanup(self) -> None:
@@ -280,8 +280,8 @@ class PlaywrightBaseBot(BaseBot, ABC):
     def _select_combobox_item(
         self, input_selector: str, arrow_selector: str, item_text: str, timeout_ms: int = 15000
     ) -> bool:
-        """
-        Seleziona un elemento in modo ultra-robusto emulando Selenium.
+        """Seleziona un elemento in modo ultra-robusto emulando Selenium.
+
         Gestisce i duplicati nelle tab prendendo sempre il primo elemento visibile.
         """
         if not self.page:
@@ -328,8 +328,8 @@ class PlaywrightBaseBot(BaseBot, ABC):
             return True
 
     def _debug_dump_page(self, suffix: str = "debug") -> str:
-        """
-        Esegue una scansione profonda della pagina corrente e salva un report tecnico.
+        """Esegue una scansione profonda della pagina corrente e salva un report tecnico.
+
         Utilissimo per mappare campi dinamici di ExtJS.
         """
         if not self.page:

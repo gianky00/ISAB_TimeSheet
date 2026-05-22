@@ -1,5 +1,5 @@
-"""
-SyncroJob - Health Worker
+"""SyncroJob - Health Worker.
+
 Worker asincrono per l'analisi della salute del sistema e la scansione dei log.
 Evita il freeze della GUI durante l'elaborazione di analytics e diagnostica.
 """
@@ -16,16 +16,13 @@ logger = logging.getLogger(__name__)
 
 
 class HealthWorker(QThread):
-    """
-    Worker che esegue analisi pesanti sui log e calcola l'Health Score in background.
-    """
+    """Worker che esegue analisi pesanti sui log e calcola l'Health Score in background."""
 
     finished_signal = Signal(dict)
     error_signal = Signal(str)
 
     def __init__(self, hours: int = 24) -> None:
-        """
-        Inizializza il worker.
+        """Inizializza il worker.
 
         Args:
           hours: Intervallo temporale di analisi (default 24h).

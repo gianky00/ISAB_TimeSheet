@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Period Manager
+"""SyncroJob - PDL Period Manager.
+
 Logica di business per il calcolo dei range settimanali e degli header temporali.
 """
 
@@ -11,9 +11,9 @@ class PDLPeriodManager:
 
     @staticmethod
     def get_week_range(offset_weeks: int = 0) -> tuple[str, str, datetime]:
-        """
-        Calcola il range della settimana basato sull'offset rispetto alla corrente.
-        Returns: (start_str, end_str, start_datetime)
+        """Calcola il range della settimana basato sull'offset rispetto alla corrente.
+
+        Returns: (start_str, end_str, start_datetime).
         """
         today = datetime.now(UTC).astimezone()
         current_weekday = today.weekday()

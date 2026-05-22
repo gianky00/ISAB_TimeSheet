@@ -1,6 +1,4 @@
-"""
-Page Object per la gestione Prenotazioni BP sul Portale Fornitori.
-"""
+"""Page Object per la gestione Prenotazioni BP sul Portale Fornitori."""
 
 from collections.abc import Callable
 from contextlib import suppress
@@ -20,8 +18,8 @@ from ..locators import PrenotaBPLocators
 
 
 class PrenotaBPPage:
-    """
-    Page Object Model per la gestione delle prenotazioni dei Buoni di Prelievo (BP).
+    """Page Object Model per la gestione delle prenotazioni dei Buoni di Prelievo (BP).
+
     Gestisce la navigazione nei menu, il filtraggio e l'inserimento di nuove prenotazioni.
     """
 
@@ -43,12 +41,12 @@ class PrenotaBPPage:
             self.short_wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
 
     def wait_and_click(self, locator: tuple[str, str], timeout: int | float | None = None) -> Any:
-        """
-        Attende che un elemento sia cliccabile e vi clicca sopra, gestendo errori DOM.
+        """Attende che un elemento sia cliccabile e vi clicca sopra, gestendo errori DOM.
 
         Args:
           locator: Tupla (By, value).
           timeout: Tempo massimo di attesa.
+
         Returns:
           WebElement: L'elemento cliccato.
         """
@@ -83,8 +81,7 @@ class PrenotaBPPage:
         return None
 
     def wait_and_fill(self, locator: tuple[str, str], text: str, timeout: int | float | None = None) -> Any:
-        """
-        Attende un campo di input, lo pulisce e inserisce il testo.
+        """Attende un campo di input, lo pulisce e inserisce il testo.
 
         Args:
           locator: Tupla (By, value).
@@ -195,9 +192,10 @@ class PrenotaBPPage:
             raise
 
     def verifica_disponibilita_materiali(self) -> bool:
-        """
-        Verifica se tutti i materiali sono disponibili controllando l'icona
+        """Verifica se tutti i materiali sono disponibili controllando l'icona.
+
         nell'ultima colonna della griglia dettagli.
+
         Returns:
           bool: True se tutti i materiali sono disponibili, False altrimenti.
         """

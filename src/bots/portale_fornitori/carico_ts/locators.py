@@ -1,5 +1,5 @@
-"""
-SyncroJob - Carico TS Locators
+"""SyncroJob - Carico TS Locators.
+
 Selectors for Carico TS.
 """
 

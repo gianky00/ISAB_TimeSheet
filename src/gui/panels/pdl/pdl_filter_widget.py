@@ -1,3 +1,5 @@
+"""Modulo Pdl Filter Widget."""
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFrame,
@@ -38,6 +40,7 @@ class PDLFilterWidget(QWidget):
     lbl_sync_status: QLabel
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
         # Force compact height
@@ -167,8 +170,7 @@ class PDLFilterWidget(QWidget):
         self.export_btn.clicked.connect(lambda: self.export_clicked.emit())
 
     def get_filters(self) -> dict[str, str]:
-        """
-        Recupera i valori correnti di tutti i filtri.
+        """Recupera i valori correnti di tutti i filtri.
 
         Returns:
             dict: Mappa dei filtri (search, group, site, area, unit).

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Document Processor
+"""SyncroJob - Document Processor.
+
 Gestisce l'estrazione di testo e la manipolazione di file PDF.
 """
 

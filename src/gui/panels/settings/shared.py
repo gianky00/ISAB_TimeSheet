@@ -1,3 +1,5 @@
+"""Modulo Shared."""
+
 from PySide6.QtCore import QSize
 from PySide6.QtWidgets import QGroupBox, QPushButton, QWidget
 

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Bot UI Components
+"""SyncroJob - Bot UI Components.
+
 Sotto-componenti specializzati per i pannelli dei bot.
 Conformit  SRP: Ogni componente gestisce una specifica area della UI.
 """
@@ -24,6 +24,7 @@ class BotControlComponent(QWidget):
     stop_clicked = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 
@@ -63,6 +64,7 @@ class BotTimelineComponent(ActivityTimelineWidget):
     """Versione specializzata della timeline per i bot."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.setContentsMargins(10, 10, 10, 10)
 

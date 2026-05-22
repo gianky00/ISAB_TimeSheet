@@ -1,5 +1,5 @@
-"""
-SyncroJob - Boot Telemetry
+"""SyncroJob - Boot Telemetry.
+
 Widget per la visualizzazione dei dati hardware e di sistema in tempo reale durante la fase di avvio.
 """
 
@@ -18,14 +18,13 @@ from src.gui.styles import COLORS
 
 
 class BootTelemetryWidget(QWidget):
-    """
-    Telemetria avanzata real-time visualizzata durante il caricamento (Boot).
+    """Telemetria avanzata real-time visualizzata durante il caricamento (Boot).
+
     Mostra informazioni su OS, Hostname, utilizzo CPU e RAM.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il widget della telemetria.
+        """Inizializza il widget della telemetria.
 
         Args:
           parent: Widget genitore.

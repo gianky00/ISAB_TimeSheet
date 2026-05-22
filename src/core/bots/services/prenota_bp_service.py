@@ -11,6 +11,7 @@ class PrenotaBPService(BaseBotService):
     """Implementazione del servizio per la prenotazione BP."""
 
     def __init__(self) -> None:
+        """Inizializza il servizio di prenotazione BP."""
         super().__init__("prenota_bp")
 
     def load_config(self) -> dict[str, Any]:
@@ -44,8 +45,7 @@ class PrenotaBPService(BaseBotService):
         data: list[dict[str, Any]],
         overrides: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
-        """
-        Prepara i dati per l'esecuzione del bot Prenota BP.
+        """Prepara i dati per l'esecuzione del bot Prenota BP.
 
         Args:
           credentials: Tupla (username, password, tipo).

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Modern Card Widget
+"""SyncroJob - Modern Card Widget.
+
 Un contenitore elegante con ombre morbide, angoli arrotondati e animazioni hover.
 """
 
@@ -18,8 +18,8 @@ if TYPE_CHECKING:
 
 
 class ModernCard(QFrame):
-    """
-    Una card moderna che gestisce automaticamente l'elevazione (ombra) e
+    """Una card moderna che gestisce automaticamente l'elevazione (ombra) e.
+
     gli effetti visivi quando l'utente ci passa sopra col mouse.
     """
 
@@ -82,6 +82,7 @@ class ModernCard(QFrame):
         border-radius: 12px;
       }}
     """)
+
         super().enterEvent(event)
 
     def leaveEvent(self, event: QEvent) -> None:

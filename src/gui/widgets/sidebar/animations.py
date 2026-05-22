@@ -1,5 +1,5 @@
-"""
-SyncroJob - Sidebar Animation Manager
+"""SyncroJob - Sidebar Animation Manager.
+
 Gestisce le transizioni fluide e il movimento magnetico del track.
 """
 
@@ -11,6 +11,7 @@ class SidebarAnimationManager(QObject):
     """Orchestratore delle animazioni per la Sidebar Widget."""
 
     def __init__(self, sidebar: QWidget) -> None:
+        """Inizializza la classe."""
         super().__init__(sidebar)
         self.sidebar = sidebar
 

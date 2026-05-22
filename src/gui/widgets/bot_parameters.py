@@ -1,5 +1,5 @@
-"""
-SyncroJob - Bot Parameters Widget
+"""SyncroJob - Bot Parameters Widget.
+
 Widget riutilizzabile per la configurazione dei parametri comuni a tutti i bot (Fornitore, Date, Percorso).
 """
 
@@ -41,16 +41,15 @@ from .calendar_date_edit import CalendarDateEdit
 
 
 class HoverPulseFrame(QFrame):
-    """
-    Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
+    """Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
+
     Fornisce un feedback visivo immediato sull'interattivitàdella card parametri.
     """
 
     pulse_value_changed = Signal(float)
 
     def __init__(self, accent_color: str | None = None, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il frame pulsante.
+        """Inizializza il frame pulsante.
 
         Args:
           accent_color: Colore hex del bordo.
@@ -114,11 +113,11 @@ class HoverPulseFrame(QFrame):
 
 
 class BotParametersWidget(QWidget):
-    """
-    Widget che raggruppa in un'unica riga i parametri comuni per i bot:
+    """Widget che raggruppa in un'unica riga i parametri comuni per i bot:
+
     - Selezione Fornitore (con pulsante gestione rapida)
     - Selezione Data (singola o range temporale)
-    - Percorso di destinazione per i file scaricati
+    - Percorso di destinazione per i file scaricati.
 
     Implementa un design Neon & Shadow standard per tutte le viste.
     """
@@ -132,8 +131,7 @@ class BotParametersWidget(QWidget):
     def __init__(
         self, show_date_range: bool = False, show_dest_path: bool = True, parent: QWidget | None = None
     ) -> None:
-        """
-        Inizializza il widget dei parametri.
+        """Inizializza il widget dei parametri.
 
         Args:
           show_date_range: Se True, visualizza anche il campo 'Data À.
@@ -293,6 +291,7 @@ class BotParametersWidget(QWidget):
       }}
       QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
     """)
+
         self.open_btn.setToolTip("Apri cartella nel file system")
         self.open_btn.clicked.connect(self._open_folder)
         hbox.addWidget(self.open_btn)
@@ -308,8 +307,7 @@ class BotParametersWidget(QWidget):
         self.main_row_layout.addWidget(line)
 
     def add_widget_to_row(self, widget: QWidget) -> None:
-        """
-        Aggiunge un widget personalizzato alla riga dei parametri.
+        """Aggiunge un widget personalizzato alla riga dei parametri.
 
         Args:
           widget: Il widget QWidget da aggiungere.

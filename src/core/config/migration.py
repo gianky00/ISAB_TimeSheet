@@ -1,5 +1,5 @@
-"""
-SyncroJob - Config Migration
+"""SyncroJob - Config Migration.
+
 Logica di migrazione per vecchie configurazioni.
 """
 

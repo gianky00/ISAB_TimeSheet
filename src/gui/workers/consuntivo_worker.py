@@ -1,5 +1,5 @@
-"""
-SyncroJob - Consuntivo Worker
+"""SyncroJob - Consuntivo Worker.
+
 Worker asincrono per l'inizializzazione dei dati e la scansione del filesystem per i consuntivi.
 Garantisce la fluidità della GUI durante la ricerca dei file Excel e le query di configurazione.
 """
@@ -15,16 +15,13 @@ logger = logging.getLogger(__name__)
 
 
 class ConsuntivoWorker(QThread):
-    """
-    Worker che gestisce il pre-caricamento delle opzioni e la scansione directory.
-    """
+    """Worker che gestisce il pre-caricamento delle opzioni e la scansione directory."""
 
     finished_signal = Signal(dict)
     error_signal = Signal(str)
 
     def __init__(self, controller: ConsuntivoController, scan_callback: Any = None) -> None:
-        """
-        Inizializza il worker.
+        """Inizializza il worker.
 
         Args:
           controller: Istanza del controller consuntivi.

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Config Security
+"""SyncroJob - Config Security.
+
 Gestione della protezione delle credenziali.
 """
 

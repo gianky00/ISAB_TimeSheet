@@ -1,3 +1,5 @@
+"""Modulo Oda."""
+
 from dataclasses import dataclass
 
 

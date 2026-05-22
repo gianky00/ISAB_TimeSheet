@@ -1,6 +1,4 @@
-"""
-Performance metrics tracking e storage.
-"""
+"""Performance metrics tracking e storage."""
 
 import json
 from collections import defaultdict
@@ -36,13 +34,13 @@ class PerformanceMetric:
 
 
 class MetricsSink:
-    """
-    Sink per metriche di performance.
+    """Sink per metriche di performance.
 
     Scrive metriche in file JSONL (newline-delimited JSON).
     """
 
     def __init__(self, config: Any = None) -> None:
+        """Inizializza la classe."""
         self.config = config or get_config()
         self.metrics_file = self.config.metrics_dir / "performance.jsonl"
 
@@ -50,8 +48,7 @@ class MetricsSink:
         self.config.metrics_dir.mkdir(parents=True, exist_ok=True)
 
     def write_metric(self, metric: PerformanceMetric) -> None:
-        """
-        Scrive metrica su file.
+        """Scrive metrica su file.
 
         Args:
           metric: Metrica da scrivere
@@ -64,8 +61,7 @@ class MetricsSink:
         operation: str | None = None,
         limit: int | None = None,
     ) -> list[PerformanceMetric]:
-        """
-        Legge metriche da file.
+        """Legge metriche da file.
 
         Args:
           operation: Filtra per operation specifica (opzionale)
@@ -112,8 +108,7 @@ class MetricsSink:
 
 
 class PerformanceTracker:
-    """
-    Tracker per monitorare performance nel tempo.
+    """Tracker per monitorare performance nel tempo.
 
     Features:
     - Registra metriche
@@ -131,6 +126,7 @@ class PerformanceTracker:
         return cls._instance
 
     def __init__(self) -> None:
+        """Inizializza la classe."""
         self.sink = MetricsSink()
         self._in_memory_metrics: dict[str, list[float]] = defaultdict(list)  # operation -> [durations]
         self._baselines: dict[str, float] = {}  # operation -> baseline_ms
@@ -141,8 +137,7 @@ class PerformanceTracker:
         duration_ms: float,
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        """
-        Registra metrica di performance.
+        """Registra metrica di performance.
 
         Args:
           operation: Nome operazione (es: "bot.scarico_ts.download")
@@ -163,8 +158,7 @@ class PerformanceTracker:
             self._in_memory_metrics[operation] = self._in_memory_metrics[operation][-1000:]
 
     def get_statistics(self, operation: str) -> dict[str, float] | None:
-        """
-        Calcola statistiche per operazione.
+        """Calcola statistiche per operazione.
 
         Args:
           operation: Nome operazione
@@ -190,8 +184,7 @@ class PerformanceTracker:
         }
 
     def set_baseline(self, operation: str, baseline_ms: float) -> None:
-        """
-        Imposta baseline per operazione.
+        """Imposta baseline per operazione.
 
         Args:
           operation: Nome operazione
@@ -200,8 +193,7 @@ class PerformanceTracker:
         self._baselines[operation] = baseline_ms
 
     def get_baseline(self, operation: str) -> float | None:
-        """
-        Restituisce baseline per operazione.
+        """Restituisce baseline per operazione.
 
         Args:
           operation: Nome operazione

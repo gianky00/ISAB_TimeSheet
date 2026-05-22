@@ -1,5 +1,4 @@
-"""
-Dependency Analyzer for PyInstaller/PyArmor (NUCLEAR OPTION)
+"""Dependency Analyzer for PyInstaller/PyArmor (NUCLEAR OPTION)
 Scansiona il progetto in modo aggressive per trovare TUTTE le dipendenze possibili.
 """
 
@@ -9,8 +8,7 @@ from pathlib import Path
 
 
 def get_all_imports(script_path: str, src_path: str) -> list[str]:  # noqa: C901, PLR0912
-    """
-    Scansiona ricorsivamente il codice sorgente per identificare tutte le importazioni effettive.
+    """Scansiona ricorsivamente il codice sorgente per identificare tutte le importazioni effettive.
     Utilizza l'analisi AST per trovare dipendenze anche in percorsi di codice non eseguiti.
 
     Args:

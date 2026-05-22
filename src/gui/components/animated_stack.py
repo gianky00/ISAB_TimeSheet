@@ -1,5 +1,5 @@
-"""
-SyncroJob - Ultra Smooth Animated Stacked Widget
+"""SyncroJob - Ultra Smooth Animated Stacked Widget.
+
 Gestisce transizioni tra widget usando snapshot e cross-fade per performance massime.
 """
 
@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 
 
 class SlidingStackedWidget(QStackedWidget):
-    """
-    StackedWidget ad alte prestazioni che anima istantanee (snapshot) dei widget
+    """StackedWidget ad alte prestazioni che anima istantanee (snapshot) dei widget.
+
     per garantire 60 FPS anche con contenuti pesanti.
     """
 
@@ -30,8 +30,7 @@ class SlidingStackedWidget(QStackedWidget):
     """Segnale emesso al termine della transizione animata."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza lo stack animato.
+        """Inizializza lo stack animato.
 
         Args:
           parent: Widget genitore.
@@ -52,8 +51,8 @@ class SlidingStackedWidget(QStackedWidget):
         self.fade_label_new.hide()
 
     def slide_to_index(self, index: int) -> None:  # noqa: PLR0915
-        """
-        Esegue l'animazione di transizione premium verso l'indice specificato.
+        """Esegue l'animazione di transizione premium verso l'indice specificato.
+
         Utilizza snapshot QPixmap per mantenere la fluidità indipendentemente dal carico dei widget.
 
         Args:

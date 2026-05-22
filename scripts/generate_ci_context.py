@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-SyncroJob - CI Context Generator (Final Secure Edition)
+"""SyncroJob - CI Context Generator (Final Secure Edition)
 Aggrega l'output di Ruff, Mypy e dei Test in un unico file CI_CONTEXT.md
 nella root del progetto per facilitare l'analisi da parte dell'IA.
 """

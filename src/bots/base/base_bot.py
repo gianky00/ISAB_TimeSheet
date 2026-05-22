@@ -1,3 +1,5 @@
+"""Modulo Base Bot."""
+
 from __future__ import annotations
 
 import re
@@ -32,9 +34,7 @@ class BotConfig:
 
 
 class BotSignals(QObject):
-    """
-    Segnali PySide6 per la comunicazione asincrona tra il thread del bot e l'interfaccia utente.
-    """
+    """Segnali PySide6 per la comunicazione asincrona tra il thread del bot e l'interfaccia utente."""
 
     step_changed = Signal(int, str, object)
     status_changed = Signal(object)
@@ -43,8 +43,8 @@ class BotSignals(QObject):
 
 
 class BaseBot(ABC):
-    """
-    Architettura base agnostica dal driver per i bot ISAB/SafeWork.
+    """Architettura base agnostica dal driver per i bot ISAB/SafeWork.
+
     Refactored V9.0: SRP Compliance via BotStepManager and ExecutionGuard.
     """
 
@@ -60,9 +60,7 @@ class BaseBot(ABC):
         password: str,
         config: BotConfig | None = None,
     ) -> None:
-        """
-        Inizializza le proprietà fondamentali del bot.
-        """
+        """Inizializza le proprietà fondamentali del bot."""
         self.username = username
         self.password = password
         self.config = config or BotConfig()
@@ -106,9 +104,7 @@ class BaseBot(ABC):
     #    Gestione Step (Delegata)
 
     def update_step(self, step_id: str | int, status: StepStatus, message: str | None = None) -> None:
-        """
-        Aggiorna lo stato di uno step tramite il gestore dedicato.
-        """
+        """Aggiorna lo stato di uno step tramite il gestore dedicato."""
         idx, name = self.step_manager.update_step(step_id, status)
 
         if idx != -1:
@@ -247,8 +243,8 @@ class BaseBot(ABC):
 
     @measure_time(threshold_ms=5000)
     def execute(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
-        """
-        Orchestratore principale dell'esecuzione.
+        """Orchestratore principale dell'esecuzione.
+
         Delegata la sicurezza a ExecutionGuard e il progresso a BotStepManager.
         """
         self._stop_requested = False

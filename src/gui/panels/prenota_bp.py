@@ -1,5 +1,4 @@
-"""
-SyncroJob - Prenota BP Panel.
+"""SyncroJob - Prenota BP Panel.
 
 Gestisce l'interfaccia utente per il bot di prenotazione dei Badge Provvisori (BP)
 sul portale fornitori ISAB. Consente di inserire una lista di BP, configurare
@@ -27,14 +26,13 @@ if TYPE_CHECKING:
 
 
 class PrenotaBPPanel(BaseBotPanel):
-    """
-    Pannello operativo per l'automazione della prenotazione BP.
+    """Pannello operativo per l'automazione della prenotazione BP.
+
     Eredita da BaseBotPanel per la gestione standard di log e stati.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello e carica i dati salvati.
+        """Inizializza il pannello e carica i dati salvati.
 
         Args:
             parent: Widget genitore.
@@ -77,8 +75,7 @@ class PrenotaBPPanel(BaseBotPanel):
             QTimer.singleShot(10, self._safe_load_data)
 
     def get_bot_class(self) -> type[BaseBot]:
-        """
-        Restituisce la classe del bot associata al pannello.
+        """Restituisce la classe del bot associata al pannello.
 
         Returns:
             Type[PrenotaBPBot]: Classe del bot.
@@ -157,8 +154,7 @@ class PrenotaBPPanel(BaseBotPanel):
         self.content_layout.addWidget(params_container)
 
     def _update_status_list(self, force: bool = False) -> None:
-        """
-        Sincronizza il contatore visivo dello stato con il numero di righe della tabella.
+        """Sincronizza il contatore visivo dello stato con il numero di righe della tabella.
 
         Args:
             force: Se True, reinizializza sempre la lista.
@@ -168,8 +164,7 @@ class PrenotaBPPanel(BaseBotPanel):
             self.status_list.initialize_rows(count, self.data_table.table.rowHeight(0) or 30)
 
     def on_step_completed(self, step_idx: int, success: bool, message: str = "") -> None:
-        """
-        Aggiorna lo stato visivo di una specifica riga al termine del suo processing.
+        """Aggiorna lo stato visivo di una specifica riga al termine del suo processing.
 
         Args:
             step_idx: Indice della riga processata.
@@ -243,8 +238,7 @@ class PrenotaBPPanel(BaseBotPanel):
             self._save_data()
 
     def _on_start(self, params_override: dict[str, Any] | None = None) -> None:
-        """
-        Prepara l'ambiente e avvia il worker del bot tramite controller.
+        """Prepara l'ambiente e avvia il worker del bot tramite controller.
 
         Args:
             params_override: Eventuali parametri che sovrascrivono quelli della UI.

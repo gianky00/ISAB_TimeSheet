@@ -1,5 +1,5 @@
-"""
-SyncroJob - Shared Integrity Worker
+"""SyncroJob - Shared Integrity Worker.
+
 Worker riutilizzabile per la verifica dell'integrità dei log di audit.
 """
 

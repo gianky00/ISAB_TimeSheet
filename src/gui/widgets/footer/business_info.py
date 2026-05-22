@@ -1,5 +1,5 @@
-"""
-SyncroJob - Footer Business Info
+"""SyncroJob - Footer Business Info.
+
 Widget per la visualizzazione delle informazioni aziendali e degli account attivi nel footer.
 """
 
@@ -22,8 +22,8 @@ from .components import ClickableLabel
 
 
 class FooterLeftWidget(QWidget):
-    """
-    Parte sinistra del footer: Business Info.
+    """Parte sinistra del footer: Business Info.
+
     Visualizza il nome del cliente, la scadenza della licenza, l'ID hardware e gli account dei portali.
     """
 
@@ -33,8 +33,7 @@ class FooterLeftWidget(QWidget):
     headless_clicked = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il widget del footer sinistro.
+        """Inizializza il widget del footer sinistro.
 
         Args:
           parent: Widget genitore.
@@ -131,8 +130,7 @@ class FooterLeftWidget(QWidget):
         layout.addWidget(line)
 
     def update_info(self, client: str, expiry: str, last_login: str = "", hw_id: str = "") -> None:
-        """
-        Aggiorna le informazioni testuali del footer.
+        """Aggiorna le informazioni testuali del footer.
 
         Args:
           client: Nome del cliente licenziatario.
@@ -171,8 +169,7 @@ class FooterLeftWidget(QWidget):
         return str(accounts[0].get("username")) if accounts else None
 
     def fade_in(self, duration: int = 400) -> None:
-        """
-        Esegue un'animazione di comparsa graduale (dissolvenza) del widget.
+        """Esegue un'animazione di comparsa graduale (dissolvenza) del widget.
 
         Args:
           duration: Durata dell'animazione in ms.

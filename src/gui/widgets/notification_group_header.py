@@ -1,5 +1,5 @@
-"""
-NotificationGroupHeader - Header collapsible per raggruppamenti di notifiche.
+"""NotificationGroupHeader - Header collapsible per raggruppamenti di notifiche.
+
 Supporta time-based, category-based e priority-based grouping.
 """
 
@@ -11,8 +11,7 @@ from src.gui.styles import COLORS
 
 
 class NotificationGroupHeader(QFrame):
-    """
-    Header collapsible per un gruppo di notifiche.
+    """Header collapsible per un gruppo di notifiche.
 
     Features:
     - Click per expand/collapse gruppo

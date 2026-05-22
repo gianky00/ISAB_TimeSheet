@@ -1,5 +1,5 @@
-"""
-SyncroJob - Service Controller
+"""SyncroJob - Service Controller.
+
 Controller per il coordinamento dei servizi di background, l'automazione dei report e la gestione del parallelismo bot.
 Implementa una logica di scheduling intelligente che permette l'esecuzione contemporanea di bot su portali diversi
 (es. Portale Fornitori e SafeWork) garantendo al contempo la sequenzialità delle operazioni sullo stesso sito.
@@ -35,8 +35,8 @@ if not logger.handlers:
 
 
 class ServiceController(QObject):
-    """
-    Gestore del ciclo di vita dei servizi asincroni e dei task pianificati (Autopilot).
+    """Gestore del ciclo di vita dei servizi asincroni e dei task pianificati (Autopilot).
+
     Coordina:
     - TelegramService per il monitoraggio remoto e l'invio di documenti.
     - Scheduler dei Bot per lo scarico automatico di timbrature, OdA e PDL.
@@ -48,8 +48,7 @@ class ServiceController(QObject):
     DEFAULT_INTERVAL_DAYS: Final[int] = 7
 
     def __init__(self, main_window: Any, telegram_service: Any) -> None:
-        """
-        Inizializza il controller dei servizi e le code di gestione del parallelismo.
+        """Inizializza il controller dei servizi e le code di gestione del parallelismo.
 
         Args:
           main_window: Riferimento alla MainWindow dell'applicazione.
@@ -94,8 +93,8 @@ class ServiceController(QObject):
         logger.info("Tutti i servizi di background sono stati arrestati.")
 
     def _check_scheduled_tasks(self) -> None:
-        """
-        Verifica il match orario per i bot configurati in modalità Autopilot.
+        """Verifica il match orario per i bot configurati in modalità Autopilot.
+
         Applica la logica di parallelismo intelligente per l'accodamento dei task.
         """
         # Usiamo l'ora locale per il confronto con la UI

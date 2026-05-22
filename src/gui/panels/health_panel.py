@@ -1,5 +1,5 @@
-"""
-SyncroJob - Health Panel
+"""SyncroJob - Health Panel.
+
 Dashboard avanzata per il monitoraggio della salute del sistema (Observability).
 Visualizza punteggi di affidabilità (Health Score), statistiche di esecuzione dei bot nelle ultime 24 ore
 e un elenco dettagliato di anomalie rilevate, con integrazione diretta per gli alert Telegram.
@@ -31,8 +31,8 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class HealthScoreBadge(QWidget):
-    """
-    Widget circolare (Gauge) Premium per l'Health Score.
+    """Widget circolare (Gauge) Premium per l'Health Score.
+
     Implementa gradienti dinamici e ombre interne per un look Next-Gen.
     """
 
@@ -41,6 +41,7 @@ class HealthScoreBadge(QWidget):
     ATTENTION_THRESHOLD: Final[int] = 40
 
     def __init__(self, parent: QWidget | None = None, size: int = 180) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self._score = 100
         self._size = size
@@ -48,6 +49,7 @@ class HealthScoreBadge(QWidget):
 
     @property
     def score(self) -> int:
+        """Ritorna il punteggio attuale di salute del sistema."""
         return self._score
 
     @score.setter
@@ -172,6 +174,7 @@ class AnomalyCard(ModernCard):
     """Card anomalia con design a lista orizzontale e badge di severità."""
 
     def __init__(self, anomaly: Anomaly, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent, elevation=6)
         self._setup_content(anomaly)
 
@@ -221,6 +224,7 @@ class AnomalyCard(ModernCard):
       font-size: 9px;
       font-weight: 900;
     """)
+
         layout.addWidget(sev_badge)
 
     def _get_severity_color(self, severity: str) -> str:
@@ -233,8 +237,8 @@ class AnomalyCard(ModernCard):
 
 
 class HealthPanel(QWidget):
-    """
-    Pannello principale Health & Observability.
+    """Pannello principale Health & Observability.
+
     Integra timer di auto-refresh per mantenere i dati sempre aggiornati.
     """
 

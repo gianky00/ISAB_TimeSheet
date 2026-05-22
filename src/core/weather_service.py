@@ -1,5 +1,5 @@
-"""
-SyncroJob - Weather Service
+"""SyncroJob - Weather Service.
+
 Servizio specializzato per il recuperòasincrono dei dati meteo e qualità dell'aria.
 Conforme al Single Responsibility Principle (SRP).
 """
@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class WeatherService(QObject):
-    """
-    Servizio Singleton per la gestione delle richieste meteo verso Open-Meteo.
+    """Servizio Singleton per la gestione delle richieste meteo verso Open-Meteo.
+
     Mantiene lo stato della richiesta e notifica i sottoscrittori tramite segnali.
     """
 
@@ -41,8 +41,8 @@ class WeatherService(QObject):
         self._temp_weather_data: dict[str, Any] = {}
 
     def fetch_weather(self) -> None:
-        """
-        Avvia la sequenza di recuperòdati: prima Meteo, poi AQI.
+        """Avvia la sequenza di recuperòdati: prima Meteo, poi AQI.
+
         Evita richieste multiple sovrapposte.
         """
         if self._is_loading:

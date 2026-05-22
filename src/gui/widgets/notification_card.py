@@ -1,5 +1,5 @@
-"""
-SyncroJob - Notification Card (Refactored)
+"""SyncroJob - Notification Card (Refactored).
+
 Widget moderno per la visualizzazione di una singola notifica.
 Modularizzato per utilizzare il Notification Styling Engine.
 """
@@ -30,8 +30,8 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class NotificationCard(QFrame):
-    """
-    Widget moderno per la visualizzazione di una singola notifica.
+    """Widget moderno per la visualizzazione di una singola notifica.
+
     Utilizza stili dinamici basati sulla severit  e supporta animazioni di fade-in.
     """
 
@@ -47,8 +47,7 @@ class NotificationCard(QFrame):
         parent: QWidget | None = None,
         disable_animations: bool = False,
     ) -> None:
-        """
-        Inizializza la card di notifica.
+        """Inizializza la card di notifica.
 
         Args:
           notification: Dizionario contenente i dati della notifica (id, titolo, messaggio, ecc.).

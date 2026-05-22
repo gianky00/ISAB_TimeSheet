@@ -1,5 +1,4 @@
-"""
-SyncroJob - Alert Manager
+"""SyncroJob - Alert Manager.
 
 Gestisce invio automatico alert su Telegram per anomalie e eventi critici.
 """
@@ -37,8 +36,7 @@ class AlertConfig:
 
 
 class AlertManager:
-    """
-    Gestisce invio automatico alert su Telegram per anomalie.
+    """Gestisce invio automatico alert su Telegram per anomalie.
 
     Features:
     - Invio alert su anomalie critiche
@@ -58,6 +56,7 @@ class AlertManager:
         return cls._instance
 
     def __init__(self, config: AlertConfig | None = None) -> None:
+        """Inizializza la classe."""
         self.config = config or AlertConfig()
         self._last_alerts: dict[str, datetime] = {}
         self._telegram_service: TelegramService | None = None
@@ -161,8 +160,7 @@ class AlertManager:
         message: str,
         level: Literal["info", "warning", "error", "critical"] = "info",
     ) -> bool:
-        """
-        Invia alert manuale via Telegram.
+        """Invia alert manuale via Telegram.
 
         Args:
           title: Titolo alert
@@ -188,8 +186,7 @@ class AlertManager:
             return True
 
     def check_and_alert(self, hours: int = 24) -> int:
-        """
-        Controlla anomalie e invia alert se necessario.
+        """Controlla anomalie e invia alert se necessario.
 
         Args:
           hours: Ore di lookback per analisi
@@ -218,8 +215,7 @@ class AlertManager:
         return alerts_sent
 
     def alert_on_critical(self, anomaly: Anomaly) -> bool:
-        """
-        Invia alert immediato per anomalia critica (bypass config).
+        """Invia alert immediato per anomalia critica (bypass config).
 
         Args:
           anomaly: Anomalia da segnalare

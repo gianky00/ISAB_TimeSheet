@@ -10,6 +10,7 @@ class ScaricoTSService(BaseBotService):
     """Implementazione del servizio per lo scarico Timesheet."""
 
     def __init__(self) -> None:
+        """Inizializza il servizio di scarico Timesheet."""
         super().__init__("scarico_ts")
 
     def load_config(self) -> dict[str, Any]:
@@ -38,8 +39,7 @@ class ScaricoTSService(BaseBotService):
         data: list[dict[str, Any]],
         overrides: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
-        """
-        Prepara i dati per l'esecuzione del bot Scarico TS.
+        """Prepara i dati per l'esecuzione del bot Scarico TS.
 
         Args:
           credentials: Tupla (username, password, tipo).

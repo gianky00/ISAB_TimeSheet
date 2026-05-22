@@ -1,3 +1,5 @@
+"""Modulo Dipendenti Manager Panel."""
+
 from typing import Any
 
 from PySide6.QtCore import Qt, QTimer, Signal
@@ -30,6 +32,7 @@ class EmployeeEditorDialog(QDialog):
     """Dialog per aggiunta/modifica dipendente."""
 
     def __init__(self, parent: QWidget | None = None, employee_data: dict[str, Any] | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.setWindowTitle("Scheda Dipendente")
         self.setMinimumWidth(400)
@@ -81,13 +84,12 @@ class EmployeeEditorDialog(QDialog):
 
 
 class DipendentiManagerPanel(QWidget):
-    """
-    Pannello di gestione CRUD Dipendenti.
-    """
+    """Pannello di gestione CRUD Dipendenti."""
 
     data_changed = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.setObjectName("DipendentiManagerPanel")
 
@@ -149,6 +151,7 @@ class DipendentiManagerPanel(QWidget):
         border-radius: 12px;
       }}
     """)
+
         toolbar_layout = QHBoxLayout(self.toolbar_card)
         toolbar_layout.setContentsMargins(15, 10, 15, 10)
         toolbar_layout.setSpacing(15)

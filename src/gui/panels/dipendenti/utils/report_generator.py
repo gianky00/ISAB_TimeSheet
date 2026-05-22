@@ -1,5 +1,5 @@
-"""
-SyncroJob - Report Generator (Refactored)
+"""SyncroJob - Report Generator (Refactored).
+
 Controller GUI asincrono per il workflow dei report dipendenti.
 Delega le operazioni pesanti al ReportWorker per non bloccare la UI.
 """

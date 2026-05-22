@@ -84,8 +84,7 @@ class ExtractMetadataStep(ProcessingStep):
         return val
 
     def _deduce_odc_from_filename(self, file_path_str: str | Path) -> str:
-        """
-        Deduce l'ODC dal nome del file sorgente.
+        """Deduce l'ODC dal nome del file sorgente.
 
         Args:
           file_path_str: Percorso del file Excel.
@@ -101,8 +100,7 @@ class ExtractMetadataStep(ProcessingStep):
         return ""
 
     def _is_sheet_empty(self, ws: Worksheet) -> bool:
-        """
-        Verifica se il foglio Excel non contiene righe di dati valide.
+        """Verifica se il foglio Excel non contiene righe di dati valide.
 
         Args:
           ws: Il foglio di lavoro da controllare.
@@ -167,8 +165,7 @@ class TransformSheetStep(ProcessingStep):
         self._autofit_columns(ws)
 
     def _autofit_columns(self, ws: Worksheet) -> None:
-        """
-        Regola la larghezza delle colonne in base al contenuto.
+        """Regola la larghezza delle colonne in base al contenuto.
 
         Args:
           ws: Il foglio di lavoro da elaborare.

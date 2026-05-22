@@ -1,5 +1,5 @@
-"""
-SyncroJob - Preventivi Generator Manager
+"""SyncroJob - Preventivi Generator Manager.
+
 Gestisce la generazione di preventivi Excel a partire da un file Master con macro.
 Implementa una tecnica avanzata di "Sanitizzazione XML" per eliminare i bug
 dei Nomi Definiti (Print_Area) prima di lanciare l'automazione Win32COM.
@@ -35,8 +35,7 @@ class GeneratoreWorker(QThread):
     finished_signal = Signal(bool, str)
 
     def __init__(self, master_path: str, data: dict[str, Any], dest_path: str) -> None:
-        """
-        Inizializza il worker per la generazione del preventivo.
+        """Inizializza il worker per la generazione del preventivo.
 
         Args:
           master_path: Percorso del file Excel master template.
@@ -67,8 +66,7 @@ class MacroWorker(QThread):
     macro_progress = Signal(str, bool)  # Emesso quando finisce una singola macro (nome, successo)
 
     def __init__(self, file_path: str, macros: list[str]) -> None:
-        """
-        Inizializza il worker per l'esecuzione delle macro.
+        """Inizializza il worker per l'esecuzione delle macro.
 
         Args:
           file_path: Percorso del file Excel su cui eseguire le macro.
@@ -116,8 +114,7 @@ class PreventiviGeneratorManager:
     """Manager avanzato per la generazione di preventivi basati su template Excel Master."""
 
     def __init__(self, master_path: str = "") -> None:
-        """
-        Inizializza il manager dei preventivi.
+        """Inizializza il manager dei preventivi.
 
         Args:
           master_path: Percorso assoluto del file Master XLSM.
@@ -127,8 +124,7 @@ class PreventiviGeneratorManager:
         self.wb: Any = None
 
     def get_next_progressive(self, directory: str) -> str:
-        """
-        Scansiona una cartella per determinare il prossimo numero progressivo disponibile.
+        """Scansiona una cartella per determinare il prossimo numero progressivo disponibile.
 
         Args:
           directory: Cartella contenente i preventivi esistenti.
@@ -203,8 +199,8 @@ class PreventiviGeneratorManager:
         return data
 
     def _sanitize_excel_file(self, filepath: str) -> None:
-        """
-        Rimuove i riferimenti corrotti a Print_Area all'interno dell'XML di Excel.
+        """Rimuove i riferimenti corrotti a Print_Area all'interno dell'XML di Excel.
+
         Risolve il bug 'Impossibile trovare il filè durante l'esecuzione di macro.
         """
         temp_dir = tempfile.mkdtemp()
@@ -241,8 +237,7 @@ class PreventiviGeneratorManager:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
     def generate_preventivo(self, data: dict[str, Any], output_dir: str) -> tuple[bool, str]:
-        """
-        Genera un nuovo preventivo popolando il template e sanitizzando l'output.
+        """Genera un nuovo preventivo popolando il template e sanitizzando l'output.
 
         Args:
           data: Dati inseriti dall'utente nella UI.

@@ -1,5 +1,5 @@
-"""
-SyncroJob - SafeWork Status List Widget
+"""SyncroJob - SafeWork Status List Widget.
+
 Widget per visualizzare lo stato di elaborazione riga per riga per i bot SafeWork.
 """
 
@@ -24,6 +24,7 @@ class StatusListWidget(QListWidget):
       QListWidget { background: transparent; border: none; outline: none; }
       QListWidget::item { padding: 0px; margin: 0px; border: none; }
     """)
+
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 

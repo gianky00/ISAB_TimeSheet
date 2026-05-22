@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Table Widget
+"""SyncroJob - PDL Table Widget.
+
 Widget specializzato per la visualizzazione della griglia PDL SafeWork.
 """
 
@@ -18,6 +18,7 @@ class PDLTableView(QTableView):
     context_menu_requested = Signal(object)  # pos
 
     def __init__(self, model: QAbstractItemModel, parent: QWidget | None = None) -> None:
+        """Inizializza la classe."""
         super().__init__(parent)
         self.setModel(model)
         self._setup_ui()
