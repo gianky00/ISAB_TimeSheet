@@ -29,6 +29,7 @@ from src.core.config_manager import set_config_value
 from src.core.constants import Icons
 from src.core.version import __version__
 from src.gui.styles import COLORS, SCROLL_AREA_TRANSPARENT, card_style
+from src.gui.workers.changelog_worker import ChangelogWorker
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
@@ -748,12 +749,18 @@ class ChangelogPanel(QWidget):
         return changelog_data
 
     def _load_changelog(self) -> None:
-        """Carica il file changelog.json ed esegue il rendering delle card di versione con la timeline."""
+        """Avvia il caricamento asincrono del changelog."""
         if ChangelogPanel._changelog_cache is not None:
-            changelog_data = ChangelogPanel._changelog_cache
-        else:
-            changelog_data = self._read_changelog_from_disk()
-            ChangelogPanel._changelog_cache = changelog_data
+            self._on_changelog_ready(ChangelogPanel._changelog_cache)
+            return
+
+        self._changelog_worker = ChangelogWorker()
+        self._changelog_worker.finished_signal.connect(self._on_changelog_ready)
+        self._changelog_worker.start()
+
+    def _on_changelog_ready(self, changelog_data: list[dict[str, Any]]) -> None:
+        """Popola la UI con i dati del changelog caricati asincronamente."""
+        ChangelogPanel._changelog_cache = changelog_data
 
         # Svuota i layout per sicurezza
         self._clear_layout(self.diag_outer_layout)
@@ -764,10 +771,10 @@ class ChangelogPanel(QWidget):
         diagnostics = self._create_diagnostics_card()
         self.diag_outer_layout.addWidget(diagnostics)
 
-        # 2. Rendering delle release reali dal file JSON
+        # 2. Rendering delle release reali
         total_real = len(changelog_data)
 
-        # Troviamo l'indice della prima release stabile reale (non in arrivo/roadmap)
+        # Troviamo l'indice della prima release stabile reale
         first_stable_index = -1
         for idx, release in enumerate(changelog_data):
             if isinstance(release, dict):
@@ -780,11 +787,14 @@ class ChangelogPanel(QWidget):
                     first_stable_index = idx
                     break
 
-        # Impostiamo la versione corrente vista come l'ultima stabile trovata
+        # Impostiamo la versione corrente vista (Asincrono per non bloccare con fsync)
         if first_stable_index != -1 and first_stable_index < total_real:
             latest_version = changelog_data[first_stable_index].get("version")
             if latest_version:
-                set_config_value("changelog_last_viewed_version", str(latest_version))
+                # Differiamo il salvataggio per massimizzare la fluidità immediata
+                QTimer.singleShot(
+                    1000, lambda v=latest_version: set_config_value("changelog_last_viewed_version", str(v))
+                )
 
         for i, release in enumerate(changelog_data):
             if isinstance(release, dict):
@@ -805,5 +815,4 @@ class ChangelogPanel(QWidget):
                     is_last=is_last_real,
                 )
 
-        # Spazio elastico in fondo
         self.scroll_layout.addStretch()

@@ -158,13 +158,13 @@ class PDLFilterWidget(QWidget):
 
     def _connect_signals(self) -> None:
         """Connette i segnali dei widget alle azioni del pannello."""
-        self.group_filter.currentTextChanged.connect(self.filter_changed.emit)
+        self.group_filter.currentTextChanged.connect(lambda _: self.filter_changed.emit())
         self.site_filter.currentTextChanged.connect(self.site_changed.emit)
         self.area_filter.currentTextChanged.connect(self.area_changed.emit)
-        self.unit_filter.currentTextChanged.connect(self.filter_changed.emit)
-        self.btn_bot_update.clicked.connect(self.update_clicked.emit)
-        self.clear_btn.clicked.connect(self.reset_clicked.emit)
-        self.export_btn.clicked.connect(self.export_clicked.emit)
+        self.unit_filter.currentTextChanged.connect(lambda _: self.filter_changed.emit())
+        self.btn_bot_update.clicked.connect(lambda: self.update_clicked.emit())
+        self.clear_btn.clicked.connect(lambda: self.reset_clicked.emit())
+        self.export_btn.clicked.connect(lambda: self.export_clicked.emit())
 
     def get_filters(self) -> dict[str, str]:
         """

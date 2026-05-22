@@ -20,6 +20,7 @@ from src.core.constants import Icons
 from src.core.version import __version__ as VERSION  # noqa: N812
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import SearchInput, StandardListWidget
+from src.gui.workers.help_worker import HelpWorker
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -189,27 +190,41 @@ class HelpPanel(QWidget):
         return content_container
 
     def _load_documentation(self) -> None:
-        """Carica contenuti professionali e dettagliati."""
-        self.sections = [
-            ("Introduzione", self._get_intro_md(), Icons.HOME),
-            ("Workflow Automazioni", self._get_scarico_md(), Icons.CPU),
-            ("Gestione Database", self._get_timbrature_md(), Icons.DATABASE),
-            ("Sincronizzazione PDL", self._get_oda_md(), Icons.FILE_TEXT),
-            ("KPI & Analisi", self._get_contabilita_md(), Icons.BAR_CHART),
-            ("Notifiche & Audit", self._get_news_md(), Icons.BELL),
-            ("Sicurezza & Privacy", self._get_license_md(), Icons.SHIELD),
-            ("Shortcuts di Sistema", self._get_shortcuts_md(), Icons.ROCKET),
-            ("Troubleshooting", self._get_troubleshooting_md(), Icons.ALERT_TRIANGLE),
-            ("Contatti & Help Desk", self._get_contacts_md(), Icons.USER),
+        """Carica i contenuti della guida in background (Asincrono)."""
+        section_loaders = [
+            ("Introduzione", self._get_intro_md, Icons.HOME),
+            ("Workflow Automazioni", self._get_scarico_md, Icons.CPU),
+            ("Gestione Database", self._get_timbrature_md, Icons.DATABASE),
+            ("Sincronizzazione PDL", self._get_oda_md, Icons.FILE_TEXT),
+            ("KPI & Analisi", self._get_contabilita_md, Icons.BAR_CHART),
+            ("Notifiche & Audit", self._get_news_md, Icons.BELL),
+            ("Sicurezza & Privacy", self._get_license_md, Icons.SHIELD),
+            ("Shortcuts di Sistema", self._get_shortcuts_md, Icons.ROCKET),
+            ("Troubleshooting", self._get_troubleshooting_md, Icons.ALERT_TRIANGLE),
+            ("Contatti & Help Desk", self._get_contacts_md, Icons.USER),
         ]
 
+        self.worker = HelpWorker(section_loaders)
+        self.worker.finished_signal.connect(self._on_docs_ready)
+        self.worker.start()
+
+    def _on_docs_ready(self, sections: list[tuple[str, str, str]]) -> None:
+        """Callback al termine del caricamento asincrono per popolare la UI."""
+        self.sections = sections
         self.index_list.blockSignals(True)
+        self.index_list.clear()
+
         for title, _content, icon_key in self.sections:
             item = QListWidgetItem(title)
             color = COLORS["teal_accent"] if title == "Introduzione" else COLORS["text_muted"]
             item.setIcon(get_colored_icon(get_asset_path(icon_key), color))
             self.index_list.addItem(item)
+
         self.index_list.blockSignals(False)
+
+        # Selezione automatica della prima riga se non c'è già una selezione
+        if self.index_list.count() > 0:
+            self.index_list.setCurrentRow(0)
 
     def _on_index_changed(self, row: int) -> None:
         if row < 0 or row >= len(self.sections):

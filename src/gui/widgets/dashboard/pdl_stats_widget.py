@@ -6,7 +6,6 @@ V10.0: Logica colori invertita (Incremento=Rosso), percentuali intere e stile el
 
 import logging
 import math
-import threading
 from typing import Any
 
 from PySide6.QtCore import Qt, QTimer, Signal
@@ -20,9 +19,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.stats.pdl_stats_engine import PDLMetrics, PDLStatsEngine
+from src.core.stats.pdl_stats_engine import PDLMetrics
 from src.gui.styles import COLORS
 from src.gui.widgets.modern_card import ModernCard
+from src.gui.workers.pdl_stats_worker import PDLStatsWorker
 
 logger = logging.getLogger(__name__)
 
@@ -186,28 +186,73 @@ class PDLStatsWidget(ModernCard):
         layout.addWidget(self.scroll_area)
 
     def refresh_stats(self) -> None:
-        """Avvia un thread in background per ricalcolare le metriche PDL."""
+        """Avvia il worker asincrono per ricalcolare le metriche PDL."""
+        if hasattr(self, "_worker") and self._worker and self._worker.isRunning():
+            return
 
-        def run() -> None:
-            """Funzione worker per l'esecuzione asincrona del calcolo metriche."""
-            try:
-                metrics = PDLStatsEngine.get_metrics()
-                self.stats_updated.emit(metrics)
-            except Exception:
-                logger.exception("PDL Refresh Error")
-
-        threading.Thread(target=run, daemon=True).start()
+        self._worker = PDLStatsWorker()
+        self._worker.finished_signal.connect(self._update_ui)
+        self._worker.error_signal.connect(lambda msg: logger.error(f"PDL Stats Error: {msg}"))
+        self._worker.start()
 
     def _update_ui(self, metrics: PDLMetrics) -> None:
-        """Aggiorna i widget grafici con i dati delle metriche ricevute."""
+        """Aggiorna i widget grafici con i dati delle metriche ricevute (Ottimizzato)."""
         self.lbl_total.setText(str(metrics.total_count))
         self.lbl_sync.setText(f"Sync: {metrics.last_sync}")
 
         self._apply_trend_style(self.lbl_trend_month, metrics.trend_percentage, "Vs Inizio Mese Prec.")
         self._apply_trend_style(self.lbl_trend_week, metrics.weekly_trend_percentage, "Vs Settimana Prec.")
 
+        # Aggiornamento intelligente della griglia (Recycling)
+        self._update_area_grid(metrics.areas_stats)
+
+    def _update_area_grid(self, stats: list[Any]) -> None:
+        """Aggiorna i badge delle aree esistenti o ne crea di nuovi senza distruggere tutto."""
+        # 1. Recupera tutti i badge esistenti nel layout
+        existing_badges: list[AreaBadge] = []
+        for i in range(self.area_layout.count()):
+            item = self.area_layout.itemAt(i)
+            if item and (row_lay := item.layout()):
+                badges_in_row = [
+                    w
+                    for j in range(row_lay.count())
+                    if (child := row_lay.itemAt(j)) and (w := child.widget()) and isinstance(w, AreaBadge)
+                ]
+                existing_badges.extend(badges_in_row)
+
+        # 2. Se il numero di badge  uguale, aggiorniamo solo i dati (Fast Path)
+        if len(existing_badges) == len(stats):
+            for badge, s in zip(existing_badges, stats, strict=False):
+                self._update_badge_data(badge, s)
+            return
+        # 3. Altrimenti, ricostruiamo (Slow Path, raramente eseguito dopo il primo boot)
         self._clear_layout(self.area_layout)
-        self._rebuild_area_grid(metrics.areas_stats)
+        self._rebuild_area_grid(stats)
+
+    def _update_badge_data(self, badge: AreaBadge, s: Any) -> None:
+        """Aggiorna il testo e lo stile di un badge esistente."""
+        trend_int = round(s.trend_percentage)
+        trend_str = f"+{trend_int}%" if trend_int > 0 else f"{trend_int}%"
+        badge.setText(f"{s.name}\n({s.current_count}   {trend_str})")
+        badge.setToolTip(
+            f"<b>Area:</b> {s.name}<br><b>PDL Creati (Mese):</b> {s.current_count}<br><b>Andamento:</b> {trend_str}"
+        )
+
+        # Aggiorna stile cromatico se il trend ha cambiato soglia
+        if trend_int > 30:
+            bg, text, border = "#fee2e2", "#991b1b", "#fca5a5"
+        elif trend_int > 0:
+            bg, text, border = "#ffedd5", "#9a3412", "#fdba74"
+        else:
+            bg, text, border = "#f0fdf4", "#166534", "#bbf7d0"
+
+        badge.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {bg}; color: {text}; border: 1px solid {border};
+                border-radius: 8px; padding: 1px; font-size: 12px; font-weight: 800; text-align: center;
+            }}
+            QPushButton:hover {{ background-color: {border}; }}
+        """)
 
     def _apply_trend_style(self, label: QLabel, trend: float, prefix: str) -> None:
         """Applica lo stile cromatico basato sull'andamento del trend."""

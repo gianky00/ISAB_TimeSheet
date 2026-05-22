@@ -164,7 +164,8 @@ class ScaricoOrePanel(QWidget):
             self.source_model.load_data_async(None)
         else:
             try:
-                self.source_model.load_data_async(ContabilitaManager.get_scarico_ore_data())
+                # Correzione: passiamo il riferimento alla funzione, non il risultato, per farla eseguire in background
+                self.source_model.load_data_async(ContabilitaManager.get_scarico_ore_data)
             except Exception as e:
                 self.filters.status_label.setText(f"Errore: {e}")
                 self._set_ui_loading(False)

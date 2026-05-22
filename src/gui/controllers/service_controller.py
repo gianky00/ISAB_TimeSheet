@@ -21,6 +21,8 @@ from src.core.database.maintenance_worker import DatabaseMaintenanceWorker
 from src.core.notification_manager import NotificationManager
 from src.core.report_service import ReportService
 from src.gui.controllers.bot_queue_manager import BotQueueManager
+from src.gui.workers.autopilot_cert_worker import AutopilotCertWorker
+from src.gui.workers.autopilot_report_worker import AutopilotReportWorker
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +145,7 @@ class ServiceController(QObject):
         self._check_certificati_schedule(config, now_time)
 
     def _check_report_email_schedule(self, config: dict[str, Any], now_time: str) -> None:
-        """Gestisce l'invio del report email basandosi su orario e intervallo di giorni configurati."""
+        """Gestisce l'invio del report email in background (Asincrono)."""
         if not config.get("report_email_autopilot_enabled", False):
             return
         if now_time != str(config.get("report_email_autopilot_time", "08:00")):
@@ -162,7 +164,10 @@ class ServiceController(QObject):
                     should_send = True
 
         if should_send:
-            ReportService.send_scheduled_report_email()
+            if hasattr(self, "_report_worker") and self._report_worker and self._report_worker.isRunning():
+                return
+            self._report_worker = AutopilotReportWorker()
+            self._report_worker.start()
 
     def _check_certificati_schedule(self, config: dict[str, Any], now_time: str) -> None:
         """Gestisce l'automazione dei certificati campione (aggiornamento DB + analisi scadenze)."""
@@ -184,11 +189,7 @@ class ServiceController(QObject):
         if not should_run:
             with suppress(Exception):
                 last_sent_dt = datetime.fromisoformat(str(last_sent))
-                # Calcolo giorni passati usando date ingenue per semplicità di test locale
                 diff_days = (datetime.now() - last_sent_dt.replace(tzinfo=None)).days
-                logger.info(
-                    f"Autopilot Certificati: Check intervallo - Ultimo: {last_sent}, Giorni passati: {diff_days}, Richiesti: {interval}"
-                )
                 if diff_days >= interval:
                     should_run = True
 
@@ -271,60 +272,16 @@ class ServiceController(QObject):
             logger.info("Autopilot Certificati: Utilizzo logica UI per generazione email audit...")
             # Assicuriamoci che i dati nel widget siano rinfrescati prima dell'analisi
             panel.certificati_widget.refresh_data()
-            # Invio email identica alla versione manuale del tab
+            # Invio email identica alla versione manuale del tab (che abbiamo già reso asincrona)
             panel.certificati_widget._run_analysis_and_send_email()
             return
 
-        # Logica di Fallback (Solo se la UI non fosse accessibile)
-        from src.core.contabilita.certificati_engine import CertificatiEngine
-        from src.core.contabilita_manager import ContabilitaManager
-
-        engine = CertificatiEngine()
-        engine.load_exclusions()
-        data = ContabilitaManager.get_certificati_campione_data()
-
-        if not data:
-            logger.warning("Autopilot Certificati: Nessun dato trovato nel database.")
+        # Logica di Fallback Asincrona (Solo se la UI non fosse accessibile)
+        if hasattr(self, "_fallback_worker") and self._fallback_worker and self._fallback_worker.isRunning():
             return
 
-        from src.core.contabilita_queries import ContabilitaQueries
-
-        groups: dict[str, list[tuple[Any, ...]]] = {}
-        for r in data:
-            key = (
-                str(r[ContabilitaQueries.CERT_IDX_ID_STRUMENTO]).strip()
-                or str(r[ContabilitaQueries.CERT_IDX_MATRICOLA]).strip()
-            )
-            if key not in groups:
-                groups[key] = []
-            groups[key].append(r)
-
-        certs_to_report = []
-        for certs in groups.values():
-            latest = max(certs, key=lambda x: str(x[ContabilitaQueries.CERT_IDX_EMISSIONE]))
-            matricola = str(latest[ContabilitaQueries.CERT_IDX_MATRICOLA]).strip()
-
-            if matricola in engine._exclusions:
-                continue
-
-            scadenza = latest[ContabilitaQueries.CERT_IDX_SCADENZA]
-            days, _ = engine.calculate_days_and_status(scadenza)
-
-            if days is not None and days <= engine.EXPIRING_THRESHOLD:
-                certs_to_report.append(
-                    {
-                        "id": latest[ContabilitaQueries.CERT_IDX_ID_STRUMENTO],
-                        "matricola": matricola,
-                        "modello": latest[ContabilitaQueries.CERT_IDX_MODELLO],
-                        "scadenza": scadenza,
-                        "giorni": days,
-                    }
-                )
-
-        if certs_to_report:
-            engine.generate_outlook_draft(certs_to_report)
-        else:
-            logger.info("Autopilot Certificati: Nessun certificato in scadenza da segnalare.")
+        self._fallback_worker = AutopilotCertWorker()
+        self._fallback_worker.start()
 
     def handle_manual_sync_request(self, bot_id: str) -> None:
         """Gestisce la richiesta manuale di sincronizzazione dal widget Autopilot."""

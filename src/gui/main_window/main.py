@@ -25,7 +25,6 @@ from src.core.app_updater import (
     run_pending_installer,
 )
 from src.core.audit_manager import AuditManager
-from src.core.license_updater import run_update
 from src.core.telegram_bridge import TelegramUIBridge
 from src.core.telegram_manager import TelegramService
 from src.core.version import __version__ as VERSION  # noqa: N812
@@ -40,6 +39,7 @@ from src.gui.dialogs.bug_report_dialog import BugReportDialog
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import apply_theme
 from src.gui.widgets.toast import ToastManager
+from src.gui.workers.license_worker import LicenseWorker
 
 from .components.menu_bar import MenuBarComponent
 
@@ -141,20 +141,27 @@ class MainWindow(QMainWindow):
         self._license_timer.start(14400000)
 
     def _check_license_heartbeat(self) -> None:
-        """Esegue una sincronizzazione silente della licenza in background."""
-        try:
-            # run_update() solleva Exception("REVOCATA...") se la licenza è stata rimossa
-            run_update()
-        except Exception as e:
-            if "REVOCATA" in str(e):
-                self._license_timer.stop()
-                ConfirmationDialog.show_error(
-                    self,
-                    "Licenza Revocata",
-                    "La licenza è stata revocata dal server.\nL'applicazione verrà chiusa.",
-                )
-                self._force_quit = True
-                QApplication.quit()
+        """Esegue una sincronizzazione silente della licenza in background (Asincrono)."""
+        if hasattr(self, "_license_worker") and self._license_worker and self._license_worker.isRunning():
+            return
+
+        self._license_worker = LicenseWorker()
+        self._license_worker.finished_signal.connect(self._on_license_check_finished)
+        self._license_worker.start()
+
+    def _on_license_check_finished(self, success: bool, error_msg: str) -> None:
+        """Gestisce l'esito della verifica licenza in background."""
+        if not success and "REVOCATA" in error_msg:
+            self._license_timer.stop()
+            ConfirmationDialog.show_error(
+                self,
+                "Licenza Revocata",
+                "La licenza è stata revocata dal server.\nL'applicazione verrà chiusa.",
+            )
+            self._force_quit = True
+            QApplication.quit()
+        elif success:
+            logger.debug("Heartbeat licenza cloud completato con successo.")
 
     def finalize_init(self) -> None:
         """Metodo chiamato per finalizzare l'inizializzazione dopo la visualizzazione della finestra."""

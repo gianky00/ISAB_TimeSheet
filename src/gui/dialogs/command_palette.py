@@ -135,7 +135,11 @@ class CommandPaletteDialog(QDialog):
         self.search_bar.setStyleSheet(
             f"QLineEdit {{ background-color: transparent; color: {text_color}; border: none; border-bottom: 2px solid {COLORS['glass_border']}; font-size: 20px; padding: 8px 4px; }} QLineEdit:focus {{ border-bottom: 2px solid {accent_color}; }}"
         )
-        self.search_bar.textChanged.connect(self._filter_list)
+        # Debounce per la ricerca globale ricorsiva
+        self.search_timer = QTimer(self)
+        self.search_timer.setSingleShot(True)
+        self.search_timer.timeout.connect(lambda: self._filter_list(self.search_bar.text()))
+        self.search_bar.textChanged.connect(lambda: self.search_timer.start(300))
         self.search_bar.installEventFilter(self)
 
         search_layout.addWidget(self.search_bar)

@@ -125,7 +125,7 @@ class ScaricaTSPanel(BaseBotPanel):
 
         # Parametri specifici: Flag Elabora TS
         self.elabora_ts_check = StandardCheckBox("Elabora TS")
-        self.elabora_ts_check.stateChanged.connect(self._save_data)
+        self.elabora_ts_check.stateChanged.connect(lambda _: self._save_data())
         self.params_widget.add_widget_to_row(self.elabora_ts_check)
 
         # Tabella Toolbar

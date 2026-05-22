@@ -6,14 +6,9 @@ Moved from core/updater/gui.py to follow SRP.
 
 from __future__ import annotations
 
-import contextlib
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
-import requests
-from packaging import version as pkg_version
 from PySide6.QtCore import Property, QEasingCurve, QPropertyAnimation, Qt, Slot
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
@@ -32,18 +27,17 @@ if TYPE_CHECKING:
 from src.core import version
 from src.core.updater.engine import (
     DownloadWorker,
-    get_local_setup_path,
-    get_network_update_info,
-    get_web_update_info,
     run_installer_and_exit,
     set_pending_installer,
 )
 from src.gui.widgets.wave_progress import WaveProgressBar
+from src.gui.workers.update_worker import UpdateCheckWorker
 
 logger = logging.getLogger(__name__)
 
-# Store active worker to prevent garbage collection
+# Store active workers to prevent garbage collection
 _active_update_worker: DownloadWorker | None = None
+_active_check_worker: UpdateCheckWorker | None = None
 _active_update_dialog: UpdateProgressDialog | None = None
 
 
@@ -200,83 +194,73 @@ def show_install_prompt(setup_path: str, parent: QWidget | None = None) -> None:
         )
 
 
-def check_for_updates(  # noqa: C901, PLR0912
+def check_for_updates(
     parent: QWidget | None = None,
     silent: bool = True,
     callback: Callable[[dict[str, Any]], None] | None = None,
 ) -> None:
-    """Controlla se sono disponibili aggiornamenti su Web e Rete Locale."""
-    update_sources = []
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        futures = {
-            executor.submit(get_web_update_info): "Web",
-            executor.submit(get_network_update_info): "Network",
-        }
-        for future in as_completed(futures):
-            info = future.result()
-            if info and info.get("version"):
-                update_sources.append(info)
+    """Controlla se sono disponibili aggiornamenti in background (Asincrono)."""
+    global _active_check_worker  # noqa: PLW0603
 
-    if not update_sources:
-        if not silent:
-            QMessageBox.information(
-                parent, "[OK] Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
-            )
-
+    if _active_check_worker and _active_check_worker.isRunning():
         return
 
-    latest_update = max(update_sources, key=lambda x: pkg_version.parse(x["version"]))
-    remote_ver_str = latest_update["version"]
-    download_url = latest_update.get("url")
-    changelog = latest_update.get("changelog", "")
+    _active_check_worker = UpdateCheckWorker(silent=silent)
 
-    if not download_url:
-        if not silent:
-            QMessageBox.information(
-                parent, "[OK] Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
-            )
-
-        return
-
-    if pkg_version.parse(remote_ver_str) > pkg_version.parse(version.__version__):
-        setup_path = get_local_setup_path(download_url)
-        remote_size = 0
-        if download_url.startswith("http"):
-            try:
-                head_resp = requests.head(download_url, timeout=5)
-                remote_size = int(head_resp.headers.get("content-length", 0))
-            except Exception as e:
-                logger.debug("Failed to get remote size: %s", e)
-        else:
-            with contextlib.suppress(Exception):
-                remote_size = Path(download_url).stat().st_size
-
-        local_size = Path(setup_path).stat().st_size if Path(setup_path).exists() else 0
-        is_complete = remote_size > 0 and local_size >= remote_size
-
-        if callback:
-            callback(latest_update)
-            return
-
-        if is_complete:
-            show_install_prompt(setup_path, parent)
-        else:
-            msg = f"Nuova versione {remote_ver_str} disponibile!\n"
-            if changelog:
-                msg += f"\nNovità:\n{changelog}\n"
-            msg += "\nVuoi aggiornare ora?"
-            reply = QMessageBox.question(
-                parent,
-                "[SYNC] Aggiornamento",
-                msg,
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            )
-            if reply == QMessageBox.StandardButton.Yes:
-                perform_auto_update(download_url, parent)
-    elif not silent:
-        QMessageBox.information(
-            parent, "[OK] Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
+    _active_check_worker.finished_signal.connect(lambda res: _handle_update_result(res, parent, callback))
+    _active_check_worker.no_update_signal.connect(
+        lambda: not silent
+        and QMessageBox.information(
+            parent,
+            "[OK] Aggiornamento",
+            f"L'applicazione è aggiornata (v{version.__version__})",
         )
+    )
+    _active_check_worker.error_signal.connect(
+        lambda msg: (
+            not silent
+            and QMessageBox.warning(
+                parent,
+                "Errore Aggiornamento",
+                f"Impossibile controllare gli aggiornamenti: {msg}",
+            )
+        )
+        or logger.debug(f"Update check failed: {msg}")
+    )
+    _active_check_worker.start()
+
+
+def _handle_update_result(
+    latest_update: dict[str, Any],
+    parent: QWidget | None = None,
+    callback: Callable[[dict[str, Any]], None] | None = None,
+) -> None:
+    """Gestisce l'esito positivo del controllo aggiornamenti (Asincrono)."""
+    if callback:
+        callback(latest_update)
+        return
+
+    is_complete = latest_update.get("is_complete", False)
+    setup_path = latest_update.get("setup_path", "")
+    remote_ver_str = latest_update["version"]
+    changelog = latest_update.get("changelog", "")
+    download_url = latest_update.get("url", "")
+
+    if is_complete:
+        show_install_prompt(setup_path, parent)
+    else:
+        msg = f"Nuova versione {remote_ver_str} disponibile!\n"
+        if changelog:
+            msg += f"\nNovità:\n{changelog}\n"
+        msg += "\nVuoi aggiornare ora?"
+        reply = QMessageBox.question(
+            parent,
+            "[SYNC] Aggiornamento",
+            msg,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            perform_auto_update(download_url, parent)
 
 
 def perform_auto_update(download_url: str, parent: QWidget | None = None) -> None:

@@ -6,7 +6,7 @@ Widget tabellari avanzati con supporto mixin per Clipboard.
 from typing import Any
 
 from PySide6.QtCore import QPoint, Qt, Signal
-from PySide6.QtGui import QAction, QBrush, QColor, QKeySequence
+from PySide6.QtGui import QAction, QBrush, QColor, QKeySequence, QPainter, QPaintEvent
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QGraphicsDropShadowEffect,
@@ -45,6 +45,7 @@ class ExcelTableWidget(QTableWidget):
         """Inizializza la tabella configurando i trigger di modifica e la clipboard."""
         super().__init__(*args, **kwargs)
         self.auto_copy_headers = False
+        self._placeholder_text = ""
         self.setEditTriggers(
             QAbstractItemView.EditTrigger.DoubleClicked
             | QAbstractItemView.EditTrigger.EditKeyPressed
@@ -54,6 +55,45 @@ class ExcelTableWidget(QTableWidget):
         if v_header := self.verticalHeader():
             v_header.setDefaultSectionSize(34)
             v_header.setVisible(False)
+
+    def setPlaceholderText(self, text: str) -> None:
+        """Imposta il testo da visualizzare quando la tabella è vuota."""
+        self._placeholder_text = text
+        self.viewport().update()
+
+    def smart_resize(self) -> None:
+        """Esegue un ridimensionamento ottimizzato per evitare lag della UI."""
+        from PySide6.QtCore import QTimer
+
+        def _do_resize() -> None:
+            if not self or self.rowCount() == 0:
+                return
+            self.setUpdatesEnabled(False)
+            try:
+                # Se la tabella è molto grande, ridimensioniamo solo le colonne.
+                # Il ridimensionamento delle righe (O(N)) è il vero killer del frame rate.
+                self.resizeColumnsToContents()
+                if self.rowCount() < 500:
+                    self.resizeRowsToContents()
+            finally:
+                self.setUpdatesEnabled(True)
+
+        QTimer.singleShot(0, _do_resize)
+
+    def paintEvent(self, event: QPaintEvent) -> None:
+        """Override per disegnare il placeholder se la tabella è vuota."""
+        super().paintEvent(event)
+        if self.rowCount() == 0 and self._placeholder_text:
+            painter = QPainter(self.viewport())
+            painter.setPen(QColor(COLORS["text_light"]))
+            font = self.font()
+            font.setPointSize(10)
+            painter.setFont(font)
+            painter.drawText(
+                self.viewport().rect(),
+                Qt.AlignmentFlag.AlignCenter,
+                self._placeholder_text,
+            )
 
     def set_row_status(self, row: int, status: str) -> None:
         """
@@ -359,6 +399,10 @@ class EditableDataTable(QWidget):
         finally:
             if not emit_signal:
                 self.table.blockSignals(False)
+
+    def setPlaceholderText(self, text: str) -> None:
+        """Proxy per impostare il placeholder nella tabella sottostante."""
+        self.table.setPlaceholderText(text)
 
     def set_row_status(self, row: int, status: str) -> None:
         """

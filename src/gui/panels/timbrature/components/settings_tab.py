@@ -65,7 +65,7 @@ class TimbratureSettingsTab(QWidget):
         self.filter_empty_cb = StandardCheckBox("Mostra solo dati mancanti (Vuoti)")
         config = config_manager.load_config()
         self.filter_empty_cb.setChecked(bool(config.get("timbrature_filter_empty_only", False)))
-        self.filter_empty_cb.stateChanged.connect(self._on_filter_empty_changed)
+        self.filter_empty_cb.stateChanged.connect(lambda _: self._on_filter_empty_changed())
         filter_layout.addWidget(self.filter_empty_cb)
         filter_layout.addStretch()
         layout.addLayout(filter_layout)

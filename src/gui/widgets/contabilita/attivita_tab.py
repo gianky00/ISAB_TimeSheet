@@ -26,7 +26,6 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.contabilita_manager import ContabilitaManager
 from src.core.excel_importer import ExcelImporter
 from src.gui.widgets import ExcelTableWidget
 from src.gui.widgets.core_widgets import (
@@ -35,6 +34,7 @@ from src.gui.widgets.core_widgets import (
     SortableTableWidgetItem,
     StandardCheckBox,
 )
+from src.gui.workers.contabilita_data_worker import ContabilitaDataWorker
 
 
 class AttivitaProgrammateTab(QWidget):
@@ -76,6 +76,7 @@ class AttivitaProgrammateTab(QWidget):
         self.combo_stato: QComboBox
         self.btn_reset: QPushButton
         self.table: ExcelTableWidget
+        self.worker: ContabilitaDataWorker | None = None
 
         self._setup_ui()
         self._load_data()
@@ -94,11 +95,11 @@ class AttivitaProgrammateTab(QWidget):
         filter_layout.setContentsMargins(5, 0, 5, 5)
 
         self.chk_ps = StandardCheckBox("Filtra PS")
-        self.chk_ps.stateChanged.connect(self.apply_filters)
+        self.chk_ps.stateChanged.connect(lambda _: self.apply_filters())
         filter_layout.addWidget(self.chk_ps)
 
         self.chk_po = StandardCheckBox("Filtra PO")
-        self.chk_po.stateChanged.connect(self.apply_filters)
+        self.chk_po.stateChanged.connect(lambda _: self.apply_filters())
         filter_layout.addWidget(self.chk_po)
 
         filter_layout.addSpacing(20)
@@ -106,7 +107,7 @@ class AttivitaProgrammateTab(QWidget):
         self.combo_area = FilterComboBox()
         self.combo_area.setMinimumWidth(150)
         self.combo_area.addItem("Tutte")
-        self.combo_area.currentTextChanged.connect(self.apply_filters)
+        self.combo_area.currentTextChanged.connect(lambda _: self.apply_filters())
         filter_layout.addWidget(self.combo_area)
 
         filter_layout.addSpacing(15)
@@ -114,7 +115,7 @@ class AttivitaProgrammateTab(QWidget):
         self.combo_stato = FilterComboBox()
         self.combo_stato.setMinimumWidth(150)
         self.combo_stato.addItem("Tutti")
-        self.combo_stato.currentTextChanged.connect(self.apply_filters)
+        self.combo_stato.currentTextChanged.connect(lambda _: self.apply_filters())
         filter_layout.addWidget(self.combo_stato)
 
         self.btn_reset = PrimaryButton("Reset Filtri")
@@ -171,20 +172,36 @@ class AttivitaProgrammateTab(QWidget):
         self._load_data()
 
     def _load_data(self) -> None:
-        """Esegue il caricamento effettivo dei dati nel modello della tabella."""
-        data = ContabilitaManager.get_attivita_programmate_data()
+        """Esegue il caricamento effettivo dei dati nel modello della tabella (Asincrono)."""
+        if self.worker and self.worker.isRunning():
+            self.worker.terminate()
+            self.worker.wait()
+
         self.table.setSortingEnabled(False)
-        self.table.blockSignals(True)
+        self.table.clearContents()
         self.table.setRowCount(0)
+        self.table.setPlaceholderText("Caricamento attività in corso...")
+
+        self.worker = ContabilitaDataWorker("get_attivita_programmate_data")
+        self.worker.finished_signal.connect(self._on_data_ready)
+        self.worker.error_signal.connect(lambda msg: print(f"Errore Attività: {msg}"))
+        self.worker.start()
+
+    def _on_data_ready(self, data: list[tuple[Any, ...]]) -> None:
+        """Popola la tabella al termine del caricamento asincrono."""
+        self.table.blockSignals(True)
         try:
             self.table.setRowCount(len(data))
             db_keys = list(ExcelImporter.ATTIVITA_PROGRAMMATE_MAPPING.values())
             for row_idx, row_data in enumerate(data):
                 self._populate_table_row(row_idx, row_data, db_keys)
-            self.table.resizeRowsToContents()
+
+            self.table.smart_resize()
             self._populate_filters()
             self._adjust_column_widths()
+
             self.apply_filters()
+            self.table.setPlaceholderText("Nessuna attività programmata trovata.")
         finally:
             self.table.blockSignals(False)
             self.table.setSortingEnabled(True)

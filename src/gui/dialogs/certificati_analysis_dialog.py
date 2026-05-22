@@ -29,6 +29,7 @@ from src.core.version import __app_name__, __version__
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
 from src.gui.widgets.core_widgets import PrimaryButton
+from src.gui.workers.outlook_worker import OutlookEmailWorker
 
 logger = get_logger(__name__)
 
@@ -384,58 +385,61 @@ class ScadenzeAnalysisDialog(QDialog):
         return layout
 
     def _send_email(self) -> None:
-        """Genera e invia il report via Outlook con screenshot degli stati critici e PDF allegato."""
+        """Genera e invia il report via Outlook asincronamente."""
         try:
-            # 1. Importazione win32com
-            try:
-                import win32com.client  # nosec B403
-
-                win32com.client.Dispatch("Outlook.Application")
-            except ImportError as err:
-                raise ImportError("Libreria 'pywin32' non trovata.") from err
-
-            # 2. Cattura immagini dei widget
+            # 1. Cattura immagini (DEVE stare nel Main Thread)
             image_paths = self._capture_widgets_as_images()
             if not image_paths:
                 self._raise_no_images()
 
-            # 3. Inizializzazione Outlook
-            outlook = win32com.client.Dispatch("Outlook.Application")
-            scaduti_count = self._count_by_condition(lambda d: d is not None and d < 0)
-            nd_count = self._count_by_condition(lambda d: d is None)
+            # 2. Definiamo la logica pesante di Outlook da eseguire nel Worker
+            def outlook_task() -> None:
+                import win32com.client  # nosec B403
 
-            mail = outlook.CreateItem(0)
-            mail.To = "laboratoriostrumenti@coemi.it"
-            mail.CC = "ciro.scaravelli@coemi.it"
-            mail.Subject = self._build_email_subject(scaduti_count, nd_count)
+                outlook = win32com.client.Dispatch("Outlook.Application")
+                scaduti_count = self._count_by_condition(lambda d: d is not None and d < 0)
+                nd_count = self._count_by_condition(lambda d: d is None)
 
-            if scaduti_count > 0:
-                mail.Importance = 2  # High
+                mail = outlook.CreateItem(0)
+                mail.To = "laboratoriostrumenti@coemi.it"
+                mail.CC = "ciro.scaravelli@coemi.it"
+                mail.Subject = self._build_email_subject(scaduti_count, nd_count)
 
-            pdf_path = self._generate_audit_pdf()
-            html_body = self._build_email_body(scaduti_count)
+                if scaduti_count > 0:
+                    mail.Importance = 2  # High
 
-            for i, path in enumerate(image_paths):
-                attachment = mail.Attachments.Add(path)
-                cid = f"img_{i}"
-                attachment.PropertyAccessor.SetProperty(
-                    "http://schemas.microsoft.com/mapi/proptag/0x3712001E", cid
-                )
-                html_body += f"<div style='margin-bottom: 20px;'><img src='cid:{cid}' style='max-width: 100%; border: 1px solid #e2e8f0; border-radius: 8px;'></div>"
+                pdf_path = self._generate_audit_pdf()
+                html_body = self._build_email_body(scaduti_count)
 
-            html_body += self._build_email_disclaimer()
-            html_body += "</body></html>"
-            mail.HTMLBody = html_body
+                for i, path in enumerate(image_paths):
+                    attachment = mail.Attachments.Add(path)
+                    cid = f"img_{i}"
+                    attachment.PropertyAccessor.SetProperty(
+                        "http://schemas.microsoft.com/mapi/proptag/0x3712001E", cid
+                    )
+                    html_body += f"<div style='margin-bottom: 20px;'><img src='cid:{cid}' style='max-width: 100%; border: 1px solid #e2e8f0; border-radius: 8px;'></div>"
 
-            if pdf_path and Path(pdf_path).exists():
-                mail.Attachments.Add(str(pdf_path))
+                html_body += self._build_email_disclaimer()
+                html_body += "</body></html>"
+                mail.HTMLBody = html_body
 
-            mail.Display()
-            self._cleanup_temp_images(image_paths)
+                if pdf_path and Path(pdf_path).exists():
+                    mail.Attachments.Add(str(pdf_path))
+
+                mail.Display()
+
+            # 3. Avvio Worker
+            self._email_worker = OutlookEmailWorker(outlook_task)
+            self._email_worker.finished_signal.connect(
+                lambda ok, msg: self._cleanup_temp_images(image_paths)
+                if ok
+                else QMessageBox.critical(self, "Errore", msg)
+            )
+            self._email_worker.start()
 
         except Exception as e:
-            logger.exception("Invio Email Audit fallito")
-            QMessageBox.critical(self, "Errore Invio Email", str(e))
+            logger.exception("Inizializzazione invio email fallita")
+            QMessageBox.critical(self, "Errore", str(e))
 
     def _build_email_disclaimer(self) -> str:
         """Costruisce il disclaimer di sistema per il fondo pagina."""

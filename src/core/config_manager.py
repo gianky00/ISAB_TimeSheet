@@ -122,20 +122,40 @@ def _load_base_config() -> dict[str, Any]:
     return config
 
 
-def save_config(config: dict[str, Any]) -> bool:
-    """Salva la configurazione su file, criptando le credenziali prima del write."""
+def save_config(config: dict[str, Any], async_save: bool = True) -> bool:
+    """
+    Salva la configurazione su file.
+    Se async_save è True (default), l'operazione di I/O (inclusa la cifratura)
+    viene delegata a un thread di background per non bloccare il Main Thread della GUI.
+    """
     global _config_cache  # noqa: PLW0603
+
+    def _execute_save(cfg_to_save: dict[str, Any]) -> None:
+        try:
+            # Cripta credenziali per il salvataggio
+            encrypt_all_credentials(cfg_to_save)
+
+            # Scrittura atomica
+            _atomic_write_json(CONFIG_FILE, cfg_to_save)
+        except Exception as e:
+            print(f"Async save failed: {e}")
+
     try:
         config_to_save = copy.deepcopy(config)
 
-        # Cripta credenziali per il salvataggio
-        encrypt_all_credentials(config_to_save)
+        if async_save:
+            # Sincronizziamo la cache immediatamente in memoria
+            with _config_lock:
+                _config_cache = copy.deepcopy(config)
 
-        # Scrittura atomica
+            # Lanciamo il thread per l'I/O su disco
+            threading.Thread(target=_execute_save, args=(config_to_save,), daemon=True).start()
+            return True
+        # Salvataggio sincrono (es. in fase di chiusura app o test)
+        encrypt_all_credentials(config_to_save)
         if _atomic_write_json(CONFIG_FILE, config_to_save):
             with _config_lock:
-                # Forza l'invalidazione della cache per garantire che load_config() rilegga da disco
-                _config_cache = None
+                _config_cache = copy.deepcopy(config)
             return True
     except Exception as e:
         print(f"Error saving config: {e}")

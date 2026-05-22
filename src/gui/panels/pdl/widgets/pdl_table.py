@@ -50,17 +50,28 @@ class PDLTableView(QTableView):
             h_header.sectionClicked.connect(self.header_clicked.emit)
 
     def optimize_columns(self, headers_count: int) -> None:
-        """Ottimizza la larghezza delle colonne basandosi sul contenuto."""
-        h = self.horizontalHeader()
-        if not h:
-            return
-        for i in range(headers_count):
-            h.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
+        """Ottimizza la larghezza delle colonne basandosi sul contenuto (Asincrono)."""
+        from PySide6.QtCore import QTimer
 
-        self.resizeColumnsToContents()
-        # Limita larghezze troppo ampie tranne l'ultima (descrizione)
-        for i in range(headers_count):
-            if i != 6 and h.sectionSize(i) > 200:
-                h.resizeSection(i, 200)
+        def _do_optimize() -> None:
+            if not self:
+                return
+            h = self.horizontalHeader()
+            if not h:
+                return
+            self.setUpdatesEnabled(False)
+            try:
+                for i in range(headers_count):
+                    h.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
 
-        h.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
+                self.resizeColumnsToContents()
+                # Limita larghezze troppo ampie tranne l'ultima (descrizione)
+                for i in range(headers_count):
+                    if i != 6 and h.sectionSize(i) > 200:
+                        h.resizeSection(i, 200)
+
+                h.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
+            finally:
+                self.setUpdatesEnabled(True)
+
+        QTimer.singleShot(0, _do_optimize)

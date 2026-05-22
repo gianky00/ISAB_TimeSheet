@@ -1,4 +1,5 @@
 from contextlib import suppress
+from typing import Any
 
 from PySide6.QtCore import (
     QAbstractAnimation,
@@ -21,9 +22,8 @@ from PySide6.QtWidgets import (
 from src.core.constants import Business, Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.gui.styles import COLORS
-from src.gui.widgets.core_widgets import (
-    FilterComboBox,
-)
+from src.gui.widgets.core_widgets import FilterComboBox
+from src.gui.workers.kpi_worker import KPIWorker
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from .cards_row import KPICardsRow
@@ -37,6 +37,7 @@ class ContabilitaKPIPanel(QWidget):
         """Inizializza il pannello e prepara i grafici."""
         super().__init__(parent)
         self.HOURLY_COST_STD = Business.HOURLY_COST_STD
+        self.worker: KPIWorker | None = None
 
         # Member declarations
         self.year_combo: QComboBox
@@ -255,81 +256,66 @@ class ContabilitaKPIPanel(QWidget):
         return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
     def _load_kpi_data(self, year_text: str) -> None:
+        """Avvia il worker asincrono per il caricamento dei dati KPI."""
         if not year_text:
             return
-        try:
+
+        with suppress(ValueError):
             year = int(year_text)
-            stats = ContabilitaManager.get_year_stats(year)
-            tot_prev = stats.get("total_prev", 0.0)
-            tot_ore = stats.get("total_ore", 0.0)
-            count = stats.get("count_total", 0)
-            ore_dirette = stats.get("ore_dirette", 0.0)
-            ore_indirette = stats.get("ore_indirette", 0.0)
 
-            costo_tot = tot_ore * self.HOURLY_COST_STD
-            margine = tot_prev - costo_tot
-            marg_perc = (margine / tot_prev * 100) if tot_prev > 0 else 0
-            val_ora = (tot_prev / tot_ore) if tot_ore > 0 else 0
-            utile_ora = val_ora - self.HOURLY_COST_STD
+            # Ferma eventuale worker precedente
+            if self.worker and self.worker.isRunning():
+                self.worker.terminate()
+                self.worker.wait()
 
-            self.card_totale.lbl_value.setText(f"  {self._format_currency(tot_prev)}")
-            self.card_ore.lbl_value.setText(self._format_currency(tot_ore))
-            self.card_ore.set_info_callback(
-                lambda: (
-                    f"<b>Totale Ore: {self._format_currency(tot_ore)} h</b><br>"
-                    f"--------------------------------<br>"
-                    f"  Ore Dirette (su ODC/Prev): {self._format_currency(ore_dirette)} h<br>"
-                    f"  Ore Indirette: {self._format_currency(ore_indirette)} h"
-                )
+            # Mostra stato caricamento (opzionale, ma utile per UX)
+            self.card_totale.lbl_value.setText("...")
+            self.card_ore.lbl_value.setText("...")
+
+            self.worker = KPIWorker(year, self.HOURLY_COST_STD)
+            self.worker.finished_signal.connect(self._on_kpi_data_ready)
+            self.worker.error_signal.connect(lambda msg: print(f"Errore KPI: {msg}"))
+            self.worker.start()
+
+    def _on_kpi_data_ready(self, result: dict[str, Any]) -> None:
+        """Aggiorna i widget della UI con i dati elaborati dal worker."""
+        summary = result["summary"]
+        chart_data = result["chart_data"]
+
+        # 1. Update Scorecards
+        self.card_totale.lbl_value.setText(f"  {self._format_currency(summary['tot_prev'])}")
+        self.card_ore.lbl_value.setText(self._format_currency(summary["tot_ore"]))
+        self.card_ore.set_info_callback(
+            lambda: (
+                f"<b>Totale Ore: {self._format_currency(summary['tot_ore'])} h</b><br>"
+                f"--------------------------------<br>"
+                f"  Ore Dirette (su ODC/Prev): {self._format_currency(summary['ore_dirette'])} h<br>"
+                f"  Ore Indirette: {self._format_currency(summary['ore_indirette'])} h"
             )
+        )
 
-            data = ContabilitaManager.get_data_by_year(year)
-            cols = [
-                "data_prev",
-                "mese",
-                "n_prev",
-                "totale_prev",
-                "attivita",
-                "tcl",
-                "odc",
-                "stato_attivita",
-                "tipologia",
-                "ore_sp",
-                "resa",
-                "annotazioni",
-                "indirizzo_consuntivo",
-                "nome_file",
-            ]
-            import pandas as pd
+        self.card_resa.lbl_value.setText(self._format_currency(summary["avg_resa"]))
+        self.card_count.lbl_value.setText(str(summary["count"]))
 
-            from src.core.stats.stats_service import StatsService
+        # Margini
+        margine = summary["margine"]
+        marg_perc = summary["marg_perc"]
+        utile_ora = summary["utile_ora"]
+        val_ora = summary["val_ora"]
 
-            df = pd.DataFrame(data, columns=cols)
-            df["totale_prev"] = pd.to_numeric(df["totale_prev"], errors="coerce").fillna(0)
-            df["ore_sp"] = pd.to_numeric(df["ore_sp"], errors="coerce").fillna(0)
-            df["resa"] = pd.to_numeric(df["resa"], errors="coerce")
+        self.card_margine.lbl_value.setText(f"  {self._format_currency(margine)}")
+        self.card_margine.lbl_value.setStyleSheet(
+            f"color: {COLORS['teal_light'] if margine >= 0 else COLORS['error_red']}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
+        )
+        self.card_margine_perc.lbl_value.setText(f"{marg_perc:.1f} %".replace(".", ","))
+        self.card_margine_perc.lbl_value.setStyleSheet(
+            f"color: {COLORS['teal_light'] if marg_perc >= 0 else COLORS['error_red']}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
+        )
+        self.card_eff_resa.lbl_value.setText(f"  {self._format_currency(utile_ora)} / h")
+        self.card_eff_resa.lbl_value.setStyleSheet(
+            f"color: {COLORS['purple_deep'] if utile_ora >= 0 else COLORS['error_red']}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
+        )
+        self.card_val_ora.lbl_value.setText(f"  {self._format_currency(val_ora)} / h")
 
-            avg_resa = df["resa"].mean() or 0
-            self.card_resa.lbl_value.setText(self._format_currency(avg_resa))
-            self.card_count.lbl_value.setText(str(count))
-
-            # Style updates for margins
-            self.card_margine.lbl_value.setText(f"  {self._format_currency(margine)}")
-            self.card_margine.lbl_value.setStyleSheet(
-                f"color: {COLORS['teal_light'] if margine >= 0 else COLORS['error_red']}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
-            )
-            self.card_margine_perc.lbl_value.setText(f"{marg_perc:.1f} %".replace(".", ","))
-            self.card_margine_perc.lbl_value.setStyleSheet(
-                f"color: {COLORS['teal_light'] if marg_perc >= 0 else COLORS['error_red']}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
-            )
-            self.card_eff_resa.lbl_value.setText(f"  {self._format_currency(utile_ora)} / h")
-            self.card_eff_resa.lbl_value.setStyleSheet(
-                f"color: {COLORS['purple_deep'] if utile_ora >= 0 else COLORS['error_red']}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
-            )
-            self.card_val_ora.lbl_value.setText(f"  {self._format_currency(val_ora)} / h")
-
-            # Process data for charts via StatsService (CORE)
-            kpi_data = StatsService.prepare_kpi_data(df, self.HOURLY_COST_STD)
-            self.charts_manager.plot_all(kpi_data)
-        except Exception as e:
-            print(f"Errore caricamento KPI: {e}")
+        # 2. Update Charts
+        self.charts_manager.plot_all(chart_data)

@@ -5,6 +5,7 @@ Utilizza ODAController per la logica di business e ODATreeView per la gerarchia.
 Refactored V9.4: Bold on selection and context menu for details.
 """
 
+import logging
 from contextlib import suppress
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
@@ -22,6 +23,7 @@ from PySide6.QtWidgets import (
 from src.core.oda.oda_controller import ODAController
 from src.core.sync_tracker import SyncTracker
 from src.gui.widgets.toast import ToastManager
+from src.gui.workers.oda_data_worker import ODADataWorker
 from src.gui.workers.oda_io_worker import OdaIOWorker
 from src.utils.helpers import safe_open
 
@@ -31,6 +33,8 @@ from .widgets.oda_tree import ODATreeView
 
 if TYPE_CHECKING:
     from src.gui.controllers.bot_worker import BotWorker
+
+logger = logging.getLogger(__name__)
 
 
 class StoricoOdaPanel(QWidget):
@@ -145,13 +149,23 @@ class StoricoOdaPanel(QWidget):
         layout.addWidget(self.main_container)
 
     def refresh_data(self) -> None:
-        """Aggiorna i dati visualizzati nel tree applicando i filtri correnti."""
+        """Ricarica i dati degli ordini di acquisto applicando i filtri (Asincrono)."""
         self.filters.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('oda')}")
         search_text = self.filters.search_input.text()
 
-        structured_data = self.controller.get_grouped_data(search_text)
+        if hasattr(self, "_data_worker") and self._data_worker.isRunning():
+            self._data_worker.terminate()
+            self._data_worker.wait()
 
+        self._data_worker = ODADataWorker(self.controller, search_text)
+        self._data_worker.finished_signal.connect(self._on_oda_data_ready)
+        self._data_worker.error_signal.connect(lambda msg: logger.error(f"ODA Error: {msg}"))
+        self._data_worker.start()
+
+    def _on_oda_data_ready(self, structured_data: list[dict[str, Any]]) -> None:
+        """Popola il modello gerarchico con i dati caricati dal worker."""
         self.model.removeRows(0, self.model.rowCount())
+
         for oda_data in structured_data:
             root_row = ODAAdapter.create_root_row(oda_data)
             self.model.appendRow(root_row)

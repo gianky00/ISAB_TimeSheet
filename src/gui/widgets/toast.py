@@ -254,18 +254,14 @@ class ToastManager(QObject):
     ) -> None:
         """
         Crea e visualizza un nuovo toast, calcolando la posizione corretta nello stack.
-        Evita duplicati identici visibili contemporaneamente.
-
-        Args:
-          message: Messaggio da mostrare.
-          toast_type: Tipo di notifica.
-          duration: Durata in ms.
-          position: "top" (default) o "bottom" (sopra il footer).
-          pulse: Se True, attiva l'animazione di pulsazione.
-          is_rich_text: Se True, abilita il rendering HTML (sanificato).
+        Ottimizzato per limitare l'overhead di rendering su flussi massivi.
         """
         # Pulisce la lista dei toast non più visibili
         ToastManager._active_toasts = [t for t in ToastManager._active_toasts if t.isVisible()]
+
+        # Protezione anti-jank: limite massimo di toast contemporanei
+        if len(ToastManager._active_toasts) >= 3:
+            return
 
         # Prevenzione duplicati identici (spam)
         for t in ToastManager._active_toasts:

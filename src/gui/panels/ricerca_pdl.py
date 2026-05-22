@@ -119,7 +119,7 @@ class RicercaPDLPanel(BaseBotPanel):
         self.exclude_closed_check = StandardCheckBox("Escludi chiusi/scaduti")
         self.exclude_closed_check.setChecked(True)
         self.exclude_closed_check.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 500;")
-        self.exclude_closed_check.stateChanged.connect(self._save_data)
+        self.exclude_closed_check.stateChanged.connect(lambda _: self._save_data())
         vbox_check.addWidget(self.exclude_closed_check)
         params_layout.addLayout(vbox_check)
 

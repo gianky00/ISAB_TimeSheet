@@ -5,7 +5,6 @@ V4.0: Storico totale, nuove metriche di successo e affidabilità con barre di pr
 """
 
 import logging
-import threading
 from typing import NamedTuple
 
 from PySide6.QtCore import Qt, QTimer, Signal
@@ -16,6 +15,7 @@ from src.core.stats.roi_engine import ROIEngine, ROIMetrics
 from src.gui.styles import COLORS
 from src.gui.widgets.animated_progress_bar import AnimatedProgressBar
 from src.gui.widgets.modern_card import ModernCard
+from src.gui.workers.roi_worker import ROIWorker
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
@@ -292,17 +292,19 @@ class BotSavingsWidget(ModernCard):
     #    Data
 
     def refresh_stats(self) -> None:
-        """Avvia il thread di calcolo delle statistiche in background per non bloccare la UI."""
+        """Avvia il worker asincrono per il calcolo del ROI."""
+        if hasattr(self, "_worker") and self._worker.isRunning():
+            return
 
-        def run() -> None:
-            """Esegue il calcolo effettivo del ROI tramite ROIEngine."""
-            try:
-                metrics = ROIEngine.calculate_savings()
-                self.stats_updated.emit(metrics)
-            except Exception:
-                logger.exception("Efficiency Update Error")
+        self._worker = ROIWorker()
+        self._worker.finished_signal.connect(self._on_stats_ready)
+        self._worker.error_signal.connect(lambda msg: logger.error(f"ROI Error: {msg}"))
+        self._worker.start()
 
-        threading.Thread(target=run, daemon=True).start()
+    def _on_stats_ready(self, metrics: ROIMetrics) -> None:
+        """Callback eseguita al termine del calcolo ROI."""
+        self._update_ui(metrics)
+        self.stats_updated.emit(metrics)
 
     def _update_ui(self, metrics: ROIMetrics) -> None:
         """

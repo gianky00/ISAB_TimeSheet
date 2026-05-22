@@ -120,7 +120,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         h_p = QHBoxLayout()
         h_p.setSpacing(10)
         self.check_stampa = StandardCheckBox("Attiva Stampa")
-        self.check_stampa.stateChanged.connect(self._save_data)
+        self.check_stampa.stateChanged.connect(lambda _: self._save_data())
         self.combo_stampanti = FilterComboBox()
         self.combo_stampanti.addItems(get_installed_printers())
         self.combo_stampanti.setStyleSheet(COMBOBOX_STYLE)

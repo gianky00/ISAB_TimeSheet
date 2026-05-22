@@ -20,6 +20,7 @@ from src.core.sync_tracker import SyncTracker
 from src.gui.formatters import FastTableModel
 from src.gui.panels.dipendenti.utils.report_generator import ReportGenerator
 from src.gui.widgets.toast import ToastManager
+from src.gui.workers.employee_worker import EmployeeWorker
 
 from ..widgets.anagrafica_header import AnagraficaHeaderWidget
 from ..widgets.employee_detail_view import EmployeeDetailView
@@ -97,20 +98,27 @@ class AnagraficaPage(QWidget):
         layout.addLayout(content_layout)
 
     def refresh_data(self) -> None:
-        """Sincronizza i dati tra DB, Controller e UI."""
+        """Sincronizza i dati tra DB, Controller e UI (Asincrono)."""
         self.header.set_sync_status(f"Ultimo Sync: {SyncTracker.get_formatted_status('timbrature')}")
 
-        # 1. Caricamento dati grezzi
-        full_rows = self.controller.get_employees(self.header.search_input.text())
+        # Ferma eventuale worker precedente
+        if hasattr(self, "_emp_worker") and self._emp_worker and self._emp_worker.isRunning():
+            self._emp_worker.terminate()
+            self._emp_worker.wait()
 
-        # 2. Processing (Calcolo scadenze e filtri)
-        dtos, counts = self.controller.process_rows(full_rows, self.current_filter)
+        search_text = self.header.search_input.text()
+        self._emp_worker = EmployeeWorker(self.controller, search_text, self.current_filter)
+        self._emp_worker.finished_signal.connect(self._on_employees_ready)
+        self._emp_worker.error_signal.connect(lambda msg: print(f"Errore Anagrafica: {msg}"))
+        self._emp_worker.start()
 
-        # 3. Map DTOs to UI structure
+    def _on_employees_ready(self, dtos: list[Any], counts: dict[str, int]) -> None:
+        """Aggiorna il modello e la UI quando i dati sono stati processati dal worker."""
+        # 1. Map DTOs to UI structure
         master_rows: list[list[str | int | None]] = [d.to_table_row() for d in dtos]
         metadata: list[dict[str, str | bool]] = [d.get_metadata() for d in dtos]
 
-        # 4. Aggiornamento UI
+        # 2. Aggiornamento UI
         self.model.update_data(master_rows, metadata)
         self.model.set_column_formatter(0, self._inactivation_formatter)
         self.header.update_counts(counts)

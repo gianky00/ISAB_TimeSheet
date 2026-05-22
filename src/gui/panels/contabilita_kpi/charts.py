@@ -147,12 +147,23 @@ class KPIChartsManager:
         return fig, canvas
 
     def plot_all(self, kpi_data: dict[str, Any]) -> None:
-        """Aggiorna tutti i grafici con i dati pre-processati dal service."""
-        self._plot_stato_attivita(kpi_data.get("stato_attivita", {}))
-        self._plot_prev_ore_mese(kpi_data.get("prev_ore_mese", {}))
-        self._plot_margine_tipologia(kpi_data.get("margine_tipologia", {}))
-        self._plot_andamento_resa(kpi_data.get("andamento_resa", {}))
-        self._plot_completamento(kpi_data.get("completamento", {}))
+        """Aggiorna tutti i grafici con i dati pre-processati dal service (Staggered)."""
+        from PySide6.QtCore import QTimer
+
+        # 1. Stato Attività (Immediato)
+        QTimer.singleShot(0, lambda: self._plot_stato_attivita(kpi_data.get("stato_attivita", {})))
+
+        # 2. Preventivato vs Ore (50ms delay)
+        QTimer.singleShot(50, lambda: self._plot_prev_ore_mese(kpi_data.get("prev_ore_mese", {})))
+
+        # 3. Margine per Tipologia (100ms delay)
+        QTimer.singleShot(100, lambda: self._plot_margine_tipologia(kpi_data.get("margine_tipologia", {})))
+
+        # 4. Andamento Resa (150ms delay)
+        QTimer.singleShot(150, lambda: self._plot_andamento_resa(kpi_data.get("andamento_resa", {})))
+
+        # 5. Stato Completamento (200ms delay)
+        QTimer.singleShot(200, lambda: self._plot_completamento(kpi_data.get("completamento", {})))
 
     def _plot_stato_attivita(self, counts: dict[str, int]) -> None:
         """Genera il grafico a torta per lo stato delle attività."""

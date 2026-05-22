@@ -6,7 +6,6 @@ e un elenco dettagliato di anomalie rilevate, con integrazione diretta per gli a
 """
 
 from contextlib import suppress
-from datetime import UTC, datetime
 from typing import Any, Final
 
 from PySide6.QtCore import QRectF, Qt, QTimer
@@ -24,10 +23,10 @@ from PySide6.QtWidgets import (
 from src.core.constants import Icons
 from src.core.logging.alert_manager import get_alert_manager
 from src.core.logging.analytics import Anomaly, generate_analytics_report
-from src.core.logging.viewer import LogViewer
 from src.core.notification_manager import NotificationManager
 from src.gui.styles import COLORS
 from src.gui.widgets import ModernButton, ModernCard
+from src.gui.workers.health_worker import HealthWorker
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -401,23 +400,28 @@ class HealthPanel(QWidget):
         parent_layout.addLayout(right_panel, stretch=2)
 
     def refresh(self) -> None:
-        """Interroga i motori di analytics e il LogViewer per aggiornare tutte le card e lo score."""
-        try:
-            report = generate_analytics_report(hours=24)
-            self._score_badge.score = report.health_score
-            self._status_label.setText(self._score_badge._get_status_text())
+        """Interroga i motori di analytics in background (Asincrono)."""
+        if hasattr(self, "_health_worker") and self._health_worker.isRunning():
+            return
 
-            health = LogViewer().generate_health_report()
-            self._stat_runs_ok.set_value(str(health.get("bot_runs", {}).get("successful", 0)))
-            self._stat_runs_fail.set_value(str(health.get("bot_runs", {}).get("failed", 0)))
-            self._stat_error_rate.set_value(f"{health.get('error_rate_percent', 0):.1f}%")
-            self._stat_anomalies.set_value(str(len(report.anomalies)))
-            self._last_update.setText(
-                f"Ultimo aggiornamento: {datetime.now(UTC).astimezone().strftime('%H:%M:%S')}"
-            )
-            self._update_anomalies(report.anomalies)
-        except Exception as e:
-            self._last_update.setText(f"Errore: {str(e)[:30]}")
+        self._last_update.setText("Analisi in corso...")
+        self._health_worker = HealthWorker(hours=24)
+        self._health_worker.finished_signal.connect(self._on_health_data_ready)
+        self._health_worker.error_signal.connect(lambda msg: self._last_update.setText(f"Errore: {msg[:30]}"))
+        self._health_worker.start()
+
+    def _on_health_data_ready(self, data: dict[str, Any]) -> None:
+        """Aggiorna i widget grafici con i dati elaborati dal worker."""
+        self._score_badge.score = data["health_score"]
+        self._status_label.setText(self._score_badge._get_status_text())
+
+        self._stat_runs_ok.set_value(str(data["bot_runs_ok"]))
+        self._stat_runs_fail.set_value(str(data["bot_runs_fail"]))
+        self._stat_error_rate.set_value(f"{data['error_rate']:.1f}%")
+        self._stat_anomalies.set_value(str(len(data["anomalies"])))
+
+        self._last_update.setText(f"Ultimo aggiornamento: {data['timestamp']}")
+        self._update_anomalies(data["anomalies"])
 
     def _update_anomalies(self, anomalies: list[Anomaly]) -> None:
         """Rigenera dinamicamente la lista delle card anomalia nella colonna di destra."""

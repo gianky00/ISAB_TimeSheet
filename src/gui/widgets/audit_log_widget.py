@@ -13,12 +13,9 @@ from typing import TYPE_CHECKING
 import shiboken6
 from PySide6.QtCore import (
     QModelIndex,
-    QObject,
-    QRunnable,
     Qt,
     QThreadPool,
     QTimer,
-    Signal,
     Slot,
 )
 from PySide6.QtWidgets import (
@@ -45,30 +42,10 @@ from src.gui.widgets.core_widgets import (
     StandardCheckBox,
 )
 from src.gui.widgets.modern_card import ModernCard
+from src.gui.workers.integrity_worker import IntegrityWorker
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
-
-
-class IntegrityWorkerSignals(QObject):
-    """Segnali emessi dal worker di verifica integrità dei log."""
-
-    finished = Signal(bool)
-
-
-class IntegrityWorker(QRunnable):
-    """Worker per la verifica asincrona dell'hash di integrità del database di audit."""
-
-    def __init__(self, manager: AuditManager) -> None:
-        """Inizializza il worker comunicando con l'AuditManager."""
-        super().__init__()
-        self.manager = manager
-        self.signals = IntegrityWorkerSignals()
-
-    def run(self) -> None:
-        """Esegue il controllo crittografico dell'integrità."""
-        valid = self.manager.verify_integrity()
-        self.signals.finished.emit(valid)
 
 
 class AuditLogWidget(QWidget):
@@ -246,7 +223,7 @@ class AuditLogWidget(QWidget):
 
         self.total_logs = total
         self.model.update_data(logs)
-        self.table_view.resizeColumnsToContents()
+        QTimer.singleShot(0, lambda: self.table_view.resizeColumnsToContents() if self.table_view else None)
         self.pagination_bar.update_state(self.current_page, self.total_logs, self.PAGE_SIZE)
 
         if self.current_page == 0:

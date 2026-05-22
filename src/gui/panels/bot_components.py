@@ -39,7 +39,7 @@ class BotControlComponent(QWidget):
             icon=get_asset_path(Icons.PLAY),
         )
         self.start_btn.setMinimumWidth(110)
-        self.start_btn.clicked.connect(self.start_clicked.emit)
+        self.start_btn.clicked.connect(lambda: self.start_clicked.emit())
         layout.addWidget(self.start_btn)
 
         self.stop_btn = ModernButton(
@@ -50,7 +50,7 @@ class BotControlComponent(QWidget):
         )
         self.stop_btn.setMinimumWidth(90)
         self.stop_btn.setEnabled(False)
-        self.stop_btn.clicked.connect(self.stop_clicked.emit)
+        self.stop_btn.clicked.connect(lambda: self.stop_clicked.emit())
         layout.addWidget(self.stop_btn)
 
     def set_running(self, running: bool) -> None:

@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from contextlib import suppress
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QColor, QFont
@@ -18,12 +18,12 @@ from PySide6.QtWidgets import (
 
 from src.core import config_manager
 from src.core.constants import Icons
-from src.core.contabilita_manager import ContabilitaManager
 from src.core.utils.formatters import format_date_it
 from src.gui.formatters import format_number_smart
 from src.gui.styles import COLORS
 from src.gui.widgets import ExcelTableWidget
 from src.gui.widgets.core_widgets import SortableTableWidgetItem
+from src.gui.workers.contabilita_data_worker import ContabilitaDataWorker
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 if TYPE_CHECKING:
@@ -53,6 +53,7 @@ class GiornaliereYearTab(QWidget):
     def __init__(self, year: int, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.year = year
+        self.worker: ContabilitaDataWorker | None = None
         self._setup_ui()
         self._load_data()
 
@@ -106,8 +107,25 @@ class GiornaliereYearTab(QWidget):
         self._load_data()
 
     def _load_data(self) -> None:
-        data = ContabilitaManager.get_giornaliere_by_year(self.year)
+        """Carica i dati annuali in background (Asincrono)."""
+        if self.worker and self.worker.isRunning():
+            self.worker.terminate()
+            self.worker.wait()
+
         self.table.setSortingEnabled(False)
+        self.table.clearContents()
+        self.table.setRowCount(0)
+
+        # Feedback caricamento
+        self.table.setPlaceholderText("Caricamento dati in corso...")
+
+        self.worker = ContabilitaDataWorker("get_giornaliere_by_year", self.year)
+        self.worker.finished_signal.connect(self._on_data_ready)
+        self.worker.error_signal.connect(lambda msg: print(f"Errore Giornaliere: {msg}"))
+        self.worker.start()
+
+    def _on_data_ready(self, data: list[tuple[Any, ...]]) -> None:
+        """Popola la tabella al termine del caricamento asincrono."""
         self.table.blockSignals(True)
         try:
             self.table.setRowCount(len(data))
@@ -127,10 +145,11 @@ class GiornaliereYearTab(QWidget):
                 if len(row_data) > self.IDX_NOMEFILE and (item_0 := self.table.item(row_idx, 0)):
                     item_0.setData(Qt.ItemDataRole.UserRole, row_data[self.IDX_NOMEFILE])
 
-            # Cruciale per il WordWrap: ridimensiona altezze righe dopo il popolamento
-            self.table.resizeRowsToContents()
+            # Cruciale per il WordWrap: ridimensiona le dimensioni dopo il popolamento (Ottimizzato)
+            self.table.smart_resize()
             self._add_totals_row()
             self._update_totals()
+            self.table.setPlaceholderText("Nessun dato trovato per questo anno.")
         finally:
             self.table.blockSignals(False)
             self.table.setSortingEnabled(True)

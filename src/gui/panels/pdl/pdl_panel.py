@@ -19,11 +19,13 @@ from PySide6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.core.pdl.pdl_controller import PDLController
+from src.core.pdl.pdl_dto import PdlRowDTO
 from src.core.pdl.pdl_service import PDLService
 from src.core.sync_tracker import SyncTracker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.formatters import FastTableModel
 from src.gui.widgets import EmptyStateWidget
+from src.gui.workers.pdl_data_worker import PDLDataWorker
 from src.gui.workers.pdl_io_worker import PdlIOWorker
 from src.utils.helpers import safe_open
 
@@ -33,8 +35,8 @@ from .programmazione_tab import ProgrammazioneTab
 from .widgets.pdl_table import PDLTableView
 
 if TYPE_CHECKING:
-    from src.core.pdl.pdl_dto import PdlRowDTO
     from src.gui.controllers.bot_worker import BotWorker
+
 
 logger = logging.getLogger(__name__)
 
@@ -150,38 +152,52 @@ class PDLDBPanel(QWidget):
         layout.addWidget(self.tabs)
 
     def _populate_initial_filters(self) -> None:
-        """Popola i menu a tendina dei filtri con i dati unici presenti nel DB."""
-        try:
-            from src.core.database import db_manager
+        """Popola i menu a tendina dei filtri in background (Asincrono)."""
+        self.filter_worker = PDLDataWorker("initial_filters")
+        self.filter_worker.filters_ready.connect(self._on_filters_ready)
+        self.filter_worker.start()
 
-            q = "SELECT DISTINCT SUBSTR(n_pdl, INSTR(n_pdl, '/') + 1) as grp FROM pdl WHERE n_pdl LIKE '%/%' ORDER BY grp"
-            rows = db_manager.execute_query(db_manager.DB_PDL, q)
+    def _on_filters_ready(self, filter_type: str, results: list[str]) -> None:
+        """Callback per il popolamento dei filtri a query completata."""
+        if filter_type == "groups":
             self.filters.group_filter.blockSignals(True)
             self.filters.group_filter.clear()
             self.filters.group_filter.addItem("Tutti")
-            for r in rows:
-                if r[0]:
-                    self.filters.group_filter.addItem(str(r[0]))
+            self.filters.group_filter.addItems(results)
             self.filters.group_filter.blockSignals(False)
             self._update_areas()
+        elif filter_type == "areas":
+            self.filters.area_filter.blockSignals(True)
+            self.filters.area_filter.clear()
+            self.filters.area_filter.addItem("Tutte")
+            self.filters.area_filter.addItems(results)
+            self.filters.area_filter.blockSignals(False)
             self._update_units()
-        except Exception:
-            logger.warning("Impossibile caricare i filtri PDL.")
+        elif filter_type == "units":
+            self.filters.unit_filter.blockSignals(True)
+            self.filters.unit_filter.clear()
+            self.filters.unit_filter.addItem("Tutte")
+            self.filters.unit_filter.addItems(results)
+            self.filters.unit_filter.blockSignals(False)
 
     def refresh_data(self, sort_col: int | None = None) -> None:
-        """
-        Ricarica i dati dal database applicando i filtri correnti.
-
-        Args:
-          sort_col: Indice opzionale della colonna per l'ordinamento.
-        """
+        """Ricarica i dati dal database applicando i filtri (Asincrono)."""
         self.filters.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('pdl')}")
         filters = self.filters.get_filters()
 
-        # Recuperòdati dal Controller (con Caching)
-        sort_order = "DESC"  # In futuro gestito dinamicamente
-        self._raw_full_data = self.controller.get_pdl_data(filters, sort_col, sort_order)
+        if hasattr(self, "data_worker") and self.data_worker.isRunning():
+            self.data_worker.terminate()
+            self.data_worker.wait()
 
+        self.data_worker = PDLDataWorker(
+            "fetch_data", controller=self.controller, filters=filters, sort_col=sort_col, sort_order="DESC"
+        )
+        self.data_worker.data_ready.connect(self._on_pdl_data_ready)
+        self.data_worker.start()
+
+    def _on_pdl_data_ready(self, data: list[PdlRowDTO]) -> None:
+        """Aggiorna il modello della tabella con i dati caricati in background."""
+        self._raw_full_data = data
         self.empty_state.setVisible(not self._raw_full_data)
         if self._raw_full_data:
             self.empty_state.hide()
@@ -203,11 +219,12 @@ class PDLDBPanel(QWidget):
         """
         if site:
             self.filters.site_filter.setCurrentText(site)
-            self._update_areas()
+            # _on_site_changed verrà triggherato se connesso, altrimenti chiamiamo noi
+            self._on_site_changed()
 
         if area:
             self.filters.area_filter.setCurrentText(area)
-            self._update_units()
+            self._on_area_changed()
 
         if search is not None:
             self.filters.search_input.setText(search)
@@ -215,61 +232,31 @@ class PDLDBPanel(QWidget):
         self.refresh_data()
 
     def _on_site_changed(self) -> None:
-        """Gestisce il cambio del filtro Sito e aggiorna le Aree disponibili."""
+        """Gestisce il cambio del filtro Sito e aggiorna le Aree disponibili (Asincrono)."""
         self._update_areas()
-        self._update_units()
         self.refresh_data()
 
     def _on_area_changed(self) -> None:
-        """Gestisce il cambio del filtro Area e aggiorna le Unità disponibili."""
+        """Gestisce il cambio del filtro Area e aggiorna le Unità disponibili (Asincrono)."""
         self._update_units()
         self.refresh_data()
 
     def _update_areas(self) -> None:
-        """Aggiorna dinamicamente il filtro Area basandosi sul Sito selezionato."""
+        """Aggiorna dinamicamente il filtro Area basandosi sul Sito selezionato (Asincrono)."""
         site = self.filters.site_filter.currentText()
-        q = "SELECT DISTINCT area FROM pdl WHERE 1=1"
-        p = []
-        if site != "Tutti i siti":
-            q += " AND sito = ?"
-            p.append(site)
-        q += " ORDER BY area"
-        from src.core.database import db_manager
 
-        rows = db_manager.execute_query(db_manager.DB_PDL, q, tuple(p))
-        self.filters.area_filter.blockSignals(True)
-        self.filters.area_filter.clear()
-        self.filters.area_filter.addItem("Tutte")
-        for r in rows:
-            if r[0]:
-                self.filters.area_filter.addItem(str(r[0]))
-        self.filters.area_filter.blockSignals(False)
+        self.area_worker = PDLDataWorker("update_areas", site)
+        self.area_worker.filters_ready.connect(self._on_filters_ready)
+        self.area_worker.start()
 
     def _update_units(self) -> None:
-        """Aggiorna dinamicamente il filtro Unità basandosi su Sito e Area selezionati."""
+        """Aggiorna dinamicamente il filtro Unità (Asincrono)."""
         site = self.filters.site_filter.currentText()
         area = self.filters.area_filter.currentText()
-        q = "SELECT DISTINCT unita FROM pdl WHERE 1=1"
-        p = []
-        if site != "Tutti i siti":
-            q += " AND sito = ?"
-            p.append(site)
-        if area != "Tutte":
-            q += " AND area = ?"
-            p.append(area)
-        q += " ORDER BY unita"
 
-        from src.core.database import db_manager
-
-        rows = db_manager.execute_query(db_manager.DB_PDL, q, tuple(p))
-
-        self.filters.unit_filter.blockSignals(True)
-        self.filters.unit_filter.clear()
-        self.filters.unit_filter.addItem("Tutte")
-        for r in rows:
-            if r[0]:
-                self.filters.unit_filter.addItem(str(r[0]))
-        self.filters.unit_filter.blockSignals(False)
+        self.unit_worker = PDLDataWorker("update_units", site, area)
+        self.unit_worker.filters_ready.connect(self._on_filters_ready)
+        self.unit_worker.start()
 
     def _on_selection_changed(self) -> None:
         """Aggiorna la vista di dettaglio quando viene selezionata una riga."""

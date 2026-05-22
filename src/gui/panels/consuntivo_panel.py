@@ -4,6 +4,8 @@ Pannello premium per la generazione e manipolazione dei consuntivi automatizzati
 Struttura modulare che integra i widget specializzati per Nuovo, Esistente e Impostazioni.
 """
 
+from typing import Any
+
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
@@ -12,6 +14,7 @@ from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.widgets.contabilita.consuntivo.crea_nuovo_tab import CreaNuovoTab
 from src.gui.widgets.contabilita.consuntivo.impostazioni_tab import ImpostazioniTab
 from src.gui.widgets.contabilita.consuntivo.modifica_esistente_tab import ModificaEsistenteTab
+from src.gui.workers.consuntivo_worker import ConsuntivoWorker
 
 
 class ConsuntivoPanel(QWidget):
@@ -57,12 +60,17 @@ class ConsuntivoPanel(QWidget):
             self.tabs.setCurrentIndex(index)
 
     def _pre_load_data(self) -> None:
-        """Esegue il caricamento pesante dei dati in background all'avvio dell'app."""
+        """Avvia il caricamento pesante dei dati in background (Asincrono)."""
         if self._data_preloaded:
             return
 
-        # Carica opzioni tramite controller (CORE)
-        opts = self.controller.get_config_options()
+        self._worker = ConsuntivoWorker(self.controller)
+        self._worker.finished_signal.connect(self._on_pre_load_finished)
+        self._worker.start()
+
+    def _on_pre_load_finished(self, result: dict[str, Any]) -> None:
+        """Popola i tab della UI con i dati caricati dal worker."""
+        opts = result["options"]
 
         self._tab_new.tcl_combo.blockSignals(True)
         self._tab_new.tcl_combo.clear()

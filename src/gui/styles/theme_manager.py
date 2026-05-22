@@ -27,6 +27,7 @@ class ThemeManager:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance.current_theme = "light"
+            cls._instance._cached_stylesheet: str | None = None
         return cls._instance
 
     @property
@@ -99,7 +100,11 @@ class ThemeManager:
         app.setPalette(palette)
 
     def _apply_stylesheet(self, app: QApplication, theme_name: str) -> None:
-        """Carica, processa e applica il file QSS principale e gli overrides."""
+        """Carica, processa e applica il file QSS principale e gli overrides (con caching)."""
+        if self._cached_stylesheet:
+            app.setStyleSheet(self._cached_stylesheet)
+            return
+
         # 1. Carica QSS del tema specifico
         qss_path = Path(get_asset_path(f"assets/styles/{theme_name}.qss"))
         qss_content = ""
@@ -123,8 +128,10 @@ class ThemeManager:
             except Exception:
                 logger.exception("Errore lettura Overrides QSS")
 
-        # 3. Applica la combinazione degli stili
-        app.setStyleSheet(qss_content + overrides_content)
+        # 3. Applica la combinazione degli stili e salva in cache
+        full_style = qss_content + overrides_content
+        self._cached_stylesheet = full_style
+        app.setStyleSheet(full_style)
 
     def _process_qss(self, content: str) -> str:
         """Sostituisce i segnaposto {{key}} con i valori della palette e delle costanti."""
