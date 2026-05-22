@@ -1,3 +1,0 @@
-nel file Excel ho N° PDL	DATA CREAZIONE	AREA	UNITÀ	DITTA	DESCRIZIONE DEL LAVORO	TIPOLOGIA	STATO	APPARECCHIATURA	RICHIEDENTE	DATA RICHIESTA	EMITTENTE	DATA EMISSIONE	APRENTE	DATA APERTURA	PRIORITÀ	CONTRATTO	ORDINE	SITO
-
-ma non tutte le colonne vengono importate, siccome sono parecchie, in che modo potremmo visualizzare tutto senza avere uno scorrimento orizzontale? sarebbero troppo schiacciate se adattiamo attualmente. Non modificare nulla, dammi un piano

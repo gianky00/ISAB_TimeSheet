@@ -2,241 +2,284 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **Nota**: Per il contesto architetturale completo in formato machine-readable, vedi [`.ai-context.json`](./.ai-context.json).
+
 ## Project Overview
 
-**SyncroJob Enterprise** is an automation platform for the ISAB supplier portal and SafeWork, built with PySide6 and Selenium. It automates timesheet downloads/uploads, OdA management, attendance tracking, and safety portal integration.
+**SyncroJob Enterprise** is an automation platform for the ISAB supplier portal and SafeWork, built with PySide6 and Selenium/Playwright. It automates timesheet downloads/uploads, OdA management, attendance tracking, and safety portal integration.
 
 ## Development Commands
 
-### Setup Ambiente
+### Setup
+
 ```bash
-# Installazione dipendenze e venv (Poetry consigliato)
+# Installazione dipendenze e venv
 poetry install
 
-# Oppure via pip (modalità editabile)
-pip install -e .
+# Attivazione venv
+poetry shell
 ```
 
 ### Testing
+
 ```bash
-# Run all tests (Always use the robust suite script to avoid environment mismatches)
+# Suite completa (sempre preferita)
 python tests/run_robust_tests.py
 
-# Run specific test file (if isolated and safe)
-pytest -v tests/unit/test_audit_manager_coverage.py
+# Test rapidi per dev loop
+poetry run pytest -m "unit and not slow"
+
+# Test singolo file
+poetry run pytest -v tests/unit/test_audit_manager_coverage.py
 ```
 
-### Code Quality
+### Code Quality (tutti automatizzati nel pre-commit)
+
 ```bash
-# Linting
-ruff check .
+# Linting + autofix
+poetry run ruff check --fix
 
-# Type checking
-mypy .
+# Formattazione
+poetry run ruff format
 
-# Format code
-ruff format .
+# Type checking strict
+poetry run mypy --strict src/
 
-# Cohesion checking (SRP / LCOM Analysis - Requires PYTHONUTF8=1 on Windows)
-poetry run cohesion --directory src/
+# Docstring coverage >= 99%
+poetry run interrogate src/
+
+# Complessità ciclomatica (max B)
+poetry run xenon src/ --max-absolute B --max-modules B --max-average A
+
+# Coesione SRP / LCOM (script con filtri anti-falsi positivi)
+poetry run python scripts/check_cohesion.py
+
+# Tutto in una volta
+poetry run pre-commit run --all-files
 ```
 
 ### Building
+
 ```bash
-# Standard build (PyInstaller)
+# Build standard (PyInstaller)
 python "admin/Crea Setup/build_dist.py"
 
-# Nuitka build (Standalone)
+# Build Nuitka (Standalone)
 python "admin/Crea Setup/build_dist.py" --use-nuitka
+```
 
-# Local build via batch script
-scripts\build.bat          # Uses PyInstaller
-scripts\build.bat --nuitka # Uses Nuitka
+### Versioning
+
+```bash
+# MAI modificare manualmente version.py o pyproject.toml
+# Usa commitizen:
+poetry run cz bump
+```
+
+### Generatori AI
+
+```bash
+# Aggiorna .ai-context.json (eseguito automaticamente dal pre-commit)
+poetry run python tools/generate_ai_context.py
+
+# Aggiorna docs/schemas/config.schema.json
+poetry run python tools/generate_schemas.py
 ```
 
 ## Architecture
 
-### Application Structure
+### Core Layout
 
-**Entry Point**: `main.py` → Initializes PySide6 QApplication and MainWindow
+```
+src/
+├── core/          # Business logic, Services, Repositories — NESSUNA GUI
+├── gui/           # Widget, Panel, Dialog PySide6 — NESSUNA logica di business
+├── bots/          # Automazione Selenium/Playwright — NO import da src/gui/
+├── models/        # Modelli Pydantic e DTO di scambio dati
+└── utils/         # Utility pure (stateless) senza side-effect
+```
 
-**Core Components**:
-- **MainWindow** (`src/gui/main_window.py`): Central hub coordinating controllers and navigation
-  - Uses `PageIndex` enum (0-10) for panel routing
-  - Implements **lazy loading** - panels created on first navigation
-  - Startup sequence with animated console and progress tracking
+### Entry Point
 
-- **NavigationController** (`src/gui/controllers/navigation_controller.py`): Handles routing between main panels
-  - Factory pattern for panel creation (`_create_*` methods)
-  - Tracks initialization state per panel (`_panel_initialized_{index}`)
+`main.py` → Inizializza PySide6 QApplication, MainWindow e Crash Handler
 
-- **Controllers** (`src/gui/controllers/`):
-  - `BotController`: Manages automation bot lifecycle
-  - `ServiceController`: Background services (Telegram)
-  - `TrayController`: System tray integration
-  - `SearchController`: Universal search across modules
+### Settings Singleton (AI-First)
+
+```python
+# CORRETTO — usa sempre il Singleton pre-caricato
+from src.core.config.settings import settings
+value = settings.browser_headless
+
+# SBAGLIATO — non istanziare direttamente
+s = SyncroJobSettings()  # NO!
+```
+
+### Formal Contracts (typing.Protocol)
+
+```python
+# src/core/interfaces.py
+class BotProtocol(Protocol):
+    def run(self, *args, **kwargs) -> bool: ...
+    def force_stop(self) -> None: ...
+    def cleanup(self) -> None: ...
+
+class DataImporterProtocol(Protocol):
+    def import_file(self, file_path: str, *args, **kwargs) -> Any: ...
+```
+
+### MainWindow Navigation
+
+- `PageIndex` enum (0-10) per panel routing
+- Lazy loading — panels creati al primo navigate
+- Pattern: `navigation_controller.get_panel(PageIndex.X)`
 
 ### Bot Architecture
 
-All automation bots inherit from `BaseBot` (`src/bots/base/base_bot.py`):
-- **Selenium-based** with Chrome WebDriver
-- **State machine pattern** using `BotStatus` enum
-- **LoginPage** abstraction for portal authentication
-- **Locators pattern**: CSS/XPath selectors in separate `locators.py` files
-- **Page Object Model**: Each bot has `pages/` directory with page classes
+Tutti i bot ereditano da `BaseBot` o `SeleniumBaseBot` / `PlaywrightBaseBot`:
 
-Bot structure:
 ```
 src/bots/
 ├── base/
-│   ├── base_bot.py        # Abstract base class
-│   └── login_page.py      # Login automation
-├── portale_fornitori/     # ISAB portal bots
-│   ├── scarico_ts/        # Timesheet download
-│   ├── dettagli_oda/      # Order details extraction
-│   ├── timbrature/        # Attendance tracking
-│   └── carico_ts/         # Timesheet upload
-└── safework/              # Safety portal bot
+│   ├── base_bot.py              # Classe astratta base + macchina a stati
+│   ├── selenium_base_bot.py     # Specializzazione Selenium
+│   ├── playwright_base_bot.py   # Specializzazione Playwright
+│   └── login_page.py            # Automazione login portali
+├── portale_fornitori/
+│   ├── scarico_ts/              # Download timesheet
+│   ├── carico_ts/               # Upload timesheet
+│   ├── dettagli_oda/            # Estrazione OdA
+│   ├── prenota_bp/              # Prenotazione BP
+│   └── timbrature/              # Timbrature dipendenti
+└── safework/
+    ├── pdl/                     # Ricerca Piano di Lavoro
+    ├── programmazione/          # Programmazione
+    └── programmazione_sync/     # Sincronizzazione programmazione
 ```
 
-### Manager Pattern (Singleton)
-
-Critical managers use singleton pattern:
-
-**AuditManager** (`src/core/audit_manager.py`):
-- **IMPORTANT**: Access via `AuditManager.instance()` NOT `AuditManager()`
-- Immutable audit trail with SHA-256 hash chaining
-- SQLite-based (`CONFIG_DIR/data/audit_log.db`)
-- **Signals**: Separated into `AuditSignals` class (PySide6 compatibility)
-  - Connect to events: `AuditManager.instance().signals.log_added.connect(callback)`
-  - Emits: `log_added`, `logs_updated`
-
-**NotificationManager** (`src/core/notification_manager.py`):
-- JSON-based notification storage
-- Signals: `notification_added`, `notifications_updated`, `unread_count_changed`
-
-**Configuration** (`src/core/config_manager.py`):
-- Central config at `CONFIG_DIR/config.json` (typically `%APPDATA%/SyncroJob`)
-- Use `get_config_value()` and `set_config_value()` functions
+**BotStatus** (macchina a stati): `IDLE → INITIALIZING → LOGGING_IN → RUNNING → COMPLETED | ERROR | STOPPED`
 
 ### UI Widget System
 
-**Widget Hierarchy**:
-- **Dashboard** (`src/gui/dashboard_panel.py`):
-  - `ActivityFeed`: Real-time audit log (event-driven via `AuditSignals`)
-  - `QuickActions`: Configurable action shortcuts
-  - `AutopilotWidget`: Scheduled bot execution display
+```python
+# SEMPRE questi — mai i widget Qt nativi
+from src.gui.widgets.modern_button import ModernButton         # non QPushButton
+from src.gui.widgets.core_widgets import ConfirmationDialog    # non QMessageBox
+from src.gui.widgets.core_widgets import StandardInputDialog   # non QInputDialog
+from src.gui.styles.theme_manager import ThemeManager          # palette HSL
+from src.gui.toast import ToastNotification                    # notifiche
+```
 
-- **Toast System** (`src/gui/widgets/toast.py`):
-  - Singleton `ToastManager.instance().show(message, type, duration, pulse=False)`
-  - Types: `info`, `success`, `warning`, `error`
-  - Position: `"top"` or `"bottom"`
+### Manager Singleton Pattern
 
-- **Animations**:
-  - Use `QPropertyAnimation` and `QVariantAnimation` (NOT `QGraphicsScaleEffect`)
-  - Example: `toast.py` pulse animation with scale factor
+**AuditManager**: `AuditManager.instance()` (**non** `AuditManager()`)
+- Audit immutabile con SHA-256 hash chaining
+- Segnali: `AuditManager.instance().signals.log_added.connect(callback)`
 
-### Data Storage
+**NotificationManager**: `NotificationManager.instance()`
+- Segnali: `notification_added`, `notifications_updated`, `unread_count_changed`
 
-- **SQLite**: Audit logs, attendance records, timesheet data
-- **JSON**: Configuration, notifications
-- **Excel**: Import/export via `openpyxl` and `pandas`
-- **Profile Data**: Chrome profile in `data/chrome_profile/`
+## Critical Rules
 
-## Important Patterns & Conventions
+### PySide6 Signal Safety
 
-### PySide6 Singleton with Signals
-
-**DO NOT** inherit QObject when using `__new__` singleton pattern. Instead:
+**Non rimuovere MAI le lambda dalle connessioni dei segnali** (FURB111 è un falso-allarme qui — ignorare):
 
 ```python
-# CORRECT - Separate signal class
-class MySignals:
-    _instance = None
+# CORRETTO — la lambda preserva la firma del segnale Qt
+self.btn.clicked.connect(lambda: self._on_clicked())
 
-    @classmethod
-    def instance(cls):
-        if cls._instance is None:
-            from PySide6.QtCore import QObject, Signal
-
-            class _Signals(QObject):
-                my_signal = Signal(dict)
-
-            cls._instance = _Signals()
-        return cls._instance
-
-class MyManager:
-    _instance = None
-
-    @classmethod
-    def instance(cls):
-        if cls._instance is None:
-            cls._instance = cls()
-        return cls._instance
-
-    def __init__(self):
-        self.signals = MySignals.instance()
+# SBAGLIATO — rompe Qt a runtime se le firme differiscono
+self.btn.clicked.connect(self._on_clicked)  # NO!
 ```
 
-When adding new panels:
-1. Add to `PageIndex` enum in `main_window.py`
-2. Add panel instantiation in `navigation_controller.py`
-3. Ensure it is added to the main stack during app startup
+### Logging
 
-### Cache Management
+```python
+# SEMPRE loguru, mai logging stdlib
+from loguru import logger
 
-After modifying core managers or singleton classes:
-```bash
-# Clean Python cache to avoid stale imports
-find src -name "*.pyc" -delete
-find src -type d -name "__pycache__" -exec rm -rf {} +
+@logger.catch  # su tutti gli entry point critici
+def critical_operation() -> None: ...
 ```
 
-### Bot State Management
+### SRP — Zero SQL in GUI
 
-Template bots track state via `_status` property:
-- `IDLE`: Ready to run
-- `INITIALIZING`: Setting up driver
-- `LOGGING_IN`: Authentication in progress
-- `RUNNING`: Main operation executing
-- `COMPLETED`: Successful finish
-- `ERROR`: Fatal error occurred
-- `STOPPED`: User-requested stop
+```python
+# SBAGLIATO — logica di business nella GUI
+class MyPanel(QWidget):
+    def _load_data(self):
+        conn = sqlite3.connect(...)  # NO!
 
-Use `_stop_requested` flag for graceful termination during long operations.
+# CORRETTO — delega al Service/Repository
+class MyPanel(QWidget):
+    def _load_data(self):
+        data = self._service.get_data()  # OK
+```
 
-### Localization
+## Exception Hierarchy
 
-UI is Italian language. Key terms:
-- "Timbrature" = Attendance/clock-ins
-- "OdA" = Ordini di Acquisto (Purchase Orders)
-- "PDL" = Piano di Lavoro (Work Plan)
-- "Strumentale" = Equipment/Assets
-- "Scarico" = Download
-- "Carico" = Upload
+```
+SyncroJobError (src/core/exceptions.py)
+├── StartupError
+├── LicenseError
+├── DatabaseError
+├── ConfigError
+├── ValidationError
+└── BotError
+    ├── BrowserInitError
+    └── AutomationError
+```
 
-## Critical Files
+## Database Layout
 
-- `src/core/version.py`: Version number for releases
-- `src/core/constants.py`: Enums, URLs, timeouts, browser config
-- `src/core/license_validator.py`: Hardware-bound license validation
-- `assets/styles/`: QSS stylesheets for UI theming
-- `data/config/`: User configuration and databases (not in git)
+| File | Scopo |
+|------|-------|
+| `contabilita.db` | Strumentali e certificati campione |
+| `timbrature_Isab.db` | Timbrature giornaliere dipendenti |
+| `pdl.db` | Piano di Lavoro (SafeWork) |
+| `storico_oda.db` | Ordini di Acquisto (portale ISAB) |
+| `anagrafica_dipendenti.db` | Anagrafica dipendenti e matricole |
+| `scarico_ore.db` | Ore scaricate da DataEase (ERP) |
+| `audit_log.db` | Registro audit immutabile (SHA-256) |
+
+Tutti i DB risiedono in `%APPDATA%/SyncroJob/data/` (determinato da `src/core/paths.py`).
+
+## Localization
+
+UI in italiano. Termini chiave:
+- **Timbrature** = Attendance/clock-ins
+- **OdA** = Ordini di Acquisto (Purchase Orders)
+- **PDL** = Piano di Lavoro (Work Plan)
+- **Strumentale** = Equipment/Assets
+- **Scarico** = Download / Export
+- **Carico** = Upload / Import
 
 ## Testing Notes
 
-- Use pytest fixtures in `conftest.py`
-- Mock Selenium WebDriver for bot tests
-- Mock PySide6 QApplication when testing UI components
-- Test files mirror `src/` structure in `tests/`
-- **Important**: NEVER run global tests via generic `pytest` command. Always run the robust suite using `python tests/run_robust_tests.py`.
+- Fixtures pytest in `conftest.py`
+- **Mai** `pytest` globale senza il Robust Runner: QApplication è singleton e causa conflitti
+- Mock Selenium/Playwright WebDriver nei bot test
+- Mock PySide6 QApplication nei test UI
+- Test mirror `src/` structure in `tests/`
+- Marker disponibili: `unit`, `gui`, `integration`, `slow`
 
 ## Common Pitfalls
 
-1. **Never call `AuditManager()` directly** - always use `.instance()`
-2. **Clear Python cache** after modifying singleton managers
-3. **Lazy loading**: Don't assume panels exist - use `navigation_controller.get_panel()`
-4. **Signals from managers**: Access via `.signals` attribute (e.g., `manager.signals.my_signal`)
-5. **Bot credentials**: Load from config, never hardcode
-6. **Download paths**: Always use `Path` objects and ensure parent dirs exist
-7. **WebDriver waits**: Use `WebDriverWait` with explicit conditions, not `time.sleep()`
+1. **AuditManager**: usa sempre `.instance()`, mai il costruttore diretto
+2. **Cache Python**: dopo aver modificato singleton, pulire `__pycache__` con `find src -name "*.pyc" -delete`
+3. **Lazy loading panels**: non assumere che il panel esista — usa `navigation_controller.get_panel()`
+4. **Bot credentials**: caricare sempre dalla config, mai hardcode
+5. **Download paths**: sempre `Path` objects con `mkdir(parents=True, exist_ok=True)`
+6. **WebDriver waits**: sempre `WebDriverWait` con condizioni esplicite, mai `time.sleep()`
+7. **Versioning**: usa `cz bump`, non modificare `version.py` manualmente
+
+## Security Notes
+
+**Vulnerabilità note e standard obbligatori:**
+
+- **GitHub PAT**: token in `license_updater.py` ricostruito da lista statica — non esporre, migrare a backend intermediario.
+- **Grace Period**: `GRACE_PERIOD_KEY` non deve essere hardcoded — validazione lato server.
+- **SQL Injection**: usare SEMPRE query parametrizzate (`cursor.execute("... WHERE id=?", (val,))`), mai f-string.
+- **Credenziali**: MAI in chiaro. Usare `SecretsManager` con keyring di sistema.
+- **RichText**: evitare `setTextFormat(Qt.RichText)` su input utente non filtrato (UI Injection).
+- **File Integrity**: validare checksum dei file scaricati dai bot prima del processamento.

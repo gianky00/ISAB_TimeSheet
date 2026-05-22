@@ -57,3 +57,41 @@ repos:
         language: system
         pass_filenames: false
         files: pyproject\.toml$
+
+  # ── Cohesion: controllo di coesione LCOM ed SRP ────────────────
+  - repo: local
+    hooks:
+      - id: check-cohesion
+        name: check cohesion
+        entry: poetry run python scripts/check_cohesion.py
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  # ── Config Schemas: generazione automatica di JSON Schema ──────
+  - repo: local
+    hooks:
+      - id: generate-schemas
+        name: generate schemas
+        entry: poetry run python tools/generate_schemas.py
+        language: system
+        pass_filenames: false
+        files: src/core/config/settings\.py$
+
+  # ── AI Context: aggiornamento contesto architetturale per IA ───
+  - repo: local
+    hooks:
+      - id: generate-ai-context
+        name: generate ai context
+        entry: poetry run python tools/generate_ai_context.py
+        language: system
+        pass_filenames: false
+        files: >-
+          (?x)^(
+            src/core/version\.py|
+            src/core/interfaces\.py|
+            src/core/exceptions\.py|
+            src/core/constants\.py|
+            src/core/config/settings\.py|
+            tools/generate_ai_context\.py
+          )$

@@ -77,13 +77,11 @@ def main() -> None:
     # 3. MYPY
     results.append(("MYPY Type Check", run_command("MYPY Type Check", "mypy src")))
 
-    # 4. XENON (Complexity)
-    # Target: Rank C per i blocchi, Rank C per i moduli (molto severo per app GUI)
-    # Usiamo rank E assoluto per i file GUI legacy ma restiamo su C per tutto il resto
+    # 4. XENON (Complexity) — soglie allineate a pyproject.toml [tool.xenon]
     results.append(
         (
             "XENON Complexity",
-            run_command("XENON Complexity", "xenon --max-absolute E --max-modules E --max-average B src"),
+            run_command("XENON Complexity", "xenon --max-absolute B --max-modules B --max-average A src"),
         )
     )
 
@@ -92,6 +90,14 @@ def main() -> None:
 
     # 6. BANDIT (Security)
     results.append(("BANDIT Security", run_command("BANDIT Security", "bandit -r src -ll")))
+
+    # 7. COHESION SRP (LCOM) — usa il checker con filtri anti-falsi positivi
+    results.append(
+        (
+            "COHESION SRP",
+            run_command("COHESION SRP", "python scripts/check_cohesion.py"),
+        )
+    )
 
     # Tabella riepilogativa
     table = Table(title="\nReport Qualità Finale")

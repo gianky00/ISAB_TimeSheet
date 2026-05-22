@@ -4,24 +4,25 @@
 
 SyncroJob è una suite software avanzata progettata per automatizzare, monitorare e ottimizzare i flussi di lavoro aziendali sul portale fornitori ISAB e SafeWork.
 
-![SyncroJob Dashboard](layout.png)
+## 🌟 Funzionalità Principali
 
-## 🌟 Nuove Funzionalità (v2.0+)
+### 🤖 Automazione Portali
 
-### 🧠 Intelligenza Artificiale & Automazione
-*   **Lyra Sentinel AI**: Monitoraggio proattivo delle anomalie nei dati e nei processi.
-*   **SafeWork Bot**: Automazione completa per la ricerca e l'esportazione PDL.
-*   **DataEase Sync**: Sincronizzazione intelligente dei dati di cantiere.
+- **Portale Fornitori ISAB**: Download/upload timesheet, estrazione OdA, timbrature.
+- **SafeWork Bot**: Ricerca e sincronizzazione PDL (Piano di Lavoro) in modo completamente automatizzato.
+- **DataEase Sync**: Sincronizzazione intelligente differenziale dei dati di cantiere.
 
 ### 🛡️ Sicurezza & Affidabilità
-*   **Audit Trail Certificato**: Registro immutabile di tutte le operazioni critiche.
-*   **Auto-Backup Cloud**: Salvataggio automatico e ripristino granulare dei dati.
-*   **Integrità Dati**: Validazione checksum in tempo reale.
 
-### 🎨 Command Center (Nuova UI)
-*   **Dashboard Modulare**: Accesso rapido a tutti i sottosistemi da un'unica vista.
-*   **Design Moderno**: Interfaccia responsiva con icone vettoriali e temi adattivi.
-*   **Notifiche Smart**: Centro notifiche unificato con filtri per priorità.
+- **Audit Trail Certificato**: Registro immutabile (SHA-256 hash chaining) di tutte le operazioni critiche.
+- **Crash Detection**: Loguru + faulthandler per catturare e salvare ogni eccezione su `logs/crash.txt`.
+- **Licenza Hardware-Bound**: Validazione della licenza legata all'hardware del PC.
+
+### 🎨 Interfaccia Moderna
+
+- **Dashboard Modulare**: Feed eventi real-time, Autopilot scheduler, Quick Actions.
+- **Design Premium**: PySide6 con tema HSL dark/light, animazioni fluide, widget personalizzati.
+- **Notifiche Smart**: Centro notifiche unificato con filtri per priorità.
 
 ---
 
@@ -30,54 +31,72 @@ SyncroJob è una suite software avanzata progettata per automatizzare, monitorar
 | Modulo | Descrizione | Stato |
 |--------|-------------|-------|
 | **📥 Scarico TS** | Download massivo timesheet (PDF/Excel) per commessa/periodo. | ✅ Attivo |
-| **📋 Dettagli OdA** | Analisi dettagliata Ordini di Acquisto e stati avanzamento. | ✅ Attivo |
+| **📋 Dettagli OdA** | Estrazione e sincronizzazione Ordini di Acquisto. | ✅ Attivo |
 | **⏱️ Timbrature** | Gestione, validazione e storicizzazione timbrature dipendenti. | ✅ Attivo |
-| **🏗️ SafeWork** | Integrazione completa con il portale sicurezza (PDL/Permessi). | ✅ Attivo |
+| **🏗️ SafeWork PDL** | Ricerca e sincronizzazione Piano di Lavoro da SafeWork. | ✅ Attivo |
 | **📤 Carico TS** | Upload automatizzato dei timesheet validati. | ✅ Attivo |
+| **📊 Contabilità** | Gestione strumentali e certificati campione. | ✅ Attivo |
 
 ---
 
 ## 📦 Installazione e Requisiti
 
 ### Requisiti di Sistema
-*   **OS**: Windows 10/11 (64-bit)
-*   **Browser**: Google Chrome (Ultima versione)
-*   **Rete**: Connessione internet attiva (per Portali e Licenza)
+
+- **OS**: Windows 10/11 (64-bit)
+- **Browser**: Google Chrome (Ultima versione)
+- **Rete**: Connessione internet attiva (per Portali e Licenza)
 
 ### Installazione Utente
-1.  Scarica l'ultimo installer da **[projectjob-bot.netlify.app](https://projectjob-bot.netlify.app)**.
-2.  Esegui `SyncroJob_Setup_vX.X.X.exe`.
-3.  Al primo avvio, il sistema configurerà automaticamente l'ambiente.
+
+1. Scarica l'ultimo installer da **[projectjob-bot.netlify.app](https://projectjob-bot.netlify.app)**.
+2. Esegui `SyncroJob_Setup_vX.X.X.exe`.
+3. Al primo avvio, il sistema configurerà automaticamente l'ambiente.
 
 ---
 
 ## 🛠️ Sviluppo
 
 ### Setup Ambiente
-```bash
-# Clone repository
-git clone https://github.com/gianky00/bot-ts.git
-cd bot-ts
 
-# Installazione dipendenze (Poetry consigliato)
+```bash
+# Installazione dipendenze (Poetry)
 poetry install
-# Oppure via pip (modalità editabile)
-pip install -e .
+
+# Attivazione venv
+poetry shell
 ```
 
 ### Comandi Utili
-*   **Avvio App**: `python main.py`
-*   **Test Suite**: `pytest tests/`
-*   **Linting**: `ruff check .`
-*   **Type Check**: `mypy .`
-*   **Build Release**: `python "admin/Crea Setup/build_dist.py"`
+
+```bash
+# Avvio app
+poetry run syncrojob
+
+# Suite di test completa
+python tests/run_robust_tests.py
+
+# Linting + fix automatico
+poetry run ruff check --fix
+
+# Type checking strict
+poetry run mypy --strict src/
+
+# Tutti i quality gate pre-commit
+poetry run pre-commit run --all-files
+
+# Bump versione (commitizen — non modificare version.py manualmente!)
+poetry run cz bump
+```
+
+Per la documentazione architetturale completa, vedi [`.ai-context.json`](./.ai-context.json) e [`CLAUDE.md`](./CLAUDE.md).
 
 ---
 
 ## 🔑 Licenza e Supporto
 
 Software proprietario sviluppato da **Giancarlo Allegretti**.
-L'uso è consentito solo tramite licenza attiva validate su hardware specifico.
+L'uso è consentito solo tramite licenza attiva validata su hardware specifico.
 
-*   **Supporto Tecnico**: Integrato nell'app (Tab Help) o via Telegram.
-*   **Documentazione**: Vedi cartella `docs/`.
+- **Supporto Tecnico**: Integrato nell'app (Tab Help) o via Telegram.
+- **Documentazione**: Vedi cartella `docs/`.

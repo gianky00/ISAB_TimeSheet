@@ -1,0 +1,161 @@
+> **[DEPRECATO]** Questo file è stato sostituito da `.ai-context.json` nella root del progetto,
+> generato automaticamente da `tools/generate_ai_context.py` e sempre aggiornato al pre-commit.
+> Conservato a scopo storico/di riferimento. NON modificare manualmente.
+
+---
+
+# SYNCROJOB ENTERPRISE - TECHNICAL REFERENCE MANUAL (llm-full.txt)
+
+Questo manuale tecnico fornisce informazioni di riferimento dettagliate e specifiche per gli agenti IA relative a schemi di database SQLite, tracciamento dello stato, automazione del browser e dipendenze chiave.
+
+---
+
+## 🗄️ ARCHIVIAZIONE DATI & SCHEMI DATABASE (SQLITE)
+
+SyncroJob Enterprise gestisce i propri dati persistenti tramite più database SQLite salvati nella cartella configurata `%APPDATA%/SyncroJob/data/` (o determinata dinamicamente da `src/core/paths.py`).
+
+### 1. Database Storico Ordini di Acquisto (`storico_oda.db`)
+Contiene la tabella principale `storico_oda` che traccia l'importazione degli OdA estratti dal portale fornitori ISAB.
+
+#### Schema della Tabella `storico_oda`:
+- **oda** (TEXT): Numero dell'Ordine di Acquisto. Parte della Primary Key.
+- **pos_oda** (TEXT): Numero di posizione dell'OdA. Parte della Primary Key.
+- **num_riga** (TEXT): Numero di riga della posizione. Parte della Primary Key.
+- **org_acq** (TEXT): Organizzazione acquisti.
+- **data_oda** (TEXT): Data di creazione dell'OdA (formato stringa).
+- **stato** (TEXT): Stato dell'OdA.
+- **cat_contab** (TEXT): Categoria contabile.
+- **descrizione** (TEXT): Descrizione testuale della riga dell'ordine.
+- **qta** (REAL): Quantità ordinata.
+- **uom** (TEXT): Unità di misura (Unit of Measure).
+- **data_consegna** (TEXT): Data di consegna concordata.
+- **valore_netto_pos** (REAL): Valore netto della singola posizione.
+- **valore_residuo** (REAL): Valore residuo non ancora fatturato/consegnato.
+- **valore_netto_oda** (REAL): Valore netto totale dell'intero OdA.
+- **divisione** (TEXT): Divisione di riferimento ISAB (es. SUD).
+- **destinatario** (TEXT): Codice del destinatario.
+- **nome_destinatario** (TEXT): Nome leggibile del destinatario.
+- **codice_fornitore** (TEXT): Codice del fornitore associato.
+- **descrizione_fornitore** (TEXT): Ragione sociale o descrizione del fornitore.
+- **emittente_fattura** (TEXT): Codice dell'emittente fattura.
+- **desc_emittente_fattura** (TEXT): Descrizione dell'emittente fattura.
+- **contract_card** (TEXT): Scheda contratto associata.
+- **contratto** (TEXT): Numero di contratto master.
+- **posizione_contratto** (TEXT): Posizione del contratto.
+- **gruppo_acquisti** (TEXT): Gruppo acquisti di riferimento.
+- **indicatore_rilascio** (TEXT): Indicatore di rilascio.
+- **stato_rilascio** (TEXT): Stato di rilascio.
+- **attivita** (TEXT): Codice attività o centro di costo.
+- **quantita** (REAL): Quantità specifica.
+- **unita_mis** (TEXT): Unità di misura secondaria.
+- **prezzo_lordo** (REAL): Prezzo lordo.
+- **testo_breve** (TEXT): Testo breve descrittivo.
+- **updated_at** (TIMESTAMP): Timestamp dell'ultimo aggiornamento (default `CURRENT_TIMESTAMP`).
+
+*Primary Key composite*: `(oda, pos_oda, num_riga)`
+
+---
+
+### 2. Database delle Sincronizzazioni JSON (`sync_state.json`)
+Gestito dalla classe `SyncTracker` (`src/core/sync_tracker.py`), tiene traccia dell'ultimo stato di sincronizzazione eseguito per ciascun modulo.
+
+#### Struttura del dizionario JSON:
+```json
+{
+    "storico_oda": {
+        "timestamp": "22/05/2026 22:00",
+        "added": 5,
+        "removed": 0,
+        "duration": 45.2,
+        "last_ts": 1779573600.0,
+        "last_attempt_success": true,
+        "last_attempt_ts": 1779573600.0,
+        "last_error": ""
+    },
+    "pdl": {
+        "timestamp": "22/05/2026 21:30",
+        "added": 12,
+        "removed": 1,
+        "duration": 122.5,
+        "last_ts": 1779571800.0,
+        "last_attempt_success": true,
+        "last_attempt_ts": 1779571800.0,
+        "last_error": ""
+    }
+}
+```
+
+---
+
+### 3. Registro Audit Immutabile (`audit_log.db`)
+Gestito da `AuditManager` (`src/core/audit_manager.py`). Ogni inserimento genera un hash SHA-256 concatenato con il record precedente per garantire che il file log non venga manomesso.
+
+#### Schema della Tabella `audit_logs`:
+- **id** (INTEGER PRIMARY KEY AUTOINCREMENT): Identificativo progressivo.
+- **timestamp** (TEXT): Data e ora dell'evento in formato ISO8601 UTC.
+- **level** (TEXT): Livello di severità (INFO, WARNING, ERROR, CRITICAL).
+- **module** (TEXT): Nome del modulo o classe che ha generato il log.
+- **event** (TEXT): Messaggio descrittivo leggibile dell'evento.
+- **payload** (TEXT): Dettagli aggiuntivi o payload JSON.
+- **prev_hash** (TEXT): Hash SHA-256 del record di audit precedente.
+- **current_hash** (TEXT): Hash SHA-256 calcolato combinando i campi correnti e `prev_hash`.
+
+---
+
+## 🤖 CLASSI CORE E LOGICA BOT (SELENIUM / PLAYWRIGHT)
+
+Tutte le automazioni browser ereditano da `BaseBot` (`src/bots/base/base_bot.py`), garantendo una gestione unificata dei profili Chrome, del logger loguru e degli stati operativi.
+
+### 1. Firma della Classe `BaseBot`
+```python
+class BaseBot:
+    """Classe astratta base per lo sviluppo di bot di automazione."""
+
+    def __init__(self, headless: bool = True, profile_name: str = "default"):
+        self.headless = headless
+        self.profile_name = profile_name
+        self._status = BotStatus.IDLE
+        self._stop_requested = False
+        self.driver = None
+
+    def run(self) -> Any:
+        """Metodo principale da implementare nelle sottoclassi."""
+        raise NotImplementedError
+
+    def stop(self) -> None:
+        """Richiede l'arresto grazioso del bot impostando _stop_requested = True."""
+        self._stop_requested = True
+
+    def _check_stop(self) -> None:
+        """Solleva un'eccezione BotStoppedException se l'utente ha richiesto l'arresto."""
+        if self._stop_requested:
+            raise BotStoppedException("Arresto del bot richiesto dall'utente.")
+```
+
+### 2.LoginPage Pattern
+Tutti i bot che richiedono l'autenticazione utilizzano `LoginPage` (`src/bots/base/login_page.py`) che automatizza l'inserimento sicuro delle credenziali utente memorizzate cifrate o protette tramite il `SecretsManager`. I locators (identificatori CSS/XPath) non sono mai hardcoded all'interno dei passaggi logici del bot, ma risiedono in un file `locators.py` specifico di ciascun modulo del bot (Pattern Page Object Model).
+
+---
+
+## 📦 DIPENDENZE CRITICHE DEL PROGETTO (pyproject.toml)
+
+Futuri agenti IA possono fare affidamento immediato sulle seguenti librerie integrate nell'ambiente Poetry:
+
+1. **GUI & Threading:**
+   - `PySide6` (Interfaccia Grafica QT moderna, Signal & Slots, QThread)
+2. **Automazione Web:**
+   - `selenium` (Webdriver manager, waits espliciti, profili Chrome)
+   - `playwright` (Motore moderno e veloce per automazioni asincrone su SafeWork)
+3. **Analisi e Manipolazione Dati:**
+   - `pandas` (Strutturazione e pulizia dati tabellari complessi)
+   - `openpyxl` (Generazione e importazione file Excel / Fogli di Calcolo)
+4. **Validazione dei Dati & Impostazioni (AI-Friendly):**
+   - `pydantic` (Disponibile e consigliato per validazione rigida e tipizzazione semantica di modelli futuri)
+   - `pydantic-settings` (Ottimizzato per definire impostazioni di configurazione tipizzate e supportare caricamento integrato/override da variabili d'ambiente)
+5. **Analisi Sintattica del Codice (AI-Friendly):**
+   - `libcst` (Concrete Syntax Tree per effettuare analisi sintattiche e modifiche/refactoring sicuri sul codice mantenendo integra la formattazione e i commenti originali, ideale per l'interazione programmata tra agenti IA)
+6. **Misurazione Coesione & SRP (AI-Friendly):**
+   - `cohesion` (Utility per calcolare la coesione interna LCOM - Lack of Cohesion in Methods per ciascuna classe, offrendo all'IA feedback quantitativi immediati per applicare rigidamente il principio di singola responsabilità SRP)
+7. **Logging e Diagnostica:**
+   - `loguru` (Logging strutturato protetto, rotazione automatica e intercettazione crash)
+   - `faulthandler` (Diagnostica degli errori a livello C++ per PySide6)

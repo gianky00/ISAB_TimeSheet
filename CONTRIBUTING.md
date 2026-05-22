@@ -13,20 +13,15 @@ Questo documento delinea le linee guida per lo sviluppo, il testing e il rilasci
 
 ### Installazione
 
-1.  **Clone del repository**:
-    ```bash
-    git clone https://github.com/gianky00/bot-ts.git
-    cd bot-ts
-    ```
-2.  **Installazione dipendenze e venv**:
-    ```bash
-    poetry install
-    ```
-3.  **Attivazione Virtual Environment**:
-    ```bash
-    poetry shell
-    ```
-    _(Oppure usa l'interprete `.venv/Scripts/python.exe` nel tuo IDE)_.
+1. **Installazione dipendenze e venv**:
+   ```bash
+   poetry install
+   ```
+2. **Attivazione Virtual Environment**:
+   ```bash
+   poetry shell
+   ```
+   _(Oppure usa l'interprete `.venv/Scripts/python.exe` nel tuo IDE)_.
 
 ---
 
@@ -40,46 +35,81 @@ Il progetto adotta una politica **Zero Regressions**.
   ```bash
   python tests/run_robust_tests.py
   ```
-- **Test Rapidi (Pytest)**:
+- **Test Rapidi (solo unit)**:
   ```bash
-  pytest tests/unit
+  poetry run pytest -m "unit and not slow"
+  ```
+- **Test con coverage**:
+  ```bash
+  poetry run pytest --cov=src --cov-report=term-missing
   ```
 
 ### Regole per Nuove Feature
 
-1.  Ogni nuova funzionalità deve avere almeno un unit test.
-2.  I test devono trovarsi in `tests/unit` o `tests/integration`.
-3.  Usa `Mock` e `Patch` per isolare dipendenze esterne (Network, DB, UI).
+1. Ogni nuova funzionalità deve avere almeno un unit test in `tests/unit/`.
+2. I test di integrazione vanno in `tests/integration/`.
+3. Usa `Mock` e `Patch` per isolare dipendenze esterne (Network, DB, UI).
+4. **Non eseguire mai** `pytest` globale senza il Robust Runner: potrebbe interferire con il QApplication singleton.
 
 ---
 
 ## 🎨 Code Style & Quality
 
-Utilizziamo strumenti di analisi statica per mantenere il codice pulito.
+Prima di un commit, **tutti** i seguenti controlli devono passare (già automatizzati nel pre-commit):
 
-- **Linting**: `ruff check .`
-- **Formatting**: `ruff format .`
-- **Type Checking**: `mypy src/core`
+```bash
+# Linting e formattazione
+poetry run ruff check --fix
+poetry run ruff format
 
-Prima di un commit, assicurati che `ruff` e `mypy` non segnalino errori.
+# Type checking (strict)
+poetry run mypy --strict src/
+
+# Docstring coverage
+poetry run interrogate src/
+
+# Complessità ciclomatica
+poetry run xenon src/ --max-absolute B --max-modules B --max-average A
+
+# Coesione SRP (LCOM)
+poetry run python scripts/check_cohesion.py
+
+# Tutti in una volta
+poetry run pre-commit run --all-files
+```
 
 ---
 
 ## 🚀 Release Process
 
-Per creare una build distribuibile:
+La versione è gestita automaticamente da **commitizen**. Non modificare mai `version.py` o `pyproject.toml` manualmente.
 
-1.  Incrementare la versione in `src/core/version.py`.
-2.  Eseguire lo script di build:
-    ```bash
-    python "admin/Crea Setup/build_dist.py"
-    ```
-3.  L'installer verrà generato nella cartella `dist/`.
+1. **Bump della versione** (calcola automaticamente major/minor/patch da commit convenzionali):
+   ```bash
+   poetry run cz bump
+   ```
+2. **Build distribuibile** (PyInstaller):
+   ```bash
+   python "admin/Crea Setup/build_dist.py"
+   ```
+3. L'installer viene generato nella cartella `dist/`.
 
 ---
 
 ## 🏛️ Architettura
 
-- **Core**: Logica di business pura (`src/core`). NO dipendenze PyQt.
-- **GUI**: Interfaccia utente (`src/gui`). Dipende SOLO da Core.
-- **Bots**: Automazione browser (`src/bots`). Orchestrati dalla GUI ma logica isolata.
+Vedi [`.ai-context.json`](./.ai-context.json) per il contesto architetturale completo in formato machine-readable.
+
+- **Core** (`src/core/`): Logica di business pura. ZERO dipendenze dalla GUI.
+- **GUI** (`src/gui/`): Interfaccia PySide6. Dipende SOLO da Core. ZERO query SQL dirette.
+- **Bots** (`src/bots/`): Automazione browser (Selenium/Playwright). Logica isolata.
+- **Protocolli**: Vedi `src/core/interfaces.py` per i contratti formali `BotProtocol` e `DataImporterProtocol`.
+
+---
+
+## 🚨 Regole Anti-Breakage Critiche
+
+1. **Signal Safety PySide6**: Non rimuovere mai le `lambda` dalle connessioni dei segnali.
+2. **Settings Singleton**: Usa sempre `from src.core.config.settings import settings`. MAI istanziare `SyncroJobSettings` direttamente.
+3. **Dialogs**: Usa `ConfirmationDialog` (non `QMessageBox`) e `StandardInputDialog` (non `QInputDialog`).
+4. **Logging**: Solo `loguru`. Implementa `@logger.catch` sugli entry point critici.

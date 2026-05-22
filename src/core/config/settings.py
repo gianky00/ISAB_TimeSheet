@@ -5,7 +5,7 @@ Integra pydantic-settings per la validazione automatica a runtime, l'override
 nativo da variabili d'ambiente (12-Factor App) e la documentazione semantica per l'IA.
 """
 
-from typing import Any
+from typing import Any, Final
 
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -68,6 +68,7 @@ class SyncroJobSettings(BaseSettings):
     master_preventivi_path: str = Field(default="", description="Percorso file master dei preventivi")
     base_network_path_preventivi: str = Field(default="", description="Percorso di rete preventivi")
 
+    # Preventivi
     preventivi_tcl: list[str] = Field(default=[], description="Elenco tecnici TCL autorizzati")
     preventivi_stati: list[str] = Field(default=[], description="Stati ammessi per i preventivi")
     reparti: list[str] = Field(
@@ -92,10 +93,17 @@ class SyncroJobSettings(BaseSettings):
     weather_show_details: bool = Field(default=False, description="Dettagli meteo avanzati in dashboard")
 
 
+# Istanza Singleton pre-caricata in memoria a runtime (thread-safe, performante e AI-First)
+settings: Final[SyncroJobSettings] = SyncroJobSettings()
+
+
 def get_typed_settings() -> SyncroJobSettings:
-    """Inizializza e restituisce le impostazioni tipizzate caricate a runtime.
+    """Restituisce l'istanza Singleton pre-caricata delle impostazioni.
+
+    Garantisce retrocompatibilità totale con i moduli esistenti ottimizzando
+    istantaneamente le performance di I/O (caricamento singolo).
 
     Returns:
         SyncroJobSettings: Istanza fortemente tipizzata e validata delle impostazioni.
     """
-    return SyncroJobSettings()
+    return settings
