@@ -32,6 +32,8 @@ pywin32 = { version = "*", platform = "win32" }
 python-telegram-bot = "*"
 pandera = "^0.28.1"
 pydantic = "*"
+pydantic-settings = "*"
+libcst = "*"
 tenacity = "*"
 loguru = "*"
 faker = "*"
@@ -304,6 +306,8 @@ module = [
     "playwright.*",
     "coverage",
     "coverage.*",
+    "pydantic_settings.*",
+    "libcst.*",
 ]
 ignore_missing_imports = true
 
@@ -321,6 +325,7 @@ exclude = [".venv", "build", "dist", "temp", "admin", "scripts", "site", "docs",
 DEP001 = ["generate_icons"]
 # DEP002 (declared but not imported): meta-packages e build tools
 DEP002 = [
+    "libcst",           # ast processing per IA (libreria di supporto integrata)
     "pyarrow",          # backend engine per pandas, non importato direttamente
     "setuptools",       # build dependency
     "pyinstaller",      # build tool

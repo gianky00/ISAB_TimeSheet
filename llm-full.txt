@@ -143,8 +143,11 @@ Futuri agenti IA possono fare affidamento immediato sulle seguenti librerie inte
 3. **Analisi e Manipolazione Dati:**
    - `pandas` (Strutturazione e pulizia dati tabellari complessi)
    - `openpyxl` (Generazione e importazione file Excel / Fogli di Calcolo)
-4. **Validazione dei Dati:**
+4. **Validazione dei Dati & Impostazioni (AI-Friendly):**
    - `pydantic` (Disponibile e consigliato per validazione rigida e tipizzazione semantica di modelli futuri)
-5. **Logging e Diagnostica:**
+   - `pydantic-settings` (Ottimizzato per definire impostazioni di configurazione tipizzate e supportare caricamento integrato/override da variabili d'ambiente)
+5. **Analisi Sintattica del Codice (AI-Friendly):**
+   - `libcst` (Concrete Syntax Tree per effettuare analisi sintattiche e modifiche/refactoring sicuri sul codice mantenendo integra la formattazione e i commenti originali, ideale per l'interazione programmata tra agenti IA)
+6. **Logging e Diagnostica:**
    - `loguru` (Logging strutturato protetto, rotazione automatica e intercettazione crash)
    - `faulthandler` (Diagnostica degli errori a livello C++ per PySide6)
