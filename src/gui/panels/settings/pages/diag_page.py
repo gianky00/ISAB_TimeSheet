@@ -1,3 +1,5 @@
+"""Modulo Diag Page."""
+
 from typing import Any
 
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
@@ -13,7 +15,10 @@ from src.utils.helpers import get_asset_path, get_colored_icon, open_folder
 
 
 class DiagPage(QWidget):
-    """Pagina Diagnostica e Licenza."""
+    """Pagina Diagnostica e Licenza.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)

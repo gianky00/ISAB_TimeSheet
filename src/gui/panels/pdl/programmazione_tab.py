@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Programmazione Tab (Refactored)
+"""SyncroJob - PDL Programmazione Tab (Refactored).
+
 Scheda coordinata per il monitoraggio della programmazione settimanale SafeWork.
 """
 
@@ -36,7 +36,10 @@ logger = logging.getLogger(__name__)
 
 
 class ProgrammazioneTab(QWidget):
-    """Orchestratore della programmazione settimanale PDL."""
+    """Orchestratore della programmazione settimanale PDL.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)

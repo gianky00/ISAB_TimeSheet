@@ -1,5 +1,5 @@
-"""
-SyncroJob - MultiSelect Filter Widget
+"""SyncroJob - MultiSelect Filter Widget.
+
 Widget professionale per la selezione multipla con ricerca e chip.
 """
 
@@ -20,7 +20,10 @@ from src.utils.helpers import get_asset_path
 
 
 class MultiSelectDialog(QDialog):
-    """Dialogo di selezione multipla con ricerca."""
+    """Dialogo di selezione multipla con ricerca.
+
+    Inizializza la classe.
+    """
 
     def __init__(
         self, title: str, items: list[str], selected: list[str], parent: QWidget | None = None
@@ -95,8 +98,7 @@ class MultiSelectDialog(QDialog):
                 item.setCheckState(state)
 
     def get_selected(self) -> list[str]:
-        """
-        Recupera la lista delle stringhe attualmente selezionate (checked).
+        """Recupera la lista delle stringhe attualmente selezionate (checked).
 
         Returns:
           list[str]: Lista di testi degli elementi selezionati.
@@ -110,7 +112,10 @@ class MultiSelectDialog(QDialog):
 
 
 class MultiSelectFilter(QWidget):
-    """Widget che mostra un pulsante di selezione e gestisce la multiselezione."""
+    """Widget che mostra un pulsante di selezione e gestisce la multiselezione.
+
+    Inizializza la classe.
+    """
 
     changed = Signal(list)
 
@@ -135,8 +140,7 @@ class MultiSelectFilter(QWidget):
         layout.addWidget(self.btn_select)
 
     def set_items(self, items: list[str]) -> None:
-        """
-        Imposta i possibili elementi selezionabili nel filtro.
+        """Imposta i possibili elementi selezionabili nel filtro.
 
         Args:
           items: Lista di stringhe.
@@ -147,8 +151,7 @@ class MultiSelectFilter(QWidget):
         self._update_button_text()
 
     def set_selected(self, selected: list[str]) -> None:
-        """
-        Imposta gli elementi attualmente selezionati.
+        """Imposta gli elementi attualmente selezionati.
 
         Args:
           selected: Lista di stringhe selezionate.

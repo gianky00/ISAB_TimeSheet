@@ -1,5 +1,5 @@
-"""
-Bot TS - Configuration Manager
+"""Bot TS - Configuration Manager.
+
 Gestione della configurazione dell'applicazione.
 Refactored V9.0: Modularized architecture.
 """
@@ -35,6 +35,8 @@ __all__ = [
     "set_default_account",
     "switch_default_account",
 ]
+import time
+
 from src.core.version import __version__
 
 # Modular imports
@@ -51,8 +53,10 @@ from .config.migration import (
 )
 from .config.security import decrypt_all_credentials, encrypt_all_credentials
 
+# ... (rest of imports remains same, just adding time and uuid if needed)
 _config_cache: dict[str, Any] | None = None
 _config_lock = threading.RLock()
+_file_io_lock = threading.Lock()
 
 
 def _reset_configuration_for_testing() -> None:
@@ -122,20 +126,40 @@ def _load_base_config() -> dict[str, Any]:
     return config
 
 
-def save_config(config: dict[str, Any]) -> bool:
-    """Salva la configurazione su file, criptando le credenziali prima del write."""
+def save_config(config: dict[str, Any], async_save: bool = True) -> bool:
+    """Salva la configurazione su file.
+
+    Se async_save è True (default), l'operazione di I/O (inclusa la cifratura)
+    viene delegata a un thread di background per non bloccare il Main Thread della GUI.
+    """
     global _config_cache  # noqa: PLW0603
+
+    def _execute_save(cfg_to_save: dict[str, Any]) -> None:
+        try:
+            # Cripta credenziali per il salvataggio
+            encrypt_all_credentials(cfg_to_save)
+
+            # Scrittura atomica
+            _atomic_write_json(CONFIG_FILE, cfg_to_save)
+        except Exception as e:
+            print(f"Async save failed: {e}")
+
     try:
         config_to_save = copy.deepcopy(config)
 
-        # Cripta credenziali per il salvataggio
-        encrypt_all_credentials(config_to_save)
+        if async_save:
+            # Sincronizziamo la cache immediatamente in memoria
+            with _config_lock:
+                _config_cache = copy.deepcopy(config)
 
-        # Scrittura atomica
+            # Lanciamo il thread per l'I/O su disco
+            threading.Thread(target=_execute_save, args=(config_to_save,), daemon=True).start()
+            return True
+        # Salvataggio sincrono (es. in fase di chiusura app o test)
+        encrypt_all_credentials(config_to_save)
         if _atomic_write_json(CONFIG_FILE, config_to_save):
             with _config_lock:
-                # Forza l'invalidazione della cache per garantire che load_config() rilegga da disco
-                _config_cache = None
+                _config_cache = copy.deepcopy(config)
             return True
     except Exception as e:
         print(f"Error saving config: {e}")
@@ -151,28 +175,50 @@ def invalidate_config_cache() -> None:
 
 
 def _atomic_write_json(path: Path, data: dict[str, Any]) -> bool:
-    """Scrive un file JSON in modo atomico usando un file temporaneo."""
-    temp_path = path.with_suffix(".tmp")
-    try:
-        ensure_config_dir()
-        with temp_path.open("w", encoding="utf-8") as f:
-            json.dump(data, f, indent=4, ensure_ascii=False)
-            # Flush e sync per essere sicuri che i dati siano su disco prima di chiudere
-            f.flush()
-            os.fsync(f.fileno())
+    """Scrive un file JSON in modo atomico usando un file temporaneo con retry e lock."""
+    # Use unique temp file per thread to avoid "file in use" on the .tmp file itself during concurrent writes
+    temp_path = path.parent / f"{path.name}.{threading.get_ident()}.tmp"
 
-        if path.exists():
-            os.replace(temp_path, path)
+    max_retries = 5
+    retry_delay = 0.1
+
+    win_err_file_in_use = 32
+
+    for attempt in range(max_retries):
+        try:
+            ensure_config_dir()
+            # 1. Scrittura del file temporaneo
+            with temp_path.open("w", encoding="utf-8") as f:
+                json.dump(data, f, indent=4, ensure_ascii=False)
+                f.flush()
+                os.fsync(f.fileno())
+
+            # 2. Sostituzione atomica protetta da lock globale di processo
+            with _file_io_lock:
+                if path.exists():
+                    os.replace(temp_path, path)
+                else:
+                    temp_path.rename(path)
+        except (PermissionError, OSError) as e:
+            # WinError 32: Il file è utilizzato da un altro processo
+            is_busy = isinstance(e, PermissionError) or (
+                isinstance(e, OSError) and getattr(e, "winerror", 0) == win_err_file_in_use
+            )
+            if is_busy and attempt < max_retries - 1:
+                time.sleep(retry_delay * (attempt + 1))
+                continue
+            print(f"Atomic write failed for {path} after {attempt + 1} attempts: {e}")
+            break
+        except Exception as e:
+            print(f"Atomic write critical error for {path}: {e}")
+            break
         else:
-            temp_path.rename(path)
-    except Exception as e:
-        print(f"Atomic write failed for {path}: {e}")
-        if temp_path.exists():
-            with suppress(OSError):
-                temp_path.unlink()
-        return False
-    else:
-        return True
+            return True
+        finally:
+            if temp_path.exists():
+                with suppress(OSError):
+                    temp_path.unlink()
+    return False
 
 
 def get_config_value(key: str, default: Any = None) -> Any:
@@ -195,8 +241,8 @@ def set_config_values(updates: dict[str, Any]) -> bool:
 
 
 def get_download_path() -> str:
-    """
-    Restituisce il percorso della cartella download configurata o quella predefinita di sistema.
+    """Restituisce il percorso della cartella download configurata o quella predefinita di sistema.
+
     Esegue una validazione di esistenza per evitare percorsi hardcoded non validi.
     """
     # Supporta sia la vecchia chiave che quella corretta per retrocompatibilità

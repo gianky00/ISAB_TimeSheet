@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Service
+"""SyncroJob - PDL Service.
+
 Gestione della logica di business e delle query per i Permessi di Lavoro (PDL).
 Delegato al PdlRepository per l'accesso ai dati.
 """
@@ -16,10 +16,12 @@ logger = logging.getLogger(__name__)
 
 
 class PDLService:
-    """Servizio per la gestione dei dati e delle operazioni sui PDL."""
+    """Servizio per la gestione dei dati e delle operazioni sui PDL.
+
+    Inizializza il servizio con un repository iniettato o predefinito.
+    """
 
     def __init__(self, repo: PdlRepository | None = None) -> None:
-        """Inizializza il servizio con un repository iniettato o predefinito."""
         self._repo = repo or PdlRepository()
 
     @staticmethod

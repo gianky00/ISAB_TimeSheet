@@ -1,5 +1,5 @@
-"""
-SyncroJob - SafeWork PDL Download Bot
+"""SyncroJob - SafeWork PDL Download Bot.
+
 Bot modulare per lo scarico e la stampa dei PDL.
 """
 
@@ -28,7 +28,10 @@ logger = get_logger(__name__)
 
 
 class SafeWorkPDLBot(SafeworkBaseBot):
-    """Bot per lo scarico e la stampa automatizzata dei PDL."""
+    """Bot per lo scarico e la stampa automatizzata dei PDL.
+
+    Inizializza il bot SafeWork PDL.
+    """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
@@ -47,7 +50,6 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         account_type: str = "Esecutore",
         **kwargs: Any,
     ) -> None:
-        """Inizializza il bot SafeWork PDL."""
         super().__init__(username, password, config, account_type=account_type)
         self.downloaded_files: list[str] = []
         self.missing_pdls: list[str] = []
@@ -240,7 +242,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self._attendi_scomparsa_overlay(timeout_secondi=5)
 
         try:
-            self.driver.execute_script("window.scrollTo(0, 0);")  # type: ignore[no-untyped-call]
+            self.driver.execute_script("window.scrollTo(0, 0);")
 
             # Pulizia preventiva
             clean_name = pdl_num.replace("/", "") + ".pdf"
@@ -286,7 +288,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self._attendi_scomparsa_overlay()
 
         try:
-            self.driver.execute_script("window.scrollTo(0, 0);")  # type: ignore[no-untyped-call]
+            self.driver.execute_script("window.scrollTo(0, 0);")
 
             # Pulizia preventiva
             self._safe_remove(str(Path(self.download_path) / "ReportPdLRinnovi.pdf"))

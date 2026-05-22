@@ -1,5 +1,5 @@
-"""
-SyncroJob - Tray Icon Component
+"""SyncroJob - Tray Icon Component.
+
 Gestore dell'icona nell'area di notifica (System Tray).
 Permette all'applicazione di restare attiva in background e di inviare notifiche push di sistema.
 """
@@ -16,18 +16,17 @@ if TYPE_CHECKING:
 
 
 class TrayIconComponent(QObject):
-    """
-    Componente responsabile dell'integrazione con la System Tray.
+    """Componente responsabile dell'integrazione con la System Tray.
+
     Inizializza il TrayController e fornisce metodi di alto livello per l'invio di messaggi balloon.
+
+    Inizializza il componente Tray.
+
+    Args:
+      main_window: Riferimento alla MainWindow dell'applicazione.
     """
 
     def __init__(self, main_window: MainWindow) -> None:
-        """
-        Inizializza il componente Tray.
-
-        Args:
-          main_window: Riferimento alla MainWindow dell'applicazione.
-        """
         super().__init__(main_window)
         self.main_window = main_window
         from src.gui.controllers.tray_controller import TrayController
@@ -41,8 +40,7 @@ class TrayIconComponent(QObject):
         icon: QSystemTrayIcon.MessageIcon = QSystemTrayIcon.MessageIcon.Information,
         duration: int = 5000,
     ) -> None:
-        """
-        Inoltra la richiesta di visualizzazione messaggio al controller.
+        """Inoltra la richiesta di visualizzazione messaggio al controller.
 
         Args:
           title: Titolo del messaggio.
@@ -53,8 +51,7 @@ class TrayIconComponent(QObject):
         self.controller.show_message(title, message, icon, duration)
 
     def show_update_message(self, new_version: str) -> None:
-        """
-        Mostra una notifica di sistema professionale per segnalare la disponibilità di una nuova versione.
+        """Mostra una notifica di sistema professionale per segnalare la disponibilità di una nuova versione.
 
         Args:
           new_version: Stringa della versione rilevata (es. '2.1.0').
@@ -66,8 +63,8 @@ class TrayIconComponent(QObject):
         )
 
     def show_background_notification(self, title: str, message: str, is_error: bool = False) -> None:
-        """
-        Invia una notifica balloon di sistema se l'applicazione è in background o minimizzata.
+        """Invia una notifica balloon di sistema se l'applicazione è in background o minimizzata.
+
         Attiva inoltre l'alert visivo sulla taskbar (lampeggiamento).
 
         Args:

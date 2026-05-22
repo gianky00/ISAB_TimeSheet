@@ -1,5 +1,5 @@
-"""
-SyncroJob - Settings Main Panel
+"""SyncroJob - Settings Main Panel.
+
 Pannello centralizzato per la configurazione dell'applicazione.
 Organizza le impostazioni in tab tematici: Configurazione, Backup, Statistiche e Telegram.
 Gestisce il salvataggio automatico e l'import/export della configurazione.
@@ -30,13 +30,15 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class ConfigSaveWorker(QThread):
-    """Worker thread per il salvataggio asincrono della configurazione."""
+    """Worker thread per il salvataggio asincrono della configurazione.
+
+    Inizializza il worker comunicando la configurazione da salvare.
+    """
 
     finished = Signal(bool, str)
     """Segnale emesso al termine del salvataggio con esito e messaggio errore."""
 
     def __init__(self, config: dict[str, Any]) -> None:
-        """Inizializza il worker comunicando la configurazione da salvare."""
         super().__init__()
         self.config = config
 
@@ -50,9 +52,18 @@ class ConfigSaveWorker(QThread):
 
 
 class SettingsPanel(QWidget):
-    """
-    Pannello principale delle impostazioni.
+    """Pannello principale delle impostazioni.
+
     Coordina i diversi tab di configurazione e fornisce funzionalità di sistema come reset e import/export.
+
+    Inizializza il pannello impostazioni.
+
+    Args:
+        parent: Widget genitore.
+
+    Attributes:
+        request_help_section: Segnale o attributo della classe.
+        settings_saved: Segnale o attributo della classe.
     """
 
     settings_saved = Signal()
@@ -62,12 +73,6 @@ class SettingsPanel(QWidget):
     """Segnale per richiedere l'apertura di una sezione specifica della guida."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello impostazioni.
-
-        Args:
-            parent: Widget genitore.
-        """
         super().__init__(parent)
         self._is_loading = False
         self._save_timer = QTimer(self)
@@ -199,8 +204,7 @@ class SettingsPanel(QWidget):
         self._save_worker.start()
 
     def _on_save_finished(self, success: bool, error_msg: str) -> None:
-        """
-        Gestisce l'esito del salvataggio asincrono.
+        """Gestisce l'esito del salvataggio asincrono.
 
         Args:
             success: True se il salvataggio è riuscito.

@@ -1,5 +1,5 @@
-"""
-Stub for backward compatibility.
+"""Stub for backward compatibility.
+
 Delegates to the new package src.gui.panels.timbrature.
 """
 

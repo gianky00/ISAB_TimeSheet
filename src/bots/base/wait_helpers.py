@@ -1,5 +1,5 @@
-"""
-Selenium Wait Helper Utilities
+"""Selenium Wait Helper Utilities.
+
 ===============================
 Centralizza pattern di wait comuni per eliminare time.sleep() hardcoded.
 
@@ -52,8 +52,7 @@ def wait_for_overlay_to_disappear(
     locator: tuple[str, str],
     timeout: int = 30,
 ) -> bool:
-    """
-    Attende che un overlay di caricamento scompaia.
+    """Attende che un overlay di caricamento scompaia.
 
     Args:
       driver: Istanza WebDriver.
@@ -77,8 +76,7 @@ def wait_for_element_clickable(
     locator: tuple[str, str],
     timeout: int = 10,
 ) -> WebElement | None:
-    """
-    Attende che un elemento sia cliccabile.
+    """Attende che un elemento sia cliccabile.
 
     Args:
       driver: Istanza WebDriver.
@@ -159,10 +157,7 @@ def safe_click_with_retry(
     retry_delay: float = 1.0,
     timeout: int = 10,
 ) -> bool:
-    """
-    Tenta il click su un elemento gestendo overlay e intercettazioni temporanee.
-    """
-
+    """Tenta il click su un elemento gestendo overlay e intercettazioni temporanee."""
     for i in range(retries):
         try:
             element = wait_for_element_clickable(driver, locator, timeout)
@@ -185,8 +180,8 @@ def execute_with_wait(
     timeout: int = 30,
     wait_locator: tuple[str, str] | None = None,
 ) -> Any:
-    """
-    Esegue un'azione e attende la scomparsa di un overlay.
+    """Esegue un'azione e attende la scomparsa di un overlay.
+
     Supporta sia overlay_locator che wait_locator (alias).
     """
     locator = wait_locator or overlay_locator
@@ -215,8 +210,8 @@ def poll_for_file(  # noqa: PLR0913
     exclude_patterns: list[str] | None = None,
     **kwargs: Any,
 ) -> str | None:
-    """
-    Attende che un file appaia in una directory usando polling.
+    """Attende che un file appaia in una directory usando polling.
+
     Approccio PERMISSIVO: ritorna il file più recente che soddisfa i criteri.
     Supporta sia il nuovo pattern con FilePollingParams che la firma legacy.
     """
@@ -323,8 +318,8 @@ def poll_for_new_file(
     poll_interval: float = 1.0,
     **kwargs: Any,
 ) -> str | None:
-    """
-    Attende che appaia un NUOVO file rispetto a uno snapshot precedente.
+    """Attende che appaia un NUOVO file rispetto a uno snapshot precedente.
+
     Supporta sia il nuovo pattern con PollConfig che la firma legacy.
     """
     # Gestione firma legacy

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Wave Progress Bar
+"""SyncroJob - Wave Progress Bar.
+
 Custom widget for spectacular wave animation.
 """
 
@@ -12,9 +12,11 @@ from PySide6.QtWidgets import QProgressBar, QWidget
 
 
 class WaveProgressBar(QProgressBar):
-    """
-    Barra di progresso custom con animazione ad onda spettacolare.
+    """Barra di progresso custom con animazione ad onda spettacolare.
+
     Utilizza QPainter per il disegno sinusoidale a 60fps.
+
+    Inizializza la classe.
     """
 
     # Costanti estetiche per l'animazione

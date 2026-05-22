@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-SyncroJob Developer Toolbox - GUI Edition
+"""SyncroJob Developer Toolbox - GUI Edition
 ==========================================
 Interfaccia grafica per tutti gli strumenti di sviluppo del progetto.
 """

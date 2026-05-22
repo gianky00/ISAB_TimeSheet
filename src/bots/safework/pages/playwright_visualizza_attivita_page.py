@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright SafeWork Visualizza AttivitàPage
+"""SyncroJob - Playwright SafeWork Visualizza AttivitàPage.
+
 Gestione della pagina Visualizza Attivitàper la programmazione usando Playwright.
 """
 
@@ -14,7 +14,14 @@ from src.bots.safework.common.locators import SafeWorkLocators
 
 
 class PlaywrightVisualizzaAttivitaPage(PlaywrightBasePage):
-    """Gestisce le interazioni con la pagina Visualizza Attivitàusando Playwright."""
+    """Gestisce le interazioni con la pagina Visualizza Attivitàusando Playwright.
+
+    Inizializza la pagina Visualizza Attività Playwright.
+
+    Args:
+        page: Pagina Playwright.
+        log_func: Funzione per il logging.
+    """
 
     def __init__(self, page: Page, log_func: Callable[[str], None]) -> None:
         super().__init__(page, log_func)

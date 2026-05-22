@@ -1,5 +1,5 @@
-"""
-SyncroJob - Consuntivo Modifica Esistente Tab
+"""SyncroJob - Consuntivo Modifica Esistente Tab.
+
 Tab intelligente per la scansione, auto-fill e manipolazione di file esistenti.
 """
 
@@ -37,7 +37,10 @@ from src.gui.widgets.modern_card import ModernContentCard
 
 
 class ModificaEsistenteTab(QWidget):
-    """Tab intelligente per la gestione di consuntivi esistenti con caching delle scansioni di rete."""
+    """Tab intelligente per la gestione di consuntivi esistenti con caching delle scansioni di rete.
+
+    Inizializza la classe.
+    """
 
     step_clicked = Signal(str)
     _scan_finished = Signal()

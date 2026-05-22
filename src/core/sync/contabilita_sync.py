@@ -1,5 +1,5 @@
-"""
-SyncroJob - Contabilità Sync Engine
+"""SyncroJob - Contabilità Sync Engine.
+
 Engine specializzato per la sincronizzazione dei dati contabili.
 """
 

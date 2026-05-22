@@ -1,5 +1,5 @@
-"""
-SyncroJob - Workflow Controller
+"""SyncroJob - Workflow Controller.
+
 Gestisce i flussi di lavoro complessi e le interazioni Command Palette -> Bot.
 """
 
@@ -17,9 +17,11 @@ if TYPE_CHECKING:
 
 
 class WorkflowController(QObject):
-    """
-    Controller per il coordinamento dei flussi di lavoro (workflow) dell'applicazione.
+    """Controller per il coordinamento dei flussi di lavoro (workflow) dell'applicazione.
+
     Gestisce l'input proveniente dalla Command Palette e lo trasforma in azioni sui Bot.
+
+    Inizializza la classe.
     """
 
     def __init__(self, main_window: MainWindow) -> None:

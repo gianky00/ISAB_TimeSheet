@@ -1,5 +1,5 @@
-"""
-SyncroJob - Consuntivo Impostazioni Tab
+"""SyncroJob - Consuntivo Impostazioni Tab.
+
 Tab per la configurazione delle liste dinamiche (Tecnici, Stati).
 """
 
@@ -18,7 +18,10 @@ from src.gui.widgets.core_widgets import SecondaryButton, StandardListWidget
 
 
 class ImpostazioniTab(QWidget):
-    """Tab per configurare le liste dinamiche usate nei consuntivi."""
+    """Tab per configurare le liste dinamiche usate nei consuntivi.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -62,6 +65,7 @@ class ImpostazioniTab(QWidget):
         border: 1px solid {COLORS["border_light"]};
       }}
     """)
+
         lay = QVBoxLayout(container)
         lay.setContentsMargins(15, 15, 15, 15)
         lay.setSpacing(10)

@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL DTO
+"""SyncroJob - PDL DTO.
+
 Oggetti di trasporto dati per il modulo PDL.
 Garantisce l'incapsulamento e previene la data leakage verso la GUI.
 """

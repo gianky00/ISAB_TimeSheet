@@ -1,5 +1,4 @@
-"""
-SyncroJob - Analytics Engine
+"""SyncroJob - Analytics Engine.
 
 Anomaly detection, pattern detection e health scoring per log analysis.
 """
@@ -47,21 +46,24 @@ class AnalyticsReport:
 
     @property
     def has_critical_issues(self) -> bool:
+        """Indica se sono presenti anomalie con gravità critica."""
         return any(a.severity == "critical" for a in self.anomalies)
 
     @property
     def anomaly_count(self) -> int:
+        """Restituisce il numero totale di anomalie rilevate."""
         return len(self.anomalies)
 
 
 class AnomalyDetector:
-    """
-    Rileva anomalie nei log basandosi su baseline statistiche.
+    """Rileva anomalie nei log basandosi su baseline statistiche.
 
     Tipi di anomalie rilevate:
     - Error rate spike (aumento improvviso errori)
     - Slow operations (operazioni più lente del normale)
     - High failure rate (tasso di fallimento bot elevato)
+
+    Inizializza la classe.
     """
 
     ERROR_HIGH_THRESHOLD: Final[float] = 15.0
@@ -90,8 +92,10 @@ class AnomalyDetector:
         return anomalies
 
     def detect_error_rate_spike(self, hours: int = 24) -> list[Anomaly]:
-        """
-        Rileva spike nel tasso di errori.
+        """Rileva spike nel tasso di errori.
+
+        Args:
+            hours: Ore di lookback per l'analisi.
 
         Returns:
           Lista di anomalie se error rate > threshold
@@ -125,8 +129,10 @@ class AnomalyDetector:
         return anomalies
 
     def detect_slow_operations(self, hours: int = 24) -> list[Anomaly]:
-        """
-        Rileva operazioni più lente del normale.
+        """Rileva operazioni più lente del normale.
+
+        Args:
+            hours: Ore di lookback per l'analisi.
 
         Returns:
           Lista di anomalie per operazioni lente
@@ -161,8 +167,10 @@ class AnomalyDetector:
         return anomalies
 
     def detect_high_failure_rate(self, hours: int = 24) -> list[Anomaly]:
-        """
-        Rileva tasso di fallimento bot elevato.
+        """Rileva tasso di fallimento bot elevato.
+
+        Args:
+            hours: Ore di lookback per l'analisi.
 
         Returns:
           Lista di anomalie se failure rate > threshold
@@ -201,12 +209,13 @@ class AnomalyDetector:
 
 
 class PatternDetector:
-    """
-    Rileva pattern ricorrenti nei log.
+    """Rileva pattern ricorrenti nei log.
 
     Tipi di pattern rilevati:
     - Errori ripetuti (stesso messaggio più volte)
     - Correlazioni (errori che seguono sempre altri errori)
+
+    Inizializza la classe.
     """
 
     def __init__(self, viewer: LogViewer | None = None) -> None:
@@ -220,8 +229,11 @@ class PatternDetector:
         return patterns
 
     def find_repeated_errors(self, hours: int = 24, min_count: int | None = None) -> list[Pattern]:
-        """
-        Trova errori che si ripetono frequentemente.
+        """Trova errori che si ripetono frequentemente.
+
+        Args:
+            hours: Ore di lookback per l'analisi.
+            min_count: Minimo occorrenze per pattern.
 
         Returns:
           Lista di pattern di errori ripetuti
@@ -258,8 +270,7 @@ class HealthScorer:
         error_rate: float = 0,
         bot_success_rate: float = 100,
     ) -> int:
-        """
-        Calcola health score.
+        """Calcola health score.
 
         Args:
           anomalies: Lista anomalie rilevate
@@ -294,8 +305,7 @@ class HealthScorer:
 
 
 def generate_analytics_report(hours: int = 24) -> AnalyticsReport:
-    """
-    Genera report completo di analytics.
+    """Genera report completo di analytics.
 
     Args:
       hours: Ore di lookback per analisi

@@ -1,5 +1,5 @@
-"""
-Base service for Bot Automations.
+"""Base service for Bot Automations.
+
 Handles configuration persistence and payload preparation.
 """
 
@@ -11,7 +11,13 @@ logger = get_logger(__name__)
 
 
 class BaseBotService:
-    """Classe base per i servizi di orchestrazione dei bot."""
+    """Classe base per i servizi di orchestrazione dei bot.
+
+    Inizializza il servizio base del bot.
+
+    Args:
+        bot_id: Identificativo unico del bot.
+    """
 
     def __init__(self, bot_id: str) -> None:
         self.bot_id = bot_id
@@ -31,10 +37,19 @@ class BaseBotService:
         data: list[dict[str, Any]],
         overrides: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
-        """
-        Prepara bot_params e bot_data per il BotWorker.
+        """Prepara bot_params e bot_data per il BotWorker.
+
+        Args:
+            credentials: Tupla con credenziali.
+            params: Parametri del bot.
+            data: Dati del bot.
+            overrides: Override opzionali.
+
         Returns:
-            tuple: (bot_params, bot_data)
+            tuple: (bot_params, bot_data).
+
+        Raises:
+            NotImplementedError: Metodo non implementato.
         """
         raise NotImplementedError
 

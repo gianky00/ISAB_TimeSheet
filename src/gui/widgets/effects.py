@@ -1,5 +1,5 @@
-"""
-SyncroJob - UI Effects Widgets.
+"""SyncroJob - UI Effects Widgets.
+
 Include componenti grafici con animazioni avanzate per il feedback visivo.
 """
 
@@ -19,21 +19,24 @@ from src.gui.styles import COLORS
 
 
 class HoverPulseFrame(QFrame):
-    """
-    Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
+    """Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
+
     Fornisce un feedback visivo moderno per le sezioni card dell'applicazione.
+
+    Inizializza il frame con il colore di accento specificato.
+
+    Args:
+      accent_color: Colore esadecimale opzionale per la linea pulsante.
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        pulse_value: Segnale o attributo della classe.
+        pulse_value_changed: Segnale o attributo della classe.
     """
 
     pulse_value_changed = Signal(float)
 
     def __init__(self, accent_color: str | None = None, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il frame con il colore di accento specificato.
-
-        Args:
-          accent_color: Colore esadecimale opzionale per la linea pulsante.
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self._accent_color = QColor(accent_color or COLORS["text_dark"])
         self._pulse_val = 1.0
@@ -70,8 +73,7 @@ class HoverPulseFrame(QFrame):
         super().leaveEvent(event)
 
     def paintEvent(self, event: QPaintEvent) -> None:
-        """
-        Disegna la linea pulsante alla base del widget.
+        """Disegna la linea pulsante alla base del widget.
 
         Args:
           event: L'evento di pittura di Qt.

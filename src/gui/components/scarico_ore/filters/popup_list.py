@@ -1,3 +1,5 @@
+"""Modulo Popup List."""
+
 from collections.abc import Sequence
 from typing import Any
 
@@ -18,9 +20,11 @@ from src.gui.widgets.core_widgets import (
 
 
 class ListFilterPopupWidget(QWidget):
-    """
-    Widget di popup per il filtraggio di liste di valori unici.
+    """Widget di popup per il filtraggio di liste di valori unici.
+
     Include una barra di ricerca e opzioni di selezione rapida.
+
+    Inizializza la classe.
     """
 
     def __init__(self, values: Sequence[Any], selected_values: Sequence[str] | None = None) -> None:
@@ -119,8 +123,7 @@ class ListFilterPopupWidget(QWidget):
         self._close_menu()
 
     def get_selected_values(self) -> list[str] | None:
-        """
-        Ottiene i valori selezionati dal modello.
+        """Ottiene i valori selezionati dal modello.
 
         Returns:
           list[str] | None: Lista di stringhe selezionate o None se tutti gli elementi sono selezionati.

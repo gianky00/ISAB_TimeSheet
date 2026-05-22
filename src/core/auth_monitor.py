@@ -1,5 +1,5 @@
-"""
-SyncroJob - Auth Monitor
+"""SyncroJob - Auth Monitor.
+
 Monitoraggio proattivo delle abilitazioni ISAB basato sulle timbrature.
 """
 
@@ -112,11 +112,11 @@ def _process_employee_match(
 
 
 def check_expiring_isab_authorizations() -> list[dict[str, Any]]:
-    """
-    Scansiona tutti i dipendenti per identificare chi ha l'abilitazione ISAB in scadenza.
+    """Scansiona tutti i dipendenti per identificare chi ha l'abilitazione ISAB in scadenza.
+
     Priorità:
     1. Match per Codice Fiscale (Infallibile)
-    2. Fallback per Nome/Cognome (se CF assente in Dipendenti)
+    2. Fallback per Nome/Cognome (se CF assente in Dipendenti).
     """
     try:
         # 1. Recupera anagrafica dipendenti

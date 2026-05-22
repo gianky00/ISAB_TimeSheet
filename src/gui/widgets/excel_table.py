@@ -1,12 +1,12 @@
-"""
-SyncroJob - Excel Table Widgets (Refactored)
+"""SyncroJob - Excel Table Widgets (Refactored).
+
 Widget tabellari avanzati con supporto mixin per Clipboard.
 """
 
 from typing import Any
 
 from PySide6.QtCore import QPoint, Qt, Signal
-from PySide6.QtGui import QAction, QBrush, QColor, QKeySequence
+from PySide6.QtGui import QAction, QBrush, QColor, QKeySequence, QPainter, QPaintEvent
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QGraphicsDropShadowEffect,
@@ -26,9 +26,11 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class ExcelTableWidget(QTableWidget):
-    """
-    QTableWidget con funzionalità Clipboard TSV.
+    """QTableWidget con funzionalità Clipboard TSV.
+
     Supporta la formattazione semantica delle righe.
+
+    Inizializza la tabella configurando i trigger di modifica e la clipboard.
     """
 
     # Safe Method Injection: Copia i metodi di ClipboardMixin per evitare crash da eredit  multipla su Windows
@@ -42,9 +44,9 @@ class ExcelTableWidget(QTableWidget):
     _paste_cell_data = ClipboardMixin._paste_cell_data
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Inizializza la tabella configurando i trigger di modifica e la clipboard."""
         super().__init__(*args, **kwargs)
         self.auto_copy_headers = False
+        self._placeholder_text = ""
         self.setEditTriggers(
             QAbstractItemView.EditTrigger.DoubleClicked
             | QAbstractItemView.EditTrigger.EditKeyPressed
@@ -55,9 +57,47 @@ class ExcelTableWidget(QTableWidget):
             v_header.setDefaultSectionSize(34)
             v_header.setVisible(False)
 
+    def setPlaceholderText(self, text: str) -> None:
+        """Imposta il testo da visualizzare quando la tabella è vuota."""
+        self._placeholder_text = text
+        self.viewport().update()
+
+    def smart_resize(self) -> None:
+        """Esegue un ridimensionamento ottimizzato per evitare lag della UI."""
+        from PySide6.QtCore import QTimer
+
+        def _do_resize() -> None:
+            if not self or self.rowCount() == 0:
+                return
+            self.setUpdatesEnabled(False)
+            try:
+                # Se la tabella è molto grande, ridimensioniamo solo le colonne.
+                # Il ridimensionamento delle righe (O(N)) è il vero killer del frame rate.
+                self.resizeColumnsToContents()
+                if self.rowCount() < 500:
+                    self.resizeRowsToContents()
+            finally:
+                self.setUpdatesEnabled(True)
+
+        QTimer.singleShot(0, _do_resize)
+
+    def paintEvent(self, event: QPaintEvent) -> None:
+        """Override per disegnare il placeholder se la tabella è vuota."""
+        super().paintEvent(event)
+        if self.rowCount() == 0 and self._placeholder_text:
+            painter = QPainter(self.viewport())
+            painter.setPen(QColor(COLORS["text_light"]))
+            font = self.font()
+            font.setPointSize(10)
+            painter.setFont(font)
+            painter.drawText(
+                self.viewport().rect(),
+                Qt.AlignmentFlag.AlignCenter,
+                self._placeholder_text,
+            )
+
     def set_row_status(self, row: int, status: str) -> None:
-        """
-        Imposta il colore semantico della riga in base allo stato.
+        """Imposta il colore semantico della riga in base allo stato.
 
         Args:
           row: Indice della riga.
@@ -121,21 +161,24 @@ class ExcelTableWidget(QTableWidget):
 
 
 class EditableDataTable(QWidget):
-    """Wrapper per ExcelTableWidget con gestione righe dinamica."""
+    """Wrapper per ExcelTableWidget con gestione righe dinamica.
+
+    Inizializza la tabella modificabile.
+
+    Args:
+      columns: Elenco di configurazioni per le colonne (nome, tipo, opzioni).
+      parent: Widget genitore opzionale.
+      initial_rows: Numero di righe vuote iniziali.
+
+    Attributes:
+        data_changed: Segnale o attributo della classe.
+    """
 
     data_changed = Signal()
 
     def __init__(
         self, columns: list[dict[str, Any]], parent: QWidget | None = None, initial_rows: int = 20
     ) -> None:
-        """
-        Inizializza la tabella modificabile.
-
-        Args:
-          columns: Elenco di configurazioni per le colonne (nome, tipo, opzioni).
-          parent: Widget genitore opzionale.
-          initial_rows: Numero di righe vuote iniziali.
-        """
         super().__init__(parent)
         self.columns = columns
         self.initial_rows = initial_rows
@@ -276,8 +319,8 @@ class EditableDataTable(QWidget):
                     item.setText("")
 
     def set_data(self, data: list[dict[str, Any]]) -> None:
-        """
-        Popola la tabella con i dati forniti.
+        """Popola la tabella con i dati forniti.
+
         Utilizza un algoritmo di matching flessibile per le chiavi (ignora case, spazi e underscore).
 
         Args:
@@ -330,8 +373,7 @@ class EditableDataTable(QWidget):
                 item.setText(value)
 
     def update_cell(self, row: int, col: int, value: str, emit_signal: bool = True) -> None:
-        """
-        Aggiorna il contenuto di una cella specifica.
+        """Aggiorna il contenuto di una cella specifica.
 
         Args:
           row: Indice della riga.
@@ -360,9 +402,12 @@ class EditableDataTable(QWidget):
             if not emit_signal:
                 self.table.blockSignals(False)
 
+    def setPlaceholderText(self, text: str) -> None:
+        """Proxy per impostare il placeholder nella tabella sottostante."""
+        self.table.setPlaceholderText(text)
+
     def set_row_status(self, row: int, status: str) -> None:
-        """
-        Proxy per impostare lo stato semantico della riga nella tabella.
+        """Proxy per impostare lo stato semantico della riga nella tabella.
 
         Args:
           row: Indice della riga.
@@ -371,8 +416,8 @@ class EditableDataTable(QWidget):
         self.table.set_row_status(row, status)
 
     def update_column_options(self, col: int, options: list[str]) -> None:
-        """
-        Aggiorna le opzioni di una colonna di tipo 'combò per tutte le righe esistenti.
+        """Aggiorna le opzioni di una colonna di tipo 'combò per tutte le righe esistenti.
+
         Aggiorna anche la definizione della colonna per le future righe.
 
         Args:

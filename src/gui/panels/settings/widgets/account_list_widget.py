@@ -1,5 +1,5 @@
-"""
-SyncroJob - Account List Widget
+"""SyncroJob - Account List Widget.
+
 Widget specializzato per la gestione degli account (ISAB, SafeWork) con supporto a password e default.
 """
 
@@ -32,22 +32,24 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class AccountListWidget(QWidget):
-    """
-    Gestisce una lista di account con icone di default e dialoghi cifrati.
+    """Gestisce una lista di account con icone di default e dialoghi cifrati.
+
     Consente l'aggiunta, modifica, rimozione e impostazione dell'account predefinito.
+
+    Inizializza il widget lista account.
+
+    Args:
+      title: Titolo del gruppo (es. 'Account ISAB').
+      show_type: Se True, mostra il campo tipologiànel dialogo account.
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        changed: Segnale o attributo della classe.
     """
 
     changed = Signal()
 
     def __init__(self, title: str, show_type: bool = False, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il widget lista account.
-
-        Args:
-          title: Titolo del gruppo (es. 'Account ISAB').
-          show_type: Se True, mostra il campo tipologiànel dialogo account.
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.title = title
         self.show_type = show_type
@@ -170,8 +172,7 @@ class AccountListWidget(QWidget):
         return accounts
 
     def set_accounts(self, accounts: Sequence[dict[str, Any]]) -> None:
-        """
-        Popola la lista con gli account forniti.
+        """Popola la lista con gli account forniti.
 
         Args:
           accounts: Sequenza di dizionari account.

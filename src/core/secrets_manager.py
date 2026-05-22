@@ -1,5 +1,5 @@
-"""
-Gestione sicura dei segreti dell'applicazione.
+"""Gestione sicura dei segreti dell'applicazione.
+
 Utilizza variabili d'ambiente con fallback su file protetti.
 """
 
@@ -26,9 +26,7 @@ class SecretsManager:
 
     @classmethod
     def get_github_token(cls) -> str:
-        """
-        Recupera il token GitHub dal keyring o lo ricostruisce dinamicamente.
-        """
+        """Recupera il token GitHub dal keyring o lo ricostruisce dinamicamente."""
         stored = cls.get_credential("cloud", "github_pat")
         if stored:
             return stored
@@ -80,20 +78,17 @@ class SecretsManager:
 
     @classmethod
     def get_grace_period_key(cls) -> bytes:
-        """
-        Genera una chiave di cifratura deterministica basata sull'Hardware ID.
+        """Genera una chiave di cifratura deterministica basata sull'Hardware ID.
+
         Questo evita di cablare chiavi statiche nel codice per i periodi di grazia.
         """
-
         hwid = get_hardware_id()
         # Usa l'HWID normalizzato per derivare una chiave Fernet valida
         return cls.derive_key(hwid, salt=b"SyncroJob_Grace_Salt_2026")
 
     @classmethod
     def get_license_key(cls) -> bytes | None:
-        """
-        Recupera la chiave di licenza in ordine di priorità.
-        """
+        """Recupera la chiave di licenza in ordine di priorità."""
         # 1. Environment variable
         key = cls._get_key_from_env()
         if key:

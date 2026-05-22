@@ -1,5 +1,5 @@
-"""
-SyncroJob - KPI Charts
+"""SyncroJob - KPI Charts.
+
 Gestione dei grafici KPI per la contabilità tramite Matplotlib.
 """
 
@@ -31,10 +31,12 @@ from src.gui.widgets.info_widgets import InfoLabel
 
 
 class DummyCanvas(QLabel):
-    """Fallback canvas utilizzato quando il backend Matplotlib Qt non  disponibile."""
+    """Fallback canvas utilizzato quando il backend Matplotlib Qt non  disponibile.
+
+    Inizializza il canvas di fallback.
+    """
 
     def __init__(self, fig: Figure) -> None:
-        """Inizializza il canvas di fallback."""
         super().__init__("Grafico disabilitato (Incompatibilit  Backend Matplotlib nativo)")
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setStyleSheet("color: #6c757d; font-style: italic;")
@@ -54,7 +56,17 @@ FigureCanvas = DummyCanvas
 
 
 class ChartContainer(QWidget):
-    """Container stilizzato per i grafici Matplotlib."""
+    """Container stilizzato per i grafici Matplotlib.
+
+    Inizializza il container stilizzato.
+
+    Args:
+      canvas: Il widget contenente il grafico Matplotlib.
+      title: Titolo del grafico.
+      height: Altezza minima del widget.
+      info_callback: Funzione chiamata al click sull'icona info.
+      parent: Widget genitore.
+    """
 
     def __init__(
         self,
@@ -64,16 +76,6 @@ class ChartContainer(QWidget):
         info_callback: Callable[[], str] | None = None,
         parent: QWidget | None = None,
     ) -> None:
-        """
-        Inizializza il container stilizzato.
-
-        Args:
-          canvas: Il widget contenente il grafico Matplotlib.
-          title: Titolo del grafico.
-          height: Altezza minima del widget.
-          info_callback: Funzione chiamata al click sull'icona info.
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.canvas = canvas
         self.setMinimumHeight(height)
@@ -120,15 +122,15 @@ class ChartContainer(QWidget):
 
 
 class KPIChartsManager:
-    """Gestore per la creazione e l'aggiornamento dei grafici KPI."""
+    """Gestore per la creazione e l'aggiornamento dei grafici KPI.
+
+    Inizializza il manager dei grafici.
+
+    Args:
+      HOURLY_COST_STD: Costo orario standard per il calcolo dei margini.
+    """
 
     def __init__(self, HOURLY_COST_STD: float) -> None:
-        """
-        Inizializza il manager dei grafici.
-
-        Args:
-          HOURLY_COST_STD: Costo orario standard per il calcolo dei margini.
-        """
         self.HOURLY_COST_STD = HOURLY_COST_STD
         self.annot: Annotation | None = None
 
@@ -147,12 +149,23 @@ class KPIChartsManager:
         return fig, canvas
 
     def plot_all(self, kpi_data: dict[str, Any]) -> None:
-        """Aggiorna tutti i grafici con i dati pre-processati dal service."""
-        self._plot_stato_attivita(kpi_data.get("stato_attivita", {}))
-        self._plot_prev_ore_mese(kpi_data.get("prev_ore_mese", {}))
-        self._plot_margine_tipologia(kpi_data.get("margine_tipologia", {}))
-        self._plot_andamento_resa(kpi_data.get("andamento_resa", {}))
-        self._plot_completamento(kpi_data.get("completamento", {}))
+        """Aggiorna tutti i grafici con i dati pre-processati dal service (Staggered)."""
+        from PySide6.QtCore import QTimer
+
+        # 1. Stato Attività (Immediato)
+        QTimer.singleShot(0, lambda: self._plot_stato_attivita(kpi_data.get("stato_attivita", {})))
+
+        # 2. Preventivato vs Ore (50ms delay)
+        QTimer.singleShot(50, lambda: self._plot_prev_ore_mese(kpi_data.get("prev_ore_mese", {})))
+
+        # 3. Margine per Tipologia (100ms delay)
+        QTimer.singleShot(100, lambda: self._plot_margine_tipologia(kpi_data.get("margine_tipologia", {})))
+
+        # 4. Andamento Resa (150ms delay)
+        QTimer.singleShot(150, lambda: self._plot_andamento_resa(kpi_data.get("andamento_resa", {})))
+
+        # 5. Stato Completamento (200ms delay)
+        QTimer.singleShot(200, lambda: self._plot_completamento(kpi_data.get("completamento", {})))
 
     def _plot_stato_attivita(self, counts: dict[str, int]) -> None:
         """Genera il grafico a torta per lo stato delle attività."""

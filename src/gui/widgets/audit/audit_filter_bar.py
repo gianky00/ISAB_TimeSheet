@@ -1,5 +1,5 @@
-"""
-SyncroJob - Audit Filter Bar
+"""SyncroJob - Audit Filter Bar.
+
 Widget per la configurazione dei filtri di ricerca e visualizzazione all'interno dell'Audit Log.
 """
 
@@ -29,8 +29,9 @@ from src.utils.helpers import get_asset_path
 
 
 class AuditFilterBar(ModernCard):
-    """
-    Barra dei filtri per l'Audit Log con design Enterprise.
+    """Barra dei filtri per l'Audit Log con design Enterprise.
+
+    Inizializza la classe.
     """
 
     filters_applied = Signal(dict)

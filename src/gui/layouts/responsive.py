@@ -1,19 +1,19 @@
-"""
-Layout responsivi che si adattano alle dimensioni finestra.
-"""
+"""Layout responsivi che si adattano alle dimensioni finestra."""
 
 from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import QHBoxLayout, QLayout, QVBoxLayout, QWidget
 
 
 class ResponsiveContainer(QWidget):
-    """Container che cambia layout in base alla larghezza."""
+    """Container che cambia layout in base alla larghezza.
+
+    Inizializza il container responsivo.
+    """
 
     BREAKPOINT_MOBILE = 600
     BREAKPOINT_TABLET = 900
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il container responsivo."""
         super().__init__(parent)
         self._widgets: list[QWidget] = []
         self._current_mode: str | None = None

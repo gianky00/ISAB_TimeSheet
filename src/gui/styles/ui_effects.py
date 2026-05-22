@@ -1,5 +1,5 @@
-"""
-SyncroJob - UI Effects Manager
+"""SyncroJob - UI Effects Manager.
+
 Centralizza la gestione delle animazioni e degli effetti visivi (Shadows, Fades, Slides).
 """
 

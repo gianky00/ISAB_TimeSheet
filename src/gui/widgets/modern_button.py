@@ -1,6 +1,4 @@
-"""
-Pulsante moderno con varianti e stati.
-"""
+"""Pulsante moderno con varianti e stati."""
 
 from __future__ import annotations
 
@@ -20,7 +18,21 @@ if TYPE_CHECKING:
 
 
 class ModernButton(QPushButton):
-    """Pulsante con animazioni e varianti."""
+    """Pulsante con animazioni e varianti.
+
+    Inizializza il pulsante moderno.
+
+    Args:
+      text: Testo da visualizzare sul pulsante.
+      variant: Variante cromatica (primary, secondary, etc.).
+      size: Taglia dimensionale (small, medium, large).
+      icon: Chiave dell'icona da visualizzare.
+      parent: Widget genitore.
+
+    Attributes:
+        hover_opacity: Segnale o attributo della classe.
+        hover_opacity_changed: Segnale o attributo della classe.
+    """
 
     hover_opacity_changed = Signal(float)
 

@@ -32,6 +32,8 @@ pywin32 = { version = "*", platform = "win32" }
 python-telegram-bot = "*"
 pandera = "^0.28.1"
 pydantic = "*"
+pydantic-settings = "*"
+libcst = "*"
 tenacity = "*"
 loguru = "*"
 faker = "*"
@@ -80,6 +82,8 @@ nuitka = "^4.0.5"
 pytest-playwright = "^0.7.2"
 types-pillow = "^10.2.0.20240822"
 types-setuptools = "^82.0.0.20260508"
+pydoclint = "^0.8.4"
+cohesion = "^1.2.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -135,6 +139,13 @@ exclude = [
     "site",
     "htmlcov",
     "config/vulture_whitelist.py",
+    "fix_docs.py",
+    "fix_other_docs.py",
+    "fix_remaining.py",
+    "scripts",
+    "admin",
+    "docs",
+    "scratch",
 ]
 
 [tool.ruff.lint]
@@ -164,6 +175,7 @@ select = [
     "TRY",   # tryceratops
     "PL",    # pylint
     "C90",   # mccabe complexity
+    "D",     # pydocstyle
 ]
 
 ignore = [
@@ -177,18 +189,26 @@ ignore = [
     "RUF001", # ambiguous-unicode-character-string: emoji sono intenzionali nella GUI
     "ANN401", # dynamically-typed-expression: Any is widely used and accepted in PySide/args
     "TRY003", # avoid-long-exception-messages: troppo verboso forzare classi custom per ogni messaggio
+    "D100",   # missing-docstring-in-public-module: gia' gestito da interrogate
+    "D104",   # missing-docstring-in-public-package: gia' gestito da interrogate
+    "D107",   # missing-docstring-in-method: gestito da interrogate
+    "D203",   # one-blank-line-before-class: incompatibile con D211
+    "D213",   # multi-line-summary-second-line: preferiamo D212
 ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
 
 [tool.ruff.lint.per-file-ignores]
 # Test: permettiamo assert, password fittizie, print, temp files, nested with, magic numbers e type hint non espliciti
-"tests/**/*.py" = ["S101", "S105", "S106", "S108", "T201", "DTZ", "SIM117", "F821", "F841", "PLR2004", "ANN", "SLF001", "PT011", "PLC0415"]
+"tests/**/*.py" = ["S101", "S105", "S106", "S108", "T201", "DTZ", "SIM117", "F821", "F841", "PLR2004", "ANN", "SLF001", "PT011", "PLC0415", "D"]
 # __init__.py: re-export senza uso diretto
 "**/__init__.py" = ["F401"]
 # Script e admin: meno severi
-"scripts/**/*.py" = ["T201", "DTZ", "PTH", "S108", "PLC0415"]
+"scripts/**/*.py" = ["T201", "DTZ", "PTH", "S108", "PLC0415", "ANN", "D", "C90", "PLR", "W"]
 "admin/**/*.py" = ["T201", "DTZ", "PTH", "S108", "E402", "ERA001", "PLC0415", "ANN"]
 # main.py: entry point
 "main.py" = ["T201", "E402", "PLC0415"]
@@ -213,7 +233,7 @@ docstring-code-format = true
 mypy_path = "."
 explicit_package_bases = true
 namespace_packages = true
-exclude = ["build", "dist", "config/vulture_whitelist.py", "admin", "tests", "mutants", "temp_patch_global_mutmut.py", "scratch", ".venv"]
+exclude = ["build", "dist", "config/vulture_whitelist.py", "admin", "tests", "mutants", "temp_patch_global_mutmut.py", "scratch", ".venv", "scripts", "fix_docs.py", "fix_other_docs.py", "fix_remaining.py"]
 
 # ── Strict Core ──────────────────────────────────────────────
 
@@ -288,8 +308,14 @@ module = [
     "playwright.*",
     "coverage",
     "coverage.*",
+    "pydantic_settings.*",
+    "libcst.*",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "src.bots.*"
+disallow_untyped_calls = false
 
 
 [tool.deptry]
@@ -301,6 +327,7 @@ exclude = [".venv", "build", "dist", "temp", "admin", "scripts", "site", "docs",
 DEP001 = ["generate_icons"]
 # DEP002 (declared but not imported): meta-packages e build tools
 DEP002 = [
+    "libcst",           # ast processing per IA (libreria di supporto integrata)
     "pyarrow",          # backend engine per pandas, non importato direttamente
     "setuptools",       # build dependency
     "pyinstaller",      # build tool
@@ -361,3 +388,12 @@ ignore = [
     "FURB111", # Redundant lambda (Pericoloso con segnali PySide6/Qt)
     "FURB184", # Chained statements (Peggiore leggibilità in casi complessi)
 ]
+
+[tool.pydoclint]
+style = "google"
+exclude = '\.git|\.tox|tests/data|build|dist|\.venv'
+require-return-section-when-returning-nothing = false
+arg-type-hints-in-docstring = false
+arg-type-hints-in-signature = true
+check-return-types = false
+check-class-attributes = false

@@ -1,5 +1,4 @@
-"""
-Core Widgets - UI Kit Standard components for SyncroJob Enterprise.
+"""Core Widgets - UI Kit Standard components for SyncroJob Enterprise.
 
 Questo modulo definisce wrapper stilizzati per i widget PySide6 di base,
 garantendo coerenza visiva nell'intera applicazione.
@@ -33,35 +32,50 @@ from src.gui.widgets.modern_button import ModernButton
 
 
 class PrimaryButton(ModernButton):
-    """Pulsante primario con stile accent."""
+    """Pulsante primario con stile accent.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, text: str = "", icon: str | None = None, parent: QWidget | None = None) -> None:
         super().__init__(text=text, variant=ModernButton.Variant.PRIMARY, icon=icon, parent=parent)
 
 
 class SecondaryButton(ModernButton):
-    """Pulsante secondario con stile neutro."""
+    """Pulsante secondario con stile neutro.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, text: str = "", icon: str | None = None, parent: QWidget | None = None) -> None:
         super().__init__(text=text, variant=ModernButton.Variant.SECONDARY, icon=icon, parent=parent)
 
 
 class DangerButton(ModernButton):
-    """Pulsante rosso per azioni distruttive."""
+    """Pulsante rosso per azioni distruttive.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, text: str = "", icon: str | None = None, parent: QWidget | None = None) -> None:
         super().__init__(text=text, variant=ModernButton.Variant.DANGER, icon=icon, parent=parent)
 
 
 class GhostButton(ModernButton):
-    """Pulsante trasparente con bordo."""
+    """Pulsante trasparente con bordo.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, text: str = "", icon: str | None = None, parent: QWidget | None = None) -> None:
         super().__init__(text=text, variant=ModernButton.Variant.GHOST, icon=icon, parent=parent)
 
 
 class IconButton(QPushButton):
-    """QPushButton icon-only con stile minimalista e hover."""
+    """QPushButton icon-only con stile minimalista e hover.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -90,7 +104,10 @@ class IconButton(QPushButton):
 
 
 class SearchInput(QLineEdit):
-    """QLineEdit stilizzato per campiùdi ricerca, con placeholder e clear button."""
+    """QLineEdit stilizzato per campiùdi ricerca, con placeholder e clear button.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, placeholder: str = "Cerca...", parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -119,7 +136,10 @@ class SearchInput(QLineEdit):
 
 
 class StandardInput(QLineEdit):
-    """QLineEdit stilizzato per input generici (path, URL, credenziali)."""
+    """QLineEdit stilizzato per input generici (path, URL, credenziali).
+
+    Inizializza la classe.
+    """
 
     def __init__(self, text: str = "", parent: QWidget | None = None) -> None:
         super().__init__(text, parent) if text else super().__init__(parent)
@@ -142,7 +162,10 @@ class StandardInput(QLineEdit):
 
 
 class StandardTextEdit(QTextEdit):
-    """QTextEdit stilizzato con bordi e focus coerenti."""
+    """QTextEdit stilizzato con bordi e focus coerenti.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -168,7 +191,10 @@ class StandardTextEdit(QTextEdit):
 
 
 class FilterComboBox(QComboBox):
-    """QComboBox stilizzata per filtri e selettori."""
+    """QComboBox stilizzata per filtri e selettori.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -208,7 +234,10 @@ class FilterComboBox(QComboBox):
 
 
 class StandardCheckBox(QCheckBox):
-    """QCheckBox stilizzata con indicatore personalizzato."""
+    """QCheckBox stilizzata con indicatore personalizzato.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, text: str = "", parent: QWidget | None = None) -> None:
         super().__init__(text, parent)
@@ -236,7 +265,10 @@ class StandardCheckBox(QCheckBox):
 
 
 class StandardSpinBox(QSpinBox):
-    """QSpinBox stilizzato con bordi coerenti."""
+    """QSpinBox stilizzato con bordi coerenti.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -262,7 +294,10 @@ class StandardSpinBox(QSpinBox):
 
 
 class StandardTable(QTableWidget):
-    """QTableWidget con stile enterprise, righe alternate e selezione per riga."""
+    """QTableWidget con stile enterprise, righe alternate e selezione per riga.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, rows: int = 0, columns: int = 0, parent: QWidget | None = None) -> None:
         super().__init__(rows, columns, parent)
@@ -299,7 +334,10 @@ class StandardTable(QTableWidget):
 
 
 class StandardListWidget(QListWidget):
-    """QListWidget stilizzata con bordi arrotondati, selezione e hover."""
+    """QListWidget stilizzata con bordi arrotondati, selezione e hover.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -330,7 +368,10 @@ class StandardListWidget(QListWidget):
 
 
 class StandardTreeWidget(QTreeWidget):
-    """QTreeWidget stilizzato con bordi e selezione coerenti."""
+    """QTreeWidget stilizzato con bordi e selezione coerenti.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -360,7 +401,10 @@ class StandardTreeWidget(QTreeWidget):
 
 
 class StandardGroupBox(QGroupBox):
-    """QGroupBox stilizzata con bordo sottile e titolo accent."""
+    """QGroupBox stilizzata con bordo sottile e titolo accent.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, title: str = "", parent: QWidget | None = None) -> None:
         super().__init__(title, parent)
@@ -387,7 +431,10 @@ class StandardGroupBox(QGroupBox):
 
 
 class StandardProgressBar(QProgressBar):
-    """QProgressBar stilizzata con accent e bordi arrotondati."""
+    """QProgressBar stilizzata con accent e bordi arrotondati.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -412,17 +459,17 @@ class StandardProgressBar(QProgressBar):
 
 
 class SortableTableWidgetItem(QTableWidgetItem):
-    """
-    QTableWidgetItem personalizzato che gestisce correttamente l'ordinamento
+    """QTableWidgetItem personalizzato che gestisce correttamente l'ordinamento.
+
     per numeri (int, float) e date (formati comuni), con fallback alfabetico.
+
+    Inizializza l'item.
+
+    :param value: Il valore (str, int, float, datetime, o None).
+    :param alignment: Opzionale, allineamento Qt (es. Qt.AlignmentFlag.AlignRight).
     """
 
     def __init__(self, value: Any, alignment: Qt.AlignmentFlag | None = None) -> None:
-        """
-        Inizializza l'item.
-        :param value: Il valore (str, int, float, datetime, o None).
-        :param alignment: Opzionale, allineamento Qt (es. Qt.AlignmentFlag.AlignRight).
-        """
         display_text = str(value) if value is not None else ""
         super().__init__(display_text)
         self.raw_value = value

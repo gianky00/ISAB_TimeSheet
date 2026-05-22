@@ -1,5 +1,5 @@
-"""
-SyncroJob - OdA Manager
+"""SyncroJob - OdA Manager.
+
 Modulo per la gestione, l'interrogazione e l'aggiornamento del database dello Storico Ordini di Acquisto (OdA).
 Gestisce la sincronizzazione tra i file Excel esportati dal portale e il database SQLite locale.
 """
@@ -19,8 +19,8 @@ logger = get_logger(__name__)
 
 
 class OdaManager:
-    """
-    Controller per le operazioni CRUD e di ricerca sullo Storico OdA.
+    """Controller per le operazioni CRUD e di ricerca sullo Storico OdA.
+
     Centralizza l'accesso ai dati degli ordini, permettendo ricerche testuali complesse.
     """
 
@@ -33,8 +33,8 @@ class OdaManager:
 
     @classmethod
     def get_all_oda(cls, search_text: str | None = None) -> list[tuple[Any, ...]]:
-        """
-        Recupera un elenco di ordini di acquisto dal database.
+        """Recupera un elenco di ordini di acquisto dal database.
+
         Delegato a OdaRepository per la logica di query.
         """
         # Restituiamo tuple per compatibilità con la GUI esistente

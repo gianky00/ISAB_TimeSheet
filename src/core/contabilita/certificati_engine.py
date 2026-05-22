@@ -1,5 +1,5 @@
-"""
-SyncroJob - Certificati Engine
+"""SyncroJob - Certificati Engine.
+
 Motore di business per il calcolo delle scadenze, ricerca file e gestione esclusioni.
 """
 
@@ -39,7 +39,10 @@ class CertificatiStats(TypedDict):
 
 
 class CertificatiEngine:
-    """Motore logico per la gestione dei certificati campione."""
+    """Motore logico per la gestione dei certificati campione.
+
+    Inizializza la classe.
+    """
 
     # Costanti per il calcolo delle scadenze
     WARNING_THRESHOLD: Final[int] = 15
@@ -110,9 +113,9 @@ class CertificatiEngine:
 
     @classmethod
     def calculate_days_and_status(cls, scadenza_str: str) -> tuple[int | None, str]:
-        """
-        Calcola i giorni alla scadenza e determina l'icona di stato.
-        Returns: (giorni_alla_scadenza, icona_pallino)
+        """Calcola i giorni alla scadenza e determina l'icona di stato.
+
+        Returns: (giorni_alla_scadenza, icona_pallino).
         """
         if not scadenza_str:
             return None, Icons.STATUS_DOT_GRAY
@@ -446,7 +449,6 @@ class CertificatiEngine:
 
     def group_data_by_id_coemi(self, data: Sequence[Sequence[Any]]) -> dict[str, list[tuple[Any, ...]]]:
         """Raggruppa le righe del DB per ID COEMI o fallback (Matricola)."""
-
         idx_id_coemi = ContabilitaQueries.CERT_IDX_ID_STRUMENTO
         idx_matricola = ContabilitaQueries.CERT_IDX_MATRICOLA
 
@@ -464,7 +466,6 @@ class CertificatiEngine:
 
     def prepare_groups_with_priority(self, groups: dict[str, list[tuple[Any, ...]]]) -> list[dict[str, Any]]:
         """Calcola stati e priorità per ogni gruppo di certificati."""
-
         processed_groups = []
         for group_key, certificates in groups.items():
             certs_sorted = sorted(certificates, key=self._parse_emission_date, reverse=True)
@@ -496,7 +497,6 @@ class CertificatiEngine:
 
     def _parse_emission_date(self, row: tuple[Any, ...]) -> datetime:
         """Helper per il parsing sicuro della data di emissione per l'ordinamento."""
-
         idx = ContabilitaQueries.CERT_IDX_EMISSIONE
         if len(row) <= idx:
             return datetime.min.replace(tzinfo=UTC)

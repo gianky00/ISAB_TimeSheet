@@ -1,8 +1,10 @@
+"""Modulo Timbrature."""
+
 import sqlite3
 
 
 def mig_timbrature_v1(conn: sqlite3.Connection) -> None:
-    """Schema Iniziale Timbrature (v1)"""
+    """Schema Iniziale Timbrature (v1)."""
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -26,14 +28,14 @@ def mig_timbrature_v1(conn: sqlite3.Connection) -> None:
 
 
 def mig_timbrature_v2(conn: sqlite3.Connection) -> None:
-    """Ottimizzazione indici Timbrature (v2)"""
+    """Ottimizzazione indici Timbrature (v2)."""
     cursor = conn.cursor()
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_nome_cognome ON timbrature(cognome, nome)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_dip_nome_cognome ON dipendenti(cognome, nome)")
 
 
 def mig_timbrature_v3(conn: sqlite3.Connection) -> None:
-    """Aggiunge colonne codice_fiscale e ore_effettive (v3)"""
+    """Aggiunge colonne codice_fiscale e ore_effettive (v3)."""
     cursor = conn.cursor()
     # Verifichiamo se le colonne esistono già per evitare errori
     cursor.execute("PRAGMA table_info(timbrature)")
@@ -48,7 +50,7 @@ def mig_timbrature_v3(conn: sqlite3.Connection) -> None:
 
 
 def mig_timbrature_v4(conn: sqlite3.Connection) -> None:
-    """Aggiunge tutte le colonne mancanti rilevate dal file Excel reale (v4)"""
+    """Aggiunge tutte le colonne mancanti rilevate dal file Excel reale (v4)."""
     cursor = conn.cursor()
     cursor.execute("PRAGMA table_info(timbrature)")
     existing = [row[1] for row in cursor.fetchall()]

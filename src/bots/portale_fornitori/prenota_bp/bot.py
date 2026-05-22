@@ -1,6 +1,4 @@
-"""
-Bot per la prenotazione automatica dei Badge Provvisori (BP) sul Portale Fornitori ISAB.
-"""
+"""Bot per la prenotazione automatica dei Badge Provvisori (BP) sul Portale Fornitori ISAB."""
 
 from datetime import UTC, datetime
 from typing import Any, ClassVar
@@ -17,7 +15,10 @@ logger = get_logger(__name__)
 
 
 class PrenotaBPBot(SeleniumBaseBot):
-    """Bot per la prenotazione massiva di Badge Provvisori (BP) sul Portale Fornitori."""
+    """Bot per la prenotazione massiva di Badge Provvisori (BP) sul Portale Fornitori.
+
+    Inizializza il bot Prenota BP.
+    """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login Portale ISAB"),
@@ -56,7 +57,6 @@ class PrenotaBPBot(SeleniumBaseBot):
         fornitore: str | None = None,
         **kwargs: Any,
     ) -> None:
-        """Inizializza il bot Prenota BP."""
         super().__init__(username, password, config)
         current_year = datetime.now(UTC).astimezone().year
         self.data_da = data_da or kwargs.get("data_da") or f"01.01.{current_year}"

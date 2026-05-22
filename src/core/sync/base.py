@@ -1,5 +1,5 @@
-"""
-SyncroJob - Base Sync Engine
+"""SyncroJob - Base Sync Engine.
+
 Logica comune per la sincronizzazione dei dati nel database SQLite.
 """
 
@@ -65,9 +65,16 @@ class BaseSyncEngine:
         new_data: list[tuple[Any, ...]],
         partition: PartitionConfig,
     ) -> tuple[int, int]:
-        """
-        Esegue una sincronizzazione atomica basata su partizioni (es: Anno).
+        """Esegue una sincronizzazione atomica basata su partizioni (es: Anno).
+
         Cancella i dati esistenti per le partizioni fornite e inserisce i nuovi.
+
+        Args:
+          cursor: Cursore del database SQLite.
+          table_name: Nome della tabella di destinazione.
+          columns: Lista dei nomi delle colonne.
+          new_data: Nuovi dati da inserire.
+          partition: Configurazione della partizione.
 
         Returns:
           Tuple (aggiunti, rimossi).

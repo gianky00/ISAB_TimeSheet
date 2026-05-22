@@ -1,5 +1,5 @@
-"""
-SyncroJob - Sidebar Animation Manager
+"""SyncroJob - Sidebar Animation Manager.
+
 Gestisce le transizioni fluide e il movimento magnetico del track.
 """
 
@@ -8,7 +8,10 @@ from PySide6.QtWidgets import QGraphicsOpacityEffect, QWidget
 
 
 class SidebarAnimationManager(QObject):
-    """Orchestratore delle animazioni per la Sidebar Widget."""
+    """Orchestratore delle animazioni per la Sidebar Widget.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, sidebar: QWidget) -> None:
         super().__init__(sidebar)

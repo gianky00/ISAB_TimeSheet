@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Programming Sync Manager
+"""SyncroJob - PDL Programming Sync Manager.
+
 Gestisce l'elaborazione dei file Excel di programmazione e il file Master aziendale.
 """
 
@@ -24,7 +24,10 @@ logger = get_logger(__name__)
 
 
 class ProgrammingSyncManager:
-    """Manager per la sincronizzazione dei dati di programmazione su Excel tramite Win32com."""
+    """Manager per la sincronizzazione dei dati di programmazione su Excel tramite Win32com.
+
+    Inizializza la classe.
+    """
 
     FOGLI_PDL: ClassVar[list[str]] = ["A1", "A2", "A3", "CTE", "BLENDING", "TAS", "IGCC"]
 

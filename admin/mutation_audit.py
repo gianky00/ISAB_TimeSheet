@@ -1,5 +1,4 @@
-"""
-🧬 Mutation Audit Tool for SyncroJob
+"""🧬 Mutation Audit Tool for SyncroJob
 Esegue test di mutazione (Mutation Testing) utilizzando 'mutatest'.
 Consente un'analisi incrementale ("poco a poco") per identificare falle nella copertura dei test.
 """

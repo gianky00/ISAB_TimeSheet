@@ -1,5 +1,5 @@
-"""
-SyncroJob - Contabilita Manager (Refactored)
+"""SyncroJob - Contabilita Manager (Refactored).
+
 Facade per la gestione della Contabilità Strumentale.
 Orchestra i servizi di importazione, ricerca e statistiche delegando le responsabilità.
 """

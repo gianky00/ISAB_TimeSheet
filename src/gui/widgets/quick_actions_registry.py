@@ -1,3 +1,5 @@
+"""Modulo Quick Actions Registry."""
+
 from typing import Any
 
 from src.core.constants import Icons

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Clipboard Mixin
+"""SyncroJob - Clipboard Mixin.
+
 Aggiunge funzionalit  di copia/incolla standard Excel alle tabelle.
 """
 

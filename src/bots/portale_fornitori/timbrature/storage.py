@@ -1,5 +1,5 @@
-"""
-SyncroJob - Timbrature Storage
+"""SyncroJob - Timbrature Storage.
+
 Handles database operations for Timbrature.
 """
 
@@ -20,7 +20,10 @@ logger = get_logger(__name__)
 
 
 class TimbratureStorage:
-    """Manages SQLite database for Timbrature."""
+    """Manages SQLite database for Timbrature.
+
+    Inizializza il database delle timbrature.
+    """
 
     COLUMNS_MAP: ClassVar[dict[str, str]] = {
         "Id Dipendente": "id_dipendente",
@@ -47,7 +50,6 @@ class TimbratureStorage:
         return db_manager.DB_TIMBRATURE
 
     def __init__(self, db_path: Path | None = None) -> None:
-        """Inizializza il database delle timbrature."""
         # Se db_path  fornito esplicitamente, usalo (principalmente per test mirati),
         # altrimenti usa la propriet  dinamica.
         self._custom_db_path = db_path
@@ -94,8 +96,8 @@ class TimbratureStorage:
             logger.exception("Errore durante ensure_columns in TimbratureStorage")
 
     def search_employees(self, query: str) -> list[dict[str, str]]:
-        """
-        Cerca dipendenti per nome/cognome.
+        """Cerca dipendenti per nome/cognome.
+
         Returns: Lista di dizionari con info dipendente.
         """
         query = query.strip().lower()
@@ -128,9 +130,7 @@ class TimbratureStorage:
         return results
 
     def get_employees(self) -> list[dict[str, str]]:
-        """
-        Recupera la lista unica dei dipendenti incrociando timbrature e mappature in config.json.
-        """
+        """Recupera la lista unica dei dipendenti incrociando timbrature e mappature in config.json."""
         mappings = config_manager.load_config().get("employee_mappings", {})
 
         with db_manager.get_connection(self._active_db_path) as conn:
@@ -169,8 +169,8 @@ class TimbratureStorage:
         reparto: str | None = None,
         cantiere: str | None = None,
     ) -> None:
-        """
-        Aggiorna le informazioni di reparto e cantiere per un dipendente specifico.
+        """Aggiorna le informazioni di reparto e cantiere per un dipendente specifico.
+
         I dati vengono salvati nel file di configurazione globale.
         """
         mappings = config_manager.load_config().get("employee_mappings", {})
@@ -245,8 +245,8 @@ class TimbratureStorage:
         return query + f" ORDER BY data DESC, id DESC LIMIT {limit * 2}", params
 
     def _normalize_search_date(self, term: str) -> str:
-        """
-        Tenta di convertire una data input (DD/MM/YYYY, DD-MM-YYYY, ecc)
+        """Tenta di convertire una data input (DD/MM/YYYY, DD-MM-YYYY, ecc).
+
         nel formato DB (YYYY-MM-DD).
         """
         term = term.strip()

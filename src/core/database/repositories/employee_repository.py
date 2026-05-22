@@ -1,3 +1,5 @@
+"""Modulo Employee Repository."""
+
 import sqlite3
 from typing import Any
 
@@ -9,7 +11,10 @@ logger = get_logger(__name__)
 
 
 class EmployeeRepository:
-    """Repository per l'accesso ai dati dell'Anagrafica Dipendenti."""
+    """Repository per l'accesso ai dati dell'Anagrafica Dipendenti.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, db_manager_instance: Any = None) -> None:
         self.db = db_manager_instance or db_manager
@@ -151,6 +156,7 @@ class EmployeeRepository:
                 INSERT INTO dipendenti ({", ".join(cols)})
                 VALUES ({", ".join(["?"] * len(cols))})
             """  # nosec B608
+
             params = (
                 cognome,
                 nome,

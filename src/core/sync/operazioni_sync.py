@@ -1,5 +1,5 @@
-"""
-SyncroJob - Operazioni Sync Engine
+"""SyncroJob - Operazioni Sync Engine.
+
 Gestisce sincronizzazioni massive (DELETE ALL + INSERT) per AttivitàProgrammate e Scarico Ore.
 """
 

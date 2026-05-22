@@ -1,5 +1,5 @@
-"""
-SyncroJob - App Styler
+"""SyncroJob - App Styler.
+
 Configura l'aspetto visivo e i metadati dell'applicazione.
 Estratto da AppInitializer per seguire l'SRP.
 """
@@ -16,9 +16,7 @@ class AppStyler:
 
     @staticmethod
     def setup_app_style(app: QApplication) -> None:
-        """
-        Configura il tema, il font e i metadati per Windows.
-        """
+        """Configura il tema, il font e i metadati per Windows."""
         app.setStyle("Fusion")
         apply_theme(app, "light")
         app.setFont(QFont("Segoe UI", 10))

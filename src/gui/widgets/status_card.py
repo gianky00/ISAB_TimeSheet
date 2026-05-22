@@ -1,5 +1,5 @@
-"""
-SyncroJob - Status Card (Modern)
+"""SyncroJob - Status Card (Modern).
+
 Card per la status bar che mostra lo stato di un servizio con ombre morbide.
 """
 
@@ -15,9 +15,11 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class StatusCard(ModernCard):
-    """
-    Card per la status bar che mostra lo stato di un servizio.
+    """Card per la status bar che mostra lo stato di un servizio.
+
     Eredita da ModernCard per ombre e hover premium.
+
+    Inizializza la classe.
     """
 
     clicked = Signal()

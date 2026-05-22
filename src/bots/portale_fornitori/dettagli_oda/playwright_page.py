@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright Dettagli OdA Page
+"""SyncroJob - Playwright Dettagli OdA Page.
+
 Page Object Model per Dettagli OdA usando Playwright.
 """
 
@@ -16,7 +16,10 @@ from src.utils.helpers import sanitize_filename
 
 
 class PlaywrightDettagliOdAPage(PlaywrightBasePage):
-    """Gestisce le interazioni con la pagina Dettagli OdA usando Playwright."""
+    """Gestisce le interazioni con la pagina Dettagli OdA usando Playwright.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, page: Page, log_callback: Callable[[str], None] | None = None) -> None:
         super().__init__(page, log_callback)
@@ -49,8 +52,7 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
             return True
 
     def setup_supplier(self, supplier: str) -> bool:
-        """
-        Imposta il fornitore per il filtering dei dati in modo robusto.
+        """Imposta il fornitore per il filtering dei dati in modo robusto.
 
         Args:
           supplier: Ragione sociale del fornitore.

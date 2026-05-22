@@ -1,5 +1,5 @@
-"""
-SyncroJob - Don Ciro Renderer
+"""SyncroJob - Don Ciro Renderer.
+
 Gestore del rendering 3D isometrico e dei calcoli IK per la mascotte Don Ciro.
 Separato dal widget per rispettare il Single Responsibility Principle (SRP).
 """
@@ -36,7 +36,10 @@ class RenderItem:
 
 
 class DonCiroRenderer:
-    """Motore di rendering per Don Ciro."""
+    """Motore di rendering per Don Ciro.
+
+    Inizializza la classe.
+    """
 
     def __init__(self) -> None:
         # Palette Cinematic (Copiate dal widget originale)

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Bot Parameters Widget
+"""SyncroJob - Bot Parameters Widget.
+
 Widget riutilizzabile per la configurazione dei parametri comuni a tutti i bot (Fornitore, Date, Percorso).
 """
 
@@ -41,21 +41,24 @@ from .calendar_date_edit import CalendarDateEdit
 
 
 class HoverPulseFrame(QFrame):
-    """
-    Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
+    """Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
+
     Fornisce un feedback visivo immediato sull'interattivitàdella card parametri.
+
+    Inizializza il frame pulsante.
+
+    Args:
+      accent_color: Colore hex del bordo.
+      parent: Widget genitore.
+
+    Attributes:
+        pulse_value: Segnale o attributo della classe.
+        pulse_value_changed: Segnale o attributo della classe.
     """
 
     pulse_value_changed = Signal(float)
 
     def __init__(self, accent_color: str | None = None, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il frame pulsante.
-
-        Args:
-          accent_color: Colore hex del bordo.
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self._accent_color = QColor(accent_color or COLORS["text_dark"])
         self._pulse_val = 1.0
@@ -114,13 +117,24 @@ class HoverPulseFrame(QFrame):
 
 
 class BotParametersWidget(QWidget):
-    """
-    Widget che raggruppa in un'unica riga i parametri comuni per i bot:
+    """Widget che raggruppa in un'unica riga i parametri comuni per i bot.
+
     - Selezione Fornitore (con pulsante gestione rapida)
     - Selezione Data (singola o range temporale)
-    - Percorso di destinazione per i file scaricati
+    - Percorso di destinazione per i file scaricati.
 
     Implementa un design Neon & Shadow standard per tutte le viste.
+
+    Inizializza il widget dei parametri.
+
+    Args:
+      show_date_range: Se True, visualizza anche il campo 'Data À.
+      show_dest_path: Se True, visualizza il campo selezione cartella.
+      parent: Widget genitore.
+
+    Attributes:
+        changed: Segnale o attributo della classe.
+        settings_requested: Segnale o attributo della classe.
     """
 
     settings_requested = Signal()
@@ -132,14 +146,6 @@ class BotParametersWidget(QWidget):
     def __init__(
         self, show_date_range: bool = False, show_dest_path: bool = True, parent: QWidget | None = None
     ) -> None:
-        """
-        Inizializza il widget dei parametri.
-
-        Args:
-          show_date_range: Se True, visualizza anche il campo 'Data À.
-          show_dest_path: Se True, visualizza il campo selezione cartella.
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.show_date_range = show_date_range
         self.show_dest_path = show_dest_path
@@ -220,7 +226,7 @@ class BotParametersWidget(QWidget):
         self.settings_btn.setIconSize(QSize(20, 20))
         self.settings_btn.setFixedSize(38, 38)
         self.settings_btn.setToolTip("Gestisci fornitori")
-        self.settings_btn.clicked.connect(self.settings_requested.emit)
+        self.settings_btn.clicked.connect(lambda: self.settings_requested.emit())
         self.settings_btn.setStyleSheet(self._get_icon_btn_style())
         hbox.addWidget(self.settings_btn)
 
@@ -293,6 +299,7 @@ class BotParametersWidget(QWidget):
       }}
       QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
     """)
+
         self.open_btn.setToolTip("Apri cartella nel file system")
         self.open_btn.clicked.connect(self._open_folder)
         hbox.addWidget(self.open_btn)
@@ -308,8 +315,7 @@ class BotParametersWidget(QWidget):
         self.main_row_layout.addWidget(line)
 
     def add_widget_to_row(self, widget: QWidget) -> None:
-        """
-        Aggiunge un widget personalizzato alla riga dei parametri.
+        """Aggiunge un widget personalizzato alla riga dei parametri.
 
         Args:
           widget: Il widget QWidget da aggiungere.

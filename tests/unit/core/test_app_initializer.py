@@ -3,7 +3,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.core.app_initializer import AppInitializer
-from src.core.license_validator import LicenseStatus
 
 
 class TestAppInitializer:
@@ -20,8 +19,8 @@ class TestAppInitializer:
 
     @patch("src.core.app_initializer.AppInitializer._setup_logging")
     @patch("src.core.app_initializer.AppInitializer._verify_environment")
-    @patch("src.core.app_initializer.AppInitializer._verify_license")
-    @patch("src.core.app_initializer.AppInitializer._init_databases")
+    @patch("src.core.app_initializer.LicenseVerifier.verify_license")
+    @patch("src.core.app_initializer.DatabaseMigrationEngine.initialize_database")
     def test_initialize_core_success(self, mock_db, mock_lic, mock_env, mock_log):
         res = AppInitializer.initialize_core()
         assert res is True
@@ -41,25 +40,6 @@ class TestAppInitializer:
         assert mock_dir.mkdir.called
         assert mock_driver.called
         assert step.called
-
-    @patch("src.core.app_initializer.get_detailed_license_status")
-    @patch("src.core.app_initializer.get_hardware_id")
-    @patch("src.core.app_initializer.run_update")
-    def test_verify_license_valid(self, mock_update, mock_hwid, mock_status):
-        mock_status.return_value = (LicenseStatus.VALID, "")
-        step = MagicMock()
-
-        AppInitializer._verify_license(step)
-        assert mock_hwid.called
-        assert mock_status.called
-
-    @patch("src.core.app_initializer.db_manager.init_db")
-    @patch("src.core.app_initializer.DatabaseBackupManager.execute_backup")
-    def test_init_databases(self, mock_backup, mock_init):
-        step = MagicMock()
-        AppInitializer._init_databases(step)
-        assert mock_init.called
-        assert mock_backup.called
 
     def test_init_generator_basic(self):
         mw = MagicMock()

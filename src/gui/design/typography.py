@@ -1,6 +1,4 @@
-"""
-Bot TS Design System - Typography
-"""
+"""Bot TS Design System - Typography."""
 
 from dataclasses import dataclass
 

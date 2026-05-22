@@ -1,5 +1,5 @@
-"""
-SyncroJob - Scarico Ore Data Model
+"""SyncroJob - Scarico Ore Data Model.
+
 Modello tabellare ottimizzato per la gestione di grandi volumi di dati (130k+ righe).
 """
 
@@ -19,8 +19,8 @@ from src.gui.components.scarico_ore.filter_worker import FilterWorker
 
 @dataclass(slots=True)
 class ScaricoOreRow:
-    """
-    Modello dati che rappresenta una singola riga nella tabella 'Scarico Orè.
+    """Modello dati che rappresenta una singola riga nella tabella 'Scarico Orè.
+
     Contiene le informazioni sui dipendenti, le ore lavorate e i dettagli della commessa.
     """
 
@@ -28,10 +28,18 @@ class ScaricoOreRow:
 
 
 class ScaricoOreTableModel(QAbstractTableModel):
-    """
-    Modello virtuale ULTRA-RAPIDO per Scarico Ore (130k+ righe).
+    """Modello virtuale ULTRA-RAPIDO per Scarico Ore (130k+ righe).
+
     Integra la logica di filtraggio per evitare l'overhead di QSortFilterProxyModel.
     Usa dati pre-formattati per rendering O(1).
+
+    Inizializza il modello e carica i dati dalla cache globale se disponibili.
+
+    Args:
+      data: Dati iniziali opzionali.
+
+    Attributes:
+        CACHE_PATH: ClassVar[Path: Segnale o attributo della classe.
     """
 
     COLUMNS: ClassVar[list[str]] = [
@@ -64,12 +72,6 @@ class ScaricoOreTableModel(QAbstractTableModel):
     loading_progress = Signal(str)
 
     def __init__(self, data: list[tuple[Any, ...]] | None = None) -> None:
-        """
-        Inizializza il modello e carica i dati dalla cache globale se disponibili.
-
-        Args:
-          data: Dati iniziali opzionali.
-        """
         super().__init__()
         self._display_data: list[list[str]] = []
         self._search_index: list[str] = []
@@ -103,8 +105,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
     def load_data_async(
         self, raw_data: list[tuple[Any, ...]] | Callable[[], list[tuple[Any, ...]]] | None = None
     ) -> None:
-        """
-        Avvia il caricamento asincrono dei dati tramite CacheWorker.
+        """Avvia il caricamento asincrono dei dati tramite CacheWorker.
 
         Args:
           raw_data: Dati grezzi da processare, funzione di caricamento o None per caricare da cache pkl.
@@ -165,8 +166,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self.load_data_async(new_data)
 
     def set_data(self, data: list[tuple[Any, ...]]) -> None:
-        """
-        Imposta i dati in modo sincrono (usato principalmente nei test o piccoli dataset).
+        """Imposta i dati in modo sincrono (usato principalmente nei test o piccoli dataset).
 
         Args:
           data: Lista di tuple di dati grezzi.
@@ -176,9 +176,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self._on_worker_finished(display_data, search, totals, style_cache, date_keys)
 
     def set_filter(self, text: str, col_filters: dict[int, set[str]] | None = None) -> None:
-        """
-        Applica filtri globali e per colonna al modello in modo asincrono.
-        """
+        """Applica filtri globali e per colonna al modello in modo asincrono."""
         if self.is_filtering and self._filter_worker and self._filter_worker.isRunning():
             self._filter_worker.cancel()
             with warnings.catch_warnings():

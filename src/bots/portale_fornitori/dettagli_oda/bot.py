@@ -1,6 +1,4 @@
-"""
-SyncroJob - Dettagli OdA Bot
-"""
+"""SyncroJob - Dettagli OdA Bot."""
 
 import concurrent.futures
 from datetime import UTC, datetime
@@ -18,7 +16,23 @@ from src.core.oda_manager import OdaManager
 
 
 class DettagliOdABot(SeleniumBaseBot):
-    """Bot per lo scarico dei dettagli degli Ordini di Acquisto (OdA) dal Portale Fornitori."""
+    """Bot per lo scarico dei dettagli degli Ordini di Acquisto (OdA) dal Portale Fornitori.
+
+    Inizializza il bot Dettagli OdA.
+
+    Args:
+      username: Nome utente per il login.
+      password: Password per il login.
+      config: Configurazione del bot.
+      data_da: Data di inizio ricerca.
+      data_a: Data di fine ricerca.
+      fornitore: Fornitore da selezionare.
+      **kwargs: Argomenti aggiuntivi.
+
+    Attributes:
+        STEPS: ClassVar[list[tuple[str: Segnale o attributo della classe.
+        str: Segnale o attributo della classe.
+    """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login Portale ISAB"),
@@ -180,7 +194,6 @@ class DettagliOdABot(SeleniumBaseBot):
 
     def _import_oda_to_db(self, downloaded_path: Path) -> None:
         """Helper per l'importazione nel database. Utilizza un ProcessPool per non bloccare il GIL della GUI."""
-
         try:
             self.log(
                 f"   Avvio importazione in Storico OdA da {downloaded_path.name}... (Potrebbe richiedere alcuni secondi)"

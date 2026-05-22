@@ -36,13 +36,17 @@ plugins:
             show_source: true
 
 nav:
-  - Home: index.md
-  - Guide:
-      - 'Setup e Installazione': GEMINI.md
-      - 'Convenzioni Codice': CLAUDE.md
+  - Home: README.md
+  - Contribuire: CONTRIBUTING.md
+  - Guide per IA:
+      - 'Contesto Architetturale (Machine-Readable)': ../.ai-context.json
+      - 'Guida Operativa (CLAUDE)': CLAUDE.md
+      - 'Linee Guida Qualità (GEMINI)': GEMINI.md
+      - 'Ottimizzazione PySide6': PYSIDE6_OPTIMIZATION.md
   - Architettura:
-      - 'Overview': ARCHITECT.md
-      - 'Design': DESIGN.md
-  - Testing:
-      - 'Strategia 2026': TESTING_PLAN_2026.md
-      - 'Summary': TESTING_SUMMARY_2026.md
+      - 'Piano Refactoring SRP': docs/srp_implementation_plan.md
+      - 'Roadmap Refactoring': docs/REFACTORING_ROADMAP.md
+  - Qualità & Testing:
+      - 'Piano Linting Remediation': docs/LINTING_REMEDIATION_PLAN.md
+      - 'Piano Coverage Test': docs/TESTING_COVERAGE_PLAN_MULTI_AGENT.md
+      - 'TODO Qualità': docs/TODO_QUALITY.md

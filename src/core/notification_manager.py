@@ -1,5 +1,5 @@
-"""
-SyncroJob - Notification Manager
+"""SyncroJob - Notification Manager.
+
 Gestore centralizzato delle notifiche applicative.
 Fornisce un'interfaccia thread-safe per aggiungere, filtrare e gestire lo stato di lettura dei messaggi di sistema.
 Supporta la persistenza su JSON e l'integrazione con la UI tramite segnali e toast.
@@ -20,10 +20,12 @@ from src.core.paths import CONFIG_DIR
 
 
 class NotificationManager(QObject):
-    """
-    Manager singleton per il sistema di notifiche.
+    """Manager singleton per il sistema di notifiche.
+
     Gestisce il ciclo di vita dei messaggi (creazione, lettura, pin, eliminazione).
     Emette segnali per l'aggiornamento dinamico dell'interfaccia utente.
+
+    Inizializza il manager caricando le notifiche salvate su disco.
     """
 
     _instance: Optional["NotificationManager"] = None
@@ -47,8 +49,7 @@ class NotificationManager(QObject):
 
     @classmethod
     def instance(cls) -> "NotificationManager":
-        """
-        Restituisce l'istanza singleton della classe, creandola se necessario (Thread-Safe).
+        """Restituisce l'istanza singleton della classe, creandola se necessario (Thread-Safe).
 
         Returns:
           NotificationManager: L'istanza unica globale.
@@ -66,7 +67,6 @@ class NotificationManager(QObject):
             cls._instance = None
 
     def __init__(self) -> None:
-        """Inizializza il manager caricando le notifiche salvate su disco."""
         super().__init__()
         self.notifications_file = CONFIG_DIR / FileNames.NOTIFICATIONS
         if not hasattr(self, "_lock"):
@@ -123,8 +123,7 @@ class NotificationManager(QObject):
         related_id: str | None = None,
         show_toast: bool = False,
     ) -> None:
-        """
-        Crea e aggiunge una nuova notifica al sistema.
+        """Crea e aggiunge una nuova notifica al sistema.
 
         Args:
           title: Titolo della notifica.
@@ -177,8 +176,7 @@ class NotificationManager(QObject):
             self.request_toast.emit(f"{title}: {clean_msg}", level, duration)
 
     def get_notifications(self, filter_unread: bool = False) -> list[dict[str, Any]]:
-        """
-        Restituisce l'elenco delle notifiche in memoria.
+        """Restituisce l'elenco delle notifiche in memoria.
 
         Args:
           filter_unread: Se True, restituisce solo i messaggi non letti.
@@ -191,8 +189,7 @@ class NotificationManager(QObject):
         return self.notifications
 
     def get_unread_count(self) -> int:
-        """
-        Restituisce il conteggio degli errori (level=error) non ancora letti.
+        """Restituisce il conteggio degli errori (level=error) non ancora letti.
 
         Returns:
           int: Numero di errori pendenti.

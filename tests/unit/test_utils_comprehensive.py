@@ -1,5 +1,4 @@
-"""
-Comprehensive tests for src.utils package.
+"""Comprehensive tests for src.utils package.
 Covers: helpers, security, validators, parsing.
 """
 

@@ -1,3 +1,5 @@
+"""Modulo General Page."""
+
 from typing import Any
 
 from PySide6.QtCore import Signal
@@ -18,7 +20,10 @@ from src.gui.widgets.core_widgets import (
 
 
 class GeneralPage(QWidget):
-    """Pagina impostazioni generali e browser."""
+    """Pagina impostazioni generali e browser.
+
+    Inizializza la classe.
+    """
 
     settings_changed = Signal()
 

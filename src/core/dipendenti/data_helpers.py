@@ -1,3 +1,5 @@
+"""Modulo Data Helpers."""
+
 import re
 from collections.abc import Callable, Sequence
 from contextlib import suppress
@@ -15,8 +17,7 @@ def normalize_name(text: Any) -> str:
 def build_timbrature_maps(
     accessi: Sequence[Sequence[Any]],
 ) -> tuple[dict[str, tuple[int, str]], dict[tuple[str, str], tuple[int, str]], Callable[[Any], str]]:
-    """
-    Costruisce mappe di lookup per le timbrature indicizzate per CF e per Nome/Cognome.
+    """Costruisce mappe di lookup per le timbrature indicizzate per CF e per Nome/Cognome.
 
     Args:
       accessi: Lista di tuple (cognome, nome, cf, data_ora).

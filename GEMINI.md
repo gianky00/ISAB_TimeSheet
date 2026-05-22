@@ -32,10 +32,16 @@ Prima di ogni commit o conclusione di task, devono essere superati i seguenti co
 ### 6. Versionamento Dinamico
 - La versione è gestita via `commitizen` e `pyproject.toml`. Non modificarla manualmente se non richiesto esplicitamente.
 
+### 7. Tipizzazione Semantica & Pydantic V2
+- **Validazione Pydantic:** Per tutti i nuovi modelli di scambio dati (es. payload estratti dai bot o configurazioni complesse), usa modelli `pydantic.BaseModel` per abilitare la validazione e il parsing automatico a runtime con zero allucinazioni di tipo.
+- **Protocolli (typing.Protocol):** Disaccoppia i moduli definendo contratti formali tramite `Protocol` invece di ereditarietà rigida. Questo rende i test mocking nativi e aiuta i futuri LLM a capire immediatamente le interfacce disponibili.
+- **Tipizzazione Semantica (typing.Annotated):** Arricchisci le firme dei metodi usando `Annotated` per associare metadati semantici o di validazione di business (es. `Annotated[str, Field(pattern="^[A-Z0-9]{16}$")]` per Codici Fiscali).
+
 ## 📂 STRUTTURA DOCUMENTALE
-- `DEVELOPMENT_PLAN_QUALITY.md`: Piano d'azione per gli standard di qualità.
-- `CLAUDE.md`: Guida rapida ai comandi e architettura.
-- `PYSIDE6_OPTIMIZATION.md`: Best practices per le performance della GUI.
+- `.ai-context.json`: **Fonte di verità architetturale** machine-readable (versione, layout, DB, bot, regole). Generato da `tools/generate_ai_context.py`.
+- `CLAUDE.md`: Guida rapida operativa — comandi, pattern di codice, pitfall comuni.
+- `PYSIDE6_OPTIMIZATION.md`: Best practices per le performance e signal safety in PySide6.
+- `docs/`: Documentazione tecnica, schemi JSON, piani di refactoring.
 
 ## 🧠 ALGORITMO DI SVILUPPO (PLAN-ACT-VALIDATE)
 1. **Analisi SRP:** La modifica proposta rompe la separazione delle responsabilità?

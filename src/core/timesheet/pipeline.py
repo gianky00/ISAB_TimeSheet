@@ -13,7 +13,10 @@ from src.core.timesheet.steps.excel_steps import (
 
 
 class TimesheetPipeline(Pipeline):
-    """Pipeline per la trasformazione strutturale dei file Excel Timesheet."""
+    """Pipeline per la trasformazione strutturale dei file Excel Timesheet.
+
+    Inizializza la classe.
+    """
 
     def __init__(self) -> None:
         super().__init__()

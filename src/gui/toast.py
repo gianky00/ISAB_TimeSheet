@@ -1,5 +1,5 @@
-"""
-Bot TS - Toast Notifications
+"""Bot TS - Toast Notifications.
+
 Widget per notifiche non intrusive.
 """
 
@@ -10,8 +10,9 @@ from src.gui.styles import COLORS
 
 
 class ToastOverlay(QWidget):
-    """
-    Overlay per mostrare notifiche temporanee (Toast).
+    """Overlay per mostrare notifiche temporanee (Toast).
+
+    Inizializza la classe.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:

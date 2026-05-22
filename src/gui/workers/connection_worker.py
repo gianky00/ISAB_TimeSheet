@@ -1,5 +1,4 @@
-"""
-SyncroJob - Connection Workers.
+"""SyncroJob - Connection Workers.
 
 Contiene i worker asincroni per il test della connettività verso servizi esterni
 come Telegram e Google Gemini.
@@ -12,22 +11,24 @@ HTTP_OK = 200
 
 
 class ConnectionTestWorker(QThread):
-    """
-    Worker asincrono per testare le connessioni di rete e la validità delle API Key.
+    """Worker asincrono per testare le connessioni di rete e la validità delle API Key.
+
     Esegue le richieste in un thread separato per non bloccare la UI.
+
+    Inizializza il worker per il test di connessione.
+
+    Args:
+      test_type: Tipo di test da eseguire ('telegram' o 'gemini').
+      token_or_key: Credenziale (Token o API Key) da verificare.
+
+    Attributes:
+        result_ready: Segnale o attributo della classe.
     """
 
     result_ready = Signal(bool, str, str)  # success, title, message
     """Segnale emesso quando il test  completato."""
 
     def __init__(self, test_type: str, token_or_key: str) -> None:
-        """
-        Inizializza il worker per il test di connessione.
-
-        Args:
-          test_type: Tipo di test da eseguire ('telegram' o 'gemini').
-          token_or_key: Credenziale (Token o API Key) da verificare.
-        """
         super().__init__()
         self.test_type = test_type  # 'telegram' or 'geminì
         self.token_or_key = token_or_key

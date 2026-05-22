@@ -1,6 +1,4 @@
-"""
-SyncroJob - Utils Module
-"""
+"""SyncroJob - Utils Module."""
 
 from .helpers import (
     format_timestamp,

@@ -1,0 +1,204 @@
+{
+    "description": "Schema di configurazione centralizzato e tipizzato per SyncroJob.\n\nSupporta il caricamento da file JSON e l'override tramite variabili d'ambiente\ncon prefisso 'SYNCROJOB_'.",
+    "properties": {
+        "accounts": {
+            "default": [],
+            "description": "Elenco account Portale Fornitori",
+            "items": {
+                "additionalProperties": true,
+                "type": "object"
+            },
+            "title": "Accounts",
+            "type": "array"
+        },
+        "safework_accounts": {
+            "default": [],
+            "description": "Elenco account SafeWork",
+            "items": {
+                "additionalProperties": true,
+                "type": "object"
+            },
+            "title": "Safework Accounts",
+            "type": "array"
+        },
+        "contracts": {
+            "default": [],
+            "description": "Contratti attivi",
+            "items": {
+                "type": "string"
+            },
+            "title": "Contracts",
+            "type": "array"
+        },
+        "default_contract": {
+            "default": "",
+            "description": "Contratto di default",
+            "title": "Default Contract",
+            "type": "string"
+        },
+        "automation_engine": {
+            "default": "selenium",
+            "description": "Motore di automazione (selenium|playwright)",
+            "title": "Automation Engine",
+            "type": "string"
+        },
+        "browser_headless": {
+            "default": false,
+            "description": "Esecuzione del browser in modalità nascosta",
+            "title": "Browser Headless",
+            "type": "boolean"
+        },
+        "browser_timeout": {
+            "default": 300,
+            "description": "Timeout del browser in secondi",
+            "title": "Browser Timeout",
+            "type": "integer"
+        },
+        "download_path": {
+            "default": "",
+            "description": "Percorso di scarico per i file timesheet ed Excel",
+            "title": "Download Path",
+            "type": "string"
+        },
+        "fornitori": {
+            "default": [],
+            "description": "Elenco dei fornitori attivi",
+            "items": {
+                "type": "string"
+            },
+            "title": "Fornitori",
+            "type": "array"
+        },
+        "last_ts_date": {
+            "default": "01.01.2026",
+            "description": "Data dell'ultimo timesheet scaricato",
+            "title": "Last Ts Date",
+            "type": "string"
+        },
+        "last_ts_fornitore": {
+            "default": "",
+            "description": "Fornitore dell'ultimo timesheet scaricato",
+            "title": "Last Ts Fornitore",
+            "type": "string"
+        },
+        "contabilita_file_path": {
+            "default": "",
+            "description": "Percorso del file Excel di contabilità",
+            "title": "Contabilita File Path",
+            "type": "string"
+        },
+        "enable_auto_update_contabilita": {
+            "default": true,
+            "description": "Aggiornamento automatico della contabilità",
+            "title": "Enable Auto Update Contabilita",
+            "type": "boolean"
+        },
+        "certificati_campione_path": {
+            "default": "",
+            "description": "Percorso cartella certificati campione",
+            "title": "Certificati Campione Path",
+            "type": "string"
+        },
+        "master_preventivi_path": {
+            "default": "",
+            "description": "Percorso file master dei preventivi",
+            "title": "Master Preventivi Path",
+            "type": "string"
+        },
+        "base_network_path_preventivi": {
+            "default": "",
+            "description": "Percorso di rete preventivi",
+            "title": "Base Network Path Preventivi",
+            "type": "string"
+        },
+        "preventivi_tcl": {
+            "default": [],
+            "description": "Elenco tecnici TCL autorizzati",
+            "items": {
+                "type": "string"
+            },
+            "title": "Preventivi Tcl",
+            "type": "array"
+        },
+        "preventivi_stati": {
+            "default": [],
+            "description": "Stati ammessi per i preventivi",
+            "items": {
+                "type": "string"
+            },
+            "title": "Preventivi Stati",
+            "type": "array"
+        },
+        "reparti": {
+            "default": [
+                "STRUMENTALE",
+                "ELETTRICO",
+                "CANTIERE",
+                "ANALISI"
+            ],
+            "description": "Reparti operativi",
+            "items": {
+                "type": "string"
+            },
+            "title": "Reparti",
+            "type": "array"
+        },
+        "cantieri": {
+            "default": [],
+            "description": "Elenco dei cantieri attivi",
+            "items": {
+                "type": "string"
+            },
+            "title": "Cantieri",
+            "type": "array"
+        },
+        "quick_actions": {
+            "default": [
+                "nav_scarico_ts",
+                "cmd_sync",
+                "cmd_open_folder"
+            ],
+            "description": "Azioni rapide in dashboard",
+            "items": {
+                "type": "string"
+            },
+            "title": "Quick Actions",
+            "type": "array"
+        },
+        "roi_weights": {
+            "additionalProperties": {
+                "type": "number"
+            },
+            "default": {},
+            "description": "Pesi di calcolo ROI per ciascun bot",
+            "title": "Roi Weights",
+            "type": "object"
+        },
+        "certificati_autopilot_enabled": {
+            "default": false,
+            "description": "Autopilota invio certificati attivo",
+            "title": "Certificati Autopilot Enabled",
+            "type": "boolean"
+        },
+        "certificati_autopilot_time": {
+            "default": "08:30",
+            "description": "Orario giornaliero autopilot",
+            "title": "Certificati Autopilot Time",
+            "type": "string"
+        },
+        "certificati_autopilot_interval_days": {
+            "default": 1,
+            "description": "Intervallo di giorni autopilot",
+            "title": "Certificati Autopilot Interval Days",
+            "type": "integer"
+        },
+        "weather_show_details": {
+            "default": false,
+            "description": "Dettagli meteo avanzati in dashboard",
+            "title": "Weather Show Details",
+            "type": "boolean"
+        }
+    },
+    "title": "SyncroJobSettings",
+    "type": "object"
+}

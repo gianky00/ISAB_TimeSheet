@@ -1,5 +1,5 @@
-"""
-SyncroJob - Telegram UI Bridge
+"""SyncroJob - Telegram UI Bridge.
+
 Punto di ingresso centrale per la comunicazione tra il servizio Telegram e la Desktop UI.
 Refactored V9.5: Modularized into specialized handlers.
 """
@@ -27,9 +27,11 @@ logger = logging.getLogger(__name__)
 
 
 class TelegramUIBridge(QObject):
-    """
-    Coordina l'interazione tra Telegram e l'applicazione Desktop.
+    """Coordina l'interazione tra Telegram e l'applicazione Desktop.
+
     Delega l'esecuzione effettiva ai sottomoduli specializzati in src/core/telegram/bridge/.
+
+    Inizializza la classe.
     """
 
     def __init__(self, main_window: "MainWindow") -> None:

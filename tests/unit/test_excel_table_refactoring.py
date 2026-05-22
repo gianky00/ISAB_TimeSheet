@@ -1,5 +1,4 @@
-"""
-Baseline tests for ExcelTableWidget clipboard operations.
+"""Baseline tests for ExcelTableWidget clipboard operations.
 Ensures copy/paste logic remains intact.
 """
 

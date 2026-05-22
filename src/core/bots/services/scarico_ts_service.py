@@ -7,7 +7,10 @@ from src.core.bots.services.base_service import BaseBotService
 
 
 class ScaricoTSService(BaseBotService):
-    """Implementazione del servizio per lo scarico Timesheet."""
+    """Implementazione del servizio per lo scarico Timesheet.
+
+    Inizializza il servizio di scarico Timesheet.
+    """
 
     def __init__(self) -> None:
         super().__init__("scarico_ts")
@@ -38,8 +41,7 @@ class ScaricoTSService(BaseBotService):
         data: list[dict[str, Any]],
         overrides: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
-        """
-        Prepara i dati per l'esecuzione del bot Scarico TS.
+        """Prepara i dati per l'esecuzione del bot Scarico TS.
 
         Args:
           credentials: Tupla (username, password, tipo).

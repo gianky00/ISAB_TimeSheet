@@ -1,6 +1,5 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
-"""
-SyncroJob - Audit Log Widget
+"""SyncroJob - Audit Log Widget.
+
 Widget riutilizzato per la visualizzazione dell'audit log.
 Refactoring modulare V2.
 """
@@ -13,12 +12,9 @@ from typing import TYPE_CHECKING
 import shiboken6
 from PySide6.QtCore import (
     QModelIndex,
-    QObject,
-    QRunnable,
     Qt,
     QThreadPool,
     QTimer,
-    Signal,
     Slot,
 )
 from PySide6.QtWidgets import (
@@ -45,42 +41,23 @@ from src.gui.widgets.core_widgets import (
     StandardCheckBox,
 )
 from src.gui.widgets.modern_card import ModernCard
+from src.gui.workers.integrity_worker import IntegrityWorker
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
 
 
-class IntegrityWorkerSignals(QObject):
-    """Segnali emessi dal worker di verifica integrità dei log."""
-
-    finished = Signal(bool)
-
-
-class IntegrityWorker(QRunnable):
-    """Worker per la verifica asincrona dell'hash di integrità del database di audit."""
-
-    def __init__(self, manager: AuditManager) -> None:
-        """Inizializza il worker comunicando con l'AuditManager."""
-        super().__init__()
-        self.manager = manager
-        self.signals = IntegrityWorkerSignals()
-
-    def run(self) -> None:
-        """Esegue il controllo crittografico dell'integrità."""
-        valid = self.manager.verify_integrity()
-        self.signals.finished.emit(valid)
-
-
 class AuditLogWidget(QWidget):
-    """
-    Dashboard avanzata per l'Audit Log V2.
+    """Dashboard avanzata per l'Audit Log V2.
+
     Widget modulare con filtri, paginazione e Live Mode.
+
+    Inizializza il widget.
     """
 
     PAGE_SIZE = 50
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il widget."""
         super().__init__(parent)
         self.manager = AuditManager.instance()
         self.current_page = 0
@@ -190,8 +167,7 @@ class AuditLogWidget(QWidget):
         self.filter_bar.set_categories(cats)
 
     def _toggle_live_mode(self, state: int | Qt.CheckState) -> None:
-        """
-        Attiva o disattiva la modalità live.
+        """Attiva o disattiva la modalità live.
 
         Args:
           state: Stato della checkbox.
@@ -215,8 +191,7 @@ class AuditLogWidget(QWidget):
             self.refresh(reset_page=True)
 
     def _on_page_changed(self, delta: int) -> None:
-        """
-        Gestisce il cambio pagina.
+        """Gestisce il cambio pagina.
 
         Args:
           delta: Spostamento pagina (+1 o -1).
@@ -225,8 +200,7 @@ class AuditLogWidget(QWidget):
         self.refresh()
 
     def refresh(self, reset_page: bool = False) -> None:
-        """
-        Rinfresca i dati visualizzati applicando i filtri correnti.
+        """Rinfresca i dati visualizzati applicando i filtri correnti.
 
         Args:
           reset_page: Se True, torna alla prima pagina.
@@ -246,7 +220,7 @@ class AuditLogWidget(QWidget):
 
         self.total_logs = total
         self.model.update_data(logs)
-        self.table_view.resizeColumnsToContents()
+        QTimer.singleShot(0, lambda: self.table_view.resizeColumnsToContents() if self.table_view else None)
         self.pagination_bar.update_state(self.current_page, self.total_logs, self.PAGE_SIZE)
 
         if self.current_page == 0:
@@ -278,8 +252,7 @@ class AuditLogWidget(QWidget):
 
     @Slot(QModelIndex)
     def _on_row_double_click(self, index: QModelIndex) -> None:
-        """
-        Gestisce il doppio click su una riga.
+        """Gestisce il doppio click su una riga.
 
         Args:
           index: Indice della cella cliccata.

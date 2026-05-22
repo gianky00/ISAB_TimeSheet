@@ -1,5 +1,5 @@
-"""
-SyncroJob - Screenshot Bridge
+"""SyncroJob - Screenshot Bridge.
+
 Implementazione GUI delle interfacce Telegram per cattura screenshot e stato.
 Segue SRP isolando PySide6.
 """
@@ -17,7 +17,10 @@ from src.core.telegram.bridge.interfaces import AppStatusProvider, ScreenshotPro
 
 
 class TelegramGUIBridge(ScreenshotProvider, AppStatusProvider):
-    """Bridge tra la GUI e il sistema Telegram."""
+    """Bridge tra la GUI e il sistema Telegram.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, main_window: Any) -> None:
         self.mw = main_window

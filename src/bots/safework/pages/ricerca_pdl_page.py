@@ -1,5 +1,5 @@
-"""
-SyncroJob - SafeWork PDL Search Page
+"""SyncroJob - SafeWork PDL Search Page.
+
 Gestisce le interazioni con la pagina di ricerca PDL.
 Logica allineata al branch Main per massima stabilità.
 """
@@ -17,7 +17,15 @@ from src.bots.safework.common.locators import SafeWorkLocators
 
 
 class RicercaPDLPage:
-    """Page Object per la pagina di ricerca PDL."""
+    """Page Object per la pagina di ricerca PDL.
+
+    Inizializza la pagina di ricerca PDL.
+
+    Args:
+        driver: Istanza del driver Selenium.
+        wait: Istanza di WebDriverWait.
+        log_func: Funzione per il logging.
+    """
 
     def __init__(
         self, driver: webdriver.Chrome, wait: WebDriverWait[webdriver.Chrome], log_func: Callable[[str], None]
@@ -35,13 +43,13 @@ class RicercaPDLPage:
             if checkbox.is_selected() != exclude_closed:
                 self.log(f"[CLICK] Impostazione 'Escludi chiusì: {exclude_closed}")
                 # Uso JS click come nel branch main per evitare problemi di intercettazione
-                self.driver.execute_script("arguments[0].click();", checkbox)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].click();", checkbox)
         except Exception as e:
             self.log(f"⚠️ Errore configurazione flag 'Escludi chiusì: {e}")
 
     def seleziona_sito_e_cerca(self, site_name: str) -> bool:
-        """
-        Seleziona il sito dal menu e clicca Cerca.
+        """Seleziona il sito dal menu e clicca Cerca.
+
         REPLICA ESATTA DEL BRANCH MAIN (search_bot.py).
         """
         try:

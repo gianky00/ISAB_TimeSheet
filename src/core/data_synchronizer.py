@@ -1,5 +1,5 @@
-"""
-SyncroJob - Data Synchronizer
+"""SyncroJob - Data Synchronizer.
+
 Gestisce la sincronizzazione dei dati importati delegando agli engine specializzati.
 """
 
@@ -18,8 +18,8 @@ from src.core.sync.smart_sync import SmartSyncEngine
 
 
 class DataSynchronizer:
-    """
-    Orchestratore per la sincronizzazione dei dati tra file sorgente e database.
+    """Orchestratore per la sincronizzazione dei dati tra file sorgente e database.
+
     Delega la logica atomica agli engine specializzati.
     """
 

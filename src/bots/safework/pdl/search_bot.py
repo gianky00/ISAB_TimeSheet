@@ -1,5 +1,5 @@
-"""
-SyncroJob - SafeWork PDL Search Bot
+"""SyncroJob - SafeWork PDL Search Bot.
+
 Bot modulare per la ricerca massiva ed esportazione Excel dei PDL.
 """
 
@@ -21,9 +21,11 @@ logger = get_logger(__name__)
 
 
 class SafeWorkPDLSearchBot(SafeworkBaseBot):
-    """
-    Bot per la ricerca massiva ed esportazione Excel dei PDL da SafeWork.
+    """Bot per la ricerca massiva ed esportazione Excel dei PDL da SafeWork.
+
     Permette di filtrare i permessi per sito e stato, importandoli nel database locale.
+
+    Inizializza il bot di ricerca PDL.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
@@ -42,9 +44,6 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         account_type: str = "Esecutore",
         **kwargs: Any,
     ) -> None:
-        """
-        Inizializza il bot di ricerca PDL.
-        """
         super().__init__(username, password, config, account_type=account_type)
         self.sites = ["IGCC", "ISAB Nord", "ISAB Sud"]
         self.exclude_closed = kwargs.get("exclude_closed", True)
@@ -71,8 +70,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         return []
 
     def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
-        """
-        Esegue la pipeline di ricerca ed esportazione dei PDL.
+        """Esegue la pipeline di ricerca ed esportazione dei PDL.
 
         Args:
           data: Parametri di ricerca (escludi chiusi, siti).
@@ -141,8 +139,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             return False
 
     def _esegui_export(self, site_name: str) -> str | None:
-        """
-        Avvia l'esportazione Excel dei risultati e attende il file.
+        """Avvia l'esportazione Excel dei risultati e attende il file.
 
         Args:
           site_name: Nome del sito processato.
@@ -178,8 +175,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             logger.debug("Impossibile rimuovere il file temporaneo", file_path=file_path)
 
     def _import_to_db(self, file_path: str) -> None:
-        """
-        Importazione massiva dei dati PDL dall'Excel nel database SQLite.
+        """Importazione massiva dei dati PDL dall'Excel nel database SQLite.
 
         Args:
           file_path: Percorso del file Excel.

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Monitoring Controller
+"""SyncroJob - Monitoring Controller.
+
 Gestisce i controlli proattivi (abilitazioni, health) e i relativi timer.
 """
 
@@ -21,8 +21,9 @@ logger = get_logger(__name__)
 
 
 class MonitoringController(QObject):
-    """
-    Controller per il monitoraggio dello stato del sistema e delle autorizzazioni.
+    """Controller per il monitoraggio dello stato del sistema e delle autorizzazioni.
+
+    Inizializza la classe.
     """
 
     def __init__(self, main_window: "MainWindow") -> None:

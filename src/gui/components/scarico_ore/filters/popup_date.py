@@ -1,3 +1,5 @@
+"""Modulo Popup Date."""
+
 from contextlib import suppress
 from typing import Any
 
@@ -17,7 +19,10 @@ from src.gui.widgets.core_widgets import (
 
 
 class DateFilterPopupWidget(QWidget):
-    """Widget filtro gerarchico per date (Anno -> Mese -> Giorno)."""
+    """Widget filtro gerarchico per date (Anno -> Mese -> Giorno).
+
+    Inizializza la classe.
+    """
 
     def __init__(self, values: list[str], selected_values: list[str] | None = None) -> None:
         super().__init__()
@@ -234,8 +239,7 @@ class DateFilterPopupWidget(QWidget):
         self._close_menu()
 
     def get_selected_values(self) -> list[str] | None:
-        """
-        Recupera la lista dei valori di data selezionati.
+        """Recupera la lista dei valori di data selezionati.
 
         Returns:
           list[str] | None: Lista delle stringhe di data selezionate o None se tutte sono selezionate.

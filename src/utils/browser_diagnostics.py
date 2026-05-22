@@ -1,5 +1,5 @@
-"""
-SyncroJob - Browser Diagnostics
+"""SyncroJob - Browser Diagnostics.
+
 Strumenti per diagnosticare e risolvere problemi di avvio dei bot Playwright.
 """
 
@@ -21,9 +21,7 @@ logger = logging.getLogger("BrowserDiagnostics")
 
 
 def run_browser_diagnostic(user_data_dir: Path | str) -> dict[str, Any]:
-    """
-    Esegue una suite completa di test diagnostici sull'ambiente del browser.
-    """
+    """Esegue una suite completa di test diagnostici sull'ambiente del browser."""
     user_data_path = Path(user_data_dir)
     report: dict[str, Any] = {
         "timestamp": datetime.now(UTC).astimezone().isoformat(),
@@ -139,9 +137,7 @@ def _save_report(report: dict[str, Any]) -> None:
 
 
 def emergency_profile_reset(user_data_dir: Path) -> bool:
-    """
-    Rinomina la cartella del profilo attuale per forzare Playwright a crearne una nuova.
-    """
+    """Rinomina la cartella del profilo attuale per forzare Playwright a crearne una nuova."""
     if not user_data_dir.exists():
         return False
 

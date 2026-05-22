@@ -1,3 +1,5 @@
+"""Modulo Splash Standalone."""
+
 import json
 import logging
 import sys
@@ -36,10 +38,12 @@ class SplashCommunicator(QObject):
 
 
 class StandaloneSplash(StartupDialog):
-    """Estensione dello StartupDialog con logging aggiuntivo e fix visibilit ."""
+    """Estensione dello StartupDialog con logging aggiuntivo e fix visibilit .
+
+    Configura lo splash screen standalone con parametri di visibilit  forzati.
+    """
 
     def __init__(self) -> None:
-        """Configura lo splash screen standalone con parametri di visibilit  forzati."""
         super().__init__()
         # Forza opacit  iniziale se l'animazione fallisse
         self.setWindowOpacity(1.0)

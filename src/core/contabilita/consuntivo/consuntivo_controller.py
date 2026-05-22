@@ -1,5 +1,5 @@
-"""
-SyncroJob - Consuntivo Controller
+"""SyncroJob - Consuntivo Controller.
+
 Logica di business per la gestione, generazione e scansione dei consuntivi.
 Agnostico rispetto alla GUI.
 """
@@ -14,7 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 class ConsuntivoController:
-    """Controller per l'orchestrazione delle attività sui Consuntivi."""
+    """Controller per l'orchestrazione delle attività sui Consuntivi.
+
+    Inizializza il controller per i consuntivi.
+    """
 
     def __init__(self) -> None:
         self.base_network = r"\\192.168.11.251\Database_Tecnico_SMI\Contabilità strumentale"

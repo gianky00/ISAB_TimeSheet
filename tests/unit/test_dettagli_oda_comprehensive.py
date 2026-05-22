@@ -1,5 +1,4 @@
-"""
-Dettagli OdA Bot - Comprehensive Test Suite (2026 Edition)
+"""Dettagli OdA Bot - Comprehensive Test Suite (2026 Edition)
 =========================================================
 Copre navigazione, download, database import e cleanup residui.
 

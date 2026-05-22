@@ -1,5 +1,5 @@
-"""
-SyncroJob - Dettagli OdA Locators
+"""SyncroJob - Dettagli OdA Locators.
+
 Selectors for the Dettagli OdA bot.
 """
 

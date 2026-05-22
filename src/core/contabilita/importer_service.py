@@ -1,5 +1,5 @@
-"""
-SyncroJob - Contabilita Importer Service
+"""SyncroJob - Contabilita Importer Service.
+
 Servizio per il coordinamento delle operazioni di importazione dati della Contabilità.
 """
 

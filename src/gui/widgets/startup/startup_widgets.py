@@ -1,10 +1,11 @@
-"""
-SyncroJob - Startup Widgets
+"""SyncroJob - Startup Widgets.
+
 Collezione di widget animati utilizzati nella Splash Screen.
 """
 
 import hashlib
 import math
+import random
 
 from PySide6.QtCore import (
     Property,
@@ -40,12 +41,14 @@ from PySide6.QtWidgets import (
 
 
 class AnimatedBorder(QWidget):
-    """Bordo con luce che scorre e ombre illuminate."""
+    """Bordo con luce che scorre e ombre illuminate.
+
+    Inizializza il componente del bordo animato.
+    """
 
     BORDER_RADIUS = 28
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il componente del bordo animato."""
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -140,15 +143,25 @@ class AnimatedBorder(QWidget):
 
 
 class GlowingProgressBar(QWidget):
-    """Progress bar premium con Laser Core, tracking dati e shimmer olografico."""
+    """Progress bar premium con Laser Core, tracking dati e shimmer olografico.
+
+    Inizializza la barra di progresso luminosa con nuovi effetti premium.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la barra di progresso luminosa."""
         super().__init__(parent)
         self._value = 0
         self._display_value = 0.0
         self._shimmer = -100.0
         self._phase = 0.0
+        # Nuovi stati per effetti premium
+        self._particles: list[dict[str, float]] = []  # Scintille (sparks)
+        self._glitch_ticks = 0
+        self._last_real_value = 0
+
+        # SMOOTHING UNIDIREZIONALE (Ease-Out)
+        self._smooth_factor = 0.1  # Velocità di inseguimento (0.0 - 1.0)
+
         # Altezza aumentata per ospitare il testo olografico
         self.setFixedHeight(28)
         self.timer = QTimer(self)
@@ -156,15 +169,71 @@ class GlowingProgressBar(QWidget):
         self.timer.start(16)
 
     def _tick(self) -> None:
-        """Aggiorna il progresso e l'effetto shimmer/laser."""
+        """Aggiorna lo stato interno del widget per il prossimo frame di animazione."""
         diff = self._value - self._display_value
-        # Smoothing del valore visualizzato
-        self._display_value += diff * 0.12
+        self._update_progress(diff)
+
+        pw = int((self._display_value / 100.0) * self.width())
+        bar_y = self.height() - 8
+        self._spawn_particles(diff, pw, bar_y)
+        self._update_existing_particles(diff)
+        self._handle_glitch_and_shimmer()
+
+        self._phase += 0.08
+        self.update()
+
+    def _update_progress(self, diff: float) -> None:
+        """Applica lo smoothing asintotico al valore di visualizzazione."""
+        if diff > 0.001:
+            increment = diff * self._smooth_factor
+            min_step = 0.01
+            self._display_value += max(increment, min_step)
+        elif diff < 0:
+            pass
+        else:
+            self._display_value = float(self._value)
+
+    def _spawn_particles(self, diff: float, pw: int, bar_y: int) -> None:
+        """Genera nuove particelle (scintille) basandosi sul movimento della barra."""
+        base_chance = 0.4
+        sprint_bonus = min(5, int(diff / 2)) if diff > 0.1 else 0
+
+        if random.random() < base_chance or sprint_bonus > 0:  # noqa: S311
+            num_to_spawn = 1 + sprint_bonus
+            for _ in range(num_to_spawn):
+                speed_mult = 1.5 if sprint_bonus > 0 else 0.5
+                self._particles.append(
+                    {
+                        "x": float(pw),
+                        "y": float(bar_y + 3),
+                        "vx": -random.uniform(1.0, 5.0) * speed_mult,  # noqa: S311
+                        "vy": random.uniform(-2.0, 2.0) * speed_mult,  # noqa: S311
+                        "life": 1.0,
+                    }
+                )
+
+    def _update_existing_particles(self, diff: float) -> None:
+        """Aggiorna la fisica delle particelle attive."""
+        for p in self._particles[:]:
+            p["x"] += p["vx"]
+            p["y"] += p["vy"]
+            p["life"] -= 0.04 if diff < 0.1 else 0.06
+            if p["life"] <= 0:
+                self._particles.remove(p)
+
+    def _handle_glitch_and_shimmer(self) -> None:
+        """Gestisce gli effetti visivi di distorsione e riflesso."""
+        if self._value != self._last_real_value:
+            if abs(self._value - self._last_real_value) > 2:
+                self._glitch_ticks = 10
+            self._last_real_value = self._value
+
+        if self._glitch_ticks > 0:
+            self._glitch_ticks -= 1
+
         self._shimmer += 5.0
         if self._shimmer > self.width() + 150:
             self._shimmer = -150.0
-        self._phase += 0.08
-        self.update()
 
     def setValue(self, val: int) -> None:
         """Imposta il valore del progresso (0-100)."""
@@ -181,13 +250,26 @@ class GlowingProgressBar(QWidget):
 
             self._draw_track(painter, w, bar_y, bar_h)
 
-            if self._display_value > 1:
+            if self._display_value > 0.5:
                 pw = int((self._display_value / 100.0) * w)
                 self._draw_progress_and_laser(painter, pw, bar_y, bar_h)
+                self._draw_sparks(painter)
                 self._draw_holographic_data(painter, pw, w, bar_y, bar_h)
                 self._draw_shimmer(painter, pw, bar_y, bar_h)
         finally:
             painter.end()
+
+    def _draw_sparks(self, painter: QPainter) -> None:
+        """Disegna le particelle di scintilla generate dal laser core."""
+        for p in self._particles:
+            alpha = int(p["life"] * 255)
+            color = (
+                QColor(255, 200, 50, alpha)
+                if random.random() > 0.3  # noqa: S311
+                else QColor(52, 152, 219, alpha)
+            )
+            painter.setPen(QPen(color, 1.5))
+            painter.drawPoint(QPoint(int(p["x"]), int(p["y"])))
 
     def _draw_track(self, painter: QPainter, w: int, bar_y: int, bar_h: int) -> None:
         """Disegna lo sfondo segmentato della barra."""
@@ -202,9 +284,28 @@ class GlowingProgressBar(QWidget):
     def _draw_progress_and_laser(self, painter: QPainter, pw: int, bar_y: int, bar_h: int) -> None:
         """Disegna il gradiente di progresso e il core laser."""
         glow_intensity = 0.6 + 0.4 * math.sin(self._phase)
-        glow_grad = QRadialGradient(pw, bar_y + bar_h / 2.0, 100.0)
-        glow_grad.setColorAt(0, QColor(52, 152, 219, int(60 * glow_intensity)))
-        glow_grad.setColorAt(1, QColor(52, 152, 219, 0))
+
+        # Color Morphing basato sul progresso
+        progress_ratio = self._display_value / 100.0
+        # Start: Blue (52, 152, 219), Mid: Purple (155, 89, 182), End: Green (46, 204, 113)
+        if progress_ratio < 0.5:
+            # Interpolazione Blue -> Purple
+            factor = progress_ratio * 2.0
+            r = int(52 + (155 - 52) * factor)
+            g = int(152 + (89 - 152) * factor)
+            b = int(219 + (182 - 219) * factor)
+        else:
+            # Interpolazione Purple -> Green
+            factor = (progress_ratio - 0.5) * 2.0
+            r = int(155 + (46 - 155) * factor)
+            g = int(89 + (204 - 89) * factor)
+            b = int(182 + (113 - 182) * factor)
+
+        main_color = QColor(r, g, b)
+
+        glow_grad = QRadialGradient(float(pw), bar_y + bar_h / 2.0, 100.0)
+        glow_grad.setColorAt(0, QColor(r, g, b, int(60 * glow_intensity)))
+        glow_grad.setColorAt(1, QColor(r, g, b, 0))
 
         painter.save()
         painter.setBrush(QBrush(glow_grad))
@@ -213,8 +314,8 @@ class GlowingProgressBar(QWidget):
         painter.restore()
 
         grad = QLinearGradient(0.0, float(bar_y), float(pw), float(bar_y))
-        grad.setColorAt(0, QColor(52, 152, 219))
-        grad.setColorAt(1, QColor(155, 89, 182))
+        grad.setColorAt(0, QColor(52, 152, 219))  # Sempre blu all'inizio
+        grad.setColorAt(1, main_color)  # Morphing alla punta
 
         progress_path = QPainterPath()
         progress_path.addRoundedRect(0.0, float(bar_y), float(pw), float(bar_h), 2.0, 2.0)
@@ -225,22 +326,34 @@ class GlowingProgressBar(QWidget):
         painter.drawLine(2, int(bar_y + bar_h / 2), pw - 2, int(bar_y + bar_h / 2))
 
     def _draw_holographic_data(self, painter: QPainter, pw: int, w: int, bar_y: int, bar_h: int) -> None:
-        """Disegna la percentuale olografica che segue la barra."""
+        """Disegna la percentuale olografica sempre accesa, con micro-glitch solo sui caratteri."""
         from PySide6.QtGui import QFont
 
-        painter.setPen(QColor(100, 200, 255, 220))
         font = QFont("Consolas", 10, QFont.Weight.Bold)
         font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 1)
         painter.setFont(font)
 
-        perc_text = f"{int(self._display_value)}%"
+        # Colore base Cyber-Blue sempre attivo per evitare lampeggi
+        neon_color = QColor(100, 200, 255, 220)
+
+        # Gestione Scramble (Glitch dei caratteri) senza spegnere la luce
+        if self._glitch_ticks > 0:
+            chars = "0123456789%@#&X$!?"
+            perc_text = "".join(random.choice(chars) for _ in range(3)) + "%"  # noqa: S311
+        else:
+            perc_text = f"{int(self._display_value)}%"
+
         text_x = max(0, min(pw - 15, w - 40))
 
+        # 1. Ombra testo (sempre presente per leggibilità)
         painter.setPen(QColor(0, 0, 0, 150))
         painter.drawText(text_x + 1, bar_y - 6 + 1, perc_text)
-        painter.setPen(QColor(100, 200, 255, 220))
+
+        # 2. Testo principale (Sempre acceso col colore neon)
+        painter.setPen(neon_color)
         painter.drawText(text_x, bar_y - 6, perc_text)
 
+        # 3. Linea di testa laser core
         head_pen = QPen(QColor(255, 255, 255, 255), 2)
         painter.setPen(head_pen)
         painter.drawLine(pw, bar_y - 2, pw, bar_y + bar_h + 2)
@@ -262,10 +375,12 @@ class GlowingProgressBar(QWidget):
 
 
 class PulsingLogo(QWidget):
-    """Logo statico con bagliore soffuso (Nessuna animazione)."""
+    """Logo statico con bagliore soffuso (Nessuna animazione).
+
+    Inizializza il widget del logo in modalità statica.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il widget del logo in modalità statica."""
         super().__init__(parent)
         self.pixmap: QPixmap | None = None
 
@@ -305,10 +420,12 @@ class PulsingLogo(QWidget):
 
 
 class TechBlueprint(QWidget):
-    """Overlay olografico tecnico con cerchi rotanti e griglie polari."""
+    """Overlay olografico tecnico con cerchi rotanti e griglie polari.
+
+    Inizializza l'overlay tecnico.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza l'overlay tecnico."""
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -361,7 +478,10 @@ class TechBlueprint(QWidget):
 
 
 class TypewriterLabel(QLabel):
-    """Label con effetto typewriter fluido."""
+    """Label con effetto typewriter fluido per messaggi dinamici.
+
+    Inizializza la label typewriter.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -384,6 +504,7 @@ class TypewriterLabel(QLabel):
         self.setText(text)
 
     def _update_text(self) -> None:
+        """Aggiorna il testo visualizzato aggiungendo un carattere alla volta (effetto typewriter)."""
         if len(self._current_text) < len(self._full_text):
             self._current_text += self._full_text[len(self._current_text)]
             self.setText(self._current_text)
@@ -392,7 +513,10 @@ class TypewriterLabel(QLabel):
 
 
 class ConsoleOverlay(QWidget):
-    """Overlay CRT per la console di diagnostica."""
+    """Overlay CRT per la console di diagnostica con scanline e griglia.
+
+    Inizializza l'overlay della console.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -427,7 +551,10 @@ class ConsoleOverlay(QWidget):
 
 
 class ChangelogTicker(QWidget):
-    """Widget premium multi-riga (3 righe) con contenitore olografico e tag neon."""
+    """Widget premium multi-riga (3 righe) con contenitore olografico e tag neon.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -631,7 +758,10 @@ class ChangelogTicker(QWidget):
 
 
 class PulseIndicator(QWidget):
-    """Indicatore di caricamento premium con anello ad espansione olografico."""
+    """Indicatore di caricamento premium con anello ad espansione olografico.
+
+    Inizializza l'indicatore pulsante.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -666,23 +796,28 @@ class PulseIndicator(QWidget):
 
     @Property(float)
     def pulse_radius(self) -> float:
+        """Ritorna il raggio attuale dell'anello pulsante."""
         return self._pulse_radius
 
     @pulse_radius.setter  # type: ignore
     def pulse_radius(self, val: float) -> None:
+        """Imposta il raggio dell'anello e aggiorna il widget."""
         self._pulse_radius = val
         self.update()
 
     @Property(float)
     def pulse_opacity(self) -> float:
+        """Ritorna l'opacità attuale dell'anello pulsante."""
         return self._pulse_opacity
 
     @pulse_opacity.setter  # type: ignore
     def pulse_opacity(self, val: float) -> None:
+        """Imposta l'opacità dell'anello e aggiorna il widget."""
         self._pulse_opacity = val
         self.update()
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
+        """Esegue il rendering dell'indicatore olografico (nucleo + anello ad espansione)."""
         painter = QPainter(self)
         try:
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)

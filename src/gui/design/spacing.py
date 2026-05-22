@@ -1,6 +1,4 @@
-"""
-Bot TS Design System - Spacing
-"""
+"""Bot TS Design System - Spacing."""
 
 
 class Spacing:

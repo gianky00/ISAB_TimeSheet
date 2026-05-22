@@ -1,5 +1,5 @@
-"""
-SyncroJob - Updater Engine
+"""SyncroJob - Updater Engine.
+
 Business logic for checking and downloading updates.
 """
 
@@ -44,7 +44,10 @@ def get_local_setup_path(url_or_path: str) -> str:
 
 
 class DownloadWorker(QThread):
-    """Worker for resilient update downloading or network copying with progress support."""
+    """Worker for resilient update downloading or network copying with progress support.
+
+    Inizializza la classe.
+    """
 
     progress = Signal(int, int, float, float)
     finished_download = Signal(str)

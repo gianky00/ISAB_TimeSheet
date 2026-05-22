@@ -1,31 +1,22 @@
-"""
-SyncroJob - App Initializer
+"""SyncroJob - App Initializer.
+
 Gestisce il ciclo di vita dell'avvio dell'applicazione.
 Agnostico rispetto alla GUI (non importa PyQt direttamente nelle funzioni core).
 """
 
 import logging
 import sys
-import threading
 import time
 from collections.abc import Callable
 from typing import Any, ClassVar
 
 import numpy
 import pandas
-from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication, QMessageBox
 
 from src.bots import get_available_bots
-from src.core.database import db_manager
-from src.core.database.backup_manager import DatabaseBackupManager
-from src.core.exceptions import LicenseError, StartupError
-from src.core.license_updater import run_update
-from src.core.license_validator import (
-    LicenseStatus,
-    get_detailed_license_status,
-    get_hardware_id,
-)
+from src.core.exceptions import StartupError
+from src.core.initialization.license_verifier import LicenseVerifier
+from src.core.initialization.migration_engine import DatabaseMigrationEngine
 from src.core.logging import configure_logging, get_logger
 from src.core.paths import CONFIG_DIR
 from src.utils.resource_manager import ResourceManager
@@ -34,9 +25,7 @@ logger = get_logger("AppInitializer")
 
 
 class AppInitializer:
-    """
-    Orchestratore della sequenza di bootstrap dell'intero sistema.
-    """
+    """Orchestratore della sequenza di bootstrap dell'intero sistema."""
 
     _core_initialized = False
     _startup_alerts: ClassVar[list[tuple[str, str]]] = []
@@ -68,8 +57,8 @@ class AppInitializer:
             AppInitializer._setup_logging()
 
             AppInitializer._verify_environment(step)
-            AppInitializer._verify_license(step)
-            AppInitializer._init_databases(step)
+            LicenseVerifier.verify_license(step)
+            DatabaseMigrationEngine.initialize_database(step)
 
             step("Ottimizzazione motori di automazione (Playwright/PDF/Excel)...", 38)
             AppInitializer._preload_heavy_modules()
@@ -98,46 +87,6 @@ class AppInitializer:
 
         step("Caricamento Registry Bot...", 22)
         logger.info(f"Moduli bot rilevati: {len(get_available_bots())}")
-
-    @staticmethod
-    def _verify_license(step: Callable[[str, int], None]) -> None:
-        """Verifica HWID e stato licenza."""
-        step("Verifica Identit  Hardware (HWID)...", 25)
-        get_hardware_id()
-
-        step("Handshake con Server Licenze in Background...", 28)
-
-        def _async_handshake() -> None:
-            try:
-                run_update()
-            except Exception as handshake_err:
-                if "REVOCATA" in str(handshake_err):
-                    logger.critical("Licenza REVOCATA rilevata dal background thread!")
-                    AppInitializer._trigger_revocation_shutdown()
-                else:
-                    logger.warning(f"Errore handshake licenza (non bloccante): {handshake_err}")
-
-        threading.Thread(target=_async_handshake, daemon=True).start()
-
-        step("Validazione Certificati di Licenza (Cache Locale)...", 31)
-        status, msg = get_detailed_license_status()
-        if status != LicenseStatus.VALID:
-            raise LicenseError(f"Licenza non valida: {msg}")
-
-    @staticmethod
-    def _init_databases(step: Callable[[str, int], None]) -> None:
-        """Inizializzazione database."""
-        step("Inizializzazione Engine SQLite3...", 34)
-        try:
-            db_manager.init_db()
-
-            # Backup automatico post-inizializzazione (Prevenzione Corruzione)
-            step("Creazione Backup di Sicurezza Database...", 37)
-            DatabaseBackupManager.execute_backup()
-
-        except Exception:
-            logger.exception("Errore inizializzazione database")
-            raise
 
     @staticmethod
     def init_generator(mw_instance: Any, yield_callback: Callable[[], None] | None = None) -> Any:
@@ -179,34 +128,6 @@ class AppInitializer:
         total_elapsed = time.perf_counter() - gen_start
         logger.info(f"[PERF] init_generator total: {total_elapsed:.2f}s")
         yield "Sistema Pronto", 100
-
-    @staticmethod
-    def _trigger_revocation_shutdown() -> None:
-        """Blocca immediatamente l'app quando il server conferma la revoca della licenza.
-
-        Viene chiamato dal background thread: usa QTimer.singleShot(0) per
-        eseguire il dialog e il sys.exit sul main thread Qt (thread-safe).
-        """
-
-        def _force_shutdown() -> None:
-            app = QApplication.instance()
-            if app:
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Icon.Critical)
-                msg.setWindowTitle("Licenza Revocata")
-                msg.setText(
-                    "La licenza di questo software  stata REVOCATA dal server.\n\n"
-                    "L'applicazione verr  chiusa immediatamente.\n"
-                    "Contattare l'amministratore per assistenza."
-                )
-                msg.setStandardButtons(QMessageBox.StandardButton.Ok)
-                msg.exec()
-            sys.exit(1)
-
-        try:
-            QTimer.singleShot(0, _force_shutdown)
-        except Exception:
-            sys.exit(1)
 
     @staticmethod
     def _preload_heavy_modules() -> None:

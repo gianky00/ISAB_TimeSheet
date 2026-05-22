@@ -1,5 +1,5 @@
-"""
-SyncroJob - Dashboard Stat Card
+"""SyncroJob - Dashboard Stat Card.
+
 Card elegante per la visualizzazione di metriche rapide in home page.
 """
 
@@ -12,9 +12,11 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class DashboardStatCard(ModernCard):
-    """
-    Card informativa per la Dashboard.
+    """Card informativa per la Dashboard.
+
     Mostra un valore, un'etichetta e un'icona tematica.
+
+    Inizializza la classe.
     """
 
     def __init__(
@@ -39,6 +41,7 @@ class DashboardStatCard(ModernCard):
       background-color: {color}20; /* 20% opacity */
       border-radius: 25px;
     """)
+
         icon_layout = QVBoxLayout(self.icon_container)
         icon_layout.setContentsMargins(0, 0, 0, 0)
         icon_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)

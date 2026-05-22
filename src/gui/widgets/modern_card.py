@@ -1,5 +1,5 @@
-"""
-SyncroJob - Modern Card Widget
+"""SyncroJob - Modern Card Widget.
+
 Un contenitore elegante con ombre morbide, angoli arrotondati e animazioni hover.
 """
 
@@ -18,13 +18,14 @@ if TYPE_CHECKING:
 
 
 class ModernCard(QFrame):
-    """
-    Una card moderna che gestisce automaticamente l'elevazione (ombra) e
+    """Una card moderna che gestisce automaticamente l'elevazione (ombra) e.
+
     gli effetti visivi quando l'utente ci passa sopra col mouse.
+
+    Inizializza la card con un livello di elevazione personalizzabile.
     """
 
     def __init__(self, parent: QWidget | None = None, elevation: int = 15) -> None:
-        """Inizializza la card con un livello di elevazione personalizzabile."""
         super().__init__(parent)
         self.elevation = elevation
 
@@ -82,6 +83,7 @@ class ModernCard(QFrame):
         border-radius: 12px;
       }}
     """)
+
         super().enterEvent(event)
 
     def leaveEvent(self, event: QEvent) -> None:
@@ -93,10 +95,12 @@ class ModernCard(QFrame):
 
 
 class ModernContentCard(ModernCard):
-    """Card che include già un layout per i contenuti."""
+    """Card che include già un layout per i contenuti.
+
+    Inizializza la card con layout verticale integrato.
+    """
 
     def __init__(self, parent: QWidget | None = None, elevation: int = 15) -> None:
-        """Inizializza la card con layout verticale integrato."""
         super().__init__(parent, elevation)
         self.content_layout = QVBoxLayout(self)
         self.content_layout.setContentsMargins(15, 15, 15, 15)

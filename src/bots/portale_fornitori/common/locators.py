@@ -1,5 +1,5 @@
-"""
-Bot TS - Common Locators
+"""Bot TS - Common Locators.
+
 Shared selectors for login and common UI elements.
 """
 

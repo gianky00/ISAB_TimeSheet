@@ -1,5 +1,5 @@
-"""
-NotificationToolbar - Barra degli strumenti per filtrare, cercare e ordinare notifiche.
+"""NotificationToolbar - Barra degli strumenti per filtrare, cercare e ordinare notifiche.
+
 Include filter chips, search bar, sort dropdown e bulk actions menu.
 """
 
@@ -26,9 +26,11 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class FilterChip(QPushButton):
-    """
-    Filter chip button con stile Material Design 3.
+    """Filter chip button con stile Material Design 3.
+
     Mostra count e supporta stato active/inactive.
+
+    Inizializza la classe.
     """
 
     def __init__(
@@ -124,9 +126,11 @@ class FilterChip(QPushButton):
 
 
 class NotificationToolbar(QWidget):
-    """
-    Toolbar con search, filter chips, sort dropdown e bulk actions.
+    """Toolbar con search, filter chips, sort dropdown e bulk actions.
+
     Emette signals per comunicare cambiamenti di stato.
+
+    Inizializza la classe.
     """
 
     # Signals
@@ -270,8 +274,7 @@ class NotificationToolbar(QWidget):
         self.sort_changed.emit(sort_key)
 
     def update_filter_counts(self, counts: dict[str, int]) -> None:
-        """
-        Update count badges on filter chips.
+        """Update count badges on filter chips.
 
         Args:
           counts: Dict with keys 'all', 'unread', 'error', 'warning', 'infò

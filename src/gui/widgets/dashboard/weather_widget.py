@@ -1,5 +1,5 @@
-"""
-SyncroJob - Weather Widget (Premium V10.0 - Atmospheric Glassmorphism)
+"""SyncroJob - Weather Widget (Premium V10.0 - Atmospheric Glassmorphism).
+
 Visualizza le previsioni meteo locali (Priolo Gargallo) utilizzando il servizio dedicato.
 V10.0: SRP Compliant, con sfondi atmosferici dinamici, mini-gauge circolari,
 visualizzatore termico interattivo ed effetti particellari animati reali a 60fps.
@@ -63,7 +63,10 @@ QToolTip {{
 
 
 class HseMetricBar(QWidget):
-    """Visualizzatore grafico premium a barra orizzontale per inquinanti e pollini."""
+    """Visualizzatore grafico premium a barra orizzontale per inquinanti e pollini.
+
+    Inizializza la barra metrica HSE.
+    """
 
     def __init__(
         self,
@@ -133,7 +136,10 @@ class HseMetricBar(QWidget):
 
 
 class WindCompass(QWidget):
-    """Bussola anemometrica premium con indicatore di direzione rotante a 360°."""
+    """Bussola anemometrica premium con indicatore di direzione rotante a 360°.
+
+    Inizializza la bussola del vento.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -214,7 +220,10 @@ class WindCompass(QWidget):
 
 
 class TemperatureVisualizer(QWidget):
-    """Visualizzatore grafico premium del divario tra temperatura reale e percepita."""
+    """Visualizzatore grafico premium del divario tra temperatura reale e percepita.
+
+    Inizializza il visualizzatore termico.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -257,6 +266,7 @@ class TemperatureVisualizer(QWidget):
 
         # Calcolo delle posizioni orizzontali dei cursori
         def get_x(val: float) -> float:
+            """Calcola la posizione X proporzionale al valore termico nell'area del widget."""
             ratio = (val - self.temp_min) / (self.temp_max - self.temp_min)
             ratio = max(0.0, min(1.0, ratio))
             return ratio * float(rect.width())
@@ -278,7 +288,10 @@ class TemperatureVisualizer(QWidget):
 
 
 class MiniRadialGauge(QWidget):
-    """Micro indicatore circolare premium ad arco per le metriche ambientali."""
+    """Micro indicatore circolare premium ad arco per le metriche ambientali.
+
+    Inizializza il micro gauge radiale.
+    """
 
     def __init__(
         self,
@@ -354,7 +367,16 @@ class MiniRadialGauge(QWidget):
 
 
 class WeatherWidget(ModernCard):
-    """Widget meteo premium con metriche cantiere e sfondi atmosferici cangianti."""
+    """Widget meteo premium con metriche cantiere e sfondi atmosferici cangianti.
+
+    Inizializza il widget meteo configurando i servizi e avviando i timer di animazione.
+
+    Args:
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        refresh_requested: Segnale o attributo della classe.
+    """
 
     refresh_requested = Signal()
 
@@ -442,6 +464,7 @@ class WeatherWidget(ModernCard):
         self._build_footer()
 
     def _build_alert_banner(self) -> None:
+        """Costruisce il banner per le allerte meteo critiche."""
         self.alert_frame = QFrame()
         self.alert_frame.setObjectName("alert_banner")
         self.alert_frame.setStyleSheet(
@@ -468,6 +491,7 @@ class WeatherWidget(ModernCard):
         self.main_layout.addWidget(self.alert_frame)
 
     def _build_header(self) -> None:
+        """Costruisce l'intestazione del widget con orologio, alba/tramonto e pulsanti."""
         header_h = QHBoxLayout()
         header_h.setSpacing(8)
 
@@ -810,6 +834,7 @@ class WeatherWidget(ModernCard):
 
             # Collegamento al termine dell'animazione
             def on_std_fade_finished() -> None:
+                """Callback al termine della dissolvenza del pannello standard."""
                 self.content_stack.setCurrentIndex(1)
 
                 # Configura l'effetto opacità per pannello dettagli
@@ -824,6 +849,7 @@ class WeatherWidget(ModernCard):
                 self.anim_fade_det.setEasingCurve(QEasingCurve.Type.InQuad)
 
                 def on_det_fade_finished() -> None:
+                    """Callback al termine della comparsa dei dettagli avanzati."""
                     self.btn_details.setEnabled(True)
                     if hasattr(self, "btn_action_details"):
                         self.btn_action_details.setEnabled(True)
@@ -860,6 +886,7 @@ class WeatherWidget(ModernCard):
             self.anim_fade_det.setEasingCurve(QEasingCurve.Type.OutQuad)
 
             def on_det_fade_out_finished() -> None:
+                """Callback al termine della dissolvenza dei dettagli avanzati."""
                 self.content_stack.setCurrentIndex(0)
 
                 # Configura l'effetto opacità per pannello standard
@@ -881,6 +908,7 @@ class WeatherWidget(ModernCard):
                 self.anim_fade_std.setEasingCurve(QEasingCurve.Type.InQuad)
 
                 def on_std_fade_in_finished() -> None:
+                    """Callback al termine della ricomparsa del pannello standard."""
                     self.btn_details.setEnabled(True)
                     if hasattr(self, "btn_action_details"):
                         self.btn_action_details.setEnabled(True)
@@ -904,6 +932,7 @@ class WeatherWidget(ModernCard):
             self.anim_fade_det.start()
 
     def _build_forecast_area(self) -> None:
+        """Configura l'area dedicata alle previsioni meteo per i prossimi giorni."""
         self.forecast_container = QWidget()
         self.forecast_container.setObjectName("forecast_container")
         self.forecast_container.setStyleSheet(
@@ -929,6 +958,7 @@ class WeatherWidget(ModernCard):
         self.main_layout.addLayout(footer_h)
 
     def _create_icon_badge(self, icon_key: str, icon_color: str, bg_color: str) -> QLabel:
+        """Crea un piccolo badge circolare con un'icona SVG colorata."""
         badge = QLabel()
         badge.setFixedSize(28, 28)
         badge.setObjectName("icon_badge")
@@ -940,6 +970,7 @@ class WeatherWidget(ModernCard):
         return badge
 
     def _add_gradient_separator(self) -> None:
+        """Aggiunge una sottile linea di separazione con gradiente orizzontale."""
         sep = QFrame()
         sep.setObjectName("gradient_sep")
         sep.setFixedHeight(1)
@@ -1094,6 +1125,7 @@ class WeatherWidget(ModernCard):
         self.lbl_updated.setText(f"Aggiornato alle {now_str}")
 
     def _evaluate_alerts(self, code: int, gusts: float) -> None:
+        """Valuta se le condizioni meteo attuali giustificano l'attivazione di un'allerta visiva."""
         alerts = []
         wind_gust_threshold = 45.0
         if gusts > wind_gust_threshold:
@@ -1110,7 +1142,7 @@ class WeatherWidget(ModernCard):
             self.alert_frame.hide()
 
     def _update_metrics(self, wind: float, gusts: float, hum: int, uv: float, aqi: float) -> None:
-        """Aggiorna i valori dei Mini Radial Gauge ambientali."""
+        """Aggiorna i valori dei Mini Radial Gauge ambientali con i dati correnti."""
         self.gauge_wind.set_value(wind, str(int(wind)))
         self.gauge_wind.setToolTip(f"<b>Vento</b><br/>Medio: {wind} km/h<br/>Raffiche max: {gusts} km/h")
 
@@ -1209,6 +1241,7 @@ class WeatherWidget(ModernCard):
         self.forecast_h.addWidget(item)
 
     def _get_weather_style(self, code: int) -> tuple[str, str]:
+        """Ritorna il percorso dell'icona e il colore associato al codice meteo WMO."""
         sunny_code = 0
         if code == sunny_code:
             return "assets/icons/sun.svg", COLORS["warning_yellow"]
@@ -1228,6 +1261,7 @@ class WeatherWidget(ModernCard):
         return "assets/icons/cloud.svg", COLORS["text_dark"]
 
     def _get_condition_text(self, code: int) -> str:
+        """Traduce il codice meteo numerico WMO in una descrizione testuale in italiano."""
         return {
             0: "Sereno",
             1: "Quasi Sereno",

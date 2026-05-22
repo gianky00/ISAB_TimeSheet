@@ -1,5 +1,5 @@
-"""
-SyncroJob - Time Manager
+"""SyncroJob - Time Manager.
+
 Gestisce il recuperòdell'orario da fonti attendibili (Network Time).
 """
 
@@ -12,9 +12,12 @@ from src.core.constants import URLs
 
 
 def get_network_time(timeout: int = 2) -> datetime | None:
-    """
-    Ottiene l'orario corrente da una fonte online affidabile (es. Google).
+    """Ottiene l'orario corrente da una fonte online affidabile (es. Google).
+
     Restituisce un oggetto datetime con timezone UTC.
+
+    Args:
+      timeout: Timeout in secondi per la richiesta HTTP.
 
     Returns:
       datetime: Orario UTC corrente da rete.
@@ -39,13 +42,13 @@ def get_network_time(timeout: int = 2) -> datetime | None:
 
 
 def get_trusted_time() -> tuple[datetime, bool]:
-    """
-    Restituisce l'orario più affidabile disponibile.
+    """Restituisce l'orario più affidabile disponibile.
+
     Priorità:
     1. Orario di rete (Network Time)
     2. Orario di sistema (System Time) - con flag di affidabilità
     Returns:
-      tuple: (datetime, bool_is_trusted)
+      tuple: (datetime, bool_is_trusted).
     """
     net_time = get_network_time()
 

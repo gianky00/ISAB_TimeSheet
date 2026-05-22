@@ -1,5 +1,5 @@
-"""
-SyncroJob - Global Constants
+"""SyncroJob - Global Constants.
+
 Centralized configuration for the application.
 """
 

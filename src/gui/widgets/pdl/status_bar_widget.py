@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Programming Status Widget
+"""SyncroJob - PDL Programming Status Widget.
+
 Widget elegante che mostra una barra di stato verde/arancione per TCL e TGO nelle celle Gantt.
 """
 
@@ -25,7 +25,10 @@ logger = logging.getLogger(__name__)
 
 
 class ProgrammingStatusWidget(QWidget):
-    """Widget elegante che mostra una barra di stato verde/arancione per TCL e TGO."""
+    """Widget elegante che mostra una barra di stato verde/arancione per TCL e TGO.
+
+    Inizializza la classe.
+    """
 
     def __init__(  # noqa: PLR0913
         self,

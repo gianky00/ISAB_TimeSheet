@@ -1,6 +1,4 @@
-"""
-Advanced sinks per output specializzati.
-"""
+"""Advanced sinks per output specializzati."""
 
 import json
 from contextlib import suppress
@@ -12,10 +10,11 @@ from .formatters import JSONFormatter
 
 
 class BotLogSink:
-    """
-    Sink specializzato per log di singole esecuzioni bot.
+    """Sink specializzato per log di singole esecuzioni bot.
 
     Ogni bot run (identificato da trace_id) ha il proprio file JSON.
+
+    Inizializza la classe.
     """
 
     def __init__(self, config: Any = None) -> None:
@@ -35,8 +34,7 @@ class BotLogSink:
         exception: Exception | None = None,
         source_info: dict[str, Any] | None = None,
     ) -> None:
-        """
-        Scrive log nel file specifico del bot run.
+        """Scrive log nel file specifico del bot run.
 
         Args:
           level: Livello log
@@ -79,8 +77,7 @@ class BotLogSink:
         self._open_files.clear()
 
     def get_bot_run_logs(self, bot_type: str, trace_id: str) -> list[dict[str, Any]]:
-        """
-        Legge tutti i log di un bot run.
+        """Legge tutti i log di un bot run.
 
         Args:
           bot_type: Tipo bot
@@ -105,10 +102,11 @@ class BotLogSink:
 
 
 class MetricsRotatingSink:
-    """
-    Sink per metriche con rotazione automatica.
+    """Sink per metriche con rotazione automatica.
 
     Ruota file metrics quando raggiunge dimensione massima.
+
+    Inizializza la classe.
     """
 
     def __init__(self, config: Any = None, max_size_mb: float = 10.0) -> None:
@@ -120,8 +118,7 @@ class MetricsRotatingSink:
         self.config.metrics_dir.mkdir(parents=True, exist_ok=True)
 
     def write(self, metric_dict: dict[str, Any]) -> None:
-        """
-        Scrive metrica su file.
+        """Scrive metrica su file.
 
         Args:
           metric_dict: Metrica come dizionario
@@ -156,10 +153,11 @@ class MetricsRotatingSink:
 
 
 class AggregatedMetricsSink:
-    """
-    Sink per metriche aggregate (summary giornaliero).
+    """Sink per metriche aggregate (summary giornaliero).
 
     Calcola statistiche aggregate e le salva in file separato.
+
+    Inizializza la classe.
     """
 
     def __init__(self, config: Any = None) -> None:
@@ -168,8 +166,7 @@ class AggregatedMetricsSink:
         self.aggregated_dir.mkdir(parents=True, exist_ok=True)
 
     def write_daily_summary(self, date: str, summary: dict[str, Any]) -> None:
-        """
-        Scrive summary giornaliero.
+        """Scrive summary giornaliero.
 
         Args:
           date: Data in formato YYYY-MM-DD
@@ -183,8 +180,7 @@ class AggregatedMetricsSink:
             print(f"[AGGREGATED SINK ERROR] Failed to write: {e}")
 
     def read_daily_summary(self, date: str) -> dict[str, Any] | None:
-        """
-        Legge summary giornaliero.
+        """Legge summary giornaliero.
 
         Args:
           date: Data in formato YYYY-MM-DD

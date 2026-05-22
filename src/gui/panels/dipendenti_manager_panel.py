@@ -1,3 +1,5 @@
+"""Modulo Dipendenti Manager Panel."""
+
 from typing import Any
 
 from PySide6.QtCore import Qt, QTimer, Signal
@@ -27,7 +29,10 @@ from src.gui.widgets.modern_button import ModernButton
 
 
 class EmployeeEditorDialog(QDialog):
-    """Dialog per aggiunta/modifica dipendente."""
+    """Dialog per aggiunta/modifica dipendente.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None, employee_data: dict[str, Any] | None = None) -> None:
         super().__init__(parent)
@@ -81,8 +86,9 @@ class EmployeeEditorDialog(QDialog):
 
 
 class DipendentiManagerPanel(QWidget):
-    """
-    Pannello di gestione CRUD Dipendenti.
+    """Pannello di gestione CRUD Dipendenti.
+
+    Inizializza la classe.
     """
 
     data_changed = Signal()
@@ -149,6 +155,7 @@ class DipendentiManagerPanel(QWidget):
         border-radius: 12px;
       }}
     """)
+
         toolbar_layout = QHBoxLayout(self.toolbar_card)
         toolbar_layout.setContentsMargins(15, 10, 15, 10)
         toolbar_layout.setSpacing(15)

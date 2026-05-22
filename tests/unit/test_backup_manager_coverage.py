@@ -90,7 +90,9 @@ class TestBackupManager:
             # Set mtime to ensure sorting
             os.utime(p, (i * 100, i * 100))
 
-        manager._cleanup_old_backups(tmp_path, keep=5)
+        from src.core.backup.archive_rotator import ArchiveRotator
+
+        ArchiveRotator.rotate_backups(tmp_path, prefix="SyncroJob_Backup_", keep=5)
 
         remaining = list(tmp_path.glob("*.zip"))
         assert len(remaining) == 5

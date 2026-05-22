@@ -1,5 +1,5 @@
-"""
-SyncroJob - Resource Manager
+"""SyncroJob - Resource Manager.
+
 Gestione centralizzata di percorsi file, asset e risorse temporanee.
 Supporta sia l'esecuzione da sorgenti che da pacchetto PyInstaller (congelato).
 """
@@ -14,8 +14,8 @@ from src.core.paths import BASE_DIR, CONFIG_DIR
 
 
 class ResourceManager:
-    """
-    Gestore centralizzato per percorsi e risorse del sistema.
+    """Gestore centralizzato per percorsi e risorse del sistema.
+
     Risolve dinamicamente la root del progetto e fornisce metodi helper per accedere ad asset e configurazioni.
     """
 
@@ -44,16 +44,16 @@ class ResourceManager:
 
     @classmethod
     def _get_config_dir(cls) -> Path:
-        """
+        """Restituisce il percorso della cartella di configurazione.
+
         Returns:
-          Path: Il percorso della cartella di configurazione utente.
+            Path: Il percorso della cartella di configurazione utente.
         """
         return CONFIG_DIR
 
     @classmethod
     def get_logs_dir(cls) -> Path:
-        """
-        Restituisce il percorso della cartella dei log.
+        """Restituisce il percorso della cartella dei log.
 
         Returns:
           Path: Percorso della directory log.
@@ -62,8 +62,7 @@ class ResourceManager:
 
     @classmethod
     def get_data_dir(cls) -> Path:
-        """
-        Restituisce il percorso della cartella dati utente.
+        """Restituisce il percorso della cartella dati utente.
 
         Returns:
           Path: Percorso della directory data.
@@ -72,8 +71,7 @@ class ResourceManager:
 
     @classmethod
     def get_writable_drivers_dir(cls) -> Path:
-        """
-        Restituisce il path della cartella drivers nella directory dati utente (sempre scrivibile).
+        """Restituisce il path della cartella drivers nella directory dati utente (sempre scrivibile).
 
         Returns:
           Path: Percorso della directory drivers scrivibile.
@@ -84,8 +82,8 @@ class ResourceManager:
 
     @classmethod
     def ensure_automation_driver(cls) -> str | None:
-        """
-        Assicura la presenza di chromedriver.exe nella directory scrivibile.
+        """Assicura la presenza di chromedriver.exe nella directory scrivibile.
+
         Se non presente, lo scarica/aggiorna silenziando l'output.
         Chiamato durante lo splash screen (Phase 1) per il pre-warming.
 
@@ -134,8 +132,7 @@ class ResourceManager:
 
     @classmethod
     def get_asset_path(cls, relative_path: str) -> str:
-        """
-        Restituisce il path assoluto di un asset basandosi sulla PROJECT_ROOT.
+        """Restituisce il path assoluto di un asset basandosi sulla PROJECT_ROOT.
 
         Args:
           relative_path: Percorso relativo all'interno della cartella assets.
@@ -150,8 +147,7 @@ class ResourceManager:
 
     @classmethod
     def get_icon(cls, name: str) -> str:
-        """
-        Restituisce il path assoluto di un'icona cercandola tra gli asset.
+        """Restituisce il path assoluto di un'icona cercandola tra gli asset.
 
         Args:
           name: Nome del file icona (con o senza estensione).
@@ -169,8 +165,7 @@ class ResourceManager:
 
     @classmethod
     def get_style(cls, theme: str = "light") -> str:
-        """
-        Restituisce il path di un file di stile QSS.
+        """Restituisce il path di un file di stile QSS.
 
         Args:
           theme: Nome del tema (light o dark).
@@ -183,8 +178,7 @@ class ResourceManager:
 
     @classmethod
     def get_temp_path(cls, filename: str) -> Path:
-        """
-        Genera un percorso sicuro nella cartella temporanea del sistema.
+        """Genera un percorso sicuro nella cartella temporanea del sistema.
 
         Args:
           filename: Nome del file desiderato.

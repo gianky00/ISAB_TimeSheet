@@ -1,5 +1,5 @@
-"""
-SyncroJob - Telegram Bridge Interfaces
+"""SyncroJob - Telegram Bridge Interfaces.
+
 Definizioni per il de-coupling tra CORE e GUI per le funzioni Telegram.
 """
 

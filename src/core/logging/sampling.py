@@ -1,19 +1,23 @@
-"""
-Context-aware sampling per ridurre volume log.
-"""
+"""Context-aware sampling per ridurre volume log."""
 
 from typing import Any
 
 
 class ContextAwareSampler:
-    """
-    Sampler intelligente che decide se loggare basandosi su context.
+    """Sampler intelligente che decide se loggare basandosi su context.
 
     Rules:
     1. Eventi ERROR/CRITICAL: SEMPRE loggati (100%)
     2. Eventi con performance anomala: SEMPRE loggati (100%)
     3. Eventi con trace_id specifico: Basato su config
     4. Eventi normali: Sampling rate configurabile
+
+    Inizializza sampler.
+
+    Args:
+      default_rate: Rate default (0.0-1.0, default 1.0 = 100%)
+      error_rate: Rate per errori (default 1.0 = 100%)
+      slow_operation_rate: Rate per operazioni lente (default 1.0 = 100%)
     """
 
     def __init__(
@@ -22,14 +26,6 @@ class ContextAwareSampler:
         error_rate: float = 1.0,
         slow_operation_rate: float = 1.0,
     ) -> None:
-        """
-        Inizializza sampler.
-
-        Args:
-          default_rate: Rate default (0.0-1.0, default 1.0 = 100%)
-          error_rate: Rate per errori (default 1.0 = 100%)
-          slow_operation_rate: Rate per operazioni lente (default 1.0 = 100%)
-        """
         self.default_rate = self._validate_rate(default_rate)
         self.error_rate = self._validate_rate(error_rate)
         self.slow_operation_rate = self._validate_rate(slow_operation_rate)
@@ -48,8 +44,7 @@ class ContextAwareSampler:
         return max(0.0, min(1.0, rate))
 
     def set_operation_rate(self, operation: str, rate: float) -> None:
-        """
-        Imposta rate custom per operazione specifica.
+        """Imposta rate custom per operazione specifica.
 
         Args:
           operation: Nome operazione
@@ -58,8 +53,7 @@ class ContextAwareSampler:
         self.operation_rates[operation] = self._validate_rate(rate)
 
     def add_trace_to_always_log(self, trace_id: str) -> None:
-        """
-        Marca trace_id da loggare sempre.
+        """Marca trace_id da loggare sempre.
 
         Args:
           trace_id: Trace ID da loggare sempre
@@ -72,8 +66,7 @@ class ContextAwareSampler:
         context: dict[str, Any] | None = None,
         extra: dict[str, Any] | None = None,
     ) -> bool:
-        """
-        Decide se loggare evento.
+        """Decide se loggare evento.
 
         Args:
           level: Livello log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
@@ -108,8 +101,7 @@ class ContextAwareSampler:
         return self._sample(self.default_rate, "default")
 
     def _is_slow_operation(self, extra: dict[str, Any]) -> bool:
-        """
-        Verifica se operazione  lenta.
+        """Verifica se operazione  lenta.
 
         Args:
           extra: Dati extra
@@ -128,8 +120,7 @@ class ContextAwareSampler:
         return bool(duration and threshold and duration > threshold)
 
     def _sample(self, rate: float, key: str) -> bool:
-        """
-        Esegue sampling con rate specificato.
+        """Esegue sampling con rate specificato.
 
         Args:
           rate: Rate (0.0-1.0)
@@ -154,8 +145,7 @@ class ContextAwareSampler:
         return (self._counters[key] % threshold) == 0
 
     def get_stats(self) -> dict[str, Any]:
-        """
-        Restituisce statistiche sampling.
+        """Restituisce statistiche sampling.
 
         Returns:
           Dict con statistiche
@@ -187,8 +177,7 @@ def should_log(
     context: dict[str, Any] | None = None,
     extra: dict[str, Any] | None = None,
 ) -> bool:
-    """
-    Helper function per sampling check.
+    """Helper function per sampling check.
 
     Args:
       level: Livello log

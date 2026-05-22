@@ -1,3 +1,5 @@
+"""Modulo Statistics Widget."""
+
 from datetime import datetime
 from typing import Any
 
@@ -25,7 +27,10 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class StatisticsWidget(QWidget):
-    """Widget per visualizzare le statistiche di utilizzo."""
+    """Widget per visualizzare le statistiche di utilizzo.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)

@@ -1,5 +1,4 @@
-"""
-Tests for parse_currency refactoring.
+"""Tests for parse_currency refactoring.
 Aims for 100% coverage and functional parity.
 """
 

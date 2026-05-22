@@ -1,3 +1,5 @@
+"""Modulo Pdl Repository."""
+
 from typing import Any
 
 from src.core.database import db_manager
@@ -8,7 +10,10 @@ logger = get_logger(__name__)
 
 
 class PdlRepository:
-    """Repository per l'accesso ai dati dei Permessi di Lavoro (PDL)."""
+    """Repository per l'accesso ai dati dei Permessi di Lavoro (PDL).
+
+    Inizializza la classe.
+    """
 
     def __init__(self, db_manager_instance: Any = None) -> None:
         self.db = db_manager_instance or db_manager

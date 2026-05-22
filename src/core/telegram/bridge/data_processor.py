@@ -1,5 +1,5 @@
-"""
-SyncroJob - Telegram Bridge Data Processor
+"""SyncroJob - Telegram Bridge Data Processor.
+
 Valida e inserisce dati (PDL, ODA, BP) provenienti da Telegram nelle tabelle UI.
 """
 
@@ -17,7 +17,10 @@ logger = logging.getLogger(__name__)
 
 
 class TelegramDataProcessor(QObject):
-    """Gestisce la validazione e l'inserimento dei dati nelle tabelle della UI."""
+    """Gestisce la validazione e l'inserimento dei dati nelle tabelle della UI.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, main_window: "MainWindow", telegram_service: Any) -> None:
         super().__init__(main_window)

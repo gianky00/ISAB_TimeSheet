@@ -1,3 +1,5 @@
+"""Modulo Integrity."""
+
 import hashlib
 import logging
 from typing import Any

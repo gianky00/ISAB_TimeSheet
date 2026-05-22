@@ -1,5 +1,5 @@
-"""
-Standard Terminal Log Widget per SyncroJob.
+"""Standard Terminal Log Widget per SyncroJob.
+
 Sostituisce la vecchia timeline orizzontale con un visualizzatore testuale pulito e moderno in Light Mode.
 """
 
@@ -13,18 +13,17 @@ from src.gui.styles import COLORS
 
 
 class TerminalLogWidget(QWidget):
-    """
-    Console di log in stile terminale chiaro con evidenziazione dei livelli.
+    """Console di log in stile terminale chiaro con evidenziazione dei livelli.
+
     Fornisce una visualizzazione testuale moderna e pulita delle attivitàdel bot.
+
+    Inizializza il widget del terminale e configura l'editor di testo.
+
+    Args:
+      parent: Widget genitore.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il widget del terminale e configura l'editor di testo.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -66,8 +65,7 @@ class TerminalLogWidget(QWidget):
     @Slot(str)
     @Slot(str, str)
     def append(self, message: str, level: str = "INFO") -> None:
-        """
-        Aggiunge un messaggio colorato alla console in base al livello di logging.
+        """Aggiunge un messaggio colorato alla console in base al livello di logging.
 
         Args:
           message: Testo del messaggio da loggare.

@@ -15,7 +15,10 @@ logger = get_logger(__name__)
 
 
 class ContabilitaRepository:
-    """Repository per l'accesso ai dati della Contabilità Strumentale."""
+    """Repository per l'accesso ai dati della Contabilità Strumentale.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, db_manager_instance: Any = None) -> None:
         self.db = db_manager_instance or db_manager
@@ -37,12 +40,10 @@ class ContabilitaRepository:
             return []
 
     @overload
-    def get_data_by_year(self, year: int, as_objects: Literal[True] = ...) -> list[ContabilitaRecord]:
-        """Restituisce i record di contabilità come oggetti."""
+    def get_data_by_year(self, year: int, as_objects: Literal[True] = ...) -> list[ContabilitaRecord]: ...
 
     @overload
-    def get_data_by_year(self, year: int, as_objects: Literal[False] = ...) -> list[tuple[Any, ...]]:
-        """Restituisce i record di contabilità come tuple."""
+    def get_data_by_year(self, year: int, as_objects: Literal[False] = ...) -> list[tuple[Any, ...]]: ...
 
     def get_data_by_year(
         self, year: int, as_objects: bool = True
@@ -75,12 +76,14 @@ class ContabilitaRepository:
             return []
 
     @overload
-    def get_giornaliere_by_year(self, year: int, as_objects: Literal[True] = ...) -> list[GiornalieraRecord]:
-        """Restituisce i record di giornaliera come oggetti."""
+    def get_giornaliere_by_year(
+        self, year: int, as_objects: Literal[True] = ...
+    ) -> list[GiornalieraRecord]: ...
 
     @overload
-    def get_giornaliere_by_year(self, year: int, as_objects: Literal[False] = ...) -> list[tuple[Any, ...]]:
-        """Restituisce i record di giornaliera come tuple."""
+    def get_giornaliere_by_year(
+        self, year: int, as_objects: Literal[False] = ...
+    ) -> list[tuple[Any, ...]]: ...
 
     def get_giornaliere_by_year(
         self, year: int, as_objects: bool = True
@@ -127,12 +130,12 @@ class ContabilitaRepository:
             return []
 
     @overload
-    def get_attivita_programmate(self, as_objects: Literal[True] = ...) -> list[AttivitaProgrammataRecord]:
-        """Restituisce le attività programmate come oggetti."""
+    def get_attivita_programmate(
+        self, as_objects: Literal[True] = ...
+    ) -> list[AttivitaProgrammataRecord]: ...
 
     @overload
-    def get_attivita_programmate(self, as_objects: Literal[False] = ...) -> list[tuple[Any, ...]]:
-        """Restituisce le attività programmate come tuple."""
+    def get_attivita_programmate(self, as_objects: Literal[False] = ...) -> list[tuple[Any, ...]]: ...
 
     def get_attivita_programmate(
         self, as_objects: bool = True
@@ -160,12 +163,12 @@ class ContabilitaRepository:
             return []
 
     @overload
-    def get_certificati_campione(self, as_objects: Literal[True] = ...) -> list[CertificatoCampioneRecord]:
-        """Restituisce i certificati campione come oggetti."""
+    def get_certificati_campione(
+        self, as_objects: Literal[True] = ...
+    ) -> list[CertificatoCampioneRecord]: ...
 
     @overload
-    def get_certificati_campione(self, as_objects: Literal[False] = ...) -> list[tuple[Any, ...]]:
-        """Restituisce i certificati campione come tuple."""
+    def get_certificati_campione(self, as_objects: Literal[False] = ...) -> list[tuple[Any, ...]]: ...
 
     def get_certificati_campione(
         self, as_objects: bool = True

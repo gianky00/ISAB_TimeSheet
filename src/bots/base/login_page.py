@@ -1,5 +1,5 @@
-"""
-Bot TS - Login Page Object
+"""Bot TS - Login Page Object.
+
 Gestisce le interazioni con la pagina di login del portale ISAB.
 """
 
@@ -21,8 +21,9 @@ from src.core.constants import Timeouts
 
 
 class LoginPage:
-    """
-    Page Object per la gestione della pagina di login.
+    """Page Object per la gestione della pagina di login.
+
+    Inizializza il Page Object di login.
     """
 
     def __init__(
@@ -32,16 +33,13 @@ class LoginPage:
         logger: Callable[[str], None] | None = None,
         isab_url: str = "",
     ) -> None:
-        """Inizializza il Page Object di login."""
         self.driver = driver
         self.wait = wait
         self.log = logger or print
         self.isab_url = isab_url
 
     def _attendi_scomparsa_overlay(self, timeout_secondi: int = Timeouts.OVERLAY) -> bool:
-        """
-        Waits for Ext JS loading overlays to disappear.
-        """
+        """Waits for Ext JS loading overlays to disappear."""
         try:
             overlay_wait: WebDriverWait[WebDriver] = WebDriverWait(self.driver, timeout_secondi)
             xpath_combined = f"{CommonLocators.LOADING_MASK[1]} | {CommonLocators.LOADING_TEXT[1]}"
@@ -81,7 +79,7 @@ class LoginPage:
                 opt_el = WebDriverWait(self.driver, 3).until(
                     EC.element_to_be_clickable((By.XPATH, option_xpath))
                 )
-                self.driver.execute_script("arguments[0].click();", opt_el)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].click();", opt_el)
         except Exception as e:
             self.log(f"⚠️ Avviso: Selezione società'{company}' non riuscita, proseguo: {e}")
 
@@ -91,7 +89,7 @@ class LoginPage:
         except (TimeoutException, ElementClickInterceptedException):
             self.log("⚠️ Click standard intercettato o timeout. Tento click JavaScript...")
             accedi_element = self.driver.find_element(*LoginLocators.LOGIN_BUTTON_FALLBACK)
-            self.driver.execute_script("arguments[0].click();", accedi_element)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].click();", accedi_element)
 
         # Gestione popup sessione attiva (immediatamente dopo click)
         self._check_and_handle_session_popup()
@@ -125,8 +123,8 @@ class LoginPage:
         return False
 
     def login(self, username: str, password: str, company: str = "ISAB") -> bool:  # noqa: PLR0911
-        """
-        Esegue il login al portale ISAB.
+        """Esegue il login al portale ISAB.
+
         Ritorna False se viene rilevato un Proxy Error.
         """
         self.log(f"Navigazione a: {self.isab_url}")

@@ -1,3 +1,5 @@
+"""Modulo Pdl Timeline."""
+
 from __future__ import annotations
 
 from contextlib import suppress
@@ -18,19 +20,18 @@ from src.gui.styles.palette_helpers import hex_to_rgba
 
 
 class PDLTimelineWidget(QWidget):
-    """
-    Widget elegante per visualizzare la cronologia delle attività di una PDL.
+    """Widget elegante per visualizzare la cronologia delle attività di una PDL.
+
     Implementa un design moderno a timeline verticale con card informative.
+
+    Inizializza la timeline con i dati degli eventi.
+
+    Args:
+      data: Lista di dizionari, ognuno rappresentante un evento (data, tecnico, descrizione, fonte).
+      parent: Widget genitore.
     """
 
     def __init__(self, data: list[dict[str, Any]], parent: QWidget | None = None) -> None:
-        """
-        Inizializza la timeline con i dati degli eventi.
-
-        Args:
-          data: Lista di dizionari, ognuno rappresentante un evento (data, tecnico, descrizione, fonte).
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.data = sorted(data, key=lambda x: str(x.get("data", "")), reverse=True)
         self._setup_ui()
@@ -57,8 +58,7 @@ class PDLTimelineWidget(QWidget):
         main_layout.addStretch()
 
     def _create_event_card(self, data: dict[str, Any], is_last: bool) -> QWidget:
-        """
-        Crea una singola card per un evento nella timeline.
+        """Crea una singola card per un evento nella timeline.
 
         Args:
           data: Dati dell'evento.
@@ -179,6 +179,7 @@ class PDLTimelineWidget(QWidget):
         box-shadow: 0 4px 6px {hex_to_rgba(COLORS["text_dark"], 0.1)};
       }}
     """)
+
         card_layout = QVBoxLayout(card_frame)
         card_layout.setContentsMargins(15, 12, 15, 12)
         card_layout.setSpacing(8)
@@ -232,6 +233,7 @@ class PDLTimelineWidget(QWidget):
       font-weight: bold;
       border: none;
     """)
+
         header_layout.addWidget(lbl_fonte)
         return header_layout
 

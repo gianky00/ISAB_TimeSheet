@@ -1,3 +1,5 @@
+"""Modulo Contabilita."""
+
 from dataclasses import dataclass
 
 

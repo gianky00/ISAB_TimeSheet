@@ -1,9 +1,9 @@
-# ruff: noqa: PLR2004, TRY300, TRY301, C901, PLR0911, PLR0912, PLR0915, PLC0415
-"""
-SyncroJob - License Updater
+"""SyncroJob - License Updater.
+
 Modulo dedicato all'aggiornamento e alla sincronizzazione dei file di licenza dal repository GitHub.
 Gestisce i periodi di grazia offline tramite token cifrati e garantisce la validità temporale del software.
 """
+# ruff: noqa: PLR2004, TRY300, TRY301, C901, PLR0911, PLR0912, PLR0915, PLC0415
 
 import json
 import sys
@@ -25,8 +25,7 @@ logger = get_logger(__name__)
 
 
 def get_github_token() -> str:
-    """
-    Recupera il token GitHub tramite il gestore dei segreti.
+    """Recupera il token GitHub tramite il gestore dei segreti.
 
     Returns:
       str: Il token di autenticazione GitHub.
@@ -35,13 +34,11 @@ def get_github_token() -> str:
 
 
 def get_license_dir() -> Path:
-    """
-    Restituisce il percorso assoluto della cartella Licenza all'interno dei dati utente.
+    """Restituisce il percorso assoluto della cartella Licenza all'interno dei dati utente.
 
     Returns:
       Path: Oggetto Path della directory licenza.
     """
-
     base_dir = Path(get_data_path())
     return base_dir / "Licenza"
 
@@ -57,8 +54,8 @@ def _get_emergency_grace_token_path() -> Path:
 
 
 def update_grace_timestamp() -> None:
-    """
-    Cifra e salva il timestamp corrente dell'ultimo avvio online riuscito.
+    """Cifra e salva il timestamp corrente dell'ultimo avvio online riuscito.
+
     Questo permette il funzionamento dell'applicazione offline per un periodo limitato.
     """
     try:
@@ -79,15 +76,16 @@ def update_grace_timestamp() -> None:
 
 
 def check_grace_period() -> bool:
-    """
-    Verifica se l'applicazione pu  funzionare offline controllando il token di validità.
+    """Verifica se l'applicazione pu  funzionare offline controllando il token di validità.
+
     Il periodo di grazia massimo  di 3 giorni dall'ultima sincronizzazione online.
 
     Returns:
       bool: True se il periodo di grazia  valido.
 
     Raises:
-      Exception: Se il token non esiste,  scaduto o  stata rilevata manipolazione oraria.
+      Exception: Se il token non esiste, scaduto o manipolazione oraria.
+      LicenseError: Se il periodo di grazia è scaduto o orologio manomesso.
     """
     token_path = _get_validity_token_path()
     if not token_path.exists():
@@ -122,8 +120,8 @@ def check_grace_period() -> bool:
 
 
 def check_emergency_grace_period() -> tuple[bool, str, int]:
-    """
-    Gestisce un periodo di grazia di emergenza (3 giorni) per licenze mancanti.
+    """Gestisce un periodo di grazia di emergenza (3 giorni) per licenze mancanti.
+
     Usato per consentire l'utilizzo immediato del software prima della sincronizzazione definitiva.
 
     Returns:
@@ -180,8 +178,8 @@ def is_license_folder_empty() -> bool:
 
 
 def run_update() -> bool:
-    """
-    Esegue la procedura completa di aggiornamento licenza.
+    """Esegue la procedura completa di aggiornamento licenza.
+
     Recupera l'Hardware ID, interroga le API di GitHub e scarica i file necessari se presenti o modificati.
     Gestisce proattivamente la revoca della licenza con validazione preventiva.
     """

@@ -1,6 +1,4 @@
-"""
-Enhanced metadata enrichment per log entries.
-"""
+"""Enhanced metadata enrichment per log entries."""
 
 import os
 import platform
@@ -16,20 +14,22 @@ except ImportError:
 
 
 class MetadataEnricher:
-    """
-    Arricchisce log entries con metadata automatici.
+    """Arricchisce log entries con metadata automatici.
 
     Metadata inclusi:
     - Informazioni applicazione (version, environment)
     - Informazioni sistema (hostname, os, python version)
     - Informazioni processo (pid, user)
     - Informazioni session/request (se disponibili)
+
+    Inizializza la classe.
     """
 
     _instance: Optional["MetadataEnricher"] = None
     _cache: dict[str, Any] | None = None
 
     def __new__(cls) -> "MetadataEnricher":
+        """Gestisce la creazione dell'istanza singleton."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
@@ -39,8 +39,7 @@ class MetadataEnricher:
             MetadataEnricher._cache = self._build_static_metadata()
 
     def _build_static_metadata(self) -> dict[str, Any]:
-        """
-        Costruisce metadata statici (calcolati una volta sola).
+        """Costruisce metadata statici (calcolati una volta sola).
 
         Returns:
           Dict con metadata statici
@@ -73,8 +72,7 @@ class MetadataEnricher:
         return metadata
 
     def _detect_environment(self) -> str:  # noqa: PLR0911
-        """
-        Rileva environment corrente.
+        """Rileva environment corrente.
 
         Returns:
           Uno tra: "development", "production", "test"
@@ -103,8 +101,7 @@ class MetadataEnricher:
         return "development"
 
     def get_static_metadata(self) -> dict[str, Any]:
-        """
-        Restituisce metadata statici (cached).
+        """Restituisce metadata statici (cached).
 
         Returns:
           Dict con metadata statici
@@ -114,8 +111,7 @@ class MetadataEnricher:
         return self._cache.copy()
 
     def get_dynamic_metadata(self) -> dict[str, Any]:
-        """
-        Restituisce metadata dinamici (calcolati ogni volta).
+        """Restituisce metadata dinamici (calcolati ogni volta).
 
         Returns:
           Dict con metadata dinamici
@@ -135,8 +131,7 @@ class MetadataEnricher:
         return metadata
 
     def get_full_metadata(self) -> dict[str, Any]:
-        """
-        Restituisce tutti i metadata (statici + dinamici).
+        """Restituisce tutti i metadata (statici + dinamici).
 
         Returns:
           Dict con metadata completi
@@ -146,8 +141,7 @@ class MetadataEnricher:
         return metadata
 
     def enrich_log_entry(self, entry: dict[str, Any]) -> dict[str, Any]:
-        """
-        Arricchisce log entry con metadata.
+        """Arricchisce log entry con metadata.
 
         Args:
           entry: Log entry da arricchire
@@ -185,8 +179,7 @@ def get_enricher() -> MetadataEnricher:
 
 
 def enrich_entry(entry: dict[str, Any]) -> dict[str, Any]:
-    """
-    Helper function per arricchire log entry.
+    """Helper function per arricchire log entry.
 
     Args:
       entry: Log entry da arricchire

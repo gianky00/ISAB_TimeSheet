@@ -1,6 +1,4 @@
-"""
-Tests for AppInitializer startup sequence.
-"""
+"""Tests for AppInitializer startup sequence."""
 
 from unittest.mock import MagicMock, patch
 

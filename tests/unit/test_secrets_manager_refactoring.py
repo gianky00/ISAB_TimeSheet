@@ -1,5 +1,4 @@
-"""
-Tests for SecretsManager.get_license_key refactoring.
+"""Tests for SecretsManager.get_license_key refactoring.
 Aims for 100% coverage and functional parity.
 """
 

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright SafeWork Programmazione Sync Bot
+"""SyncroJob - Playwright SafeWork Programmazione Sync Bot.
+
 Versione Playwright del bot per il download massivo del report di programmazione Excel.
 """
 
@@ -19,8 +19,17 @@ if TYPE_CHECKING:
 
 
 class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
-    """
-    Bot per il download massivo delle attività SafeWork (Syncro) usando Playwright.
+    """Bot per il download massivo delle attività SafeWork (Syncro) usando Playwright.
+
+    Inizializza il bot per la sincronizzazione della programmazione.
+
+    Args:
+      config: Configurazione del bot Selenium.
+      account_type: Tipologia di account (es. Esecutore).
+
+    Attributes:
+        STEPS: ClassVar[list[tuple[str: Segnale o attributo della classe.
+        str: Segnale o attributo della classe.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
@@ -41,10 +50,12 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
 
     @property
     def name(self) -> str:
+        """Restituisce il nome identificativo del bot."""
         return "Sincronizzazione Programmazione (PW)"
 
     @property
     def description(self) -> str:
+        """Restituisce la descrizione delle finalità del bot."""
         return "Download massivo report attività SafeWork (Playwright)"
 
     @staticmethod

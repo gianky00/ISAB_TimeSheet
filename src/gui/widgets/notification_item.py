@@ -1,3 +1,5 @@
+"""Modulo Notification Item."""
+
 from datetime import datetime
 from typing import Any
 
@@ -16,13 +18,14 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 # Widget per singola notifica
 class NotificationItem(QFrame):
-    """
-    Widget grafico per la visualizzazione di una singola notifica nel centro notifiche.
+    """Widget grafico per la visualizzazione di una singola notifica nel centro notifiche.
+
     Supporta diversi livelli di severit  (info, success, warning, error).
+
+    Inizializza l'item con i dati della notifica.
     """
 
     def __init__(self, notification: dict[str, Any], parent: QWidget | None = None) -> None:
-        """Inizializza l'item con i dati della notifica."""
         super().__init__(parent)
         self.notification = notification
         self.manager = NotificationManager.instance()

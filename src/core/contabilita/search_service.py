@@ -1,5 +1,5 @@
-"""
-Bot TS - Contabilita Search
+"""Bot TS - Contabilita Search.
+
 Gestisce le funzionalità di ricerca per i dati della Contabilità Strumentale.
 """
 
@@ -18,10 +18,14 @@ class ContabilitaSearch:
 
     @classmethod
     def search_oda(cls, db_path: Path, query: str) -> list[dict[str, Any]]:
-        """
-        Cerca OdA per codice, descrizione o ODC.
+        """Cerca OdA per codice, descrizione o ODC.
+
+        Args:
+            db_path: Percorso del database.
+            query: Query di ricerca.
+
         Returns:
-          List[Dict]: Lista di risultati [{'codice_oda': '...', 'descrizione': '...'}, ...]
+          List[Dict]: Lista di risultati [{'codice_oda': '...', 'descrizione': '...'}, ...].
         """
         if not db_path.exists():
             logger.debug("[DEBUG] DB Contabilità non trovato")
@@ -139,8 +143,10 @@ class ContabilitaSearch:
             params.append(f"{year}-%")
 
         sql = f"""SELECT data, personale, descrizione FROM giornaliere
+
          WHERE (lower(personale) LIKE ? OR lower(descrizione) LIKE ?){where}
          ORDER BY data DESC LIMIT ?"""  # nosec B608
+
         params.append(limit)
         cursor.execute(sql, params)
         return [
@@ -160,8 +166,10 @@ class ContabilitaSearch:
             params.append(f"{year}-%")
 
         sql = f"""SELECT data, pers1, descrizione, commessa, totale_ore FROM scarico_ore
+
          WHERE (lower(pers1) LIKE ? OR lower(pers2) LIKE ? OR lower(descrizione) LIKE ?){where}
          ORDER BY data DESC LIMIT ?"""  # nosec B608
+
         params.append(limit)
         cursor.execute(sql, params)
         return [
@@ -180,6 +188,7 @@ class ContabilitaSearch:
         """Esegue la ricerca specifica nei certificati campione."""
         like = f"%{query}%"
         sql = """SELECT modello, costruttore, matricola FROM certificati_campione
+
          WHERE lower(matricola) LIKE ? OR lower(modello) LIKE ? OR lower(costruttore) LIKE ? LIMIT ?"""
         cursor.execute(sql, [like, like, like, limit])
         return [{"modello": r[0], "costruttore": r[1], "matricola": r[2]} for r in cursor.fetchall()]

@@ -1,7 +1,9 @@
+"""Modulo Panel."""
+
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
@@ -32,6 +34,7 @@ from src.gui.widgets.core_widgets import (
     SearchInput,
 )
 from src.gui.widgets.toast import ToastManager
+from src.gui.workers.timbrature_worker import TimbratureDataWorker
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from .components.detail_view import TimbratureDetailView
@@ -42,9 +45,11 @@ if TYPE_CHECKING:
 
 
 class TimbratureDBPanel(QWidget):
-    """
-    Pannello per la visualizzazione del Database Timbrature Isab con architettura Master-Detail.
+    """Pannello per la visualizzazione del Database Timbrature Isab con architettura Master-Detail.
+
     Refactored: usa componenti modulari.
+
+    Inizializza la classe.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -70,6 +75,10 @@ class TimbratureDBPanel(QWidget):
         # Local cache for filters (Inizializzato a vuoto, caricato asincronamente)
         self.reparti: list[str] = []
         self.cantieri: list[str] = []
+
+        self._data_worker: TimbratureDataWorker | None = None
+        self._filter_worker: TimbratureDataWorker | None = None
+        self._import_worker: TimbratureDataWorker | None = None
 
         self._setup_ui()
 
@@ -274,8 +283,13 @@ class TimbratureDBPanel(QWidget):
         layout.addWidget(splitter)
 
     def _update_filter_combos(self) -> None:
-        # Cache reload
-        lists = self.storage.get_lists()
+        """Richiede il caricamento delle liste filtri in background (Asincrono)."""
+        self._filter_worker = TimbratureDataWorker(self.storage, "fetch_filters")
+        self._filter_worker.filters_ready.connect(self._on_filters_ready)
+        self._filter_worker.start()
+
+    def _on_filters_ready(self, lists: dict[str, list[Any]]) -> None:
+        """Popola i menu a tendina con i dati caricati dal worker."""
         self.reparti = lists.get("reparti", [])
         self.cantieri = lists.get("cantieri", [])
         years = lists.get("years", [])
@@ -305,22 +319,29 @@ class TimbratureDBPanel(QWidget):
         self.cantiere_filter.blockSignals(False)
 
     def refresh_data(self) -> None:
-        """Carica i dati dal DB e aggiorna il modello virtuale."""
+        """Carica i dati dal DB in background (Asincrono)."""
         text = self.search_input.text()
         anno = self.anno_filter.currentData()
         reparto = self.reparto_filter.currentData()
         cantiere = self.cantiere_filter.currentData()
 
-        # Get rows
-        rows = self.storage.get_timbrature_with_reparto(
-            limit=2000,
+        if self._data_worker and self._data_worker.isRunning():
+            self._data_worker.terminate()
+            self._data_worker.wait()
+
+        self._data_worker = TimbratureDataWorker(
+            self.storage,
+            "fetch_data",
             filter_text=text,
             filter_reparto=reparto,
             filter_cantiere=cantiere,
             filter_year=anno,
         )
+        self._data_worker.data_ready.connect(self._on_data_ready)
+        self._data_worker.start()
 
-        # Prepare for FastTableModel
+    def _on_data_ready(self, rows: list[tuple[Any, ...]]) -> None:
+        """Aggiorna il modello virtuale con i dati caricati in background."""
         # Headers: Data(0), Cognome(4), Nome(3), Ingresso(1), Uscita(2), Reparto(16), Cantiere(17)
         master_rows = []
         for row in rows:
@@ -337,12 +358,12 @@ class TimbratureDBPanel(QWidget):
             master_rows.append(m_row)
 
         self.model.update_data(master_rows, new_metadata=rows)
-        # Resize con protezione
+        # Resize ottimizzato (già deferito via QTimer internamente se usassimo smart_resize,
+        # ma qui manteniamo la compatibilità esistente con QTimer.singleShot)
         QTimer.singleShot(
             0,
             lambda: self.db_table.resizeColumnsToContents() if self.db_table else None,
         )
-        # Reset detail
         self.detail_view.clear_fields()
 
     def _on_selection_changed(self, selected: QItemSelection, _deselected: QItemSelection) -> None:
@@ -379,7 +400,6 @@ class TimbratureDBPanel(QWidget):
 
     def _on_settings_changed(self) -> None:
         """Reagisce al cambio di impostazioni aggiornando i filtri di reparto e cantiere."""
-        # Settings updated (data storage updated), we might need to refresh options
         self._update_filter_combos()
 
     def _import_excel_manually(self) -> None:
@@ -392,21 +412,25 @@ class TimbratureDBPanel(QWidget):
         if not file_path:
             return
 
-        try:
-            success = self.storage.import_excel(file_path, print)
-            if success:
-                AuditManager.instance().log_action(
-                    "Importazione Manuale",
-                    "database",
-                    params={"file": Path(file_path).name},
-                )
-                self.refresh_data()
-                ToastManager.instance().show("Dati importati correttamente.", "success")
-                self.settings_tab.load_data()
-            else:
-                ToastManager.instance().show("Impossibile importare il file.", "error")
-        except Exception as e:
-            ToastManager.instance().show(f"Errore importazione: {e}", "error")
+        ToastManager.instance().show("Importazione in corso...", "info")
+
+        self._import_worker = TimbratureDataWorker(self.storage, "import_excel", file_path)
+        self._import_worker.import_finished.connect(self._on_import_finished)
+        self._import_worker.start()
+
+    def _on_import_finished(self, success: bool, message: str) -> None:
+        """Gestisce il completamento dell'importazione asincrona."""
+        if success:
+            AuditManager.instance().log_action(
+                "Importazione Manuale",
+                "database",
+                params={"status": "success"},
+            )
+            self.refresh_data()
+            ToastManager.instance().show("Dati importati correttamente.", "success")
+            self.settings_tab.load_data()
+        else:
+            ToastManager.instance().show(message, "error")
 
     # Exposed for external calls (compatibility)
     def refresh_fornitori(self) -> None:

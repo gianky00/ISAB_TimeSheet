@@ -23,8 +23,7 @@ class TestAttivitaImporter:
         assert res is None
 
     def test_prepare_attivita_rows_float_conversion(self):
-        """
-        Verifica che i numeri float (comuni in Excel) siano gestiti.
+        """Verifica che i numeri float (comuni in Excel) siano gestiti.
         Nota: Attualmente l'importer fa astype(str), quindi 1234.0 diventa '1234.0'.
         Se questo è un bug desiderato da risolvere, il test lo evidenzierà.
         """

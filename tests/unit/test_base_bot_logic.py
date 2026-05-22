@@ -19,9 +19,7 @@ class TestBaseBotLogic:
         return driver
 
     def test_selenium_retry_logic(self, mock_driver):
-        """
-        Test that a function simulating a bot action retries on failure.
-        """
+        """Test that a function simulating a bot action retries on failure."""
         # Simulate a function that fails twice then succeeds
         side_effect = [WebDriverException("Fail 1"), WebDriverException("Fail 2"), True]
 

@@ -1,6 +1,4 @@
-"""
-Thread-safe tests for NotificationManager.
-"""
+"""Thread-safe tests for NotificationManager."""
 
 import json
 import threading

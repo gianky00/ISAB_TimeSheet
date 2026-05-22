@@ -1,5 +1,5 @@
-"""
-SyncroJob - Signal Connector
+"""SyncroJob - Signal Connector.
+
 Controller responsabile del cablaggio dei segnali tra i diversi moduli dell'applicazione.
 Mantiene disaccoppiata la logica dei servizi dalla visualizzazione della MainWindow.
 """
@@ -16,18 +16,17 @@ if TYPE_CHECKING:
 
 
 class SignalConnector(QObject):
-    """
-    Gestisce la connessione dei segnali PySide6 tra i Singleton Manager e la UI.
+    """Gestisce la connessione dei segnali PySide6 tra i Singleton Manager e la UI.
+
     Sìoccupa di aggiornare badge, mostrare toast e gestire la navigazione dalla sidebar.
+
+    Inizializza il connettore di segnali.
+
+    Args:
+      main_window: Riferimento alla MainWindow dell'applicazione.
     """
 
     def __init__(self, main_window: "MainWindow") -> None:
-        """
-        Inizializza il connettore di segnali.
-
-        Args:
-          main_window: Riferimento alla MainWindow dell'applicazione.
-        """
         super().__init__(main_window)
         self.main_window = main_window
 
@@ -48,10 +47,10 @@ class SignalConnector(QObject):
             )
 
     def connect_global_signals(self) -> None:
-        """
-        Collega i segnali globali dei servizi core.
+        """Collega i segnali globali dei servizi core.
+
         - Notifiche -> Toast Manager & Tray Icon
-        - Conteggio notifiche -> Badge Sidebar
+        - Conteggio notifiche -> Badge Sidebar.
         """
         # Toast Manager (In-app notification)
         NotificationManager.instance().request_toast.connect(
@@ -94,8 +93,8 @@ class SignalConnector(QObject):
             sidebar.group_notifiche.header_btn.set_badge(NotificationManager.instance().get_unread_count())
 
     def connect_sidebar_signals(self) -> None:
-        """
-        Collega i segnali di interazione della barra laterale ai controller di navigazione.
+        """Collega i segnali di interazione della barra laterale ai controller di navigazione.
+
         Gestisce i cambi pagina, l'apertura di tab specifici e la Command Palette.
         """
         sidebar = getattr(self.main_window, "sidebar", None)

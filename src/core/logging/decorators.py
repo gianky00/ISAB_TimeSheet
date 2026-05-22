@@ -1,5 +1,5 @@
-"""
-Decorators per il logging automatico e il monitoraggio delle performance.
+"""Decorators per il logging automatico e il monitoraggio delle performance.
+
 Fornisce strumenti per misurare i tempi di esecuzione e tracciare l'ingresso/uscita dalle funzioni.
 """
 
@@ -21,8 +21,7 @@ def measure_time[F: Callable[..., Any]](
     *,
     threshold_ms: float | None = None,
     logger_name: str | None = None,
-) -> F:
-    """Overload per l'uso come @measure_time decoratore semplice."""
+) -> F: ...
 
 
 @overload
@@ -31,8 +30,7 @@ def measure_time(
     *,
     threshold_ms: float | None = None,
     logger_name: str | None = None,
-) -> Callable[[F], F]:
-    """Overload per l'uso come @measure_time(threshold_ms=100) con parametri."""
+) -> Callable[[F], F]: ...
 
 
 def measure_time[F: Callable[..., Any]](
@@ -41,8 +39,8 @@ def measure_time[F: Callable[..., Any]](
     threshold_ms: float | None = None,
     logger_name: str | None = None,
 ) -> F | Callable[[F], F]:
-    """
-    Decorator per misurare tempo esecuzione e loggarlo automaticamente.
+    """Decorator per misurare tempo esecuzione e loggarlo automaticamente.
+
     Invia le metriche al tracker globale e genera span_id per il contesto.
 
     Args:
@@ -128,8 +126,7 @@ def log_entry_exit[F: Callable[..., Any]](
     logger_name: str | None = None,
     log_args: bool = False,
     log_result: bool = False,
-) -> F:
-    """Overload per l'uso come @log_entry_exit decoratore semplice."""
+) -> F: ...
 
 
 @overload
@@ -139,8 +136,7 @@ def log_entry_exit(
     logger_name: str | None = None,
     log_args: bool = False,
     log_result: bool = False,
-) -> Callable[[F], F]:
-    """Overload per l'uso come @log_entry_exit(log_args=True) con parametri."""
+) -> Callable[[F], F]: ...
 
 
 def log_entry_exit[F: Callable[..., Any]](
@@ -150,8 +146,8 @@ def log_entry_exit[F: Callable[..., Any]](
     log_args: bool = False,
     log_result: bool = False,
 ) -> F | Callable[[F], F]:
-    """
-    Decorator per loggare l'ingresso e l'uscita da una funzione.
+    """Decorator per loggare l'ingresso e l'uscita da una funzione.
+
     Utile per il tracciamento del flusso di esecuzione nel debug.
 
     Args:

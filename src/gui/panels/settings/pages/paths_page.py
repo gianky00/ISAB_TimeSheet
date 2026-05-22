@@ -1,3 +1,5 @@
+"""Modulo Paths Page."""
+
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -25,7 +27,10 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class PathsPage(QWidget):
-    """Pagina per la gestione dei percorsi file."""
+    """Pagina per la gestione dei percorsi file.
+
+    Inizializza la classe.
+    """
 
     settings_changed = Signal()
 
@@ -47,7 +52,7 @@ class PathsPage(QWidget):
 
         self.auto_update_check = QCheckBox("Attiva aggiornamento automatico all'avvio (background)")
         self.auto_update_check.setStyleSheet("padding: 5px; font-size: 15px;")
-        self.auto_update_check.stateChanged.connect(self.settings_changed.emit)
+        self.auto_update_check.stateChanged.connect(lambda _: self.settings_changed.emit())
         cont_layout.addWidget(self.auto_update_check)
 
         # Giornaliere
@@ -129,6 +134,7 @@ class PathsPage(QWidget):
       }}
       QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
     """)
+
         btn_open.clicked.connect(lambda: self._open_path(edit.text()))
         row.addWidget(btn_open)
 

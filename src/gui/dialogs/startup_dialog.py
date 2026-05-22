@@ -1,5 +1,5 @@
-"""
-SyncroJob - Splash Screen
+"""SyncroJob - Splash Screen.
+
 Gestisce l'inizializzazione dell'applicazione con animazioni fluide e effetti 3D.
 """
 
@@ -55,7 +55,10 @@ logger = logging.getLogger(__name__)
 
 
 class StartupDialog(QDialog):
-    """Splash screen con animazioni fluide a 60fps e effetti 3D."""
+    """Splash screen con animazioni fluide a 60fps e effetti 3D.
+
+    Inizializza la classe.
+    """
 
     # Dimensioni del contenuto visibile (Innalzate proporzionalmente)
     CONTENT_WIDTH = 850
@@ -705,7 +708,7 @@ class StartupDialog(QDialog):
             self._thread.quit()
             thread_wait_ms = 500
             self._thread.wait(thread_wait_ms)
-        close_delay_ms = 400
+        close_delay_ms = 50
         QTimer.singleShot(close_delay_ms, self.accept)
 
     def get_result(self) -> bool:

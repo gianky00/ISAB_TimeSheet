@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-SyncroJob Master Developer Tool & Pre-Flight Check (Apex Edition)
+"""SyncroJob Master Developer Tool & Pre-Flight Check (Apex Edition)
 ====================================================================
 L'Oracolo del Progetto: Score, Dashboard HTML, Git-Hooks e Intelligence.
 """
@@ -79,8 +78,7 @@ class CheckResult:
 
 
 def get_bin(name: str) -> str:
-    """
-    Recupera il percorso dell'eseguibile nel venv o nei path standard di Python.
+    """Recupera il percorso dell'eseguibile nel venv o nei path standard di Python.
 
     Args:
         name: Nome dell'eseguibile (senza estensione).
@@ -107,8 +105,7 @@ def get_bin(name: str) -> str:
 
 
 def run_tool(name: str, cmd: list[str], label: str, cwd: Path = PROJECT_ROOT) -> tuple[bool, str, float]:
-    """
-    Esegue uno strumento esterno registrando l'output in un file di log dedicato.
+    """Esegue uno strumento esterno registrando l'output in un file di log dedicato.
 
     Args:
         name: Identificativo dello strumento.

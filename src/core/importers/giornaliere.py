@@ -1,3 +1,5 @@
+"""Modulo Giornaliere."""
+
 import os
 import re
 from collections.abc import Callable

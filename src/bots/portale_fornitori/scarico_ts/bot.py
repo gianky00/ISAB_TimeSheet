@@ -1,5 +1,5 @@
-"""
-SyncroJob - Scarico TS Bot
+"""SyncroJob - Scarico TS Bot.
+
 Bot per il download automatico dei timesheet dal portale ISAB.
 Sincronizzato con la logica stabile del branch main e arricchito con STEPS per Cyber-Stepper V5.
 """
@@ -25,8 +25,9 @@ from src.utils.helpers import sanitize_filename
 
 
 class ScaricaTSBot(SeleniumBaseBot):
-    """
-    Bot per lo scarico automatico dei timesheet dal portale ISAB.
+    """Bot per lo scarico automatico dei timesheet dal portale ISAB.
+
+    Inizializza il bot Scarico TS.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
@@ -76,9 +77,6 @@ class ScaricaTSBot(SeleniumBaseBot):
         elabora_ts: bool = False,
         **kwargs: Any,
     ) -> None:
-        """
-        Inizializza il bot Scarico TS.
-        """
         super().__init__(username, password, config)
         self.data_da = data_da or f"01.01.{datetime.now(UTC).year}"
         self.fornitore = fornitore
@@ -233,14 +231,14 @@ class ScaricaTSBot(SeleniumBaseBot):
         var ev_ch = new Event('change', {bubbles:true}); el.dispatchEvent(ev_ch);
       """
             campo_num = self.wait.until(EC.presence_of_element_located((By.NAME, "NumeroOda")))
-            self.driver.execute_script("arguments[0].value = arguments[1];", campo_num, numero_oda)  # type: ignore[no-untyped-call]
-            self.driver.execute_script(js_dispatch, campo_num)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].value = arguments[1];", campo_num, numero_oda)
+            self.driver.execute_script(js_dispatch, campo_num)
 
             campo_pos = self.wait.until(EC.presence_of_element_located((By.NAME, "PosizioneOda")))
-            self.driver.execute_script(  # type: ignore[no-untyped-call]
+            self.driver.execute_script(
                 "arguments[0].value = ''; arguments[0].value = arguments[1];", campo_pos, posizione_oda
             )
-            self.driver.execute_script(js_dispatch, campo_pos)  # type: ignore[no-untyped-call]
+            self.driver.execute_script(js_dispatch, campo_pos)
 
             xpath_cerca = "//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Cerca']]"
             self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_cerca))).click()
@@ -307,8 +305,8 @@ class ScaricaTSBot(SeleniumBaseBot):
 
             option_xpath = f"//li[normalize-space(text())='{self.fornitore}']"
             option = self.long_wait.until(EC.presence_of_element_located((By.XPATH, option_xpath)))
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)  # type: ignore[no-untyped-call]
-            self.driver.execute_script("arguments[0].click();", option)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
+            self.driver.execute_script("arguments[0].click();", option)
             self._attendi_scomparsa_overlay()
 
             campo_data_da = self.wait.until(EC.visibility_of_element_located((By.NAME, "DataTimesheetDa")))
@@ -371,7 +369,7 @@ class ScaricaTSBot(SeleniumBaseBot):
         xpath = "//div[contains(@class, 'x-tool') and @role='button'][.//div[@data-ref='toolEl' and contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]]"
         try:
             btn = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
             time.sleep(0.5)
             btn.click()
         except Exception as e:

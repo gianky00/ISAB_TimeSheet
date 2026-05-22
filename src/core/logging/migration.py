@@ -1,6 +1,4 @@
-"""
-Helper per migrare dal vecchio sistema di logging al nuovo.
-"""
+"""Helper per migrare dal vecchio sistema di logging al nuovo."""
 
 import logging
 import sys
@@ -10,8 +8,7 @@ from .logger import get_logger as get_new_logger
 
 
 class LoggingAdapter:
-    """
-    Adapter che converte chiamate standard logging in structured logging.
+    """Adapter che converte chiamate standard logging in structured logging.
 
     Usage:
       # Vecchio codice:
@@ -22,6 +19,8 @@ class LoggingAdapter:
       logger = get_logger(__name__)
 
       # Funziona sia con vecchio che nuovo sistema!
+
+    Inizializza la classe.
     """
 
     def __init__(self, name: str) -> None:
@@ -61,7 +60,6 @@ class LoggingAdapter:
 
     def exception(self, msg: Any, *args: Any, exc_info: bool = True, **kwargs: Any) -> None:
         """Exception log."""
-
         extra = kwargs.pop("extra", {})
         formatted_msg = msg % args if args else msg
 
@@ -75,8 +73,7 @@ class LoggingAdapter:
 
 
 def get_logger(name: str) -> LoggingAdapter:
-    """
-    Ottiene logger compatibile con vecchio e nuovo sistema.
+    """Ottiene logger compatibile con vecchio e nuovo sistema.
 
     Args:
       name: Nome logger (tipicamente __name__)
@@ -88,8 +85,7 @@ def get_logger(name: str) -> LoggingAdapter:
 
 
 def migrate_logging_call(old_code: str) -> str:
-    """
-    Converte codice vecchio logging in nuovo formato.
+    """Converte codice vecchio logging in nuovo formato.
 
     Args:
       old_code: Snippet di codice con vecchio logging

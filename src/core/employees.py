@@ -1,3 +1,5 @@
+"""Modulo Employees."""
+
 import sqlite3
 import time
 from typing import Any, cast
@@ -12,10 +14,12 @@ logger = get_logger(__name__)
 
 
 class EmployeeManager:
-    """
-    Gestisce la logica di business per i dipendenti, facendo da interfaccia
+    """Gestisce la logica di business per i dipendenti, facendo da interfaccia.
+
     tra la GUI/Bot e il Database SQLite.
     Delegato al nuovo EmployeeRepository per l'accesso ai dati.
+
+    Inizializza la classe.
     """
 
     def __init__(self, db_manager_instance: Any = None) -> None:
@@ -65,8 +69,8 @@ class EmployeeManager:
         return self._repo.save(emp)
 
     def import_from_csv(self, csv_path: str) -> int:
-        """
-        Importa/Sincronizza i dipendenti dal CSV al DB tramite Pipeline.
+        """Importa/Sincronizza i dipendenti dal CSV al DB tramite Pipeline.
+
         Ritorna il numero di record processati.
         """
         from src.core.processing.base import Pipeline  # noqa: PLC0415

@@ -1,3 +1,5 @@
+"""Modulo Pipeline."""
+
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +13,10 @@ from src.core.processing.timesheet.steps import (
 
 
 class TimesheetProcessingPipeline:
-    """Pipeline per l'elaborazione dei file Timesheet."""
+    """Pipeline per l'elaborazione dei file Timesheet.
+
+    Inizializza la classe.
+    """
 
     def __init__(self) -> None:
         self.pipeline = Pipeline()

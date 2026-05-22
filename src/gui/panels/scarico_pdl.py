@@ -1,5 +1,5 @@
-"""
-SyncroJob - Scarico PDL Panel (Refactored)
+"""SyncroJob - Scarico PDL Panel (Refactored).
+
 Pannello coordinato per lo scarico massivo e la stampa dei PDL da SafeWork.
 Modularizzato per una migliore manutenibilità.
 """
@@ -40,18 +40,17 @@ logger = logging.getLogger(__name__)
 
 
 class ScaricoPDLPanel(BaseBotPanel):
-    """
-    Orchestratore per lo scarico PDL con gestione parametri e stati riga.
+    """Orchestratore per lo scarico PDL con gestione parametri e stati riga.
+
     Consente di definire una lista di numeri PDL, la cartella di destinazione e le opzioni di stampa.
+
+    Inizializza il pannello scarico PDL.
+
+    Args:
+        parent: Widget genitore opzionale.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello scarico PDL.
-
-        Args:
-            parent: Widget genitore opzionale.
-        """
         super().__init__(
             bot_id="scarico_pdl",
             bot_name="Scarico PDL",
@@ -70,8 +69,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             QTimer.singleShot(10, self._safe_load_data)
 
     def get_bot_class(self) -> Any:
-        """
-        Restituisce la classe del bot associata a questo pannello.
+        """Restituisce la classe del bot associata a questo pannello.
 
         Returns:
             Type[SafeWorkPDLBot]: La classe per l'automazione PDL.
@@ -120,7 +118,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         h_p = QHBoxLayout()
         h_p.setSpacing(10)
         self.check_stampa = StandardCheckBox("Attiva Stampa")
-        self.check_stampa.stateChanged.connect(self._save_data)
+        self.check_stampa.stateChanged.connect(lambda _: self._save_data())
         self.combo_stampanti = FilterComboBox()
         self.combo_stampanti.addItems(get_installed_printers())
         self.combo_stampanti.setStyleSheet(COMBOBOX_STYLE)

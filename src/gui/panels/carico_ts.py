@@ -1,5 +1,5 @@
-"""
-SyncroJob - Carico TS Panel
+"""SyncroJob - Carico TS Panel.
+
 Pannello per il bot Carico TS.
 """
 
@@ -27,18 +27,17 @@ if TYPE_CHECKING:
 
 
 class CaricoTSPanel(BaseBotPanel):
-    """
-    Pannello per l'automazione del caricamento dei TimeSheet (Carico TS).
+    """Pannello per l'automazione del caricamento dei TimeSheet (Carico TS).
+
     Gestisce l'input dei dati e l'avvio del bot CaricoTSBot.
+
+    Inizializza il pannello Carico TS.
+
+    Args:
+      parent: Widget genitore.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello Carico TS.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(
             bot_id="carico_ts",
             bot_name="Carico TS",
@@ -145,8 +144,7 @@ class CaricoTSPanel(BaseBotPanel):
             self._save_data()
 
     def validate_ready(self) -> tuple[bool, str]:
-        """
-        Verifica la presenza di credenziali e dati prima dell'avvio.
+        """Verifica la presenza di credenziali e dati prima dell'avvio.
 
         Returns:
           tuple: (bool pronto, messaggio errore).

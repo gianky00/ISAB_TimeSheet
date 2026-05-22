@@ -1,3 +1,5 @@
+"""Modulo Pdl Delegate."""
+
 from collections.abc import Sequence
 from typing import Any
 
@@ -6,7 +8,10 @@ from PySide6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
 
 
 class PDLDelegate(QStyledItemDelegate):
-    """Delegate per gestire il wrap selettivo e l'allineamento nelle celle PDL."""
+    """Delegate per gestire il wrap selettivo e l'allineamento nelle celle PDL.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, date_columns: Sequence[int], parent: Any | None = None) -> None:
         super().__init__(parent)

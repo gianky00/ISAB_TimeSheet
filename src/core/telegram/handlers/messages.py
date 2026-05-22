@@ -1,3 +1,5 @@
+"""Modulo Messages."""
+
 from __future__ import annotations
 
 import re
@@ -15,8 +17,8 @@ if TYPE_CHECKING:
 async def handle_text_input(
     service: TelegramService, update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> None:
-    """
-    Main router for incoming text messages.
+    """Main router for incoming text messages.
+
     Routes based on current user state (DB query, wizard) or passes to query dispatcher.
     """
     if (
@@ -90,16 +92,14 @@ async def _handle_sequential_input(
 
 
 async def handle_voice(service: TelegramService, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Handles voice messages. (AI functionality removed)
-    """
+    """Handles voice messages. (AI functionality removed)."""
     if update.message:
         await update.message.reply_text("   Messaggiàvocali non supportati in questa versione.")
 
 
 async def handle_photo(service: TelegramService, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Handles photo messages.
+    """Handles photo messages.
+
     Downloads the high-res photo and emits a 'photo_received' signal.
     """
     if not await service._check_auth(update):

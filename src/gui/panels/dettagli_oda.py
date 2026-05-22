@@ -1,5 +1,5 @@
-"""
-SyncroJob - Dettagli OdA Panel
+"""SyncroJob - Dettagli OdA Panel.
+
 Pannello di controllo dedicato al bot per l'estrazione massiva dei dettagli degli Ordini d'Acquisto (OdA).
 Permette di configurare un elenco di OdA e contratti, impostare range temporali e monitorare
 il download automatico dei documenti dal portale fornitori.
@@ -30,19 +30,18 @@ if TYPE_CHECKING:
 
 
 class DettagliOdAPanel(BaseBotPanel):
-    """
-    Pannello operativo per l'automazione dello scarico dettagli OdA.
+    """Pannello operativo per l'automazione dello scarico dettagli OdA.
+
     Eredita da BaseBotPanel per la gestione standardizzata del worker e del log.
     Include una tabella editabile per l'input dei numeri d'ordine e dei relativi contratti.
+
+    Inizializza il pannello configurando l'ID e la descrizione del bot.
+
+    Args:
+        parent: Widget genitore.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello configurando l'ID e la descrizione del bot.
-
-        Args:
-            parent: Widget genitore.
-        """
         super().__init__(
             bot_id="dettagli_oda",
             bot_name="Dettagli OdA",
@@ -157,8 +156,7 @@ class DettagliOdAPanel(BaseBotPanel):
         self.params_layout.addLayout(table_h)
 
     def _update_status_list(self, force: bool = False) -> None:
-        """
-        Sincronizza il contatore visivo dello stato con il numero di righe della tabella.
+        """Sincronizza il contatore visivo dello stato con il numero di righe della tabella.
 
         Args:
             force: Se True, reinizializza sempre la lista.
@@ -168,8 +166,7 @@ class DettagliOdAPanel(BaseBotPanel):
             self.status_list.initialize_rows(count, self.data_table.table.rowHeight(0) or 30)
 
     def on_step_completed(self, step_idx: int, success: bool, message: str = "") -> None:
-        """
-        Aggiorna lo stato visivo di una specifica riga al termine del suo processing.
+        """Aggiorna lo stato visivo di una specifica riga al termine del suo processing.
 
         Args:
             step_idx: Indice della riga processata.
@@ -274,8 +271,7 @@ class DettagliOdAPanel(BaseBotPanel):
             self._save_data()
 
     def validate_ready(self) -> tuple[bool, str]:
-        """
-        Valida i requisiti minimi per l'avvio del bot.
+        """Valida i requisiti minimi per l'avvio del bot.
 
         Returns:
             tuple: (bool pronto, messaggio errore).

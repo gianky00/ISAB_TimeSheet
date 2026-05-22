@@ -1,5 +1,5 @@
-"""
-SyncroJob - Core Formatters
+"""SyncroJob - Core Formatters.
+
 Funzioni di formattazione agnostiche rispetto alla GUI, usate per il processing dei dati.
 """
 
@@ -8,9 +8,7 @@ from datetime import UTC, datetime
 
 
 def format_date_it(value: object) -> str:
-    """
-    Converte stringa ISO YYYY-MM-DD o datetime in DD/MM/YYYY.
-    """
+    """Converte stringa ISO YYYY-MM-DD o datetime in DD/MM/YYYY."""
     if not value:
         return ""
     with suppress(Exception):

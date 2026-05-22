@@ -1,5 +1,4 @@
-"""
-Integration Tests per SafeWork PDL Flow.
+"""Integration Tests per SafeWork PDL Flow.
 Simula un'esecuzione completa end-to-end con Page Object Model.
 """
 

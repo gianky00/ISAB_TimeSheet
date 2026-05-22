@@ -1,5 +1,5 @@
-"""
-SyncroJob - Carico TS Page
+"""SyncroJob - Carico TS Page.
+
 Page Object Model for Carico TS.
 """
 
@@ -17,15 +17,14 @@ from src.core.constants import Timeouts
 
 
 class CaricoTSPage:
-    """
-    Page Object Model per la gestione del caricamento dei TimeSheet.
+    """Page Object Model per la gestione del caricamento dei TimeSheet.
+
     Fornisce strumenti per navigare nell'area gestione e interagire con gli ordini.
+
+    Inizializza la pagina con il driver e la callback di logging.
     """
 
     def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None) -> None:
-        """
-        Inizializza la pagina con il driver e la callback di logging.
-        """
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.log = log_callback or print
@@ -51,11 +50,11 @@ class CaricoTSPage:
             return True
 
     def select_supplier(self, supplier: str) -> bool:
-        """
-        Seleziona il fornitore indicato dal menu a discesa.
+        """Seleziona il fornitore indicato dal menu a discesa.
 
         Args:
           supplier: Nome del fornitore.
+
         Returns:
           bool: True se la selezione ha avuto successo.
         """
@@ -66,8 +65,8 @@ class CaricoTSPage:
 
             opt_xpath = f"//li[contains(text(), '{supplier}')]"
             opt = WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, opt_xpath)))
-            self.driver.execute_script("arguments[0].scrollIntoView({block:'nearest'});", opt)  # type: ignore[no-untyped-call]
-            self.driver.execute_script("arguments[0].click();", opt)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].scrollIntoView({block:'nearest'});", opt)
+            self.driver.execute_script("arguments[0].click();", opt)
             self._wait_overlay()
         except Exception as e:
             self.log(f"Errore fornitore: {e}")
@@ -76,11 +75,11 @@ class CaricoTSPage:
             return True
 
     def process_oda(self, oda: str) -> bool:
-        """
-        Inserisce il numero OdA nel campo di input e avvia l'estrazione.
+        """Inserisce il numero OdA nel campo di input e avvia l'estrazione.
 
         Args:
           oda: Numero dell'Ordine di Acquisto.
+
         Returns:
           bool: True se l'input  stato inviato correttamente.
         """
@@ -89,7 +88,7 @@ class CaricoTSPage:
             inp = self.wait.until(EC.presence_of_element_located(CaricoTSLocators.ODA_INPUT))
 
             # JS Click to focus/activate
-            self.driver.execute_script("arguments[0].click();", inp)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].click();", inp)
             js = """
       var el = arguments[0];
       el.value = arguments[1];
@@ -97,7 +96,7 @@ class CaricoTSPage:
       el.dispatchEvent(new Event('change', {bubbles:true}));
       el.dispatchEvent(new Event('blur', {bubbles:true}));
       """
-            self.driver.execute_script(js, inp, oda)  # type: ignore[no-untyped-call]
+            self.driver.execute_script(js, inp, oda)
 
             # Click Extract
             btn = self.wait.until(EC.element_to_be_clickable(CaricoTSLocators.EXTRACT_BUTTON))

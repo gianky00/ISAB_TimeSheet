@@ -1,3 +1,5 @@
+"""Modulo Account Dialog."""
+
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import (
     QDialog,
@@ -16,7 +18,10 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class AccountDialog(QDialog):
-    """Dialog per aggiungere/modificare un account."""
+    """Dialog per aggiungere/modificare un account.
+
+    Inizializza la classe.
+    """
 
     def __init__(
         self,
@@ -111,6 +116,7 @@ class AccountDialog(QDialog):
         border-color: {COLORS["border_dark"]};
       }}
     """)
+
         self.toggle_pass_btn.clicked.connect(self._toggle_password_visibility)
         pass_layout.addWidget(self.toggle_pass_btn)
 

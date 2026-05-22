@@ -1,5 +1,5 @@
-"""
-SyncroJob - Scarico Ore Filter Bar
+"""SyncroJob - Scarico Ore Filter Bar.
+
 Componente UI per la visualizzazione delle statistiche e dei filtri di ricerca.
 """
 
@@ -15,7 +15,10 @@ from src.utils.helpers import get_asset_path
 
 
 class ScaricoOreFilterBar(ModernCard):
-    """Barra superiore con statistiche righe, ore e input di ricerca."""
+    """Barra superiore con statistiche righe, ore e input di ricerca.
+
+    Inizializza la classe.
+    """
 
     search_requested = Signal(str)
     update_requested = Signal()

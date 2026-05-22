@@ -1,3 +1,5 @@
+"""Modulo Contabilita Worker."""
+
 import time
 from pathlib import Path
 from typing import Any
@@ -85,8 +87,7 @@ class ContabilitaWorker(QThread):
     def _update_progress_dynamic(
         self, current_in_phase: int, total_in_phase: int, state: Any, phase_key: str
     ) -> None:
-        """
-        Aggiorna il totale operazioni se il numero effettivo differisce dalla stima.
+        """Aggiorna il totale operazioni se il numero effettivo differisce dalla stima.
 
         Args:
           current_in_phase: Numero elemento corrente (1-based)

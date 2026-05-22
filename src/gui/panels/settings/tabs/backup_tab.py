@@ -1,5 +1,5 @@
-"""
-SyncroJob - Backup Tab (Next-Gen)
+"""SyncroJob - Backup Tab (Next-Gen).
+
 Pannello per la gestione dei backup e dei log strutturato a Card.
 """
 
@@ -27,18 +27,18 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class SettingCard(QFrame):
-    """Container a card con ombra e stile moderno per un gruppo di impostazioni."""
+    """Container a card con ombra e stile moderno per un gruppo di impostazioni.
+
+    Inizializza la card di impostazione.
+
+    Args:
+      title: Titolo della sezione.
+      subtitle: Descrizione breve.
+      icon_key: Chiave icona.
+      content_widget: Widget contenuto.
+    """
 
     def __init__(self, title: str, subtitle: str, icon_key: str, content_widget: QWidget) -> None:
-        """
-        Inizializza la card di impostazione.
-
-        Args:
-          title: Titolo della sezione.
-          subtitle: Descrizione breve.
-          icon_key: Chiave icona.
-          content_widget: Widget contenuto.
-        """
         super().__init__()
         self.title_text = title
         self.subtitle_text = subtitle
@@ -97,18 +97,17 @@ class SettingCard(QFrame):
 
 
 class BackupTab(QWidget):
-    """
-    Tab dedicato alla sicurezza dei dati.
+    """Tab dedicato alla sicurezza dei dati.
+
     Permette la gestione dei backup del database e la pulizia dei log operativi.
+
+    Inizializza il tab di backup.
+
+    Args:
+      parent: Widget genitore.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il tab di backup.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.cards: list[SettingCard] = []
         self._setup_ui()
@@ -232,8 +231,7 @@ class BackupTab(QWidget):
             card.setVisible(match or not search_term)
 
     def load_from_config(self, config: dict[str, Any]) -> None:
-        """
-        Carica i metadati del backup dalla configurazione.
+        """Carica i metadati del backup dalla configurazione.
 
         Args:
           config: Dizionario di configurazione.

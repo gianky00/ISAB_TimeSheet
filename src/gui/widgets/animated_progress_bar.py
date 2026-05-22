@@ -1,5 +1,5 @@
-"""
-SyncroJob - Animated Progress Bar
+"""SyncroJob - Animated Progress Bar.
+
 Progress bar animata con striature, shimmer e bordo pulsante.
 Supporta colori personalizzati e API asincrona.
 """
@@ -21,18 +21,17 @@ from src.gui.styles import COLORS
 
 
 class AnimatedProgressBar(QWidget):
-    """
-    Progress bar animata con striature, shimmer e bordo pulsante.
+    """Progress bar animata con striature, shimmer e bordo pulsante.
+
     Implementa un'estetica moderna con animazioni a 30fps.
+
+    Inizializza la barra di progresso.
+
+    Args:
+      parent: Widget genitore opzionale.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza la barra di progresso.
-
-        Args:
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.setFixedHeight(18)
         self._value = 0
@@ -49,8 +48,7 @@ class AnimatedProgressBar(QWidget):
         self._anim_timer.setInterval(33)
 
     def set_color(self, color_hex: str) -> None:
-        """
-        Imposta il colore di accento della barra.
+        """Imposta il colore di accento della barra.
 
         Args:
           color_hex: Colore in formato esadecimale (es. #FF0000).
@@ -59,8 +57,7 @@ class AnimatedProgressBar(QWidget):
         self.update()
 
     def set_value(self, value: int) -> None:
-        """
-        Alias per setValue (snake_case standard).
+        """Alias per setValue (snake_case standard).
 
         Args:
           value: Valore intero tra 0 e 100.
@@ -68,8 +65,7 @@ class AnimatedProgressBar(QWidget):
         self.setValue(value)
 
     def setValue(self, value: int) -> None:
-        """
-        Imposta il valore di avanzamento della barra.
+        """Imposta il valore di avanzamento della barra.
 
         Args:
           value: Valore intero tra 0 e 100.
@@ -106,8 +102,7 @@ class AnimatedProgressBar(QWidget):
         self.update()
 
     def paintEvent(self, event: QPaintEvent) -> None:
-        """
-        Renderizza graficamente la barra di progresso con effetti avanzati.
+        """Renderizza graficamente la barra di progresso con effetti avanzati.
 
         Args:
           event: L'evento di pittura di Qt.

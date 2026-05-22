@@ -1,5 +1,4 @@
-"""
-SyncroJob - Wait Helpers Coverage Boost (Final Robustness)
+"""SyncroJob - Wait Helpers Coverage Boost (Final Robustness)
 Test di polling con tempo incrementale automatico per evitare StopIteration.
 """
 

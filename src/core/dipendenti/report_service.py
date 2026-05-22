@@ -1,5 +1,5 @@
-"""
-SyncroJob - Report Service
+"""SyncroJob - Report Service.
+
 Servizio CORE per la raccolta dati e generazione report (HTML/Excel).
 Indipendente dalla GUI.
 """
@@ -83,7 +83,6 @@ class ReportService:
     @staticmethod
     def build_report_html(data: dict[str, Any]) -> str:
         """Costruisce il template HTML per l'email."""
-
         current_date = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
         font_family = "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif"
         header_color = COLORS["primary_dark"]

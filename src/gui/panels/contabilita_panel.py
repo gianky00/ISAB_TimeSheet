@@ -1,5 +1,5 @@
-"""
-SyncroJob - Contabilità Panel
+"""SyncroJob - Contabilità Panel.
+
 Pannello centrale per la visualizzazione e l'analisi della Contabilità Strumentale.
 Integra reportistica annuale, dati giornalieri, attività programmate e certificati campione.
 Include un motore di ricerca unificato e l'accesso al pannello di analisi KPI.
@@ -52,24 +52,26 @@ logger = logging.getLogger(__name__)
 
 
 class ContabilitaPanel(QWidget):
-    """
-    Pannello principale dell'interfaccia di contabilità.
+    """Pannello principale dell'interfaccia di contabilità.
+
     Organizza i dati complessi in tab logici e fornisce strumenti per:
     - Ricerca rapida tra migliaia di record.
     - Calcolo dinamico dei totali ore su selezione utente.
     - Sincronizzazione background con file Excel esterni.
     - Visualizzazione grafica dei KPI.
+
+    Inizializza il pannello e avvia il caricamento lazy dei dati.
+
+    Args:
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        SECONDS_IN_MINUTE: Final[int: Segnale o attributo della classe.
     """
 
     SECONDS_IN_MINUTE: Final[int] = 60
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello e avvia il caricamento lazy dei dati.
-
-        Args:
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.controller = ContabilitaController(self)
         self.status_labels: list[QLabel] = []
@@ -319,8 +321,8 @@ class ContabilitaPanel(QWidget):
             self.search_input.setFocus()
 
     def refresh_tabs(self, auto_email: bool = False) -> None:
-        """
-        Interroga il database per gli anni disponibili e aggiorna i tab degli anni.
+        """Interroga il database per gli anni disponibili e aggiorna i tab degli anni.
+
         Sincronizza inoltre i dati per le attività e i certificati.
         """
         years = ContabilitaManager.get_available_years()

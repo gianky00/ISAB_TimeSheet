@@ -1,9 +1,11 @@
+"""Modulo Pdl."""
+
 import contextlib
 import sqlite3
 
 
 def mig_pdl_v1(conn: sqlite3.Connection) -> None:
-    """Schema Iniziale PDL (v1) basato su Ricerca.xlsx"""
+    """Schema Iniziale PDL (v1) basato su Ricerca.xlsx."""
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -39,7 +41,7 @@ def mig_pdl_v1(conn: sqlite3.Connection) -> None:
 
 
 def mig_pdl_v2(conn: sqlite3.Connection) -> None:
-    """Aggiunge vincolo UNIQUE su n_pdl e pulisce duplicati (v2)"""
+    """Aggiunge vincolo UNIQUE su n_pdl e pulisce duplicati (v2)."""
     cursor = conn.cursor()
     # 1. Rimuovi duplicati mantenendo il più recente (o ID più alto)
     cursor.execute(
@@ -92,7 +94,7 @@ def mig_pdl_v2(conn: sqlite3.Connection) -> None:
 
 
 def mig_pdl_v3(conn: sqlite3.Connection) -> None:
-    """Crea la tabella per la persistenza della programmazione settimanale (v3)"""
+    """Crea la tabella per la persistenza della programmazione settimanale (v3)."""
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -117,7 +119,7 @@ def mig_pdl_v3(conn: sqlite3.Connection) -> None:
 
 
 def mig_pdl_v4(conn: sqlite3.Connection) -> None:
-    """Aggiunge colonne per il range settimanale alla tabella programmazione (v4)"""
+    """Aggiunge colonne per il range settimanale alla tabella programmazione (v4)."""
     cursor = conn.cursor()
     with contextlib.suppress(sqlite3.OperationalError):
         cursor.execute("ALTER TABLE pdl_programmazione ADD COLUMN settimana_start TEXT")
@@ -128,7 +130,7 @@ def mig_pdl_v4(conn: sqlite3.Connection) -> None:
 
 
 def mig_pdl_v5(conn: sqlite3.Connection) -> None:
-    """Aggiunge colonna 'unitàalla tabella programmazione (v5)"""
+    """Aggiunge colonna 'unitàalla tabella programmazione (v5)."""
     cursor = conn.cursor()
     with contextlib.suppress(sqlite3.OperationalError):
         cursor.execute("ALTER TABLE pdl_programmazione ADD COLUMN unita TEXT")

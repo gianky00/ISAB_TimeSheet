@@ -1,5 +1,5 @@
-"""
-SyncroJob - Sync Tracker
+"""SyncroJob - Sync Tracker.
+
 Modulo per il monitoraggio e la persistenza dello stato di sincronizzazione dei database.
 Traccia timestamp, numero di record aggiunti/rimossi e tempi di esecuzione per ogni operazione di importazione dati.
 Permette di visualizzare nella UI lo stato dell'ultimo aggiornamento (es. PDL, Dipendenti, OdA).
@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 class SyncTracker:
-    """
-    Gestore dello stato di sincronizzazione globale.
+    """Gestore dello stato di sincronizzazione globale.
+
     Utilizza un file JSON per mantenere la persistenza tra i riavvii dell'applicazione.
     Fornisce metodi statici per aggiornare e recuperare i metadati delle operazioni di sync.
     """
@@ -61,8 +61,7 @@ class SyncTracker:
 
     @classmethod
     def update_status(cls, module: str, added: int, removed: int, duration: float = 0.0) -> None:
-        """
-        Registra l'avvenuta sincronizzazione con successo di un modulo specifico.
+        """Registra l'avvenuta sincronizzazione con successo di un modulo specifico.
 
         Args:
           module: Identificativo del modulo (es. 'pdl', 'dipendenti', 'storico_oda').
@@ -120,8 +119,7 @@ class SyncTracker:
 
     @classmethod
     def get_status(cls, module: str) -> dict[str, Any]:
-        """
-        Recupera i dati dell'ultima sincronizzazione per un determinato modulo.
+        """Recupera i dati dell'ultima sincronizzazione per un determinato modulo.
 
         Args:
           module: Nome del modulo da interrogare.
@@ -135,9 +133,9 @@ class SyncTracker:
 
     @classmethod
     def get_formatted_status(cls, module: str) -> str:
-        """
-        Restituisce una rappresentazione testuale formattata in HTML per la UI.
-        Esempio: "30/01/2026 14:00 +1 -5 (Tempo: 2.5s)"
+        """Restituisce una rappresentazione testuale formattata in HTML per la UI.
+
+        Esempio: "30/01/2026 14:00 +1 -5 (Tempo: 2.5s)".
 
         Args:
           module: Nome del modulo.

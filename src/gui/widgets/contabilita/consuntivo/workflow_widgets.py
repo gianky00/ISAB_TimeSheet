@@ -1,5 +1,5 @@
-"""
-SyncroJob - Consuntivo Workflow Widgets
+"""SyncroJob - Consuntivo Workflow Widgets.
+
 Componenti grafici per la visualizzazione del processo di automazione.
 """
 
@@ -13,7 +13,21 @@ from src.gui.styles import COLORS
 
 
 class WorkflowStepButton(QFrame):
-    """Card pulsante premium per uno step del workflow consuntivo con animazione Glow."""
+    """Card pulsante premium per uno step del workflow consuntivo con animazione Glow.
+
+    Inizializza la card dello step.
+
+    Args:
+      step_id: Identificativo unico dello step.
+      step_number: Numero d'ordine visualizzato.
+      title: Titolo breve dello step.
+      description: Descrizione estesa.
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        clicked: Segnale o attributo della classe.
+        glow_opacity: Segnale o attributo della classe.
+    """
 
     clicked = Signal(str)
 
@@ -33,16 +47,6 @@ class WorkflowStepButton(QFrame):
         description: str,
         parent: QWidget | None = None,
     ) -> None:
-        """
-        Inizializza la card dello step.
-
-        Args:
-          step_id: Identificativo unico dello step.
-          step_number: Numero d'ordine visualizzato.
-          title: Titolo breve dello step.
-          description: Descrizione estesa.
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self._step_id = step_id
         self._step_number = step_number
@@ -114,8 +118,7 @@ class WorkflowStepButton(QFrame):
     glow_opacity = Property(float, fget=get_glow_opacity, fset=set_glow_opacity)
 
     def set_state(self, state: str) -> None:
-        """
-        Cambia lo stato visivo dello step.
+        """Cambia lo stato visivo dello step.
 
         Args:
           state: Uno degli stati definiti in WorkflowStepButton.State.
@@ -179,6 +182,7 @@ class WorkflowStepButton(QFrame):
             stop:0 #283593, stop:0.5 #1565c0, stop:1 #1976d2);
         }
       """)
+
             self._number_badge.setStyleSheet(
                 "background: rgba(255,255,255,0.2); color: #ffffff; "
                 "border-radius: 14px; border: 1px solid rgba(255,255,255,0.3);"
@@ -194,6 +198,7 @@ class WorkflowStepButton(QFrame):
           border: 2px solid #009688; background-color: #e0f2f1;
         }}
       """)
+
             self._number_badge.setStyleSheet(
                 f"background-color: {s['badge_bg']}; color: {s['badge_color']}; "
                 f"border-radius: 14px; border: none;"
@@ -228,7 +233,19 @@ class WorkflowStepButton(QFrame):
 
 
 class WorkflowMapWidget(QWidget):
-    """Widget mappa workflow con step connessi da frecce."""
+    """Widget mappa workflow con step connessi da frecce.
+
+    Inizializza la mappa del workflow.
+
+    Args:
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        ACTIONS: ClassVar[list[tuple[str: Segnale o attributo della classe.
+        int: Segnale o attributo della classe.
+        str: Segnale o attributo della classe.
+        str: Segnale o attributo della classe.
+    """
 
     step_clicked = Signal(str)
 
@@ -263,12 +280,6 @@ class WorkflowMapWidget(QWidget):
     }
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza la mappa del workflow.
-
-        Args:
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.setMinimumHeight(300)
         self._step_buttons: dict[str, WorkflowStepButton] = {}
@@ -303,6 +314,7 @@ class WorkflowMapWidget(QWidget):
                 border-radius: 20px;
             }
         """)
+
         shadow = QGraphicsDropShadowEffect(container)
         shadow.setBlurRadius(30)
         shadow.setOffset(0, 8)
@@ -380,8 +392,7 @@ class WorkflowMapWidget(QWidget):
         return arrow
 
     def set_step_state(self, step_id: str, state: str) -> None:
-        """
-        Imposta lo stato di un pulsante step specifico.
+        """Imposta lo stato di un pulsante step specifico.
 
         Args:
           step_id: Identificativo dello step.
@@ -396,8 +407,7 @@ class WorkflowMapWidget(QWidget):
             btn.set_state(WorkflowStepButton.State.IDLE)
 
     def get_macros_for_step(self, step_id: str) -> list[str]:
-        """
-        Restituisce la lista di macro VBA per lo step indicato.
+        """Restituisce la lista di macro VBA per lo step indicato.
 
         Args:
           step_id: Identificativo dello step.

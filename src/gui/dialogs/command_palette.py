@@ -1,5 +1,5 @@
-"""
-SyncroJob - Command Palette Dialog
+"""SyncroJob - Command Palette Dialog.
+
 Dialogo 'Quick Open' interattivo ispirato a VSCode per l'accesso rapido a comandi e funzioni.
 Supporta navigazione gerarchica, ricerca globale ricorsiva e modalità di input interattivo.
 """
@@ -43,23 +43,25 @@ if TYPE_CHECKING:
 
 
 class CommandPaletteDialog(QDialog):
-    """
-    Dialogo 'Quick Open' in sovraimpressione.
+    """Dialogo 'Quick Open' in sovraimpressione.
+
     Permette di navigare nell'albero dei comandi (Root -> Submenu -> Action)
     o di cercare globalmente qualsiasi funzione registrata nel sistema.
+
+    Inizializza la command palette.
+
+    Args:
+      parent: Widget genitore per il posizionamento.
+      root_nodes: Lista dei nodi comando radice.
+
+    Attributes:
+        closed: Segnale o attributo della classe.
     """
 
     closed = Signal()
     """Segnale emesso quando il dialogo completa l'animazione di chiusura."""
 
     def __init__(self, parent: QWidget | None = None, root_nodes: list[CommandNode] | None = None) -> None:
-        """
-        Inizializza la command palette.
-
-        Args:
-          parent: Widget genitore per il posizionamento.
-          root_nodes: Lista dei nodi comando radice.
-        """
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -135,7 +137,11 @@ class CommandPaletteDialog(QDialog):
         self.search_bar.setStyleSheet(
             f"QLineEdit {{ background-color: transparent; color: {text_color}; border: none; border-bottom: 2px solid {COLORS['glass_border']}; font-size: 20px; padding: 8px 4px; }} QLineEdit:focus {{ border-bottom: 2px solid {accent_color}; }}"
         )
-        self.search_bar.textChanged.connect(self._filter_list)
+        # Debounce per la ricerca globale ricorsiva
+        self.search_timer = QTimer(self)
+        self.search_timer.setSingleShot(True)
+        self.search_timer.timeout.connect(lambda: self._filter_list(self.search_bar.text()))
+        self.search_bar.textChanged.connect(lambda: self.search_timer.start(300))
         self.search_bar.installEventFilter(self)
 
         search_layout.addWidget(self.search_bar)

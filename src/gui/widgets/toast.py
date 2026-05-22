@@ -1,6 +1,4 @@
-"""
-Sistema di notifiche toast non-blocking con supporto hover e tempi differenziati.
-"""
+"""Sistema di notifiche toast non-blocking con supporto hover e tempi differenziati."""
 
 from __future__ import annotations
 
@@ -53,7 +51,10 @@ class ToastParams:
 
 
 class Toast(QWidget):
-    """Notifica toast animata non bloccante con supporto pausa al passaggio del mouse."""
+    """Notifica toast animata non bloccante con supporto pausa al passaggio del mouse.
+
+    Inizializza il toast con i parametri di configurazione.
+    """
 
     class Type:
         """Costanti per il tipo di notifica."""
@@ -71,7 +72,6 @@ class Toast(QWidget):
     }
 
     def __init__(self, params: ToastParams) -> None:
-        """Inizializza il toast con i parametri di configurazione."""
         super().__init__(params.parent)
         self._duration = params.duration
         self._type = params.toast_type
@@ -154,7 +154,6 @@ class Toast(QWidget):
 
     def _sanitize_html(self, html: str) -> str:
         """Rimuove tag pericolosi dall'HTML del toast."""
-
         clean = re.sub(r"<script.*?>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
         clean = re.sub(
             r"<(script|iframe|object|embed|applet|meta|link|style).*?>",
@@ -252,20 +251,16 @@ class ToastManager(QObject):
         pulse: bool = False,
         is_rich_text: bool = False,
     ) -> None:
-        """
-        Crea e visualizza un nuovo toast, calcolando la posizione corretta nello stack.
-        Evita duplicati identici visibili contemporaneamente.
+        """Crea e visualizza un nuovo toast, calcolando la posizione corretta nello stack.
 
-        Args:
-          message: Messaggio da mostrare.
-          toast_type: Tipo di notifica.
-          duration: Durata in ms.
-          position: "top" (default) o "bottom" (sopra il footer).
-          pulse: Se True, attiva l'animazione di pulsazione.
-          is_rich_text: Se True, abilita il rendering HTML (sanificato).
+        Ottimizzato per limitare l'overhead di rendering su flussi massivi.
         """
         # Pulisce la lista dei toast non più visibili
         ToastManager._active_toasts = [t for t in ToastManager._active_toasts if t.isVisible()]
+
+        # Protezione anti-jank: limite massimo di toast contemporanei
+        if len(ToastManager._active_toasts) >= 3:
+            return
 
         # Prevenzione duplicati identici (spam)
         for t in ToastManager._active_toasts:

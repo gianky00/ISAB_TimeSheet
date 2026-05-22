@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright Carico TS Page
+"""SyncroJob - Playwright Carico TS Page.
+
 Page Object Model per Carico TS usando Playwright.
 """
 
@@ -12,16 +12,16 @@ from src.bots.portale_fornitori.carico_ts.locators import CaricoTSLocators
 
 
 class PlaywrightCaricoTSPage(PlaywrightBasePage):
-    """Gestisce le interazioni con la pagina Carico TS usando Playwright."""
+    """Gestisce le interazioni con la pagina Carico TS usando Playwright.
+
+    Inizializza la pagina di caricamento timesheet.
+
+    Args:
+      page: Oggetto Page di Playwright.
+      log_callback: Funzione per l'invio dei log.
+    """
 
     def __init__(self, page: Page, log_callback: Callable[[str], None] | None = None) -> None:
-        """
-        Inizializza la pagina di caricamento timesheet.
-
-        Args:
-          page: Oggetto Page di Playwright.
-          log_callback: Funzione per l'invio dei log.
-        """
         super().__init__(page, log_callback)
 
     def navigate(self) -> bool:
@@ -38,8 +38,7 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
             return True
 
     def select_supplier(self, supplier: str) -> bool:
-        """
-        Seleziona il fornitore dal menu a discesa della pagina in modo robusto.
+        """Seleziona il fornitore dal menu a discesa della pagina in modo robusto.
 
         Args:
           supplier: Nome del fornitore da selezionare.
@@ -65,8 +64,7 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
             return True
 
     def process_oda(self, oda: str) -> bool:
-        """
-        Inserisce il numero OdA nel campo di input e avvia l'estrazione.
+        """Inserisce il numero OdA nel campo di input e avvia l'estrazione.
 
         Args:
           oda: Numero dell'ordine di acquisto da processare.

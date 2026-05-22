@@ -1,5 +1,5 @@
-"""
-Bot TS Design System - Color Palette
+"""Bot TS Design System - Color Palette.
+
 Basato su Material Design 3 con adattamenti per dark mode.
 """
 

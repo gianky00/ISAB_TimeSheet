@@ -1,5 +1,5 @@
-"""
-SyncroJob - ODA Tree Widget
+"""SyncroJob - ODA Tree Widget.
+
 Widget specializzato per la visualizzazione gerarchica degli Ordini di Acquisto.
 """
 
@@ -11,7 +11,10 @@ from src.gui.styles import COLORS
 
 
 class ODATreeView(QTreeView):
-    """Vista gerarchica per Storico OdA con supporto Master-Detail."""
+    """Vista gerarchica per Storico OdA con supporto Master-Detail.
+
+    Inizializza la classe.
+    """
 
     selection_changed_custom = Signal()
     row_double_clicked = Signal()

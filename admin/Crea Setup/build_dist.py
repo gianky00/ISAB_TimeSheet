@@ -1,5 +1,4 @@
-"""
-Bot TS - Build & Distribution Script
+"""Bot TS - Build & Distribution Script
 Compila l'applicazione con PyInstaller, crea l'installer con Inno Setup,
 e deploya su Netlify tramite APiu'(ZIP deploy).
 """

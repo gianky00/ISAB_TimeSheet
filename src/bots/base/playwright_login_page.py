@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright Login Page Object
+"""SyncroJob - Playwright Login Page Object.
+
 Gestisce le interazioni con la pagina di login del portale ISAB usando Playwright.
 """
 
@@ -13,8 +13,9 @@ from src.bots.portale_fornitori.common.locators import CommonLocators, LoginLoca
 
 
 class PlaywrightLoginPage(PlaywrightBasePage):
-    """
-    Page Object per la gestione della pagina di login con Playwright.
+    """Page Object per la gestione della pagina di login con Playwright.
+
+    Inizializza la classe.
     """
 
     def __init__(
@@ -86,9 +87,7 @@ class PlaywrightLoginPage(PlaywrightBasePage):
             return True
 
     def login(self, username: str, password: str, company: str = "ISAB") -> bool:
-        """
-        Esegue il login al portale ISAB in modo rapido.
-        """
+        """Esegue il login al portale ISAB in modo rapido."""
         self.log(f"Navigazione a: {self.isab_url}")
         http_error_code = 400
 

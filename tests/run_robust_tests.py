@@ -1,6 +1,5 @@
 # ruff: noqa: PLR0915, PLR0912, C901, PLR0911
-"""
-SyncroJob Enterprise - Ultra Test Runner V5.2 (The Apex Runner)
+"""SyncroJob Enterprise - Ultra Test Runner V5.2 (The Apex Runner)
 ================================================================
 Sistema ibrido di orchestrazione test, ottimizzato per consumo IA.
 

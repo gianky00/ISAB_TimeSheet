@@ -1,5 +1,5 @@
-"""
-SyncroJob - Lists Settings Page
+"""SyncroJob - Lists Settings Page.
+
 Pagina per la gestione delle anagrafiche operative (Account, Contratti, Fornitori, ecc.).
 Refactored V9.5: Modular architecture with specialized CRUD widgets.
 """
@@ -17,9 +17,11 @@ from src.gui.panels.settings.widgets.editable_list_widget import EditableListWid
 
 
 class ListsPage(QWidget):
-    """
-    Pagina per la gestione delle liste dati.
+    """Pagina per la gestione delle liste dati.
+
     Fornisce sezioni modulari per l'anagrafica operativa.
+
+    Inizializza la classe.
     """
 
     settings_changed = Signal()

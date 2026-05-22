@@ -1,6 +1,4 @@
-"""
-Tests for NotificationManager.
-"""
+"""Tests for NotificationManager."""
 
 from unittest.mock import patch
 

@@ -1,5 +1,5 @@
-"""
-SyncroJob - SafeWork Login Page
+"""SyncroJob - SafeWork Login Page.
+
 Encapsulamento della logica di login SafeWork.
 """
 
@@ -14,7 +14,15 @@ from src.bots.safework.common.locators import SafeWorkLocators
 
 
 class SafeWorkLoginPage:
-    """Gestisce l'accesso al portale SafeWork."""
+    """Gestisce l'accesso al portale SafeWork.
+
+    Inizializza la pagina di login SafeWork.
+
+    Args:
+      driver: Istanza di WebDriver Chrome.
+      wait: Oggetto WebDriverWait configurato.
+      log_func: Funzione di callback per il logging.
+    """
 
     def __init__(
         self, driver: webdriver.Chrome, wait: WebDriverWait[webdriver.Chrome], log_func: Callable[[str], None]
@@ -24,9 +32,7 @@ class SafeWorkLoginPage:
         self.log = log_func
 
     def login(self, username: str, password: str, account_type: str = "Esecutore") -> bool:
-        """
-        Esegue il login con strategia differenziata in base al tipo di account.
-        """
+        """Esegue il login con strategia differenziata in base al tipo di account."""
         try:
             # 1. Azioni Comuni (Selezione Sito, Input Credenziali, Click Login)
             self._procedura_comune_login(username, password)
@@ -88,8 +94,8 @@ class SafeWorkLoginPage:
                 raise
 
     def _login_flow_standard(self) -> bool:
-        """
-        Flusso STANDARD (Lento):
+        """Flusso STANDARD (Lento).
+
         - DEVE attendere la comparsa dello spinner 'Caricamento...'
         - DEVE attendere la sua scomparsa.
         """

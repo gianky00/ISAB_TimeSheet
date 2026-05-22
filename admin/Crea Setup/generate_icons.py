@@ -1,5 +1,4 @@
-"""
-Script per generare icone professionali per SyncroJob Enterprise.
+"""Script per generare icone professionali per SyncroJob Enterprise.
 Design: Digital Precision - Esagoni tecnologici con elementi AI e automazione.
 Questo script è stato unificato per funzionare sia dalla root che dalla cartella admin.
 """
@@ -47,8 +46,7 @@ def draw_hexagon_points(center_x, center_y, size, rotation=0):
 
 
 def create_complex_app_icon(target_size):  # noqa: C901, PLR0912, PLR0915
-    """
-    Icona principale dell'applicazione.
+    """Icona principale dell'applicazione.
     Design: Esagono tecnologico con nucleo AI centrale e elementi orbitali.
     """
     # Lavoriamo a 1024px per massima qualità
@@ -210,8 +208,7 @@ def create_complex_app_icon(target_size):  # noqa: C901, PLR0912, PLR0915
 
 
 def create_complex_setup_icon(target_size):  # noqa: C901, PLR0912, PLR0915
-    """
-    Icona del setup/installer.
+    """Icona del setup/installer.
     Design: Esagoni in assemblaggio con arco di progresso e particelle.
     """
     canvas = 1024

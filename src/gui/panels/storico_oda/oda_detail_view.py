@@ -1,3 +1,5 @@
+"""Modulo Oda Detail View."""
+
 from collections.abc import Sequence
 from contextlib import suppress
 from typing import Any
@@ -17,7 +19,10 @@ from src.gui.styles import COLORS
 
 
 class OdaDetailView(QWidget):
-    """Widget per la visualizzazione del dettaglio completo di un OdA."""
+    """Widget per la visualizzazione del dettaglio completo di un OdA.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, headers: list[str], parent: QWidget | None = None) -> None:
         super().__init__(parent)

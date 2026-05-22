@@ -1,5 +1,4 @@
-"""
-SafeWork PDL Bot - Comprehensive Test Suite (2026 Edition)
+"""SafeWork PDL Bot - Comprehensive Test Suite (2026 Edition)
 =========================================================
 Test suite blindata post-refactoring.
 

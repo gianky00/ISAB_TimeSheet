@@ -1,3 +1,5 @@
+"""Modulo Settings Tab."""
+
 from typing import Any
 
 from PySide6.QtCore import Qt, Signal
@@ -21,8 +23,9 @@ from src.gui.widgets.modern_button import ModernButton
 
 
 class TimbratureSettingsTab(QWidget):
-    """
-    Tab per la gestione delle impostazioni (Dipendenti, Reparti, Cantieri).
+    """Tab per la gestione delle impostazioni (Dipendenti, Reparti, Cantieri).
+
+    Inizializza la classe.
     """
 
     settings_changed = Signal()  # Emesso quando cambiano le liste o i dati
@@ -65,7 +68,7 @@ class TimbratureSettingsTab(QWidget):
         self.filter_empty_cb = StandardCheckBox("Mostra solo dati mancanti (Vuoti)")
         config = config_manager.load_config()
         self.filter_empty_cb.setChecked(bool(config.get("timbrature_filter_empty_only", False)))
-        self.filter_empty_cb.stateChanged.connect(self._on_filter_empty_changed)
+        self.filter_empty_cb.stateChanged.connect(lambda _: self._on_filter_empty_changed())
         filter_layout.addWidget(self.filter_empty_cb)
         filter_layout.addStretch()
         layout.addLayout(filter_layout)
@@ -88,6 +91,7 @@ class TimbratureSettingsTab(QWidget):
         border-bottom: 1px solid {COLORS["border_light"]};
       }}
     """)
+
         v_header = self.settings_table.verticalHeader()
         if v_header is not None:
             v_header.setVisible(False)

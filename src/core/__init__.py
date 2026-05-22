@@ -1,3 +1,1 @@
-"""
-SyncroJob - Core Module
-"""
+"""SyncroJob - Core Module."""

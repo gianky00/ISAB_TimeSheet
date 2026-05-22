@@ -1,3 +1,5 @@
+"""Modulo Employee."""
+
 from dataclasses import dataclass
 
 

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Config Tab (Next-Gen)
+"""SyncroJob - Config Tab (Next-Gen).
+
 Pannello di configurazione strutturato a Card Moderne con navigazione fluida.
 Sostituisce il vecchio QToolBox con un design 'System Hub' ad alta leggibilit .
 """
@@ -32,21 +32,20 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class SettingCard(QFrame):
-    """
-    Container a card con ombra e stile moderno per un gruppo di impostazioni.
+    """Container a card con ombra e stile moderno per un gruppo di impostazioni.
+
     Fornisce un'intestazione con icona, titolo e sottotitolo.
+
+    Inizializza la card di impostazione.
+
+    Args:
+      title: Titolo della sezione.
+      subtitle: Descrizione breve dello scopo.
+      icon_key: Chiave dell'icona in Icons.
+      content_widget: Widget contenente i controlli reali.
     """
 
     def __init__(self, title: str, subtitle: str, icon_key: str, content_widget: QWidget) -> None:
-        """
-        Inizializza la card di impostazione.
-
-        Args:
-          title: Titolo della sezione.
-          subtitle: Descrizione breve dello scopo.
-          icon_key: Chiave dell'icona in Icons.
-          content_widget: Widget contenente i controlli reali.
-        """
         super().__init__()
         self.title_text = title
         self.subtitle_text = subtitle
@@ -107,21 +106,23 @@ class SettingCard(QFrame):
 
 
 class ConfigTab(QWidget):
-    """
-    Tab di configurazione d' lite.
+    """Tab di configurazione d' lite.
+
     Organizza le impostazioni in Card tematiche scorrevoli.
+
+    Inizializza il tab di configurazione.
+
+    Args:
+      parent: Widget genitore.
+
+    Attributes:
+        settings_changed: Segnale o attributo della classe.
     """
 
     settings_changed = Signal()
     """Segnale emesso quando un'impostazione interna viene variata."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il tab di configurazione.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.pages: list[QWidget] = []
         self.cards: list[SettingCard] = []

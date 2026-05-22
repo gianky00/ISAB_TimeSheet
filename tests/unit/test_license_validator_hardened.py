@@ -1,5 +1,4 @@
-"""
-Hardened tests for LicenseValidator.
+"""Hardened tests for LicenseValidator.
 Verifies hardware ID checks, expiration, and integrity.
 """
 

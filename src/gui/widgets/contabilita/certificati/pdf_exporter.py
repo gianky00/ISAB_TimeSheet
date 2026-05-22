@@ -1,3 +1,5 @@
+"""Modulo Pdf Exporter."""
+
 import os
 import re
 from datetime import datetime
@@ -14,7 +16,10 @@ from src.core.version import __version__
 
 
 class CertificatiPdfExporter:
-    """Genera report PDF professionale per i certificati campione - Versione Legacy Ripristinata."""
+    """Genera report PDF professionale per i certificati campione - Versione Legacy Ripristinata.
+
+    Inizializza la classe.
+    """
 
     def __init__(
         self,
@@ -86,9 +91,7 @@ class CertificatiPdfExporter:
             return True, "Esportazione PDF completata con successo."
 
     def _get_certificate_link(self, cert_name: str) -> str:
-        """
-        Cerca il file del certificato nella cartella di rete e restituisce l'URI per l'href.
-        """
+        """Cerca il file del certificato nella cartella di rete e restituisce l'URI per l'href."""
         if not cert_name:
             return ""
 
@@ -144,8 +147,7 @@ class CertificatiPdfExporter:
         *,
         has_nd: bool = False,
     ) -> None:
-        """
-        Disegna il footer con la numerazione delle pagine e l'eventuale postilla.
+        """Disegna il footer con la numerazione delle pagine e l'eventuale postilla.
 
         Args:
           painter: L'oggetto QPainter per il disegno.

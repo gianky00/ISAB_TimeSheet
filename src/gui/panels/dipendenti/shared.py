@@ -1,5 +1,5 @@
-"""
-SyncroJob - Employee Shared Components
+"""SyncroJob - Employee Shared Components.
+
 Widget, delegate e componenti UI condivisi utilizzati nei pannelli della gestione personale.
 """
 
@@ -34,16 +34,15 @@ DAYS_CRITICAL = 0
 
 
 class ColoredDotDelegate(QStyledItemDelegate):
-    """
-    Delegate personalizzato per colorare i pallini nella colonna SCAD. ISAB.
+    """Delegate personalizzato per colorare i pallini nella colonna SCAD. ISAB.
+
     Visualizza un cerchio colorato (Verde, Arancio, Rosso) in base ai giorni rimanenti.
     """
 
     def paint(
         self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex
     ) -> None:
-        """
-        Disegna il pallino colorato con il numero di giorni.
+        """Disegna il pallino colorato con il numero di giorni.
 
         Args:
           painter: Oggetto per il disegno.
@@ -101,9 +100,11 @@ class ColoredDotDelegate(QStyledItemDelegate):
 
 
 class InteractiveStatusCard(QFrame):
-    """
-    Card moderna interattiva con animazioni e ombreggiature.
+    """Card moderna interattiva con animazioni e ombreggiature.
+
     Utilizzata per visualizzare i conteggi aggregati (es. Abilitati, In Scadenza, Scaduti).
+
+    Inizializza la card di stato interattiva.
     """
 
     clicked = Signal(str)
@@ -117,7 +118,6 @@ class InteractiveStatusCard(QFrame):
         filter_type: str,
         parent: QWidget | None = None,
     ) -> None:
-        """Inizializza la card di stato interattiva."""
         super().__init__(parent)
         self.base_color = color
         self.filter_type = filter_type
@@ -228,8 +228,7 @@ class InteractiveStatusCard(QFrame):
         super().mousePressEvent(event)
 
     def setValue(self, val: Any) -> None:
-        """
-        Aggiorna il valore numerico visualizzato sulla card.
+        """Aggiorna il valore numerico visualizzato sulla card.
 
         Args:
           val: Valore da visualizzare.
@@ -238,8 +237,7 @@ class InteractiveStatusCard(QFrame):
 
 
 def create_info_card(title: str) -> tuple[QFrame, QVBoxLayout]:
-    """
-    Crea una card informativa con ombra e stile moderno.
+    """Crea una card informativa con ombra e stile moderno.
 
     Args:
       title: Il titolo da visualizzare nell'header della card.
@@ -292,8 +290,7 @@ def create_info_card(title: str) -> tuple[QFrame, QVBoxLayout]:
 
 
 def create_field_row(label_text: str) -> QWidget:
-    """
-    Crea una riga di campo con label e valore stilizzati (stile Material Design).
+    """Crea una riga di campo con label e valore stilizzati (stile Material Design).
 
     Args:
       label_text: Il testo dell'etichetta del campo.

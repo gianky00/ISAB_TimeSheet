@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright SafeWork PDL Search Page
+"""SyncroJob - Playwright SafeWork PDL Search Page.
+
 Gestisce le interazioni con la pagina di ricerca PDL usando Playwright.
 """
 
@@ -13,7 +13,14 @@ from src.bots.safework.common.locators import SafeWorkLocators
 
 
 class PlaywrightRicercaPDLPage(PlaywrightBasePage):
-    """Page Object per la pagina di ricerca PDL usando Playwright."""
+    """Page Object per la pagina di ricerca PDL usando Playwright.
+
+    Inizializza la pagina di ricerca PDL Playwright.
+
+    Args:
+        page: Pagina Playwright.
+        log_func: Funzione per il logging.
+    """
 
     def __init__(self, page: Page, log_func: Callable[[str], None]) -> None:
         super().__init__(page, log_func)

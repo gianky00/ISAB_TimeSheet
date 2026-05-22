@@ -1,5 +1,5 @@
-"""
-SyncroJob - PDL Programmazione Table Widget
+"""SyncroJob - PDL Programmazione Table Widget.
+
 Componente specializzato per la visualizzazione della griglia di programmazione.
 """
 
@@ -23,7 +23,10 @@ logger = logging.getLogger(__name__)
 
 
 class ProgrammazioneTableWidget(StandardTable):
-    """Tabella specializzata per la programmazione PDL con supporto per espansione Timeline."""
+    """Tabella specializzata per la programmazione PDL con supporto per espansione Timeline.
+
+    Inizializza la classe.
+    """
 
     row_expanded = Signal(int, bool)  # row, is_expanded
     selection_changed_custom = Signal()

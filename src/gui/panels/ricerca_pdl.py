@@ -1,5 +1,5 @@
-"""
-SyncroJob - Ricerca PDL Panel
+"""SyncroJob - Ricerca PDL Panel.
+
 Pannello per il bot Ricerca PDL (SafeWork).
 """
 
@@ -31,19 +31,20 @@ if TYPE_CHECKING:
 
 
 class RicercaPDLPanel(BaseBotPanel):
-    """
-    Pannello per la ricerca ed esportazione massiva dei PDL da SafeWork.
+    """Pannello per la ricerca ed esportazione massiva dei PDL da SafeWork.
+
+    Inizializza il pannello Ricerca PDL.
+
+    Args:
+      parent: Widget genitore.
+
+    Attributes:
+        data_updated: Segnale o attributo della classe.
     """
 
     data_updated = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello Ricerca PDL.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(
             bot_id="ricerca_pdl",
             bot_name="Ricerca PDL",
@@ -100,6 +101,7 @@ class RicercaPDLPanel(BaseBotPanel):
                 border: 1px solid {COLORS["border_light"]};
             }}
         """)
+
         UIEffectsManager.apply_shadow(params_container, blur=CARD_SHADOW_BLUR, color=CARD_SHADOW_COLOR)
         UIEffectsManager.animate_fade(params_container, duration=400)
 
@@ -119,7 +121,7 @@ class RicercaPDLPanel(BaseBotPanel):
         self.exclude_closed_check = StandardCheckBox("Escludi chiusi/scaduti")
         self.exclude_closed_check.setChecked(True)
         self.exclude_closed_check.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 500;")
-        self.exclude_closed_check.stateChanged.connect(self._save_data)
+        self.exclude_closed_check.stateChanged.connect(lambda _: self._save_data())
         vbox_check.addWidget(self.exclude_closed_check)
         params_layout.addLayout(vbox_check)
 

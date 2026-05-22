@@ -1,5 +1,4 @@
-"""
-SyncroJob - Bot Regression Shield
+"""SyncroJob - Bot Regression Shield
 Suite di test avanzata per intercettare regressioni nei flussi di operazioni e integrità dati.
 """
 

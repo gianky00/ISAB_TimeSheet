@@ -1,9 +1,11 @@
+"""Modulo Contabilita."""
+
 import contextlib
 import sqlite3
 
 
 def mig_contabilita_v1(conn: sqlite3.Connection) -> None:
-    """Schema Iniziale Contabilità (v1)"""
+    """Schema Iniziale Contabilità (v1)."""
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -69,7 +71,7 @@ def mig_contabilita_v1(conn: sqlite3.Connection) -> None:
 
 
 def mig_contabilita_v2(conn: sqlite3.Connection) -> None:
-    """Ottimizzazione indici Contabilità (v2)"""
+    """Ottimizzazione indici Contabilità (v2)."""
     cursor = conn.cursor()
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_cont_n_prev ON contabilita(n_prev)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_cont_odc ON contabilita(odc)")
@@ -78,7 +80,7 @@ def mig_contabilita_v2(conn: sqlite3.Connection) -> None:
 
 
 def mig_contabilita_v3(conn: sqlite3.Connection) -> None:
-    """Implementazione FTS5 per ricerche veloci (v3)"""
+    """Implementazione FTS5 per ricerche veloci (v3)."""
     cursor = conn.cursor()
     # Tabella virtuale per Contabilità
     cursor.execute(
@@ -125,7 +127,7 @@ def mig_contabilita_v3(conn: sqlite3.Connection) -> None:
 
 
 def mig_contabilita_v4(conn: sqlite3.Connection) -> None:
-    """Risoluzione duplicati Certificati Campione e indice univoco (v4)"""
+    """Risoluzione duplicati Certificati Campione e indice univoco (v4)."""
     cursor = conn.cursor()
     # 1. Pulizia duplicati esistenti (mantiene solo il primo ID trovato per coppia matricola-certificato)
     cursor.execute(
@@ -145,7 +147,7 @@ def mig_contabilita_v4(conn: sqlite3.Connection) -> None:
 
 
 def mig_contabilita_v5(conn: sqlite3.Connection) -> None:
-    """Aggiunta colonne annotazioni e ubicazione a certificati_campione (v5)"""
+    """Aggiunta colonne annotazioni e ubicazione a certificati_campione (v5)."""
     cursor = conn.cursor()
     # Ignoriamo l'errore se le colonne esistono già
     with contextlib.suppress(sqlite3.OperationalError):
@@ -155,13 +157,13 @@ def mig_contabilita_v5(conn: sqlite3.Connection) -> None:
 
 
 def mig_contabilita_v6(conn: sqlite3.Connection) -> None:
-    """Rimozione vincolo UNIQUE per permettere importazione 'Tale e Quale' (v6)"""
+    """Rimozione vincolo UNIQUE per permettere importazione 'Tale e Quale' (v6)."""
     cursor = conn.cursor()
     cursor.execute("DROP INDEX IF EXISTS idx_cert_unique")
 
 
 def mig_contabilita_v7(conn: sqlite3.Connection) -> None:
-    """Ridenominazione id_strumento in id_coemi e allineamento colonne (v7)"""
+    """Ridenominazione id_strumento in id_coemi e allineamento colonne (v7)."""
     cursor = conn.cursor()
     cursor.execute("PRAGMA table_info(certificati_campione)")
     cols = [row[1] for row in cursor.fetchall()]

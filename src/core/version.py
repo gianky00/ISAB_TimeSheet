@@ -1,6 +1,6 @@
-"""
-SyncroJob - Versione
-Sistema di automazione per portale ISAB
+"""SyncroJob - Versione.
+
+Sistema di automazione per portale ISAB.
 """
 
 __version__ = "1.49.0"

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright Carico TS Bot
+"""SyncroJob - Playwright Carico TS Bot.
+
 Versione Playwright del bot per il caricamento dei timesheet.
 """
 
@@ -12,8 +12,8 @@ from src.core.constants import Business
 
 
 class PlaywrightCaricoTSBot(PlaywrightBaseBot):
-    """
-    Bot per l'estrazione e il caricamento dei dati Timesheet usando Playwright.
+    """Bot per l'estrazione e il caricamento dei dati Timesheet usando Playwright.
+
     Automatizza la selezione dell'OdA e il caricamento massivo delle ore lavorate.
     """
 

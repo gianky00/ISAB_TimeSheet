@@ -1,5 +1,5 @@
-"""
-SyncroJob - Timbrature Page
+"""SyncroJob - Timbrature Page.
+
 Page Object Model for the Timbrature section of the ISAB portal.
 """
 
@@ -29,7 +29,15 @@ from src.core.paths import CONFIG_DIR
 
 
 class TimbraturePage:
-    """Encapsulates interactions with the Timbrature page."""
+    """Encapsulates interactions with the Timbrature page.
+
+    Inizializza la classe.
+
+    Args:
+      driver: WebDriver per l'automazione.
+      log_callback: Funzione per il logging.
+      download_path: Percorso per i download.
+    """
 
     def __init__(
         self,
@@ -59,8 +67,7 @@ class TimbraturePage:
             self.log("⚠️ Timeout attesa overlay.")
 
     def navigate_to_timbrature(self) -> bool:
-        """
-        Naviga verso la pagina delle timbrature tramite ricerca globale o fallback del menu.
+        """Naviga verso la pagina delle timbrature tramite ricerca globale o fallback del menu.
 
         Returns:
             bool: True se la navigazione ha successo, False altrimenti.
@@ -79,9 +86,9 @@ class TimbraturePage:
                 try:
                     search_input.click()
                 except Exception:
-                    self.driver.execute_script("arguments[0].click();", search_input)  # type: ignore[no-untyped-call]
+                    self.driver.execute_script("arguments[0].click();", search_input)
 
-                self.driver.execute_script("arguments[0].value = '';", search_input)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].value = '';", search_input)
                 search_input.send_keys("Report Timbrature")
                 time.sleep(0.3)
                 search_input.send_keys(Keys.ENTER)
@@ -112,7 +119,7 @@ class TimbraturePage:
                 try:
                     submenu.click()
                 except Exception:
-                    self.driver.execute_script("arguments[0].click();", submenu)  # type: ignore[no-untyped-call]
+                    self.driver.execute_script("arguments[0].click();", submenu)
             except Exception:
                 actions = ActionChains(self.driver)
                 actions.send_keys(Keys.TAB).pause(0.3)
@@ -173,9 +180,7 @@ class TimbraturePage:
             return True
 
     def download_timbrature(self, fornitore: str, data_da: str, data_a: str, download_path: str = "") -> str:
-        """
-        Metodo high-level per gestire l'intero flusso: filtri -> download.
-        """
+        """Metodo high-level per gestire l'intero flusso: filtri -> download."""
         if download_path:
             self.download_path = download_path
 
@@ -206,7 +211,7 @@ class TimbraturePage:
                         try:
                             ActionChains(self.driver).move_to_element(arrow_element).click().perform()
                         except Exception:
-                            self.driver.execute_script("arguments[0].click();", arrow_element)  # type: ignore[no-untyped-call]
+                            self.driver.execute_script("arguments[0].click();", arrow_element)
                         break
                 except Exception:
                     with suppress(Exception):
@@ -220,12 +225,12 @@ class TimbraturePage:
                 EC.presence_of_element_located((By.XPATH, option_xpath))
             )
 
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
 
             try:
                 option.click()
             except (ElementClickInterceptedException, Exception):
-                self.driver.execute_script("arguments[0].click();", option)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].click();", option)
             self._wait_for_overlay()
 
         except Exception as e:
@@ -250,13 +255,13 @@ class TimbraturePage:
                 f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() in allowed_ext
             }
 
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", excel_btn)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", excel_btn)
 
             self.log("Clicco su Excel...")
             try:
                 excel_btn.click()
             except Exception:
-                self.driver.execute_script("arguments[0].click();", excel_btn)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].click();", excel_btn)
 
             self.log("Attendo download...")
 

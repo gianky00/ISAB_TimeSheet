@@ -1,3 +1,5 @@
+"""Modulo Audit Pagination Bar."""
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
@@ -6,7 +8,10 @@ from src.gui.widgets.modern_button import ModernButton
 
 
 class AuditPaginationBar(QWidget):
-    """Barra di paginazione per l'Audit Log con stile Enterprise."""
+    """Barra di paginazione per l'Audit Log con stile Enterprise.
+
+    Inizializza la classe.
+    """
 
     page_changed = Signal(int)  # offset (1 per next, -1 per prev)
 
@@ -43,9 +48,7 @@ class AuditPaginationBar(QWidget):
         layout.addWidget(self.next_btn)
 
     def update_state(self, current_page: int, total_logs: int, page_size: int) -> None:
-        """
-        Aggiorna lo stato visivo della barra (label e abilitazione pulsanti).
-        """
+        """Aggiorna lo stato visivo della barra (label e abilitazione pulsanti)."""
         total_pages = (total_logs + page_size - 1) // page_size
         total_pages = max(total_pages, 1)
 

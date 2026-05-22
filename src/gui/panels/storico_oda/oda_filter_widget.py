@@ -1,3 +1,5 @@
+"""Modulo Oda Filter Widget."""
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QHBoxLayout,
@@ -16,7 +18,10 @@ from src.utils.helpers import get_asset_path
 
 
 class OdaFilterWidget(QWidget):
-    """Widget contenente i filtri e i pulsanti di azione per il pannello Storico OdA."""
+    """Widget contenente i filtri e i pulsanti di azione per il pannello Storico OdA.
+
+    Inizializza la classe.
+    """
 
     search_changed = Signal(str)
     update_clicked = Signal()

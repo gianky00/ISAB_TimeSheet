@@ -1,5 +1,5 @@
-"""
-SyncroJob - Selenium Base Bot
+"""SyncroJob - Selenium Base Bot.
+
 Implementazione della classe base per i bot Selenium.
 """
 
@@ -29,9 +29,13 @@ from src.utils.resource_manager import ResourceManager
 
 
 class SeleniumBaseBot(BaseBot, ABC):
-    """
-    Classe base per i bot basati su Selenium.
+    """Classe base per i bot basati su Selenium.
+
     Gestisce l'inizializzazione di ChromeDriver, le opzioni del browser e le attese.
+
+    Inizializza le proprietà fondamentali del bot Selenium.
+
+    Supporta sia la firma legacy (user, pwd, config) che quella moderna (config=config).
     """
 
     def __init__(
@@ -40,10 +44,6 @@ class SeleniumBaseBot(BaseBot, ABC):
         password: str | None = None,
         config: SeleniumBotConfig | None = None,
     ) -> None:
-        """
-        Inizializza le proprietà fondamentali del bot Selenium.
-        Supporta sia la firma legacy (user, pwd, config) che quella moderna (config=config).
-        """
         # Estrazione intelligente dei parametri per compatibilità Factory/Test
         actual_config = config or SeleniumBotConfig()
         actual_user = username if username is not None else actual_config.username

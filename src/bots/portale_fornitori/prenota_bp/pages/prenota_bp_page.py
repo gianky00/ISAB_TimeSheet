@@ -1,6 +1,4 @@
-"""
-Page Object per la gestione Prenotazioni BP sul Portale Fornitori.
-"""
+"""Page Object per la gestione Prenotazioni BP sul Portale Fornitori."""
 
 from collections.abc import Callable
 from contextlib import suppress
@@ -20,13 +18,14 @@ from ..locators import PrenotaBPLocators
 
 
 class PrenotaBPPage:
-    """
-    Page Object Model per la gestione delle prenotazioni dei Buoni di Prelievo (BP).
+    """Page Object Model per la gestione delle prenotazioni dei Buoni di Prelievo (BP).
+
     Gestisce la navigazione nei menu, il filtraggio e l'inserimento di nuove prenotazioni.
+
+    Inizializza la pagina con il driver e configura i tempi di attesa.
     """
 
     def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None) -> None:
-        """Inizializza la pagina con il driver e configura i tempi di attesa."""
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.short_wait = WebDriverWait(driver, Timeouts.SHORT)
@@ -43,14 +42,19 @@ class PrenotaBPPage:
             self.short_wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
 
     def wait_and_click(self, locator: tuple[str, str], timeout: int | float | None = None) -> Any:
-        """
-        Attende che un elemento sia cliccabile e vi clicca sopra, gestendo errori DOM.
+        """Attende che un elemento sia cliccabile e vi clicca sopra, gestendo errori DOM.
 
         Args:
           locator: Tupla (By, value).
           timeout: Tempo massimo di attesa.
+
         Returns:
           WebElement: L'elemento cliccato.
+
+        Raises:
+          TimeoutException: Se l'elemento non diventa cliccabile.
+          AttributeError: Se l'elemento non è valido.
+          Exception: In caso di altri errori.
         """
         self._wait_for_overlay()
         wait_time = timeout or Timeouts.DEFAULT
@@ -65,13 +69,13 @@ class PrenotaBPPage:
                 )
 
                 # Scroll al centro
-                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", el)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", el)
                 try:
                     el.click()
                 except Exception as e:
                     # Backup click via Javascript
                     self.log(f"   Click standard fallito ({e}), uso JS fallback.")
-                    self.driver.execute_script("arguments[0].click();", el)  # type: ignore[no-untyped-call]
+                    self.driver.execute_script("arguments[0].click();", el)
             except (TimeoutException, AttributeError, Exception) as e:
                 if attempt == max_attempts - 1:  # Ultimo tentativo fallito
                     self.log(f"  Errore definitivo click su {locator}: {e}")
@@ -83,13 +87,15 @@ class PrenotaBPPage:
         return None
 
     def wait_and_fill(self, locator: tuple[str, str], text: str, timeout: int | float | None = None) -> Any:
-        """
-        Attende un campo di input, lo pulisce e inserisce il testo.
+        """Attende un campo di input, lo pulisce e inserisce il testo.
 
         Args:
           locator: Tupla (By, value).
           text: Testo da inserire.
           timeout: Tempo massimo di attesa.
+
+        Returns:
+          WebElement: L'elemento compilato.
         """
         self._wait_for_overlay()
         el = (WebDriverWait(self.driver, timeout) if timeout else self.wait).until(
@@ -126,13 +132,13 @@ class PrenotaBPPage:
                 EC.visibility_of_element_located(PrenotaBPLocators.SUBMENU_GESTIONE_BP)
             )
             self.log("Voce menu visibile, click diretto.")
-            self.driver.execute_script("arguments[0].click();", submenu)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].click();", submenu)
         except Exception as e:
             # Espansione menu principale
             self.log(f"Menu non cliccabile ({e}), espansione menu 'Buono di Prelievo'...")
             self.wait_and_click(PrenotaBPLocators.MENU_BUONO_PRELIEVO)
             submenu = self.wait.until(EC.element_to_be_clickable(PrenotaBPLocators.SUBMENU_GESTIONE_BP))
-            self.driver.execute_script("arguments[0].click();", submenu)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].click();", submenu)
 
         self._wait_for_overlay()
 
@@ -162,8 +168,8 @@ class PrenotaBPPage:
                     EC.presence_of_element_located((By.XPATH, option_xpath))
                 )
 
-                self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)  # type: ignore[no-untyped-call]
-                self.driver.execute_script("arguments[0].click();", option)  # type: ignore[no-untyped-call]
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
+                self.driver.execute_script("arguments[0].click();", option)
                 self._wait_for_overlay()
             except Exception as e:
                 self.log(f"   Avviso: Selezione fornitore fallita ({e}), tento inserimento manuale.")
@@ -195,9 +201,10 @@ class PrenotaBPPage:
             raise
 
     def verifica_disponibilita_materiali(self) -> bool:
-        """
-        Verifica se tutti i materiali sono disponibili controllando l'icona
+        """Verifica se tutti i materiali sono disponibili controllando l'icona.
+
         nell'ultima colonna della griglia dettagli.
+
         Returns:
           bool: True se tutti i materiali sono disponibili, False altrimenti.
         """
@@ -354,7 +361,7 @@ class PrenotaBPPage:
     def _click_safe(self, element: Any) -> None:
         """Esegue un click sicuro tramite scroll e JS fallback."""
         try:
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
             element.click()
         except Exception:
-            self.driver.execute_script("arguments[0].click();", element)  # type: ignore[no-untyped-call]
+            self.driver.execute_script("arguments[0].click();", element)

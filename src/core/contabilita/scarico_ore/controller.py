@@ -1,5 +1,5 @@
-"""
-SyncroJob - Scarico Ore Controller
+"""SyncroJob - Scarico Ore Controller.
+
 Gestisce la logica di business, l'importazione e il calcolo dei totali per lo Scarico Ore.
 """
 
@@ -15,25 +15,29 @@ logger = logging.getLogger(__name__)
 
 
 class ScaricoOreWorker(QThread):
-    """Worker thread per l'importazione asincrona di Scarico Ore."""
+    """Worker thread per l'importazione asincrona di Scarico Ore.
+
+    Inizializza il worker per l'importazione.
+
+    Args:
+      file_path: Percorso del file Excel dello Scarico Ore da importare.
+
+    Attributes:
+        finished_signal: Segnale emesso al completamento.
+        progress_signal: Segnale per l'aggiornamento del progresso.
+    """
 
     finished_signal = Signal(bool, str, int, int, float)
     progress_signal = Signal(str)
 
     def __init__(self, file_path: str) -> None:
-        """
-        Inizializza il worker per l'importazione.
-
-        Args:
-          file_path: Percorso del file Excel dello Scarico Ore da importare.
-        """
         super().__init__()
         self.file_path = file_path
         self.start_time: float = 0.0
 
     def run(self) -> None:
-        """
-        Esegue l'importazione nel thread separato con calcolo del progresso e dell'ETA.
+        """Esegue l'importazione nel thread separato con calcolo del progresso e dell'ETA.
+
         Inizializza il database e invoca il manager per il processing del file.
         """
         ContabilitaManager.init_db()
@@ -64,19 +68,20 @@ class ScaricoOreWorker(QThread):
 
 
 class ScaricoOreController(QObject):
-    """Controller centrale per il coordinamento dei dati di Scarico Ore."""
+    """Controller centrale per il coordinamento dei dati di Scarico Ore.
+
+    Inizializza il controller di Scarico Ore.
+    """
 
     status_changed = Signal(str)
     update_finished = Signal(bool, str)
 
     def __init__(self) -> None:
-        """Inizializza il controller di Scarico Ore."""
         super().__init__()
         self.worker: ScaricoOreWorker | None = None
 
     def start_import(self, file_path: str) -> None:
-        """
-        Inizializza e avvia il thread di importazione asincrona.
+        """Inizializza e avvia il thread di importazione asincrona.
 
         Args:
           file_path: Percorso del file Excel sorgente.
@@ -87,8 +92,7 @@ class ScaricoOreController(QObject):
         self.worker.start()
 
     def _handle_finished(self, success: bool, msg: str, added: int, removed: int, duration: float) -> None:
-        """
-        Gestisce il completamento del worker di importazione, formattando il report per la UI.
+        """Gestisce il completamento del worker di importazione, formattando il report per la UI.
 
         Args:
           success: Esito dell'operazione.
@@ -110,8 +114,7 @@ class ScaricoOreController(QObject):
 
     @staticmethod
     def format_number(value: float) -> str:
-        """
-        Formatta un numero decimale rimuovendo gli zeri inutili.
+        """Formatta un numero decimale rimuovendo gli zeri inutili.
 
         Args:
           value: Il valore numerico da formattare.

@@ -12,8 +12,8 @@ from src.core.importers.storico_oda import StoricoOdaImporter
 
 
 class ExcelImporter:
-    """
-    Facade per l'importazione di dati da file Excel.
+    """Facade per l'importazione di dati da file Excel.
+
     Delega ai moduli specifici in src/core/importers/.
     Mantiene la compatibilit  con il codice esistente.
     """
@@ -27,8 +27,11 @@ class ExcelImporter:
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, list[tuple[Any, ...]], list[int]]:
-        """
-        Importa i dati di contabilità dal file specificato.
+        """Importa i dati di contabilità dal file specificato.
+
+        Args:
+            file_path: Percorso del file.
+            progress_callback: Callback per il progresso.
 
         Returns:
           Tuple: (success, message, data_rows, years_found)
@@ -45,8 +48,12 @@ class ExcelImporter:
         lookup_map: dict[str, str],
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, list[tuple[Any, ...]], list[int]]:
-        """
-        Importa le giornaliere ricorsivamente dalla root path.
+        """Importa le giornaliere ricorsivamente dalla root path.
+
+        Args:
+            root_path: Cartella di partenza per la ricerca.
+            lookup_map: Mappa dei dipendenti.
+            progress_callback: Callback opzionale per il progresso.
 
         Returns:
           Tuple: (success, message, rows, years_cleared)
@@ -78,6 +85,7 @@ class ExcelImporter:
 
     @staticmethod
     def scan_scarico_ore_rows(file_path: str) -> int:
+        """Restituisce il numero di righe dello scarico ore."""
         return ScaricoOreImporter.scan_scarico_ore_rows(file_path)
 
     # --- Certificati ---
@@ -89,6 +97,7 @@ class ExcelImporter:
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, list[tuple[Any, ...]]]:
+        """Importa i certificati campione dal file specificato."""
         return CertificatiImporter.import_certificati_campione(file_path, progress_callback)
 
     # --- Storico OdA ---
@@ -100,11 +109,13 @@ class ExcelImporter:
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, list[tuple[Any, ...]]]:
+        """Importa lo storico OdA dal file specificato."""
         return StoricoOdaImporter.import_storico_oda(file_path, progress_callback)
 
     # --- Helpers Vari ---
     @staticmethod
     def scan_workload(file_path: str, giornaliere_path: str) -> tuple[int, int]:
+        """Scansiona il carico di lavoro dai file specificati."""
         sheets = ContabilitaImporter.scan_sheets(file_path)
         files = GiornaliereImporter.scan_files(giornaliere_path)
         return sheets, files

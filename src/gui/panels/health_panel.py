@@ -1,12 +1,11 @@
-"""
-SyncroJob - Health Panel
+"""SyncroJob - Health Panel.
+
 Dashboard avanzata per il monitoraggio della salute del sistema (Observability).
 Visualizza punteggi di affidabilità (Health Score), statistiche di esecuzione dei bot nelle ultime 24 ore
 e un elenco dettagliato di anomalie rilevate, con integrazione diretta per gli alert Telegram.
 """
 
 from contextlib import suppress
-from datetime import UTC, datetime
 from typing import Any, Final
 
 from PySide6.QtCore import QRectF, Qt, QTimer
@@ -24,17 +23,19 @@ from PySide6.QtWidgets import (
 from src.core.constants import Icons
 from src.core.logging.alert_manager import get_alert_manager
 from src.core.logging.analytics import Anomaly, generate_analytics_report
-from src.core.logging.viewer import LogViewer
 from src.core.notification_manager import NotificationManager
 from src.gui.styles import COLORS
 from src.gui.widgets import ModernButton, ModernCard
+from src.gui.workers.health_worker import HealthWorker
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class HealthScoreBadge(QWidget):
-    """
-    Widget circolare (Gauge) Premium per l'Health Score.
+    """Widget circolare (Gauge) Premium per l'Health Score.
+
     Implementa gradienti dinamici e ombre interne per un look Next-Gen.
+
+    Inizializza la classe.
     """
 
     GOOD_THRESHOLD: Final[int] = 80
@@ -49,6 +50,7 @@ class HealthScoreBadge(QWidget):
 
     @property
     def score(self) -> int:
+        """Ritorna il punteggio attuale di salute del sistema."""
         return self._score
 
     @score.setter
@@ -114,7 +116,10 @@ class HealthScoreBadge(QWidget):
 
 
 class StatCard(ModernCard):
-    """Card statistica Premium con elevazione e icone colorate."""
+    """Card statistica Premium con elevazione e icone colorate.
+
+    Inizializza la classe.
+    """
 
     def __init__(
         self,
@@ -170,7 +175,10 @@ class StatCard(ModernCard):
 
 
 class AnomalyCard(ModernCard):
-    """Card anomalia con design a lista orizzontale e badge di severità."""
+    """Card anomalia con design a lista orizzontale e badge di severità.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, anomaly: Anomaly, parent: QWidget | None = None) -> None:
         super().__init__(parent, elevation=6)
@@ -222,6 +230,7 @@ class AnomalyCard(ModernCard):
       font-size: 9px;
       font-weight: 900;
     """)
+
         layout.addWidget(sev_badge)
 
     def _get_severity_color(self, severity: str) -> str:
@@ -234,17 +243,19 @@ class AnomalyCard(ModernCard):
 
 
 class HealthPanel(QWidget):
-    """
-    Pannello principale Health & Observability.
+    """Pannello principale Health & Observability.
+
     Integra timer di auto-refresh per mantenere i dati sempre aggiornati.
+
+    Inizializza l'interfaccia e avvia gli scheduler di monitoraggio.
     """
 
     REFRESH_INTERVAL_MS: Final[int] = 120000  # 2 min
     ALERT_CHECK_INTERVAL_MS: Final[int] = 1800000  # 30 min
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza l'interfaccia e avvia gli scheduler di monitoraggio."""
         super().__init__(parent)
+        self._health_worker: HealthWorker | None = None
         self._first_refresh_done = False
         self._setup_ui()
         self._refresh_timer = QTimer(self)
@@ -401,23 +412,28 @@ class HealthPanel(QWidget):
         parent_layout.addLayout(right_panel, stretch=2)
 
     def refresh(self) -> None:
-        """Interroga i motori di analytics e il LogViewer per aggiornare tutte le card e lo score."""
-        try:
-            report = generate_analytics_report(hours=24)
-            self._score_badge.score = report.health_score
-            self._status_label.setText(self._score_badge._get_status_text())
+        """Interroga i motori di analytics in background (Asincrono)."""
+        if self._health_worker and self._health_worker.isRunning():
+            return
 
-            health = LogViewer().generate_health_report()
-            self._stat_runs_ok.set_value(str(health.get("bot_runs", {}).get("successful", 0)))
-            self._stat_runs_fail.set_value(str(health.get("bot_runs", {}).get("failed", 0)))
-            self._stat_error_rate.set_value(f"{health.get('error_rate_percent', 0):.1f}%")
-            self._stat_anomalies.set_value(str(len(report.anomalies)))
-            self._last_update.setText(
-                f"Ultimo aggiornamento: {datetime.now(UTC).astimezone().strftime('%H:%M:%S')}"
-            )
-            self._update_anomalies(report.anomalies)
-        except Exception as e:
-            self._last_update.setText(f"Errore: {str(e)[:30]}")
+        self._last_update.setText("Analisi in corso...")
+        self._health_worker = HealthWorker(hours=24)
+        self._health_worker.finished_signal.connect(self._on_health_data_ready)
+        self._health_worker.error_signal.connect(lambda msg: self._last_update.setText(f"Errore: {msg[:30]}"))
+        self._health_worker.start()
+
+    def _on_health_data_ready(self, data: dict[str, Any]) -> None:
+        """Aggiorna i widget grafici con i dati elaborati dal worker."""
+        self._score_badge.score = data["health_score"]
+        self._status_label.setText(self._score_badge._get_status_text())
+
+        self._stat_runs_ok.set_value(str(data["bot_runs_ok"]))
+        self._stat_runs_fail.set_value(str(data["bot_runs_fail"]))
+        self._stat_error_rate.set_value(f"{data['error_rate']:.1f}%")
+        self._stat_anomalies.set_value(str(len(data["anomalies"])))
+
+        self._last_update.setText(f"Ultimo aggiornamento: {data['timestamp']}")
+        self._update_anomalies(data["anomalies"])
 
     def _update_anomalies(self, anomalies: list[Anomaly]) -> None:
         """Rigenera dinamicamente la lista delle card anomalia nella colonna di destra."""

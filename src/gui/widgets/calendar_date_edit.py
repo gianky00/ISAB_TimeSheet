@@ -1,5 +1,5 @@
-"""
-SyncroJob - Calendar Widgets
+"""SyncroJob - Calendar Widgets.
+
 QDateEdit personalizzato con popup calendario.
 """
 
@@ -11,7 +11,10 @@ from src.utils.helpers import get_asset_path
 
 
 class CalendarDateEdit(QDateEdit):
-    """QDateEdit con popup calendario e stile personalizzato."""
+    """QDateEdit con popup calendario e stile personalizzato.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Utility Helpers
+"""SyncroJob - Utility Helpers.
+
 Funzioni di utilit  generali per la gestione del filesystem, formattazione dati e cleanup processi.
 Include una robusta logica di terminazione per processi Chrome/Chromedriver "zombie".
 """
@@ -26,8 +26,8 @@ _ICON_CACHE: dict[str, QPixmap] = {}
 
 
 def get_asset_path(relative_path: str) -> str:
-    """
-    Restituisce il percorso assoluto di un asset.
+    """Restituisce il percorso assoluto di un asset.
+
     Funziona sia in sviluppo che nell'app installata.
     Utilizza ResourceManager come fonte unica di verit .
     """
@@ -44,8 +44,7 @@ def get_app_icon_path() -> str | None:
 
 
 def setup_logging(name: str = "BotTS", log_file: str | None = None) -> logging.Logger:
-    """
-    Configura il sistema di logging.
+    """Configura il sistema di logging.
 
     Args:
       name: Nome del logger
@@ -80,8 +79,7 @@ def setup_logging(name: str = "BotTS", log_file: str | None = None) -> logging.L
 
 
 def format_timestamp(dt: datetime | None = None) -> str:
-    """
-    Formatta un timestamp per la visualizzazione.
+    """Formatta un timestamp per la visualizzazione.
 
     Args:
       dt: Datetime da formattare (default: now)
@@ -111,8 +109,7 @@ def get_months_list() -> list[str]:
 
 
 def get_years_list(start_offset: int = -2, end_offset: int = 2) -> list[str]:
-    """
-    Restituisce una lista di anni intorno a quello corrente.
+    """Restituisce una lista di anni intorno a quello corrente.
 
     Args:
       start_offset: Offset dall'anno corrente per l'inizio.
@@ -131,8 +128,8 @@ def is_windows() -> bool:
 
 
 def safe_open(path: str | Path) -> bool:
-    """
-    Apre un file o una cartella nel programma predefinito in modo sicuro.
+    """Apre un file o una cartella nel programma predefinito in modo sicuro.
+
     Previene l'esecuzione di binari pericolosi tramite blacklist.
 
     Args:
@@ -171,16 +168,12 @@ def open_folder(path: str) -> bool:
 
 
 def safe_str(value: object, default: str = "") -> str:
-    """
-    Esegue una conversione sicura a stringa gestendo i valori None.
-    """
+    """Esegue una conversione sicura a stringa gestendo i valori None."""
     return str(value) if value is not None else default
 
 
 def truncate_string(text: str, max_length: int = 50, suffix: str = "...") -> str:
-    """
-    Tronca una stringa se supera la lunghezza specificata.
-    """
+    """Tronca una stringa se supera la lunghezza specificata."""
     if not text:
         return ""
     if len(text) <= max_length:
@@ -189,9 +182,7 @@ def truncate_string(text: str, max_length: int = 50, suffix: str = "...") -> str
 
 
 def sanitize_filename(filename: str) -> str:
-    """
-    Sanitizza una stringa per renderla sicura come nome file (previene Path Traversal).
-    """
+    """Sanitizza una stringa per renderla sicura come nome file (previene Path Traversal)."""
     if not filename:
         return "unnamed_file"
 
@@ -205,9 +196,7 @@ def sanitize_filename(filename: str) -> str:
 
 
 def cleanup_chrome_temp_files(directory: Path | str) -> list[str]:
-    """
-    Rimuove file da 0 KB nella directory (residui di download Selenium falliti).
-    """
+    """Rimuove file da 0 KB nella directory (residui di download Selenium falliti)."""
     dir_path = Path(directory)
     if not dir_path.exists():
         return []
@@ -225,8 +214,8 @@ def cleanup_chrome_temp_files(directory: Path | str) -> list[str]:
 
 
 def cleanup_bot_processes() -> None:
-    """
-    Termina forzatamente le istanze 'zombiè di Chrome e Chromedriver legate all'applicazione.
+    """Termina forzatamente le istanze 'zombiè di Chrome e Chromedriver legate all'applicazione.
+
     Rimuove i file di lock del profilo per prevenire errori di sessione (SessionNotCreated).
     Include anche processi Playwright/Node se rimasti appesi.
     """
@@ -299,8 +288,8 @@ def _remove_profile_locks(logger: logging.Logger) -> None:
 
 
 def get_colored_icon(icon_path: str, color: str = "#000000") -> QIcon:
-    """
-    Applica un colore personalizzato a un'icona SVG tramite QPainter.
+    """Applica un colore personalizzato a un'icona SVG tramite QPainter.
+
     Implementa un sistema di caching per massimizzare le performance di rendering.
     """
     if not Path(icon_path).exists():

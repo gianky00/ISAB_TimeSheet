@@ -1,5 +1,4 @@
-"""
-Hardened tests for TimesheetProcessor.
+"""Hardened tests for TimesheetProcessor.
 Verifies Excel transformation logic and robustness.
 """
 

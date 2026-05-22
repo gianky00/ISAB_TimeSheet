@@ -1,6 +1,8 @@
+"""Modulo Security Dashboard."""
+
 from typing import Any
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QThreadPool, QTimer, Slot
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -16,6 +18,7 @@ from src.core.constants import Icons
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
 from src.gui.widgets.core_widgets import PrimaryButton
+from src.gui.workers.integrity_worker import IntegrityWorker
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 # Stile forzato per i tooltip in Light Mode
@@ -31,9 +34,11 @@ QToolTip {
 
 
 class SecurityDashboard(QWidget):
-    """
-    Dashboard di sicurezza e audit log.
+    """Dashboard di sicurezza e audit log.
+
     Visualizza statistiche, grafici semplificati e log critici.
+
+    Inizializza la classe.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -288,7 +293,14 @@ class SecurityDashboard(QWidget):
             self.log_layout.addWidget(row)
 
     def _run_integrity_check(self) -> None:
-        valid = self.audit_manager.verify_integrity()
+        """Avvia il controllo di integrità in background."""
+        worker = IntegrityWorker(self.audit_manager)
+        worker.signals.finished.connect(self._on_integrity_checked)
+        QThreadPool.globalInstance().start(worker)
+
+    @Slot(bool)
+    def _on_integrity_checked(self, valid: bool) -> None:
+        """Callback al termine della verifica asincrona."""
         if valid:
             QMessageBox.information(
                 self,

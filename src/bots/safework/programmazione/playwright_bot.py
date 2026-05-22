@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright SafeWork Programmazione Bot
+"""SyncroJob - Playwright SafeWork Programmazione Bot.
+
 Versione Playwright del bot per il monitoraggio della programmazione settimanale.
 """
 
@@ -26,8 +26,17 @@ IDX_AREA: Final[int] = 24
 
 
 class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
-    """
-    Bot per monitorare i flag TCL/TGO della settimana usando Playwright.
+    """Bot per monitorare i flag TCL/TGO della settimana usando Playwright.
+
+    Inizializza il bot per la programmazione PDL con Playwright.
+
+    Args:
+      config: Configurazione del bot Selenium.
+      account_type: Tipologia di account (es. Esecutore).
+
+    Attributes:
+        STEPS: ClassVar[list[tuple[str: Segnale o attributo della classe.
+        str: Segnale o attributo della classe.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
@@ -49,10 +58,12 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
 
     @property
     def name(self) -> str:
+        """Restituisce il nome identificativo del bot."""
         return "Programmazione PDL (PW)"
 
     @property
     def description(self) -> str:
+        """Restituisce la descrizione delle finalità del bot."""
         return "Monitoraggio programmazione settimanale SafeWork (Playwright)"
 
     @staticmethod

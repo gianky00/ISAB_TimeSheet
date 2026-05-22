@@ -1,5 +1,5 @@
-"""
-SyncroJob - Report Service
+"""SyncroJob - Report Service.
+
 Logica di business per la generazione e l'invio di report email tramite Outlook.
 """
 

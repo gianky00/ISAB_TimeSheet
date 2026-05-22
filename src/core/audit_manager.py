@@ -1,5 +1,5 @@
-"""
-SyncroJob - Audit Manager Facade
+"""SyncroJob - Audit Manager Facade.
+
 Modulo di compatibilit  che delega al nuovo package modulare src.core.audit.
 """
 

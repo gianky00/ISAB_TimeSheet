@@ -1,6 +1,4 @@
-"""
-SyncroJob - Scarico TS Module
-"""
+"""SyncroJob - Scarico TS Module."""
 
 from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
 

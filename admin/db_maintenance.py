@@ -1,5 +1,4 @@
-"""
-SyncroJob - Database Maintenance Tool
+"""SyncroJob - Database Maintenance Tool
 Esegue operazioni di manutenzione ordinaria su TUTTI i database dell'applicazione:
 1. Integrity Check
 2. Vacuum (Compattazione)
@@ -39,8 +38,7 @@ DATABASES = [
 
 
 def maintain_db(db_name: str) -> None:
-    """
-    Esegue operazioni di manutenzione (integrity check, vacuum, analyze) su un singolo database.
+    """Esegue operazioni di manutenzione (integrity check, vacuum, analyze) su un singolo database.
 
     Args:
         db_name: Nome del file database presente nella cartella dati.

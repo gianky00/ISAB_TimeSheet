@@ -1,16 +1,15 @@
-"""
-SyncroJob - Backup Manager
+"""SyncroJob - Backup Manager.
+
 Gestisce il backup e ripristino dei dati critici su cloud locale (OneDrive/Drive).
 """
 
 import os
-import zipfile
-from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import ClassVar
 
 from src.core.audit_manager import AuditManager
+from src.core.backup.archive_rotator import ArchiveRotator
+from src.core.backup.zip_compressor import ZipCompressor
 from src.core.config_manager import load_config
 from src.core.logging import get_logger
 from src.core.paths import CONFIG_DIR
@@ -19,16 +18,11 @@ logger = get_logger(__name__)
 
 
 class BackupManager:
-    """
-    Manager specializzato nella creazione e ripristino di backup dell'applicazione.
-    Supporta il rilevamento automatico dei percorsi OneDrive e Google Drive.
-    """
+    """Manager specializzato nella creazione e ripristino di backup dell'applicazione.
 
-    # Cartelle da escludere dal backup
-    EXCLUDE_DIRS: ClassVar[list[str]] = ["chrome_profile", "logs", "cache"]
-
-    # Estensioni file critici
-    INCLUDE_EXT: ClassVar[list[str]] = [".db", ".json", ".dat"]
+    Agisce come facciata ad alto livello (Facade) e supporta il rilevamento
+    automatico dei percorsi OneDrive, Google Drive, Dropbox e MEGA.
+    """
 
     @staticmethod
     def detect_cloud_paths() -> dict[str, Path]:
@@ -140,20 +134,7 @@ class BackupManager:
             zip_filename = f"SyncroJob_Backup_{timestamp}.zip"
             zip_path = target_dir / zip_filename
 
-            file_count = 0
-
-            with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-                # Usiamo os.walk per massima compatibilit  con filesystem simulati e reali
-                for root, dirs, files in os.walk(source_dir):
-                    # Filtra directory escluse
-                    dirs[:] = [d for d in dirs if d not in BackupManager.EXCLUDE_DIRS]
-
-                    for file in files:
-                        file_path = Path(root) / file
-                        if file_path.suffix in BackupManager.INCLUDE_EXT:
-                            arcname = file_path.relative_to(source_dir)
-                            zipf.write(file_path, arcname)
-                            file_count += 1
+            file_count = ZipCompressor.compress_directory(source_dir, zip_path)
 
             if file_count > 0:
                 # Audit
@@ -169,7 +150,7 @@ class BackupManager:
                 )
 
                 # Cleanup vecchi backup (mantiene ultimi 5)
-                BackupManager._cleanup_old_backups(target_dir)
+                ArchiveRotator.rotate_backups(target_dir)
 
                 return True, str(zip_path)
 
@@ -189,25 +170,6 @@ class BackupManager:
             return False, str(e)
         else:
             return success, msg
-
-    @staticmethod
-    def _cleanup_old_backups(target_dir: Path, keep: int = 5) -> None:
-        """
-        Mantiene solo gli ultimi N backup nel database, eliminando i più vecchi.
-
-        Args:
-          target_dir: Cartella dove risiedono i backup.
-          keep: Numero di backup da conservare (default 5).
-        """
-        with suppress(Exception):
-            backups = sorted(
-                target_dir.glob("SyncroJob_Backup_*.zip"),
-                key=lambda p: p.stat().st_mtime,
-                reverse=True,
-            )
-            for old_backup in backups[keep:]:
-                with suppress(Exception):
-                    old_backup.unlink()
 
     @staticmethod
     def list_backups() -> list[Path]:
@@ -233,13 +195,8 @@ class BackupManager:
             if not zip_p.exists():
                 return False, "File di backup non trovato."
 
-            # Verifica validità zip
-            if not zipfile.is_zipfile(zip_p):
-                return False, "File non valido o corrotto."
-
-            # Estrazione sicura
-            with zipfile.ZipFile(zip_p, "r") as zipf:
-                zipf.extractall(CONFIG_DIR)
+            # Estrazione delegata sicura
+            ZipCompressor.extract_archive(zip_p, CONFIG_DIR)
 
             AuditManager.instance().log_action(
                 "Ripristino Backup",

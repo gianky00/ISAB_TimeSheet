@@ -1,11 +1,9 @@
-"""
-SyncroJob - Certificati Campione Tab (Refactored)
+"""SyncroJob - Certificati Campione Tab (Refactored).
+
 Gestore dell'interfaccia per il monitoraggio dei certificati campione.
 Coordina l'uso del CertificatiEngine e del CertificatiTreeWidget.
 """
 
-import operator
-import os
 from contextlib import suppress
 from datetime import datetime
 from typing import Any
@@ -32,21 +30,23 @@ from src.gui.dialogs.certificati_analysis_dialog import ScadenzeAnalysisDialog
 from src.gui.styles import COLORS
 from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
 from src.gui.widgets.core_widgets import PrimaryButton
+from src.gui.workers.certificati_worker import CertificatiWorker
+from src.gui.workers.pdf_export_worker import PDFExportWorker
 from src.utils.helpers import get_asset_path, safe_open
 
 from .certificati.tree_widget import CertificatiTreeWidget
 
 
 class CertificatiCampioneTab(QWidget):
-    """Tab per Certificati Campione (Tree View) - Versione Modularizzata."""
+    """Tab per Certificati Campione (Tree View) - Versione Modularizzata.
+
+    Inizializza il tab dei certificati caricano i filtri persistenti.
+
+    Args:
+        parent: Widget genitore opzionale.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il tab dei certificati caricano i filtri persistenti.
-
-        Args:
-            parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.engine = CertificatiEngine()
 
@@ -56,6 +56,10 @@ class CertificatiCampioneTab(QWidget):
         self._only_excluded = get_config_value("cert_filter_only_ex", False)
         self._hide_absent = get_config_value("cert_filter_hide_absent", False)
         self._include_history = get_config_value("cert_filter_history", True)
+
+        self.worker: CertificatiWorker | None = None
+        self._pdf_worker: PDFExportWorker | None = None
+        self._pending_expanded_ids: list[str] = []
 
         self._setup_ui()
         self._load_data()
@@ -93,7 +97,7 @@ class CertificatiCampioneTab(QWidget):
 
         self.search_input = SearchInput("Cerca per ID COEMI, Matricola, Modello...")
         self.search_input.setFixedWidth(350)
-        self.search_input.textChanged.connect(self._apply_filters)
+        self.search_input.textChanged.connect(lambda _: self._apply_filters())
         toolbar.addWidget(self.search_input)
 
         # Menu Mostra/Escludi (Professionale)
@@ -211,6 +215,7 @@ class CertificatiCampioneTab(QWidget):
             }}
             QPushButton:hover {{ background-color: {COLORS["bg_hover"]}; border-color: {COLORS["primary_dark"]}; }}
         """)
+
         return btn
 
     def _expand_all(self) -> None:
@@ -299,44 +304,56 @@ class CertificatiCampioneTab(QWidget):
         self.engine.load_exclusions()
 
         # Salva stato espansione
-        expanded_ids = []
+        self._pending_expanded_ids = []
         for i in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(i)
             if item and item.isExpanded():
                 with suppress(Exception):
                     # Usiamo l'ID COEMI per ripristinare l'espansione
                     meta = self.engine.parse_parent_label(item.text(0))
-                    expanded_ids.append(meta.get("id_coemi", ""))
+                    if id_coemi := meta.get("id_coemi"):
+                        self._pending_expanded_ids.append(id_coemi)
 
         self._load_data()
 
-        # Ripristina stato espansione
-        if expanded_ids:
-            for i in range(self.tree.topLevelItemCount()):
-                item = self.tree.topLevelItem(i)
-                if item:
-                    with suppress(Exception):
-                        meta = self.engine.parse_parent_label(item.text(0))
-                        if meta.get("id_coemi") in expanded_ids:
-                            item.setExpanded(True)
-
     def _load_data(self) -> None:
-        """Popola l'albero raggruppando i certificati per ID COEMI."""
-        data = ContabilitaManager.get_certificati_campione_data()
+        """Popola l'albero raggruppando i certificati per ID COEMI (Asincrono)."""
+        if self.worker and self.worker.isRunning():
+            self.worker.terminate()
+            self.worker.wait()
+
+        # Feedback visivo caricamento (opzionale)
+        self.tree.setUpdatesEnabled(False)
+
+        self.worker = CertificatiWorker(self.engine)
+        self.worker.finished_signal.connect(self._on_data_ready)
+        self.worker.error_signal.connect(lambda msg: print(f"Errore caricamento certificati: {msg}"))
+        self.worker.start()
+
+    def _on_data_ready(self, prioritized_groups: list[dict[str, Any]]) -> None:
+        """Callback eseguita al termine del worker per popolare la UI."""
         self.tree.clear()
         self.tree.setSortingEnabled(False)
-
-        # Raggruppamento e prioritizzazione delegata all'engine (SRP)
-        id_groups = self.engine.group_data_by_id_coemi(data)
-        prioritized_groups = self.engine.prepare_groups_with_priority(id_groups)
-        prioritized_groups.sort(key=operator.itemgetter("priority"))
 
         # Popolamento Tree
         self._populate_tree(prioritized_groups)
 
         self.tree.collapseAll()
+
+        # Ripristina stato espansione salvato
+        if self._pending_expanded_ids:
+            for i in range(self.tree.topLevelItemCount()):
+                item = self.tree.topLevelItem(i)
+                if item:
+                    with suppress(Exception):
+                        meta = self.engine.parse_parent_label(item.text(0))
+                        if meta.get("id_coemi") in self._pending_expanded_ids:
+                            item.setExpanded(True)
+            self._pending_expanded_ids = []
+
         self._apply_filters()
         self._update_excluded_count_label()
+        self.tree.setUpdatesEnabled(True)
 
     def _populate_tree(self, groups: list[dict[str, Any]]) -> None:
         """Crea gli elementi nell'albero per ogni gruppo di certificati."""
@@ -636,7 +653,7 @@ class CertificatiCampioneTab(QWidget):
         dialog._send_email()
 
     def _export_pdf(self) -> None:
-        """Esporta la lista dei certificati in un PDF formattato professionalmente."""
+        """Esporta la lista dei certificati in un PDF formattato professionalmente (Asincrono)."""
         from src.gui.widgets.contabilita.certificati.pdf_exporter import (
             CertificatiPdfExporter,
         )
@@ -651,18 +668,30 @@ class CertificatiCampioneTab(QWidget):
         if not file_path:
             return
 
+        if hasattr(self, "_pdf_worker") and self._pdf_worker and self._pdf_worker.isRunning():
+            return
+
+        NotificationManager.instance().add_notification(
+            title="PDF", message="Generazione PDF in corso...", level="info", show_toast=True
+        )
+
         exporter = CertificatiPdfExporter(
             self.tree,
             show_excluded=self._show_excluded,
             include_history=self._include_history,
             print_exclusions=self.engine._print_exclusions,
         )
-        success, message = exporter.export(file_path)
 
+        self._pdf_worker = PDFExportWorker(exporter, file_path)
+        self._pdf_worker.finished_signal.connect(self._on_pdf_export_finished)
+        self._pdf_worker.start()
+
+    def _on_pdf_export_finished(self, success: bool, message: str) -> None:
+        """Callback al termine della generazione PDF."""
         if success:
             NotificationManager.instance().add_notification(
                 title="Esportazione completata",
-                message=f"PDF generato con successo: {os.path.basename(file_path)}",
+                message="Il report PDF è stato generato con successo.",
                 level="success",
                 show_toast=True,
             )

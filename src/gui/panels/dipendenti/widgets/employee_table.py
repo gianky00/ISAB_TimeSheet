@@ -1,5 +1,5 @@
-"""
-SyncroJob - Employee Table Widget
+"""SyncroJob - Employee Table Widget.
+
 Widget specializzato per la visualizzazione della griglia anagrafica dipendenti.
 """
 
@@ -25,19 +25,23 @@ logger = logging.getLogger(__name__)
 
 
 class EmployeeTableView(QTableView):
-    """Tabella specializzata per l'anagrafica dipendenti con delegati e menu contestuale."""
+    """Tabella specializzata per l'anagrafica dipendenti con delegati e menu contestuale.
+
+    Inizializza la tabella dipendenti.
+
+    Args:
+      model: Il modello dati (FastTableModel).
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        employee_selected: Segnale o attributo della classe.
+        monitoring_toggled: Segnale o attributo della classe.
+    """
 
     monitoring_toggled = Signal(str, bool)  # id_risorsa, enable
     employee_selected = Signal(int)  # row_idx
 
     def __init__(self, model: Any, parent: QWidget | None = None) -> None:
-        """
-        Inizializza la tabella dipendenti.
-
-        Args:
-          model: Il modello dati (FastTableModel).
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.setModel(model)
         self._setup_ui()
@@ -77,8 +81,7 @@ class EmployeeTableView(QTableView):
     """)
 
     def configure_columns(self, widths: list[int]) -> None:
-        """
-        Configura la larghezza fissa delle colonne.
+        """Configura la larghezza fissa delle colonne.
 
         Args:
           widths: Lista di interi rappresentanti i pixel per ogni colonna.
@@ -102,8 +105,7 @@ class EmployeeTableView(QTableView):
             self.employee_selected.emit(indexes[0].row())
 
     def _show_context_menu(self, position: QPoint) -> None:
-        """
-        Mostra il menu contestuale per attivare/disattivare il monitoraggio del dipendente.
+        """Mostra il menu contestuale per attivare/disattivare il monitoraggio del dipendente.
 
         Args:
           position: Posizione del clic del mouse.

@@ -1,3 +1,5 @@
+"""Modulo Timesheet."""
+
 from dataclasses import dataclass
 
 

@@ -1,5 +1,5 @@
-"""
-SyncroJob - Report Worker
+"""SyncroJob - Report Worker.
+
 Thread worker per la generazione asincrona dei report.
 Gestisce l'integrazione con Outlook nel thread dedicato.
 """
@@ -26,12 +26,14 @@ logger = logging.getLogger(__name__)
 
 
 class ReportWorker(QThread):
-    """Worker per l'esecuzione asincrona del workflow di reporting."""
+    """Worker per l'esecuzione asincrona del workflow di reporting.
+
+    Inizializza il worker.
+    """
 
     finished_signal = Signal(bool, str, dict)  # success, message, data
 
     def __init__(self) -> None:
-        """Inizializza il worker."""
         super().__init__()
 
     def run(self) -> None:
@@ -62,8 +64,7 @@ class ReportWorker(QThread):
     def _handle_outlook(
         self, body_html: str, excel_path: Path | None, report_data: dict[str, Any]
     ) -> tuple[bool, str]:
-        """
-        Gestisce l'automazione Outlook.
+        """Gestisce l'automazione Outlook.
 
         Args:
           body_html: Corpo dell'email in formato HTML.

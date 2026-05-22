@@ -1,3 +1,5 @@
+"""Modulo Quick Actions."""
+
 from typing import Any
 
 from PySide6.QtCore import QPoint, QSize, Qt, Signal
@@ -21,8 +23,9 @@ from .quick_actions_registry import AVAILABLE_ACTIONS
 
 
 class ActionChip(QPushButton):
-    """
-    Pulsante 'Chip' per azione rapida.
+    """Pulsante 'Chip' per azione rapida.
+
+    Inizializza la classe.
     """
 
     def __init__(self, text: str, icon_path: str, color: str, parent: QWidget | None = None) -> None:
@@ -59,8 +62,9 @@ class ActionChip(QPushButton):
 
 
 class QuickActions(QWidget):
-    """
-    Toolbar orizzontale scrollabile con azioni rapide configurabili.
+    """Toolbar orizzontale scrollabile con azioni rapide configurabili.
+
+    Inizializza la classe.
     """
 
     action_clicked = Signal(str)  # Emits action key

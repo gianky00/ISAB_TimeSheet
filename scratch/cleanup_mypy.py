@@ -5,8 +5,7 @@ import re
 
 
 def cleanup_mypy_suppressions(directory: str) -> None:
-    """
-    Scansiona ricorsivamente una directory e rimuove i commenti 'disable-error-code' di MyPy.
+    """Scansiona ricorsivamente una directory e rimuove i commenti 'disable-error-code' di MyPy.
 
     Args:
       directory: Il percorso della cartella da pulire.

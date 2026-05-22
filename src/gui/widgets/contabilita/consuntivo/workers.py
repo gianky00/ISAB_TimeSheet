@@ -1,5 +1,5 @@
-"""
-SyncroJob - Consuntivo Workers
+"""SyncroJob - Consuntivo Workers.
+
 Worker per operazioni asincrone nel modulo Consuntivi.
 """
 
@@ -9,7 +9,10 @@ from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoCont
 
 
 class ProgWorker(QThread):
-    """Worker per il calcolo asincrono del progressivo OdC."""
+    """Worker per il calcolo asincrono del progressivo OdC.
+
+    Inizializza la classe.
+    """
 
     finished = Signal(str)
 

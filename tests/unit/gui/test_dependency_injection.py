@@ -38,11 +38,9 @@ def mock_main_window(qtbot):
 
 
 def test_navigation_controller_dependency_injection(mock_main_window):
-    """
-    Test architetturale: Verifica che il NavigationController agisca correttamente come
+    """Test architetturale: Verifica che il NavigationController agisca correttamente come
     Dependency Injection Container (IoC).
     """
-
     # 1. Instanziazione del Container
     nav_controller = NavigationController(mock_main_window)
 

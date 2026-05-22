@@ -1,5 +1,5 @@
-"""
-SyncroJob - Panel Factory
+"""SyncroJob - Panel Factory.
+
 Componente responsabile dell'istanziazione "Lazy" dei pannelli dell'interfaccia utente.
 Garantisce il disaccoppiamento tra la logica di navigazione e la creazione degli oggetti UI.
 """
@@ -19,24 +19,22 @@ logger = logging.getLogger(__name__)
 
 
 class PanelFactory:
-    """
-    Factory per la creazione dei pannelli della MainWindow.
+    """Factory per la creazione dei pannelli della MainWindow.
+
     Incapsula la logica di importazione dinamica e inizializzazione dei widget.
+
+    Inizializza la factory.
+
+    Args:
+      navigation_controller: Riferimento al controller di navigazione per l'iniezione delle dipendenze.
     """
 
     def __init__(self, navigation_controller: "NavigationController") -> None:
-        """
-        Inizializza la factory.
-
-        Args:
-          navigation_controller: Riferimento al controller di navigazione per l'iniezione delle dipendenze.
-        """
         self.nav = navigation_controller
         self.mw: MainWindow = navigation_controller.mw
 
     def create_panel(self, index: PageIndex | int) -> QWidget | None:
-        """
-        Crea un'istanza del pannello corrispondente all'indice specificato.
+        """Crea un'istanza del pannello corrispondente all'indice specificato.
 
         Args:
           index: Indice della pagina (PageIndex).

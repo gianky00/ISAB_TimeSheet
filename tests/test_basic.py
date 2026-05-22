@@ -1,6 +1,4 @@
-"""
-Bot TS - Basic Tests
-"""
+"""Bot TS - Basic Tests"""
 
 import os
 import sys

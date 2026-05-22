@@ -1,3 +1,5 @@
+"""Modulo Year Tab."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
@@ -25,7 +27,10 @@ if TYPE_CHECKING:
 
 
 class MultiColumnFilterProxyModel(QSortFilterProxyModel):
-    """Proxy model che filtra su tutte le colonne con supporto multi-termine."""
+    """Proxy model che filtra su tutte le colonne con supporto multi-termine.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -59,7 +64,10 @@ class MultiColumnFilterProxyModel(QSortFilterProxyModel):
 
 
 class ContabilitaYearTab(QWidget):
-    """Tab per un singolo anno ottimizzato per massima reattività."""
+    """Tab per un singolo anno ottimizzato per massima reattività.
+
+    Inizializza la classe.
+    """
 
     COLUMNS: ClassVar[list[str]] = [
         "DATA\nPREV.",

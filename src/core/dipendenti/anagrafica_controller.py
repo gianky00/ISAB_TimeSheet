@@ -1,5 +1,5 @@
-"""
-SyncroJob - Anagrafica Controller
+"""SyncroJob - Anagrafica Controller.
+
 Logica di business per il caricamento, filtraggio e processing dei dati dipendenti.
 """
 
@@ -22,7 +22,10 @@ logger = logging.getLogger(__name__)
 
 
 class AnagraficaController:
-    """Controller per la gestione dei dati dell'anagrafica dipendenti."""
+    """Controller per la gestione dei dati dell'anagrafica dipendenti.
+
+    Inizializza il controller dell'anagrafica dipendenti.
+    """
 
     def __init__(self) -> None:
         self.repository = EmployeeRepository()
@@ -147,7 +150,6 @@ class AnagraficaController:
 
     def get_last_isab_access(self, cognome: str, nome: str) -> tuple[str, int, str]:
         """Recupera l'ultimo accesso ISAB per un dipendente."""
-
         norm_cognome, norm_nome = normalize_name(cognome), normalize_name(nome)
         query = """
       SELECT data FROM timbrature

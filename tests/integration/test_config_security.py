@@ -12,8 +12,7 @@ from src.utils.security import password_manager
 class TestConfigSecurity:
     @pytest.fixture(autouse=True)
     def setup_method(self, _isolate_config):
-        """
-        Questa fixture usa _isolate_config per creare un ambiente pulito
+        """Questa fixture usa _isolate_config per creare un ambiente pulito
         e applica patch aggiuntive necessarie per questo test.
         """
         fake_file = _isolate_config

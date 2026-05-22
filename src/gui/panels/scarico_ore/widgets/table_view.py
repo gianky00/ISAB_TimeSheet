@@ -1,5 +1,5 @@
-"""
-SyncroJob - Scarico Ore Table View
+"""SyncroJob - Scarico Ore Table View.
+
 Widget tabellare specializzato per grandi volumi di dati con filtri Excel-style.
 """
 
@@ -15,7 +15,10 @@ from src.gui.components.scarico_ore import FilterHeaderView, ScaricoOreTableMode
 
 
 class ScaricoOreTableView(QTableView):
-    """TableView ottimizzata per lo Scarico Ore con supporto a filtri e copia TSV."""
+    """TableView ottimizzata per lo Scarico Ore con supporto a filtri e copia TSV.
+
+    Inizializza la classe.
+    """
 
     selection_totals_changed = Signal(float)
     filter_changed = Signal(int, list)

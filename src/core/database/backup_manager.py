@@ -1,5 +1,5 @@
-"""
-SyncroJob - Database Backup Manager
+"""SyncroJob - Database Backup Manager.
+
 Specializzato nella protezione dei database SQLite tramite backup periodici e rotazione.
 """
 
@@ -16,8 +16,8 @@ logger = get_logger(__name__)
 
 
 class DatabaseBackupManager:
-    """
-    Gestisce il backup dei database SQLite in una cartella locale dedicata.
+    """Gestisce il backup dei database SQLite in una cartella locale dedicata.
+
     Implementa la rotazione dei file per evitare eccessivo consumo di disco.
     """
 
@@ -26,8 +26,8 @@ class DatabaseBackupManager:
 
     @classmethod
     def execute_backup(cls) -> bool:
-        """
-        Esegue il backup di tutti i database attivi.
+        """Esegue il backup di tutti i database attivi.
+
         Utilizza il comando VACUUM INTO di SQLite per backup consistenti a caldo.
         """
         try:
@@ -70,8 +70,8 @@ class DatabaseBackupManager:
 
     @classmethod
     def _safe_copy(cls, src: Path, dst: Path) -> bool:
-        """
-        Esegue una copia sicura del database.
+        """Esegue una copia sicura del database.
+
         Prova a usare SQLite per un backup consistente, altrimenti fallback su shutil.
         """
         try:

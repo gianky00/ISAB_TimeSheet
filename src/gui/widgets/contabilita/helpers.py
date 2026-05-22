@@ -1,3 +1,5 @@
+"""Modulo Helpers."""
+
 from datetime import UTC, datetime
 from typing import Any
 
@@ -8,6 +10,7 @@ class SortableTreeWidgetItem(QTreeWidgetItem):
     """Custom QTreeWidgetItem che implementa l'ordinamento numerico e per data."""
 
     def __lt__(self, other: Any) -> bool:
+        """Metodo magico di confronto."""
         tw = self.treeWidget()
         if tw is None or not isinstance(other, QTreeWidgetItem):
             return super().__lt__(other)

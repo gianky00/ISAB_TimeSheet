@@ -1,5 +1,5 @@
-"""
-SyncroJob - Parsing Utils
+"""SyncroJob - Parsing Utils.
+
 Utility per il parsing robusto di valute e numeri.
 """
 
@@ -8,8 +8,8 @@ from contextlib import suppress
 
 
 def parse_currency(value: float | int | str | None) -> float:
-    """
-    Converte una stringa o numero in float, gestendo formati Italiani e Internazionali.
+    """Converte una stringa o numero in float, gestendo formati Italiani e Internazionali.
+
     Versione Enterprise V5.1: Gestione robusta di rumore e notazione scientifica.
     """
     # 0. Gestione rapida tipi numerici e nulli

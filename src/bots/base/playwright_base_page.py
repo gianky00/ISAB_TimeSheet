@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright Base Page Object
+"""SyncroJob - Playwright Base Page Object.
+
 Classe base condivisa per tutti i Page Objects basati su Playwright.
 """
 
@@ -14,8 +14,9 @@ from src.core.constants import Timeouts
 
 
 class PlaywrightBasePage:
-    """
-    Classe base per la gestione delle interazioni con le pagine usando Playwright.
+    """Classe base per la gestione delle interazioni con le pagine usando Playwright.
+
+    Inizializza la classe.
     """
 
     def __init__(self, page: Page, logger: Callable[[str], None] | None = None) -> None:
@@ -96,8 +97,8 @@ class PlaywrightBasePage:
     def _select_combobox_item(
         self, input_selector: str, arrow_selector: str, item_text: str, timeout_ms: int = 15000
     ) -> bool:
-        """
-        Seleziona un elemento in modo ultra-robusto emulando Selenium.
+        """Seleziona un elemento in modo ultra-robusto emulando Selenium.
+
         Gestisce i duplicati nelle tab prendendo sempre il primo elemento visibile.
         Previene i blocchi di 30s usando timeout brevi e pre-attese esplicite.
         Supporta anche campi senza freccia fisica (inserimento diretto).

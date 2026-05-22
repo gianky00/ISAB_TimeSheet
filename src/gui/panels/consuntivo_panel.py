@@ -1,8 +1,10 @@
-"""
-SyncroJob - Consuntivo Panel (Refactored)
+"""SyncroJob - Consuntivo Panel (Refactored).
+
 Pannello premium per la generazione e manipolazione dei consuntivi automatizzati.
 Struttura modulare che integra i widget specializzati per Nuovo, Esistente e Impostazioni.
 """
+
+from typing import Any
 
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QVBoxLayout, QWidget
@@ -12,23 +14,27 @@ from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.widgets.contabilita.consuntivo.crea_nuovo_tab import CreaNuovoTab
 from src.gui.widgets.contabilita.consuntivo.impostazioni_tab import ImpostazioniTab
 from src.gui.widgets.contabilita.consuntivo.modifica_esistente_tab import ModificaEsistenteTab
+from src.gui.workers.consuntivo_worker import ConsuntivoWorker
 
 
 class ConsuntivoPanel(QWidget):
-    """Pannello Root che organizza la suite Premium dei Consuntivi."""
+    """Pannello Root che organizza la suite Premium dei Consuntivi.
+
+    Inizializza il pannello consuntivo con iniezione del controller.
+
+    Args:
+      controller: Istanza del controller per la logica di business.
+      parent: Widget genitore opzionale.
+    """
 
     def __init__(self, controller: ConsuntivoController, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello consuntivo con iniezione del controller.
-
-        Args:
-          controller: Istanza del controller per la logica di business.
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.controller = controller
         self._data_preloaded = False
+        self._worker: ConsuntivoWorker | None = None
+
         self._setup_ui()
+
         # Avvia il caricamento dei dati immediatamente all'istanza (Eager Loading)
         QTimer.singleShot(100, self._pre_load_data)
 
@@ -57,12 +63,17 @@ class ConsuntivoPanel(QWidget):
             self.tabs.setCurrentIndex(index)
 
     def _pre_load_data(self) -> None:
-        """Esegue il caricamento pesante dei dati in background all'avvio dell'app."""
+        """Avvia il caricamento pesante dei dati in background (Asincrono)."""
         if self._data_preloaded:
             return
 
-        # Carica opzioni tramite controller (CORE)
-        opts = self.controller.get_config_options()
+        self._worker = ConsuntivoWorker(self.controller)
+        self._worker.finished_signal.connect(self._on_pre_load_finished)
+        self._worker.start()
+
+    def _on_pre_load_finished(self, result: dict[str, Any]) -> None:
+        """Popola i tab della UI con i dati caricati dal worker."""
+        opts = result["options"]
 
         self._tab_new.tcl_combo.blockSignals(True)
         self._tab_new.tcl_combo.clear()
@@ -90,7 +101,9 @@ class ConsuntivoPanel(QWidget):
 
     def _on_tab_changed(self, index: int) -> None:
         """Gestisce il refresh leggero dell'interfaccia al cambio scheda.
-        I tab ora gestiscono autonomamente il caching pesante."""
+
+        I tab ora gestiscono autonomamente il caching pesante.
+        """
         widget = self.tabs.widget(index)
 
         if isinstance(widget, CreaNuovoTab):

@@ -1,5 +1,4 @@
-"""
-Baseline tests for ExcelImporter.
+"""Baseline tests for ExcelImporter.
 Ensures 100% coverage and parity before refactoring.
 """
 

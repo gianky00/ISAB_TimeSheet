@@ -1,5 +1,5 @@
-"""
-SyncroJob - Bot Execution Guard
+"""SyncroJob - Bot Execution Guard.
+
 Gestisce i controlli pre-volo dei bot: licenza, aggiornamenti e integrità.
 Centralizza la sicurezza dell'esecuzione.
 """
@@ -10,14 +10,11 @@ logger = get_logger(__name__)
 
 
 class ExecutionGuard:
-    """
-    Componente responsabile della validazione delle condizioni di esecuzione.
-    """
+    """Componente responsabile della validazione delle condizioni di esecuzione."""
 
     @staticmethod
     def check_environment() -> tuple[bool, str]:
-        """
-        Esegue i controlli preliminari (Licenza e Aggiornamenti).
+        """Esegue i controlli preliminari (Licenza e Aggiornamenti).
 
         Returns:
           Tuple (esito, messaggio_errore).

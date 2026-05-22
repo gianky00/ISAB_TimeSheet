@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright SafeWork PDL Download Bot
+"""SyncroJob - Playwright SafeWork PDL Download Bot.
+
 Versione Playwright del bot per lo scarico e la stampa dei PDL.
 """
 
@@ -29,7 +29,18 @@ MIN_PAGES_FOR_CLEANUP: Final[int] = 2
 
 
 class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
-    """Bot per lo scarico e la stampa automatizzata dei PDL usando Playwright."""
+    """Bot per lo scarico e la stampa automatizzata dei PDL usando Playwright.
+
+    Inizializza il bot di scarico PDL con Playwright.
+
+    Args:
+        config: Configurazione del bot.
+        account_type: Tipo di account SafeWork.
+
+    Attributes:
+        STEPS: ClassVar[list[tuple[str: Segnale o attributo della classe.
+        str: Segnale o attributo della classe.
+    """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
@@ -50,10 +61,12 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
 
     @property
     def name(self) -> str:
+        """Nome del bot."""
         return "Scarico PDL (PW)"
 
     @property
     def description(self) -> str:
+        """Descrizione del bot."""
         return "Scarica e stampa Permessi di Lavoro da SafeWork (Playwright)"
 
     @staticmethod

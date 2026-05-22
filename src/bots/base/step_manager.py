@@ -1,5 +1,5 @@
-"""
-SyncroJob - Bot Step Manager
+"""SyncroJob - Bot Step Manager.
+
 Componente dedicato alla gestione della timeline operativa dei bot.
 Gestisce gli stati degli step e notifica la GUI tramite segnali.
 """
@@ -24,18 +24,22 @@ class StepStatus(Enum):
 
 
 class BotStepManager(QObject):
-    """
-    Gestisce la progressione degli step di un bot.
+    """Gestisce la progressione degli step di un bot.
+
     Isola la logica della macchina a stati della timeline dal bot core.
+
+    Inizializza il manager degli step.
+
+    Args:
+      steps_definition: Lista di tuple (id, label) definita nella classe del bot.
+
+    Attributes:
+        step_changed: Segnale o attributo della classe.
     """
 
     step_changed = Signal(int, str, object)  # index, name, status
 
     def __init__(self, steps_definition: list[tuple[str, str]]) -> None:
-        """
-        Args:
-          steps_definition: Lista di tuple (id, label) definita nella classe del bot.
-        """
         super().__init__()
         self.steps = steps_definition
         self._states: list[StepStatus] = [StepStatus.PENDING for _ in self.steps]
@@ -47,8 +51,7 @@ class BotStepManager(QObject):
         self._current_index = -1
 
     def update_step(self, step_id: Any, status: StepStatus) -> tuple[int, str]:
-        """
-        Aggiorna lo stato di uno step.
+        """Aggiorna lo stato di uno step.
 
         Args:
           step_id: Stringa (id) o intero (indice).
@@ -85,4 +88,5 @@ class BotStepManager(QObject):
 
     @property
     def current_index(self) -> int:
+        """Restituisce l'indice dello step attualmente attivo."""
         return self._current_index

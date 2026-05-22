@@ -1,6 +1,4 @@
-"""
-SyncroJob - GUI Widgets Registry
-"""
+"""SyncroJob - GUI Widgets Registry."""
 
 from .bot_parameters import BotParametersWidget
 from .core_widgets import (

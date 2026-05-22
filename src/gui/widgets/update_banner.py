@@ -1,3 +1,5 @@
+"""Modulo Update Banner."""
+
 from PySide6.QtCore import (
     Property,
     QEasingCurve,
@@ -32,7 +34,10 @@ QToolTip {
 
 
 class UpdateBanner(QFrame):
-    """Banner per la notifica e il progresso di aggiornamenti disponibili."""
+    """Banner per la notifica e il progresso di aggiornamenti disponibili.
+
+    Inizializza la classe.
+    """
 
     download_requested = Signal(str)
 
@@ -50,6 +55,7 @@ class UpdateBanner(QFrame):
       }}
       {TOOLTIP_CSS}
     """)
+
         self.setVisible(False)
         self._download_url = ""
         self._is_complete = False

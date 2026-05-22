@@ -1,5 +1,5 @@
-"""
-SyncroJob - Playwright Timbrature Bot
+"""SyncroJob - Playwright Timbrature Bot.
+
 Versione Playwright del bot per lo scarico delle timbrature.
 """
 
@@ -14,7 +14,10 @@ from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
 
 class PlaywrightTimbratureBot(PlaywrightBaseBot):
-    """Bot per lo scarico e l'archiviazione automatica delle timbrature usando Playwright."""
+    """Bot per lo scarico e l'archiviazione automatica delle timbrature usando Playwright.
+
+    Inizializza il bot con i parametri temporali e il fornitore.
+    """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login Portale ISAB"),
@@ -45,7 +48,6 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
         ]
 
     def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs: Any) -> None:
-        """Inizializza il bot con i parametri temporali e il fornitore."""
         kwargs.pop("societa", None)
         super().__init__(**kwargs)
         self.data_da = data_da
@@ -79,8 +81,7 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
         return True, ""
 
     def _normalize_ranges(self, data: list[dict[str, Any]] | dict[str, Any]) -> list[dict[str, Any]]:
-        """
-        Normalizza i dati di input in una lista di intervalli temporali.
+        """Normalizza i dati di input in una lista di intervalli temporali.
 
         Args:
           data: Dati grezzi ricevuti dal worker.
@@ -149,8 +150,7 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
     def _process_download_ranges(
         self, page_obj: PlaywrightTimbraturePage, ranges: list[dict[str, Any]]
     ) -> int:
-        """
-        Cicla sugli intervalli e gestisce download e importazione.
+        """Cicla sugli intervalli e gestisce download e importazione.
 
         Args:
           page_obj: Page Object per l'interazione Playwright.

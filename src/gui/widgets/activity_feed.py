@@ -1,3 +1,5 @@
+"""Modulo Activity Feed."""
+
 from __future__ import annotations
 
 from contextlib import suppress
@@ -37,8 +39,9 @@ QToolTip {
 
 
 class ActivityItem(QFrame):
-    """
-    Rappresenta una singola voce nella timeline orizzontale (Compact) con animazioni moderne.
+    """Rappresenta una singola voce nella timeline orizzontale (Compact) con animazioni moderne.
+
+    Inizializza la classe.
     """
 
     def __init__(
@@ -173,8 +176,9 @@ class ActivityItem(QFrame):
 
 
 class ActivityFeed(QWidget):
-    """
-    Widget che mostra una timeline orizzontale delle ultime attività.
+    """Widget che mostra una timeline orizzontale delle ultime attività.
+
+    Inizializza la classe.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:

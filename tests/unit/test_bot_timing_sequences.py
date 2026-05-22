@@ -51,8 +51,7 @@ class ConcreteSafeWorkPDLBot(SafeWorkPDLBot):
 
 
 class TestBotTimingSequences:
-    """
-    Questa suite di test verifica che le pause (time.sleep) critiche siano
+    """Questa suite di test verifica che le pause (time.sleep) critiche siano
     presenti e chiamate nell'ordine corretto per tutti i bot.
     """
 

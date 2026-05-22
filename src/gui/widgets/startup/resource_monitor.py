@@ -1,5 +1,5 @@
-"""
-SyncroJob - Resource Monitor
+"""SyncroJob - Resource Monitor.
+
 HUD per il monitoraggio in tempo reale di RAM e CPU durante l'avvio.
 """
 
@@ -18,7 +18,10 @@ from src.utils.system_telemetry import FILETIME, get_current_process_ram_mb
 
 
 class ResourceMonitor(QWidget):
-    """HUD Monitor per Risorse (RAM/CPU Activity)."""
+    """HUD Monitor per Risorse (RAM/CPU Activity).
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
