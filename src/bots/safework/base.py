@@ -31,6 +31,14 @@ class SafeworkBaseBot(SeleniumBaseBot):
         config: SeleniumBotConfig | None = None,
         account_type: str = "Esecutore",
     ) -> None:
+        """Inizializza il bot base per SafeWork.
+
+        Args:
+          username: Nome utente per il login.
+          password: Password per il login.
+          config: Configurazione del bot Selenium.
+          account_type: Tipologia di account (es. Esecutore).
+        """
         super().__init__(username, password, config)
         self.account_type = account_type
         self.safework_login_page: SafeWorkLoginPage | None = None
@@ -141,8 +149,10 @@ class SafeworkBaseBot(SeleniumBaseBot):
 
     @property
     def name(self) -> str:
+        """Restituisce il nome identificativo del bot."""
         return "SafeWorkBot"
 
     @property
     def description(self) -> str:
+        """Restituisce la descrizione delle finalità del bot."""
         return "Bot Base SafeWork"
