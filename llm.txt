@@ -1,0 +1,131 @@
+# SYNCROJOB ENTERPRISE - ARCHITECTURE & AI CONTEXT GUIDE (llm.txt)
+
+Questo documento fornisce un contesto ad alta densità di informazioni sull'architettura e sulle convenzioni del progetto SyncroJob Enterprise (ISAB_TimeSheet) per Large Language Models (LLM) e agenti di sviluppo.
+
+---
+
+## 📂 MAPPA DELL'ARCHITETTURA (HIGH DENSITY)
+
+```
+c:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet/
+├── main.py                    # Entry Point: Inizializza QApplication, MainWindow e Crash Handler
+├── GEMINI.md                  # Linee guida di qualità rigorose (Ruff, MyPy, Pydoclint, Pydantic)
+├── CLAUDE.md                  # Istruzioni operative rapide per sviluppo, build e test
+├── PYSIDE6_OPTIMIZATION.md    # Best practices per performance e signal safety in PySide6
+├── src/
+│   ├── main.py                # Wrapper secondario o entrypoint (se invocato internamente)
+│   ├── models/                # Modelli di dati tipizzati (Pydantic / Dataclasses)
+│   │   ├── employee.py        # Modello Dipendente / Anagrafica
+│   │   ├── oda.py             # Modello Ordine di Acquisto (OdA)
+│   │   ├── pdl.py             # Modello Piano di Lavoro (PDL)
+│   │   └── contabilita.py     # Modello transazioni e ore strumentali
+│   ├── core/                  # Logica di business, servizi e Manager Singleton
+│   │   ├── audit_manager.py   # Registro audit immutabile (SHA-256) con database SQLite dedicato
+│   │   ├── config_manager.py  # Gestione configurazione centralizzata JSON (config.json)
+│   │   ├── notification_mgr.py# Gestione notifiche centralizzata
+│   │   ├── sync_tracker.py    # Persistenza delle statistiche di sincronizzazione dei dati
+│   │   ├── data_synchronizer.py # Motore di sincronizzazione intelligente con SQLite (UPSERT smart)
+│   │   └── controllers/       # Controller che collegano la logica di business alla GUI
+│   ├── bots/                  # Automazioni browser basate su Selenium e Playwright
+│   │   ├── base/              # Classi base per tutti i bot
+│   │   │   ├── base_bot.py    # Logica di base del bot e macchina a stati
+│   │   │   └── login_page.py  # Gestione login e credenziali protette
+│   │   ├── portale_fornitori/ # Bot dedicati al Portale Fornitori ISAB
+│   │   │   ├── scarico_ts/    # Bot scarico timesheet giornalieri
+│   │   │   ├── carico_ts/     # Bot upload timesheet approvati
+│   │   │   └── dettagli_oda/  # Bot estrazione dati ordini di acquisto
+│   │   └── safework/          # Bot dedicato al portale di sicurezza SafeWork (Ricerca PDL)
+│   ├── gui/                   # Interfaccia grafica utente PySide6 (Modern UI)
+│   │   ├── main_window.py     # Finestra principale coordinatrice, lazy loading dei pannelli
+│   │   ├── controllers/       # Controller specifici per la navigazione e i tray di sistema
+│   │   ├── panels/            # Pannelli principali lazy-loaded (PageIndex 0-10)
+│   │   │   ├── dashboard_panel.py # Pannello principale con feed eventi e autopilot
+│   │   │   ├── storico_oda_panel.py # Pannello gestione e sincronizzazione OdA
+│   │   │   └── pdl_db_panel.py    # Pannello gestione e ricerca PDL
+│   │   └── widgets/           # Widget UI personalizzati (Toast, ModernButton, ConfirmationDialog)
+│   └── utils/                 # Classi e funzioni helper di utilità generica
+│       ├── date_utils.py      # Gestione date, range e formati locali
+│       ├── helpers.py         # Funzioni helper generiche per stringhe, file e conversioni
+│       ├── secure_logger.py   # Wrapper di logging sicuro integrato con Loguru
+│       └── resource_manager.py# Gestore delle risorse, fogli di stile (QSS) e icone
+```
+
+---
+
+## ⚙️ FLUSSI DI PROCESSO & THREADING (MERMAID)
+
+### 1. Esecuzione Asincrona di un Bot tramite QThread Worker
+Tutti i bot di automazione non devono mai bloccare l'interfaccia grafica PySide6. Vengono eseguiti in thread secondari usando un pattern a segnali sicuri.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant GUI as Interfaccia GUI (StoricoOdAPanel)
+    participant Worker as QThread Worker (OdaWorker)
+    participant Bot as Selenium Bot (DettagliOdABot)
+    participant DB as SQLite / SyncTracker
+
+    GUI->>Worker: Crea Worker con parametri (credenziali, date)
+    GUI->>Worker: Connette segnali (progress, finished, error)
+    GUI->>Worker: Chiama worker.start()
+    activate Worker
+    Worker->>Bot: Inizializza Bot in modalità headless/headful
+    activate Bot
+    Worker->>Bot: Chiama bot.run()
+    Bot->>Worker: Invia aggiornamenti di stato (BotStatus)
+    Worker->>GUI: Emette segnale update_status(message)
+    Bot->>Worker: Ritorna i dati estratti (es. lista di OdA)
+    deactivate Bot
+    Worker->>DB: Esegue _sync_upsert_smart() e aggiorna SyncTracker
+    Worker->>GUI: Emette segnale finished(risultato_sincronizzazione)
+    deactivate Worker
+    GUI->>GUI: Mostra ConfirmationDialog di successo e aggiorna la tabella
+```
+
+### 2. Ciclo di Sincronizzazione Smart degli OdA (`_sync_upsert_smart`)
+Per evitare aggiornamenti ridondanti e garantire la massima precisione nei contatori (+N inseriti, +M modificati), viene applicata una logica differenziale tramite SQL `EXCEPT`.
+
+```mermaid
+graph TD
+    A["Inizio Sincronizzazione"] --> B["Crea tabella temporanea temp_oda"]
+    B --> C["Inserisci i dati estratti dal bot in temp_oda"]
+    C --> D["Esegui query EXCEPT per identificare righe NUOVE o MODIFICATE"]
+    D --> E{"Ci sono modifiche?"}
+    E -- No --> F["Ritorna contatore (0 inseriti, 0 modificati)"]
+    E -- Sì --> G["Esegui INSERT OR REPLACE INTO storico_oda"]
+    G --> H["Ritorna contatore (+N reali aggiornati)"]
+    F --> I["Aggiorna SyncTracker con timestamp corrente"]
+    H --> I
+    I --> J["Fine e chiusura transazione"]
+```
+
+---
+
+## 🚨 LINEE GUIDA DI CODIFICA FONDAMENTALI
+
+### 1. Separazione delle Responsabilità (SRP)
+- **Logica vs GUI:** La GUI (`src/gui/`) deve occuparsi solo di visualizzazione, animazioni e propagazione dei segnali. Nessuna query diretta a database, scraping o elaborazione complessa deve avvenire nella GUI.
+- **Controller/Service:** La logica di business deve risiedere nei Manager (`src/core/`) o nei Controller dedicati.
+
+### 2. Integrità e Sicurezza dei Segnali PySide6 (QT)
+- **Signal Safety:** Quando colleghi i segnali alle funzioni, non rimuovere mai le `lambda` se mittente e destinatario hanno firme di argomenti differenti. Rimuovere le lambda per brevità sintattica (es. segnalato da Ruff come `FURB111`) causa instabilità a runtime in PySide6.
+- **Esempio Corretto:**
+  ```python
+  # Mantiene la lambda per garantire la corrispondenza dei parametri della firma PySide6
+  self.btn_aggiorna.clicked.connect(lambda: self._on_aggiorna_clicked())
+  ```
+
+### 3. Gestione Sicura degli Errori e Crash Handling
+- **Protezione con Loguru:** Ogni punto di ingresso critico (avvio di bot, callback di thread, startup) deve essere decorato con `@logger.catch` per evitare crash silenziosi.
+- **Crash File:** Se l'applicazione subisce un crash irreversibile, l'eccezione globale scrive i dettagli nel file `logs/crash.txt` per diagnostica immediata.
+- **Mascotte e Dialogs:** Sostituire sempre `QMessageBox` o `QInputDialog` nativi con le classi customizzate `ConfirmationDialog` e `StandardInputDialog` per preservare il design moderno e coerente dell'applicazione.
+
+### 4. Gestione degli Stati nei Bot (Macchina a Stati Selenium/Playwright)
+Ogni bot eredita da `BaseBot` e deve aggiornare e rispettare rigorosamente gli stati di `BotStatus`:
+- `IDLE`: Pronto all'avvio.
+- `INITIALIZING`: Setup del webdriver / browser.
+- `LOGGING_IN`: Autenticazione sul portale ISAB / SafeWork.
+- `RUNNING`: Esecuzione dell'operazione di business (estrazione o caricamento).
+- `COMPLETED`: Operazione terminata con successo.
+- `ERROR`: Interrotto da un'eccezione non gestita.
+- `STOPPED`: Interrotto graziosamente su richiesta dell'utente tramite `_stop_requested`.
