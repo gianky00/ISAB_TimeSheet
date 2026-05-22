@@ -19,6 +19,18 @@ class SafeworkBaseBot(SeleniumBaseBot):
     """Classe base specifica per SafeWork.
 
     Isola le logiche SafeWork da quelle del Portale Fornitori.
+
+    Inizializza il bot base per SafeWork.
+
+    Args:
+      username: Nome utente per il login.
+      password: Password per il login.
+      config: Configurazione del bot Selenium.
+      account_type: Tipologia di account (es. Esecutore).
+
+    Attributes:
+        ISAB_URL: Segnale o attributo della classe.
+        SAFEWORK_URL: Segnale o attributo della classe.
     """
 
     SAFEWORK_URL = URLs.SAFEWORK_URL
@@ -31,14 +43,6 @@ class SafeworkBaseBot(SeleniumBaseBot):
         config: SeleniumBotConfig | None = None,
         account_type: str = "Esecutore",
     ) -> None:
-        """Inizializza il bot base per SafeWork.
-
-        Args:
-          username: Nome utente per il login.
-          password: Password per il login.
-          config: Configurazione del bot Selenium.
-          account_type: Tipologia di account (es. Esecutore).
-        """
         super().__init__(username, password, config)
         self.account_type = account_type
         self.safework_login_page: SafeWorkLoginPage | None = None

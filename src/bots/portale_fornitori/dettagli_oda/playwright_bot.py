@@ -26,6 +26,8 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
     """Bot per lo scarico dei dettagli degli Ordini di Acquisto (OdA) usando Playwright.
 
     Supporta sia la ricerca granulare che lo scarico massivo della lista OdA per il database.
+
+    Inizializza il bot con configurazione e filtri temporali.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
@@ -63,7 +65,6 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
         fornitore: str | None = None,
         **kwargs: Any,
     ) -> None:
-        """Inizializza il bot con configurazione e filtri temporali."""
         super().__init__(config)
         current_year = datetime.now(UTC).astimezone().year
 

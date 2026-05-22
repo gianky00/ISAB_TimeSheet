@@ -22,10 +22,12 @@ logger = logging.getLogger(__name__)
 
 
 class TelegramIntentHandler(QObject):
-    """Gestisce la logica di business derivante dagli intenti AI di Telegram."""
+    """Gestisce la logica di business derivante dagli intenti AI di Telegram.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, main_window: "MainWindow", telegram_service: Any, system_handler: Any = None) -> None:
-        """Inizializza la classe."""
         super().__init__(main_window)
         self.mw = main_window
         self.telegram = telegram_service

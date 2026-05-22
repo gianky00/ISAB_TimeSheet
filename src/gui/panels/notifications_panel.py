@@ -61,14 +61,14 @@ class NotificationsPanel(QWidget):
     - Notifiche: Feed interattivo dei messaggi di sistema.
     - Audit: Log dettagliato delle azioni utente e bot.
     - Health: Indicatori di salute e performance del sistema.
+
+    Inizializza il pannello notifiche e collega il manager globale.
+
+    Args:
+        parent: Widget genitore.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il pannello notifiche e collega il manager globale.
-
-        Args:
-            parent: Widget genitore.
-        """
         super().__init__(parent)
         self.current_filter = "all"
         self.current_search = ""

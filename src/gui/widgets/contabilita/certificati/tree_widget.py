@@ -25,10 +25,12 @@ from src.utils.helpers import get_asset_path
 
 
 class UbicazioneDelegate(QStyledItemDelegate):
-    """Delegate per la selezione dell'ubicazione tramite ComboBox."""
+    """Delegate per la selezione dell'ubicazione tramite ComboBox.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.items = [
             UbicazioneStrumenti.ASSENTE.value,
@@ -93,7 +95,10 @@ class AnnotazioniDelegate(QStyledItemDelegate):
 
 
 class CertificatiTreeWidget(StandardTreeWidget):
-    """Tree Widget specializzato per la gestione dei certificati."""
+    """Tree Widget specializzato per la gestione dei certificati.
+
+    Inizializza la classe.
+    """
 
     item_edited_custom = Signal(object, str, str)  # (item, col_name, new_value)
 
@@ -128,7 +133,6 @@ class CertificatiTreeWidget(StandardTreeWidget):
     ) = range(12)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
         self.itemChanged.connect(self._on_item_changed)

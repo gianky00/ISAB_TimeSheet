@@ -30,10 +30,11 @@ class TelegramUIBridge(QObject):
     """Coordina l'interazione tra Telegram e l'applicazione Desktop.
 
     Delega l'esecuzione effettiva ai sottomoduli specializzati in src/core/telegram/bridge/.
+
+    Inizializza la classe.
     """
 
     def __init__(self, main_window: "MainWindow") -> None:
-        """Inizializza la classe."""
         super().__init__()
         self.mw = main_window
         self.telegram = main_window.telegram

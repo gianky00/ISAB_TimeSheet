@@ -19,7 +19,20 @@ logger = logging.getLogger(__name__)
 
 
 class AnagraficaHeaderWidget(QWidget):
-    """Header della pagina Anagrafica con ricerca, azioni e statistiche."""
+    """Header della pagina Anagrafica con ricerca, azioni e statistiche.
+
+    Inizializza l'header dell'anagrafica.
+
+    Args:
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        filter_changed: Segnale o attributo della classe.
+        import_requested: Segnale o attributo della classe.
+        report_requested: Segnale o attributo della classe.
+        search_changed: Segnale o attributo della classe.
+        update_requested: Segnale o attributo della classe.
+    """
 
     search_changed = Signal(str)
     import_requested = Signal()
@@ -28,11 +41,6 @@ class AnagraficaHeaderWidget(QWidget):
     filter_changed = Signal(str)  # tipo filtro ("ok", "warning", etc.)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza l'header dell'anagrafica.
-
-        Args:
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self._setup_ui()
 

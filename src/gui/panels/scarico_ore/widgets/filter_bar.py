@@ -15,13 +15,15 @@ from src.utils.helpers import get_asset_path
 
 
 class ScaricoOreFilterBar(ModernCard):
-    """Barra superiore con statistiche righe, ore e input di ricerca."""
+    """Barra superiore con statistiche righe, ore e input di ricerca.
+
+    Inizializza la classe.
+    """
 
     search_requested = Signal(str)
     update_requested = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(elevation=10, parent=parent)
         self.setObjectName("filterBar")
         self._setup_ui()

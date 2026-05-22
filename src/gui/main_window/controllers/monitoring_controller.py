@@ -21,10 +21,12 @@ logger = get_logger(__name__)
 
 
 class MonitoringController(QObject):
-    """Controller per il monitoraggio dello stato del sistema e delle autorizzazioni."""
+    """Controller per il monitoraggio dello stato del sistema e delle autorizzazioni.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, main_window: "MainWindow") -> None:
-        """Inizializza la classe."""
         super().__init__(main_window)
         self.mw = main_window
         self.auth_check_timer = QTimer(self)

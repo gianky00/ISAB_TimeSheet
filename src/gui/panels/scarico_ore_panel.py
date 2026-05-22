@@ -31,15 +31,15 @@ class ScaricoOrePanel(QWidget):
     """Orchestratore dello Scarico Ore coordinato dal ScaricoOreController.
 
     Gestisce il caricamento asincrono, il filtraggio avanzato e la visualizzazione delle ore.
+
+    Inizializza il pannello dello scarico ore con iniezione del controller.
+
+    Args:
+      controller: Istanza del controller per la logica di business.
+      parent: Widget genitore opzionale.
     """
 
     def __init__(self, controller: ScaricoOreController, parent: QWidget | None = None) -> None:
-        """Inizializza il pannello dello scarico ore con iniezione del controller.
-
-        Args:
-          controller: Istanza del controller per la logica di business.
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.controller = controller
         self._current_col_filters: dict[int, set[str]] = {}

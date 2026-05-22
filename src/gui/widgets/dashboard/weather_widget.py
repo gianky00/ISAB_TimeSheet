@@ -63,7 +63,10 @@ QToolTip {{
 
 
 class HseMetricBar(QWidget):
-    """Visualizzatore grafico premium a barra orizzontale per inquinanti e pollini."""
+    """Visualizzatore grafico premium a barra orizzontale per inquinanti e pollini.
+
+    Inizializza la barra metrica HSE.
+    """
 
     def __init__(
         self,
@@ -73,7 +76,6 @@ class HseMetricBar(QWidget):
         accent_color: str,
         parent: QWidget | None = None,
     ) -> None:
-        """Inizializza la barra metrica HSE."""
         super().__init__(parent)
         self.name = name
         self.unit = unit
@@ -134,10 +136,12 @@ class HseMetricBar(QWidget):
 
 
 class WindCompass(QWidget):
-    """Bussola anemometrica premium con indicatore di direzione rotante a 360°."""
+    """Bussola anemometrica premium con indicatore di direzione rotante a 360°.
+
+    Inizializza la bussola del vento.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la bussola del vento."""
         super().__init__(parent)
         self.setFixedSize(86, 86)
         self.direction = 0.0
@@ -216,10 +220,12 @@ class WindCompass(QWidget):
 
 
 class TemperatureVisualizer(QWidget):
-    """Visualizzatore grafico premium del divario tra temperatura reale e percepita."""
+    """Visualizzatore grafico premium del divario tra temperatura reale e percepita.
+
+    Inizializza il visualizzatore termico.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il visualizzatore termico."""
         super().__init__(parent)
         self.setFixedHeight(14)
         self.setMinimumWidth(120)
@@ -282,7 +288,10 @@ class TemperatureVisualizer(QWidget):
 
 
 class MiniRadialGauge(QWidget):
-    """Micro indicatore circolare premium ad arco per le metriche ambientali."""
+    """Micro indicatore circolare premium ad arco per le metriche ambientali.
+
+    Inizializza il micro gauge radiale.
+    """
 
     def __init__(
         self,
@@ -292,7 +301,6 @@ class MiniRadialGauge(QWidget):
         tooltip: str,
         parent: QWidget | None = None,
     ) -> None:
-        """Inizializza il micro gauge radiale."""
         super().__init__(parent)
         self.setFixedSize(58, 58)
         self.title = title
@@ -359,16 +367,20 @@ class MiniRadialGauge(QWidget):
 
 
 class WeatherWidget(ModernCard):
-    """Widget meteo premium con metriche cantiere e sfondi atmosferici cangianti."""
+    """Widget meteo premium con metriche cantiere e sfondi atmosferici cangianti.
+
+    Inizializza il widget meteo configurando i servizi e avviando i timer di animazione.
+
+    Args:
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        refresh_requested: Segnale o attributo della classe.
+    """
 
     refresh_requested = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il widget meteo configurando i servizi e avviando i timer di animazione.
-
-        Args:
-          parent: Widget genitore opzionale.
-        """
         super().__init__(elevation=5, parent=parent)
         self.setMinimumWidth(360)
 

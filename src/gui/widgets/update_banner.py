@@ -34,7 +34,10 @@ QToolTip {
 
 
 class UpdateBanner(QFrame):
-    """Banner per la notifica e il progresso di aggiornamenti disponibili."""
+    """Banner per la notifica e il progresso di aggiornamenti disponibili.
+
+    Inizializza la classe.
+    """
 
     download_requested = Signal(str)
 

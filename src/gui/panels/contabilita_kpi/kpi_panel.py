@@ -33,10 +33,12 @@ from .charts import ChartContainer, KPIChartsManager
 
 
 class ContabilitaKPIPanel(QWidget):
-    """Pannello dashboard per la visualizzazione dei KPiùdella contabilità strumentale."""
+    """Pannello dashboard per la visualizzazione dei KPiùdella contabilità strumentale.
+
+    Inizializza il pannello e prepara i grafici.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il pannello e prepara i grafici."""
         super().__init__(parent)
         self.HOURLY_COST_STD = Business.HOURLY_COST_STD
         self.worker: KPIWorker | None = None

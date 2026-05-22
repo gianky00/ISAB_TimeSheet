@@ -14,10 +14,12 @@ from src.core.constants import Timeouts
 
 
 class PlaywrightBasePage:
-    """Classe base per la gestione delle interazioni con le pagine usando Playwright."""
+    """Classe base per la gestione delle interazioni con le pagine usando Playwright.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, page: Page, logger: Callable[[str], None] | None = None) -> None:
-        """Inizializza la classe."""
         self.page = page
         self.log = logger or print
 

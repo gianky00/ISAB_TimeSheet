@@ -32,12 +32,14 @@ QToolTip {
 
 
 class DetachedModuleItem(QFrame):
-    """Singola voce di un modulo sganciato nella card."""
+    """Singola voce di un modulo sganciato nella card.
+
+    Inizializza la classe.
+    """
 
     reattach_requested = Signal(int)
 
     def __init__(self, index: int, title: str, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.index = index
         self.title = title
@@ -100,13 +102,14 @@ class MultiWindowStatusWidget(QFrame):
     """Card della Dashboard che mostra i moduli attualmente in esecuzione in finestre esterne.
 
     Sìnasconde automaticamente se non ci sono moduli sganciati.
+
+    Inizializza la classe.
     """
 
     reattach_all_requested = Signal()
     reattach_single_requested = Signal(int)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setObjectName("multiWindowStatusCard")
         self.setStyleSheet(card_style())

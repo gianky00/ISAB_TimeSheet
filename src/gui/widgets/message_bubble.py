@@ -31,10 +31,11 @@ class MessageBubble(QFrame):
       text: Testo del messaggio (supporta Markdown)
       is_lyra: True se messaggio AI (sinistra), False se utente (destra)
       parent: Widget parent opzionale
+
+    Inizializza la classe.
     """
 
     def __init__(self, sender: str, text: str, is_lyra: bool = True, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.is_lyra = is_lyra
         self._setup_ui(sender, text)

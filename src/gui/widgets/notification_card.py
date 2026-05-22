@@ -33,6 +33,19 @@ class NotificationCard(QFrame):
     """Widget moderno per la visualizzazione di una singola notifica.
 
     Utilizza stili dinamici basati sulla severit  e supporta animazioni di fade-in.
+
+    Inizializza la card di notifica.
+
+    Args:
+      notification: Dizionario contenente i dati della notifica (id, titolo, messaggio, ecc.).
+      parent: Widget genitore opzionale.
+      disable_animations: Se True, disabilita l'effetto di fade-in iniziale.
+
+    Attributes:
+        action_triggered: Segnale o attributo della classe.
+        card_clicked: Segnale o attributo della classe.
+        card_deleted: Segnale o attributo della classe.
+        pin_toggled: Segnale o attributo della classe.
     """
 
     # Signals
@@ -47,13 +60,6 @@ class NotificationCard(QFrame):
         parent: QWidget | None = None,
         disable_animations: bool = False,
     ) -> None:
-        """Inizializza la card di notifica.
-
-        Args:
-          notification: Dizionario contenente i dati della notifica (id, titolo, messaggio, ecc.).
-          parent: Widget genitore opzionale.
-          disable_animations: Se True, disabilita l'effetto di fade-in iniziale.
-        """
         super().__init__(parent)
         self.notification = notification
         self.manager = NotificationManager.instance()

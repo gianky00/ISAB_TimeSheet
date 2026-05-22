@@ -41,12 +41,14 @@ from PySide6.QtWidgets import (
 
 
 class AnimatedBorder(QWidget):
-    """Bordo con luce che scorre e ombre illuminate."""
+    """Bordo con luce che scorre e ombre illuminate.
+
+    Inizializza il componente del bordo animato.
+    """
 
     BORDER_RADIUS = 28
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il componente del bordo animato."""
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -141,10 +143,12 @@ class AnimatedBorder(QWidget):
 
 
 class GlowingProgressBar(QWidget):
-    """Progress bar premium con Laser Core, tracking dati e shimmer olografico."""
+    """Progress bar premium con Laser Core, tracking dati e shimmer olografico.
+
+    Inizializza la barra di progresso luminosa con nuovi effetti premium.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la barra di progresso luminosa con nuovi effetti premium."""
         super().__init__(parent)
         self._value = 0
         self._display_value = 0.0
@@ -371,10 +375,12 @@ class GlowingProgressBar(QWidget):
 
 
 class PulsingLogo(QWidget):
-    """Logo statico con bagliore soffuso (Nessuna animazione)."""
+    """Logo statico con bagliore soffuso (Nessuna animazione).
+
+    Inizializza il widget del logo in modalità statica.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il widget del logo in modalità statica."""
         super().__init__(parent)
         self.pixmap: QPixmap | None = None
 
@@ -414,10 +420,12 @@ class PulsingLogo(QWidget):
 
 
 class TechBlueprint(QWidget):
-    """Overlay olografico tecnico con cerchi rotanti e griglie polari."""
+    """Overlay olografico tecnico con cerchi rotanti e griglie polari.
+
+    Inizializza l'overlay tecnico.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza l'overlay tecnico."""
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -470,10 +478,12 @@ class TechBlueprint(QWidget):
 
 
 class TypewriterLabel(QLabel):
-    """Label con effetto typewriter fluido per messaggi dinamici."""
+    """Label con effetto typewriter fluido per messaggi dinamici.
+
+    Inizializza la label typewriter.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la label typewriter."""
         super().__init__(parent)
         self._full_text = ""
         self._current_text = ""
@@ -503,10 +513,12 @@ class TypewriterLabel(QLabel):
 
 
 class ConsoleOverlay(QWidget):
-    """Overlay CRT per la console di diagnostica con scanline e griglia."""
+    """Overlay CRT per la console di diagnostica con scanline e griglia.
+
+    Inizializza l'overlay della console.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza l'overlay della console."""
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -539,10 +551,12 @@ class ConsoleOverlay(QWidget):
 
 
 class ChangelogTicker(QWidget):
-    """Widget premium multi-riga (3 righe) con contenitore olografico e tag neon."""
+    """Widget premium multi-riga (3 righe) con contenitore olografico e tag neon.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.notes: list[str] = []
         self.current_idx = 0
@@ -744,10 +758,12 @@ class ChangelogTicker(QWidget):
 
 
 class PulseIndicator(QWidget):
-    """Indicatore di caricamento premium con anello ad espansione olografico."""
+    """Indicatore di caricamento premium con anello ad espansione olografico.
+
+    Inizializza l'indicatore pulsante.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza l'indicatore pulsante."""
         super().__init__(parent)
         self.setFixedSize(30, 30)
         self._pulse_radius = 4.0

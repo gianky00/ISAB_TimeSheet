@@ -20,7 +20,10 @@ logger = get_logger(__name__)
 
 
 class TimbratureStorage:
-    """Manages SQLite database for Timbrature."""
+    """Manages SQLite database for Timbrature.
+
+    Inizializza il database delle timbrature.
+    """
 
     COLUMNS_MAP: ClassVar[dict[str, str]] = {
         "Id Dipendente": "id_dipendente",
@@ -47,7 +50,6 @@ class TimbratureStorage:
         return db_manager.DB_TIMBRATURE
 
     def __init__(self, db_path: Path | None = None) -> None:
-        """Inizializza il database delle timbrature."""
         # Se db_path  fornito esplicitamente, usalo (principalmente per test mirati),
         # altrimenti usa la propriet  dinamica.
         self._custom_db_path = db_path

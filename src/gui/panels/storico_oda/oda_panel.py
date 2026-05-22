@@ -38,15 +38,16 @@ logger = logging.getLogger(__name__)
 
 
 class StoricoOdaPanel(QWidget):
-    """Orchestratore dello Storico OdA con architettura Master-Detail modularizzata."""
+    """Orchestratore dello Storico OdA con architettura Master-Detail modularizzata.
+
+    Inizializza il pannello dello storico OdA con iniezione del controller.
+
+    Args:
+      controller: Istanza del controller per la logica di business.
+      parent: Widget genitore opzionale.
+    """
 
     def __init__(self, controller: ODAController, parent: QWidget | None = None) -> None:
-        """Inizializza il pannello dello storico OdA con iniezione del controller.
-
-        Args:
-          controller: Istanza del controller per la logica di business.
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.controller = controller
         self.worker: BotWorker | None = None

@@ -20,10 +20,11 @@ class WorkflowController(QObject):
     """Controller per il coordinamento dei flussi di lavoro (workflow) dell'applicazione.
 
     Gestisce l'input proveniente dalla Command Palette e lo trasforma in azioni sui Bot.
+
+    Inizializza la classe.
     """
 
     def __init__(self, main_window: MainWindow) -> None:
-        """Inizializza la classe."""
         super().__init__(main_window)
         self.mw = main_window
 

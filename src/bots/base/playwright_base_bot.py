@@ -37,6 +37,12 @@ class PlaywrightBaseBot(BaseBot, ABC):
     """Classe base per i bot basati su Playwright.
 
     Centralizza la gestione del browser Chromium, la persistenza del profilo e i flag di sicurezza.
+
+    Inizializza le proprietà fondamentali del bot Playwright.
+
+    Args:
+      config: Istanza di SeleniumBotConfig con le impostazioni del bot.
+      **kwargs: Altri parametri di configurazione extra.
     """
 
     def __init__(
@@ -44,12 +50,6 @@ class PlaywrightBaseBot(BaseBot, ABC):
         config: SeleniumBotConfig,
         **kwargs: Any,
     ) -> None:
-        """Inizializza le proprietà fondamentali del bot Playwright.
-
-        Args:
-          config: Istanza di SeleniumBotConfig con le impostazioni del bot.
-          **kwargs: Altri parametri di configurazione extra.
-        """
         super().__init__(config.username, config.password, config)
         self.playwright: Playwright | None = None
         self.browser: Browser | None = None

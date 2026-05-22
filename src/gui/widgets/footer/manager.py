@@ -14,6 +14,14 @@ class FooterStatsManager(QWidget):
     """Manager centrale per il footer: gestisce la transizione tra FASE 1 (Boot) e FASE 2 (Operativa).
 
     Coordina i widget sinistro, centrale e destro per riflettere lo stato globale del sistema.
+
+    Inizializza il manager del footer.
+
+    Args:
+      left_widget: Widget per le info aziendali.
+      center_console: Console per i log di avvio.
+      right_widget: Widget per il progresso e lo stato bot.
+      parent: Widget genitore.
     """
 
     def __init__(
@@ -23,14 +31,6 @@ class FooterStatsManager(QWidget):
         right_widget: FooterRightWidget,
         parent: QWidget | None = None,
     ) -> None:
-        """Inizializza il manager del footer.
-
-        Args:
-          left_widget: Widget per le info aziendali.
-          center_console: Console per i log di avvio.
-          right_widget: Widget per il progresso e lo stato bot.
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.left_widget = left_widget
         self.center_console = center_console

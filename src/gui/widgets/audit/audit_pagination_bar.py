@@ -8,12 +8,14 @@ from src.gui.widgets.modern_button import ModernButton
 
 
 class AuditPaginationBar(QWidget):
-    """Barra di paginazione per l'Audit Log con stile Enterprise."""
+    """Barra di paginazione per l'Audit Log con stile Enterprise.
+
+    Inizializza la classe.
+    """
 
     page_changed = Signal(int)  # offset (1 per next, -1 per prev)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 

@@ -26,10 +26,12 @@ if TYPE_CHECKING:
 
 
 class AnimatedSplitButton(QPushButton):
-    """Pulsante Split personalizzato con sfondo bianco, massimo contrasto e animazione al passaggio del mouse."""
+    """Pulsante Split personalizzato con sfondo bianco, massimo contrasto e animazione al passaggio del mouse.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setFixedWidth(45)
         self.setFixedHeight(40)
@@ -110,14 +112,14 @@ class ToolBarComponent(QObject):
     """Coordina la creazione e il posizionamento dei componenti di navigazione principali.
 
     Gestisce la comunicazione tra la barra di ricerca globale e il SearchController.
+
+    Inizializza il componente ToolBar.
+
+    Args:
+      main_window: Riferimento alla MainWindow dell'applicazione.
     """
 
     def __init__(self, main_window: MainWindow) -> None:
-        """Inizializza il componente ToolBar.
-
-        Args:
-          main_window: Riferimento alla MainWindow dell'applicazione.
-        """
         super().__init__(main_window)
         self.main_window = main_window
         self.sidebar: SidebarWidget | None = None

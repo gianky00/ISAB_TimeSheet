@@ -22,14 +22,15 @@ from src.gui.styles import COLORS
 
 
 class OperationLogWidget(QFrame):
-    """Console professionale in Light Mode per i log delle operazioni."""
+    """Console professionale in Light Mode per i log delle operazioni.
+
+    Inizializza la console di log.
+
+    Args:
+      parent: Widget genitore opzionale.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la console di log.
-
-        Args:
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.setObjectName("logWidget")
         self.setStyleSheet(f"""

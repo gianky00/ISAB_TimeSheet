@@ -26,6 +26,8 @@ class AuditManager:
     """Manager per l'Audit Log con meccanismi di integrità e severità.
 
     Implementazione rifattorizzata e modulare con supporto asincrono per evitare lag UI.
+
+    Inizializza i componenti interni del manager (DB, Segnali, Worker).
     """
 
     _instance: Optional["AuditManager"] = None
@@ -45,7 +47,6 @@ class AuditManager:
         return cls._instance
 
     def __init__(self) -> None:
-        """Inizializza i componenti interni del manager (DB, Segnali, Worker)."""
         if getattr(self, "_initialized", False):
             return
         self.db = AuditDatabase()

@@ -39,7 +39,10 @@ class CertificatiStats(TypedDict):
 
 
 class CertificatiEngine:
-    """Motore logico per la gestione dei certificati campione."""
+    """Motore logico per la gestione dei certificati campione.
+
+    Inizializza la classe.
+    """
 
     # Costanti per il calcolo delle scadenze
     WARNING_THRESHOLD: Final[int] = 15
@@ -63,7 +66,6 @@ class CertificatiEngine:
         return DB_DIR / "certificati_exclusions.json"
 
     def __init__(self) -> None:
-        """Inizializza la classe."""
         self._exclusions: set[str] = set()
         self._print_exclusions: set[str] = set()
         self.load_exclusions()

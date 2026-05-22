@@ -27,6 +27,15 @@ class TimbratureBotPanel(BaseBotPanel):
 
     Gestisce la configurazione dei parametri di ricerca (fornitore e date) e il ciclo di vita del worker Selenium.
     Emette segnali per notificare il completamento delle operazioni e i cambi di stato dell'Autopilot.
+
+    Inizializza il pannello e prepara il caricamento dei dati salvati.
+
+    Args:
+      parent: Widget genitore.
+
+    Attributes:
+        data_updated: Segnale o attributo della classe.
+        status_changed: Segnale o attributo della classe.
     """
 
     data_updated = Signal()
@@ -36,11 +45,6 @@ class TimbratureBotPanel(BaseBotPanel):
     """Segnale emesso quando cambia lo stato del bot (stato, messaggio)."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il pannello e prepara il caricamento dei dati salvati.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(
             bot_id="timbrature",
             bot_name="Timbrature",

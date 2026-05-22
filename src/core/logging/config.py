@@ -8,10 +8,12 @@ from src.core.paths import LOGS_DIR
 
 
 class LoggingConfig:
-    """Configurazione centralizzata per il sistema di logging."""
+    """Configurazione centralizzata per il sistema di logging.
+
+    Inizializza la classe.
+    """
 
     def __init__(self) -> None:
-        """Inizializza la classe."""
         # Base directory: C:\Users\gianc\AppData\Local\SyncroJob\logs
         self.base_dir: Final[Path] = LOGS_DIR
 

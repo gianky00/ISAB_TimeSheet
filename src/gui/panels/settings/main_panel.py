@@ -30,13 +30,15 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class ConfigSaveWorker(QThread):
-    """Worker thread per il salvataggio asincrono della configurazione."""
+    """Worker thread per il salvataggio asincrono della configurazione.
+
+    Inizializza il worker comunicando la configurazione da salvare.
+    """
 
     finished = Signal(bool, str)
     """Segnale emesso al termine del salvataggio con esito e messaggio errore."""
 
     def __init__(self, config: dict[str, Any]) -> None:
-        """Inizializza il worker comunicando la configurazione da salvare."""
         super().__init__()
         self.config = config
 
@@ -53,6 +55,15 @@ class SettingsPanel(QWidget):
     """Pannello principale delle impostazioni.
 
     Coordina i diversi tab di configurazione e fornisce funzionalità di sistema come reset e import/export.
+
+    Inizializza il pannello impostazioni.
+
+    Args:
+        parent: Widget genitore.
+
+    Attributes:
+        request_help_section: Segnale o attributo della classe.
+        settings_saved: Segnale o attributo della classe.
     """
 
     settings_saved = Signal()
@@ -62,11 +73,6 @@ class SettingsPanel(QWidget):
     """Segnale per richiedere l'apertura di una sezione specifica della guida."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il pannello impostazioni.
-
-        Args:
-            parent: Widget genitore.
-        """
         super().__init__(parent)
         self._is_loading = False
         self._save_timer = QTimer(self)

@@ -32,14 +32,14 @@ class AutomazioniWidget(QWidget):
     """Pannello raggruppato per i Bot con animazioni Snapshot-Fade.
 
     Centralizza l'accesso a tutti i processi di automazione web.
+
+    Inizializza il widget delle automazioni.
+
+    Args:
+      main_window: Riferimento alla finestra principale per la registrazione dei pannelli.
     """
 
     def __init__(self, main_window: MainWindow) -> None:
-        """Inizializza il widget delle automazioni.
-
-        Args:
-          main_window: Riferimento alla finestra principale per la registrazione dei pannelli.
-        """
         super().__init__()
         self.mw = main_window
 

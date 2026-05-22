@@ -29,14 +29,14 @@ class PrenotaBPPanel(BaseBotPanel):
     """Pannello operativo per l'automazione della prenotazione BP.
 
     Eredita da BaseBotPanel per la gestione standard di log e stati.
+
+    Inizializza il pannello e carica i dati salvati.
+
+    Args:
+        parent: Widget genitore.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il pannello e carica i dati salvati.
-
-        Args:
-            parent: Widget genitore.
-        """
         super().__init__(
             bot_id="prenota_bp",
             bot_name="Prenota BP",

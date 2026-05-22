@@ -34,14 +34,14 @@ class DettagliOdAPanel(BaseBotPanel):
 
     Eredita da BaseBotPanel per la gestione standardizzata del worker e del log.
     Include una tabella editabile per l'input dei numeri d'ordine e dei relativi contratti.
+
+    Inizializza il pannello configurando l'ID e la descrizione del bot.
+
+    Args:
+        parent: Widget genitore.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il pannello configurando l'ID e la descrizione del bot.
-
-        Args:
-            parent: Widget genitore.
-        """
         super().__init__(
             bot_id="dettagli_oda",
             bot_name="Dettagli OdA",

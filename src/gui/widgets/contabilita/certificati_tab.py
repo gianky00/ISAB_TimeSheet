@@ -38,14 +38,15 @@ from .certificati.tree_widget import CertificatiTreeWidget
 
 
 class CertificatiCampioneTab(QWidget):
-    """Tab per Certificati Campione (Tree View) - Versione Modularizzata."""
+    """Tab per Certificati Campione (Tree View) - Versione Modularizzata.
+
+    Inizializza il tab dei certificati caricano i filtri persistenti.
+
+    Args:
+        parent: Widget genitore opzionale.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il tab dei certificati caricano i filtri persistenti.
-
-        Args:
-            parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.engine = CertificatiEngine()
 

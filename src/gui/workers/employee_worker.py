@@ -14,7 +14,19 @@ logger = logging.getLogger(__name__)
 
 
 class EmployeeWorker(QThread):
-    """Worker che gestisce l'estrazione e il processing dei dati dipendenti in background."""
+    """Worker che gestisce l'estrazione e il processing dei dati dipendenti in background.
+
+    Inizializza il worker.
+
+    Args:
+      controller: Istanza di AnagraficaController.
+      search_text: Testo di ricerca.
+      current_filter: Filtro di stato corrente.
+
+    Attributes:
+        error_signal: Segnale o attributo della classe.
+        finished_signal: Segnale o attributo della classe.
+    """
 
     finished_signal = Signal(list, dict)  # (dtos, counts)
     error_signal = Signal(str)
@@ -22,13 +34,6 @@ class EmployeeWorker(QThread):
     def __init__(
         self, controller: AnagraficaController, search_text: str, current_filter: str | None
     ) -> None:
-        """Inizializza il worker.
-
-        Args:
-          controller: Istanza di AnagraficaController.
-          search_text: Testo di ricerca.
-          current_filter: Filtro di stato corrente.
-        """
         super().__init__()
         self.controller = controller
         self.search_text = search_text

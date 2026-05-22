@@ -24,14 +24,14 @@ class AnimatedProgressBar(QWidget):
     """Progress bar animata con striature, shimmer e bordo pulsante.
 
     Implementa un'estetica moderna con animazioni a 30fps.
+
+    Inizializza la barra di progresso.
+
+    Args:
+      parent: Widget genitore opzionale.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la barra di progresso.
-
-        Args:
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.setFixedHeight(18)
         self._value = 0

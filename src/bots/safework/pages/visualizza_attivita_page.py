@@ -17,18 +17,19 @@ from src.bots.safework.common.locators import SafeWorkLocators
 
 
 class VisualizzaAttivitaPage:
-    """Gestisce le interazioni con la pagina Visualizza Attività."""
+    """Gestisce le interazioni con la pagina Visualizza Attività.
+
+    Inizializza la pagina Visualizza Attività.
+
+    Args:
+        driver: Istanza del driver Selenium.
+        wait: Istanza di WebDriverWait.
+        log_func: Funzione per il logging.
+    """
 
     def __init__(
         self, driver: webdriver.Chrome, wait: WebDriverWait[webdriver.Chrome], log_func: Callable[[str], None]
     ) -> None:
-        """Inizializza la pagina Visualizza Attività.
-
-        Args:
-            driver: Istanza del driver Selenium.
-            wait: Istanza di WebDriverWait.
-            log_func: Funzione per il logging.
-        """
         self.driver = driver
         self.wait = wait
         self.log = log_func

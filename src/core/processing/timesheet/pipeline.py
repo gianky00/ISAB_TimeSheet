@@ -13,10 +13,12 @@ from src.core.processing.timesheet.steps import (
 
 
 class TimesheetProcessingPipeline:
-    """Pipeline per l'elaborazione dei file Timesheet."""
+    """Pipeline per l'elaborazione dei file Timesheet.
+
+    Inizializza la classe.
+    """
 
     def __init__(self) -> None:
-        """Inizializza la classe."""
         self.pipeline = Pipeline()
         self.pipeline.add_step(LoadWorkbookStep())
         self.pipeline.add_step(ExtractMetadataStep())

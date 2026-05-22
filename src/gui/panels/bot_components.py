@@ -18,13 +18,15 @@ from src.utils.helpers import get_asset_path
 
 
 class BotControlComponent(QWidget):
-    """Componente per i controlli di avvio e interruzione del bot."""
+    """Componente per i controlli di avvio e interruzione del bot.
+
+    Inizializza la classe.
+    """
 
     start_clicked = Signal()
     stop_clicked = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 
@@ -61,10 +63,12 @@ class BotControlComponent(QWidget):
 
 
 class BotTimelineComponent(ActivityTimelineWidget):
-    """Versione specializzata della timeline per i bot."""
+    """Versione specializzata della timeline per i bot.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setContentsMargins(10, 10, 10, 10)
 
@@ -74,7 +78,10 @@ class BotTimelineComponent(ActivityTimelineWidget):
 
 
 class BotLogComponent(TimelineWidget):
-    """Versione specializzata della console log per i bot."""
+    """Versione specializzata della console log per i bot.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)

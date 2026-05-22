@@ -13,17 +13,22 @@ logger = logging.getLogger(__name__)
 
 
 class HelpWorker(QThread):
-    """Worker che prepara le sezioni della documentazione in background."""
+    """Worker che prepara le sezioni della documentazione in background.
+
+    Inizializza il worker con la lista dei loader.
+
+    Args:
+      section_loaders: Lista di (Titolo, FunzioneLoader, IconKey).
+
+    Attributes:
+        error_signal: Segnale o attributo della classe.
+        finished_signal: Segnale o attributo della classe.
+    """
 
     finished_signal = Signal(list)
     error_signal = Signal(str)
 
     def __init__(self, section_loaders: list[tuple[str, Callable[[], str], str]]) -> None:
-        """Inizializza il worker con la lista dei loader.
-
-        Args:
-          section_loaders: Lista di (Titolo, FunzioneLoader, IconKey).
-        """
         super().__init__()
         self.section_loaders = section_loaders
 

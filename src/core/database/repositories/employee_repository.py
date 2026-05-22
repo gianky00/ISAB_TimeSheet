@@ -11,10 +11,12 @@ logger = get_logger(__name__)
 
 
 class EmployeeRepository:
-    """Repository per l'accesso ai dati dell'Anagrafica Dipendenti."""
+    """Repository per l'accesso ai dati dell'Anagrafica Dipendenti.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, db_manager_instance: Any = None) -> None:
-        """Inizializza la classe."""
         self.db = db_manager_instance or db_manager
         self.columns = [
             "id_risorsa",

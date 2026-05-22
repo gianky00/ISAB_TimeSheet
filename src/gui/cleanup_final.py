@@ -1,4 +1,4 @@
-"""Script di pulizia finale:
+"""Script di pulizia finale.
 
 1. Rimuove import PySide6 orfani (widget ora gestiti da core_widgets)
 2. Rimuove setStyleSheet() duplicati dove il wrapper già li applica

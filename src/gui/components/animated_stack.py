@@ -24,17 +24,20 @@ class SlidingStackedWidget(QStackedWidget):
     """StackedWidget ad alte prestazioni che anima istantanee (snapshot) dei widget.
 
     per garantire 60 FPS anche con contenuti pesanti.
+
+    Inizializza lo stack animato.
+
+    Args:
+      parent: Widget genitore.
+
+    Attributes:
+        animation_finished: Segnale o attributo della classe.
     """
 
     animation_finished = Signal()
     """Segnale emesso al termine della transizione animata."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza lo stack animato.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self._animation_duration = 350
         self._easing_curve = QEasingCurve.Type.OutCubic

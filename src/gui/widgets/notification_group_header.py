@@ -18,6 +18,8 @@ class NotificationGroupHeader(QFrame):
     - Count badge
     - Icon emoji basato su tipo gruppo
     - Visual feedback su hover
+
+    Inizializza la classe.
     """
 
     # Signal

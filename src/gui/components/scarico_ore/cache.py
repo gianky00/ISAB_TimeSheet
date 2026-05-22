@@ -23,6 +23,8 @@ class CacheWorker(QThread):
 
     Handles file I/O (JSON) and data processing.
     Now builds a PRE-FORMATTED display cache for max speed.
+
+    Inizializza la classe.
     """
 
     finished = Signal(

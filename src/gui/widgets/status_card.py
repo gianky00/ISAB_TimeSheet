@@ -18,12 +18,13 @@ class StatusCard(ModernCard):
     """Card per la status bar che mostra lo stato di un servizio.
 
     Eredita da ModernCard per ombre e hover premium.
+
+    Inizializza la classe.
     """
 
     clicked = Signal()
 
     def __init__(self, title: str, status: str = "In attesa", parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent, elevation=8)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 

@@ -31,15 +31,15 @@ class PDLDetailView(QWidget):
     """Widget per la visualizzazione del dettaglio completo di un PDL.
 
     Visualizza i campi del database in un form scrollabile e una tabella con gli interventi estratti dai report.
+
+    Inizializza la vista dettaglio PDL.
+
+    Args:
+      headers: Lista dei nomi delle colonne del database da visualizzare.
+      parent: Widget genitore.
     """
 
     def __init__(self, headers: list[str], parent: QWidget | None = None) -> None:
-        """Inizializza la vista dettaglio PDL.
-
-        Args:
-          headers: Lista dei nomi delle colonne del database da visualizzare.
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.headers = headers
         self.detail_labels: dict[str, QLabel] = {}

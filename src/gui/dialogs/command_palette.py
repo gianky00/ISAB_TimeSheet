@@ -47,18 +47,21 @@ class CommandPaletteDialog(QDialog):
 
     Permette di navigare nell'albero dei comandi (Root -> Submenu -> Action)
     o di cercare globalmente qualsiasi funzione registrata nel sistema.
+
+    Inizializza la command palette.
+
+    Args:
+      parent: Widget genitore per il posizionamento.
+      root_nodes: Lista dei nodi comando radice.
+
+    Attributes:
+        closed: Segnale o attributo della classe.
     """
 
     closed = Signal()
     """Segnale emesso quando il dialogo completa l'animazione di chiusura."""
 
     def __init__(self, parent: QWidget | None = None, root_nodes: list[CommandNode] | None = None) -> None:
-        """Inizializza la command palette.
-
-        Args:
-          parent: Widget genitore per il posizionamento.
-          root_nodes: Lista dei nodi comando radice.
-        """
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)

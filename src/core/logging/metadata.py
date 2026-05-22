@@ -21,18 +21,20 @@ class MetadataEnricher:
     - Informazioni sistema (hostname, os, python version)
     - Informazioni processo (pid, user)
     - Informazioni session/request (se disponibili)
+
+    Inizializza la classe.
     """
 
     _instance: Optional["MetadataEnricher"] = None
     _cache: dict[str, Any] | None = None
 
     def __new__(cls) -> "MetadataEnricher":
+        """Gestisce la creazione dell'istanza singleton."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
     def __init__(self) -> None:
-        """Inizializza la classe."""
         if MetadataEnricher._cache is None:
             MetadataEnricher._cache = self._build_static_metadata()
 

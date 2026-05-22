@@ -23,10 +23,11 @@ class ListFilterPopupWidget(QWidget):
     """Widget di popup per il filtraggio di liste di valori unici.
 
     Include una barra di ricerca e opzioni di selezione rapida.
+
+    Inizializza la classe.
     """
 
     def __init__(self, values: Sequence[Any], selected_values: Sequence[str] | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__()
         self.values = values
         self.all_values = {str(v).lower() for v in values}

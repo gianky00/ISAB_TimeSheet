@@ -33,7 +33,10 @@ logger = logging.getLogger(__name__)
 
 
 class DonCiroWidget(QWidget):
-    """Il Don Ciro: Visualizzazione 3D isometrica della mascotte aziendale."""
+    """Il Don Ciro: Visualizzazione 3D isometrica della mascotte aziendale.
+
+    Inizializza la classe.
+    """
 
     walk_phase_changed = Signal(float)
     action_phase_changed = Signal(float)
@@ -42,7 +45,6 @@ class DonCiroWidget(QWidget):
     label_phase_changed = Signal(float)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         fixed_width = 280
         fixed_height = 180

@@ -41,6 +41,14 @@ class AttivitaProgrammateTab(QWidget):
     """Tab per la visualizzazione e il filtraggio delle AttivitàProgrammate.
 
     Utilizza una tabella ad alte prestazioni per mostrare lo stato delle PdL e la pianificazione settimanale.
+
+    Inizializza il tab delle attivitàprogrammate.
+
+    Args:
+      parent: Widget genitore.
+
+    Attributes:
+        COLUMNS: ClassVar[list[str: Segnale o attributo della classe.
     """
 
     COLUMNS: ClassVar[list[str]] = [
@@ -63,11 +71,6 @@ class AttivitaProgrammateTab(QWidget):
     ]
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il tab delle attivitàprogrammate.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.chk_ps: QCheckBox
         self.chk_po: QCheckBox

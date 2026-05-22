@@ -12,7 +12,10 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class EmptyStateWidget(QWidget):
-    """Mostra un'icona stilizzata e un messaggio quando non ci sono dati."""
+    """Mostra un'icona stilizzata e un messaggio quando non ci sono dati.
+
+    Inizializza la classe.
+    """
 
     def __init__(
         self,

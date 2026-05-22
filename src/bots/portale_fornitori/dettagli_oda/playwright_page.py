@@ -16,10 +16,12 @@ from src.utils.helpers import sanitize_filename
 
 
 class PlaywrightDettagliOdAPage(PlaywrightBasePage):
-    """Gestisce le interazioni con la pagina Dettagli OdA usando Playwright."""
+    """Gestisce le interazioni con la pagina Dettagli OdA usando Playwright.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, page: Page, log_callback: Callable[[str], None] | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(page, log_callback)
 
     def navigate_to_dettagli(self, is_first_row: bool = True) -> bool:

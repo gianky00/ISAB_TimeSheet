@@ -34,18 +34,21 @@ class EditableListWidget(QWidget):
     """Widget che gestisce una lista di stringhe con controlli CRUD.
 
     Supporta l'interazione tramite pulsanti dedicati o menu contestuale.
+
+    Inizializza il widget lista modificabile.
+
+    Args:
+      title: Titolo del gruppo visualizzato.
+      input_label: Etichetta da mostrare nel dialogo di input.
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        changed: Segnale o attributo della classe.
     """
 
     changed = Signal()
 
     def __init__(self, title: str, input_label: str, parent: QWidget | None = None) -> None:
-        """Inizializza il widget lista modificabile.
-
-        Args:
-          title: Titolo del gruppo visualizzato.
-          input_label: Etichetta da mostrare nel dialogo di input.
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.title = title
         self.input_label = input_label

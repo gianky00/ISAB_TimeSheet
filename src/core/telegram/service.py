@@ -31,6 +31,8 @@ class TelegramService(QObject):
 
     Supporta comandi vocali, NLU e dialoghi contestuali.
     Refactored per delegare la logica ai moduli handlers/.
+
+    Inizializza la classe.
     """
 
     log_signal = Signal(str)
@@ -43,7 +45,6 @@ class TelegramService(QObject):
     intent_received = Signal(str, dict)
 
     def __init__(self) -> None:
-        """Inizializza la classe."""
         super().__init__()
         self.app: Application[Any, Any, Any, Any, Any, Any] | None = None
         self.loop: asyncio.AbstractEventLoop | None = None

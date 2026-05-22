@@ -27,16 +27,19 @@ class BotStepManager(QObject):
     """Gestisce la progressione degli step di un bot.
 
     Isola la logica della macchina a stati della timeline dal bot core.
+
+    Inizializza il manager degli step.
+
+    Args:
+      steps_definition: Lista di tuple (id, label) definita nella classe del bot.
+
+    Attributes:
+        step_changed: Segnale o attributo della classe.
     """
 
     step_changed = Signal(int, str, object)  # index, name, status
 
     def __init__(self, steps_definition: list[tuple[str, str]]) -> None:
-        """Inizializza il manager degli step.
-
-        Args:
-          steps_definition: Lista di tuple (id, label) definita nella classe del bot.
-        """
         super().__init__()
         self.steps = steps_definition
         self._states: list[StepStatus] = [StepStatus.PENDING for _ in self.steps]

@@ -46,10 +46,12 @@ class AnalyticsReport:
 
     @property
     def has_critical_issues(self) -> bool:
+        """Indica se sono presenti anomalie con gravità critica."""
         return any(a.severity == "critical" for a in self.anomalies)
 
     @property
     def anomaly_count(self) -> int:
+        """Restituisce il numero totale di anomalie rilevate."""
         return len(self.anomalies)
 
 
@@ -60,6 +62,8 @@ class AnomalyDetector:
     - Error rate spike (aumento improvviso errori)
     - Slow operations (operazioni più lente del normale)
     - High failure rate (tasso di fallimento bot elevato)
+
+    Inizializza la classe.
     """
 
     ERROR_HIGH_THRESHOLD: Final[float] = 15.0
@@ -72,7 +76,6 @@ class AnomalyDetector:
     FAILURE_CRITICAL_THRESHOLD: Final[float] = 50.0
 
     def __init__(self, viewer: LogViewer | None = None) -> None:
-        """Inizializza la classe."""
         self.viewer = viewer or LogViewer()
 
         # Baseline thresholds (configurabili)
@@ -90,6 +93,9 @@ class AnomalyDetector:
 
     def detect_error_rate_spike(self, hours: int = 24) -> list[Anomaly]:
         """Rileva spike nel tasso di errori.
+
+        Args:
+            hours: Ore di lookback per l'analisi.
 
         Returns:
           Lista di anomalie se error rate > threshold
@@ -125,6 +131,9 @@ class AnomalyDetector:
     def detect_slow_operations(self, hours: int = 24) -> list[Anomaly]:
         """Rileva operazioni più lente del normale.
 
+        Args:
+            hours: Ore di lookback per l'analisi.
+
         Returns:
           Lista di anomalie per operazioni lente
         """
@@ -159,6 +168,9 @@ class AnomalyDetector:
 
     def detect_high_failure_rate(self, hours: int = 24) -> list[Anomaly]:
         """Rileva tasso di fallimento bot elevato.
+
+        Args:
+            hours: Ore di lookback per l'analisi.
 
         Returns:
           Lista di anomalie se failure rate > threshold
@@ -202,10 +214,11 @@ class PatternDetector:
     Tipi di pattern rilevati:
     - Errori ripetuti (stesso messaggio più volte)
     - Correlazioni (errori che seguono sempre altri errori)
+
+    Inizializza la classe.
     """
 
     def __init__(self, viewer: LogViewer | None = None) -> None:
-        """Inizializza la classe."""
         self.viewer = viewer or LogViewer()
         self.min_count = 3  # Minimo occorrenze per pattern
 
@@ -217,6 +230,10 @@ class PatternDetector:
 
     def find_repeated_errors(self, hours: int = 24, min_count: int | None = None) -> list[Pattern]:
         """Trova errori che si ripetono frequentemente.
+
+        Args:
+            hours: Ore di lookback per l'analisi.
+            min_count: Minimo occorrenze per pattern.
 
         Returns:
           Lista di pattern di errori ripetuti

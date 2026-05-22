@@ -29,6 +29,8 @@ class FilterChip(QPushButton):
     """Filter chip button con stile Material Design 3.
 
     Mostra count e supporta stato active/inactive.
+
+    Inizializza la classe.
     """
 
     def __init__(
@@ -127,6 +129,8 @@ class NotificationToolbar(QWidget):
     """Toolbar con search, filter chips, sort dropdown e bulk actions.
 
     Emette signals per comunicare cambiamenti di stato.
+
+    Inizializza la classe.
     """
 
     # Signals
@@ -138,7 +142,6 @@ class NotificationToolbar(QWidget):
     SEARCH_DEBOUNCE_MS: Final[int] = 300
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._filter_chips: dict[str, FilterChip] = {}
         self._current_filter = "all"

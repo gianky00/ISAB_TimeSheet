@@ -34,15 +34,16 @@ class SidebarChildButton(SidebarButton):
 
 
 class SidebarSubGroup(QWidget):
-    """Sottogruppo di secondo livello (es. Portale Fornitori sotto Automazioni)."""
+    """Sottogruppo di secondo livello (es. Portale Fornitori sotto Automazioni).
+
+    Inizializza il sottogruppo della sidebar.
+
+    Args:
+      title: Titolo del sottogruppo.
+      parent: Widget genitore opzionale.
+    """
 
     def __init__(self, title: str, parent: QWidget | None = None) -> None:
-        """Inizializza il sottogruppo della sidebar.
-
-        Args:
-          title: Titolo del sottogruppo.
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -101,18 +102,22 @@ class SidebarSubGroup(QWidget):
 
 
 class SidebarGroup(QWidget):
-    """Gruppo espandibile con Accordion logic per sottomenu."""
+    """Gruppo espandibile con Accordion logic per sottomenu.
+
+    Inizializza il gruppo principale della sidebar.
+
+    Args:
+      title: Titolo del gruppo.
+      icon_path: Percorso dell'icona del gruppo.
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        expanded: Segnale o attributo della classe.
+    """
 
     expanded = Signal(object)
 
     def __init__(self, title: str, icon_path: str, parent: QWidget | None = None) -> None:
-        """Inizializza il gruppo principale della sidebar.
-
-        Args:
-          title: Titolo del gruppo.
-          icon_path: Percorso dell'icona del gruppo.
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)

@@ -31,16 +31,20 @@ if TYPE_CHECKING:
 
 
 class RicercaPDLPanel(BaseBotPanel):
-    """Pannello per la ricerca ed esportazione massiva dei PDL da SafeWork."""
+    """Pannello per la ricerca ed esportazione massiva dei PDL da SafeWork.
+
+    Inizializza il pannello Ricerca PDL.
+
+    Args:
+      parent: Widget genitore.
+
+    Attributes:
+        data_updated: Segnale o attributo della classe.
+    """
 
     data_updated = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il pannello Ricerca PDL.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(
             bot_id="ricerca_pdl",
             bot_name="Ricerca PDL",

@@ -43,6 +43,8 @@ class AlertManager:
     - Cooldown per evitare spam
     - Configurazione soglie
     - Integrazione con TelegramService
+
+    Inizializza la classe.
     """
 
     _instance: "AlertManager | None" = None
@@ -56,7 +58,6 @@ class AlertManager:
         return cls._instance
 
     def __init__(self, config: AlertConfig | None = None) -> None:
-        """Inizializza la classe."""
         self.config = config or AlertConfig()
         self._last_alerts: dict[str, datetime] = {}
         self._telegram_service: TelegramService | None = None

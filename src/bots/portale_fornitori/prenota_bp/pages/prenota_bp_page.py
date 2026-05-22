@@ -21,10 +21,11 @@ class PrenotaBPPage:
     """Page Object Model per la gestione delle prenotazioni dei Buoni di Prelievo (BP).
 
     Gestisce la navigazione nei menu, il filtraggio e l'inserimento di nuove prenotazioni.
+
+    Inizializza la pagina con il driver e configura i tempi di attesa.
     """
 
     def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None) -> None:
-        """Inizializza la pagina con il driver e configura i tempi di attesa."""
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.short_wait = WebDriverWait(driver, Timeouts.SHORT)
@@ -49,6 +50,11 @@ class PrenotaBPPage:
 
         Returns:
           WebElement: L'elemento cliccato.
+
+        Raises:
+          TimeoutException: Se l'elemento non diventa cliccabile.
+          AttributeError: Se l'elemento non è valido.
+          Exception: In caso di altri errori.
         """
         self._wait_for_overlay()
         wait_time = timeout or Timeouts.DEFAULT
@@ -87,6 +93,9 @@ class PrenotaBPPage:
           locator: Tupla (By, value).
           text: Testo da inserire.
           timeout: Tempo massimo di attesa.
+
+        Returns:
+          WebElement: L'elemento compilato.
         """
         self._wait_for_overlay()
         el = (WebDriverWait(self.driver, timeout) if timeout else self.wait).until(

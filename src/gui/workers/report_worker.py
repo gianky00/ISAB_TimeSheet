@@ -26,12 +26,14 @@ logger = logging.getLogger(__name__)
 
 
 class ReportWorker(QThread):
-    """Worker per l'esecuzione asincrona del workflow di reporting."""
+    """Worker per l'esecuzione asincrona del workflow di reporting.
+
+    Inizializza il worker.
+    """
 
     finished_signal = Signal(bool, str, dict)  # success, message, data
 
     def __init__(self) -> None:
-        """Inizializza il worker."""
         super().__init__()
 
     def run(self) -> None:

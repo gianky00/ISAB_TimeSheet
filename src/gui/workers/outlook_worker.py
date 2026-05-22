@@ -13,16 +13,20 @@ logger = logging.getLogger(__name__)
 
 
 class OutlookEmailWorker(QThread):
-    """Worker che gestisce l'apertura e l'invio di email Outlook in background."""
+    """Worker che gestisce l'apertura e l'invio di email Outlook in background.
+
+    Inizializza il worker.
+
+    Args:
+      email_func: La funzione che esegue l'invio della mail (già configurata).
+
+    Attributes:
+        finished_signal: Segnale o attributo della classe.
+    """
 
     finished_signal = Signal(bool, str)  # (success, error_message)
 
     def __init__(self, email_func: Callable[[], None]) -> None:
-        """Inizializza il worker.
-
-        Args:
-          email_func: La funzione che esegue l'invio della mail (già configurata).
-        """
         super().__init__()
         self.email_func = email_func
 

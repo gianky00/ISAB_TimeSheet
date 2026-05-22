@@ -48,6 +48,17 @@ class ReportWorker(QThread):
     """Worker thread dedicato alla generazione del report diagnostico.
 
     Esegue la raccolta dei file e la compressione ZIP in background per non bloccare l'interfaccia utente.
+
+    Inizializza il worker con le opzioni di inclusione.
+
+    Args:
+      include_logs: Se includere i file log dell'applicazione.
+      include_analytics: Se includere i report di analisi anomalie.
+      include_audit: Se includere la traccia delle azioni utente.
+      trace_id: ID opzionale per isolare una specifica transazione nei log.
+
+    Attributes:
+        finished: Segnale o attributo della classe.
     """
 
     finished = Signal(bool, str, str, list)
@@ -60,14 +71,6 @@ class ReportWorker(QThread):
         include_audit: bool,
         trace_id: str | None = None,
     ) -> None:
-        """Inizializza il worker con le opzioni di inclusione.
-
-        Args:
-          include_logs: Se includere i file log dell'applicazione.
-          include_analytics: Se includere i report di analisi anomalie.
-          include_audit: Se includere la traccia delle azioni utente.
-          trace_id: ID opzionale per isolare una specifica transazione nei log.
-        """
         super().__init__()
         self.include_logs = include_logs
         self.include_analytics = include_analytics
@@ -93,14 +96,14 @@ class BugReportDialog(QDialog):
 
     Permette all'utente di descrivere il problema e scegliere quali dati diagnostici inviare.
     Supporta l'invio automatico tramite Outlook o il salvataggio manuale del file ZIP.
+
+    Inizializza il dialogo e configura l'interfaccia utente.
+
+    Args:
+      parent: Widget genitore.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il dialogo e configura l'interfaccia utente.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.setWindowTitle("Segnala un Problema")
         dialog_width = 600

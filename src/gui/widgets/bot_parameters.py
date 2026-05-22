@@ -44,17 +44,21 @@ class HoverPulseFrame(QFrame):
     """Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
 
     Fornisce un feedback visivo immediato sull'interattivitàdella card parametri.
+
+    Inizializza il frame pulsante.
+
+    Args:
+      accent_color: Colore hex del bordo.
+      parent: Widget genitore.
+
+    Attributes:
+        pulse_value: Segnale o attributo della classe.
+        pulse_value_changed: Segnale o attributo della classe.
     """
 
     pulse_value_changed = Signal(float)
 
     def __init__(self, accent_color: str | None = None, parent: QWidget | None = None) -> None:
-        """Inizializza il frame pulsante.
-
-        Args:
-          accent_color: Colore hex del bordo.
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self._accent_color = QColor(accent_color or COLORS["text_dark"])
         self._pulse_val = 1.0
@@ -113,13 +117,24 @@ class HoverPulseFrame(QFrame):
 
 
 class BotParametersWidget(QWidget):
-    """Widget che raggruppa in un'unica riga i parametri comuni per i bot:
+    """Widget che raggruppa in un'unica riga i parametri comuni per i bot.
 
     - Selezione Fornitore (con pulsante gestione rapida)
     - Selezione Data (singola o range temporale)
     - Percorso di destinazione per i file scaricati.
 
     Implementa un design Neon & Shadow standard per tutte le viste.
+
+    Inizializza il widget dei parametri.
+
+    Args:
+      show_date_range: Se True, visualizza anche il campo 'Data À.
+      show_dest_path: Se True, visualizza il campo selezione cartella.
+      parent: Widget genitore.
+
+    Attributes:
+        changed: Segnale o attributo della classe.
+        settings_requested: Segnale o attributo della classe.
     """
 
     settings_requested = Signal()
@@ -131,13 +146,6 @@ class BotParametersWidget(QWidget):
     def __init__(
         self, show_date_range: bool = False, show_dest_path: bool = True, parent: QWidget | None = None
     ) -> None:
-        """Inizializza il widget dei parametri.
-
-        Args:
-          show_date_range: Se True, visualizza anche il campo 'Data À.
-          show_dest_path: Se True, visualizza il campo selezione cartella.
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.show_date_range = show_date_range
         self.show_dest_path = show_dest_path

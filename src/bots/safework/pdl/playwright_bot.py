@@ -29,7 +29,18 @@ MIN_PAGES_FOR_CLEANUP: Final[int] = 2
 
 
 class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
-    """Bot per lo scarico e la stampa automatizzata dei PDL usando Playwright."""
+    """Bot per lo scarico e la stampa automatizzata dei PDL usando Playwright.
+
+    Inizializza il bot di scarico PDL con Playwright.
+
+    Args:
+        config: Configurazione del bot.
+        account_type: Tipo di account SafeWork.
+
+    Attributes:
+        STEPS: ClassVar[list[tuple[str: Segnale o attributo della classe.
+        str: Segnale o attributo della classe.
+    """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
@@ -45,12 +56,6 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
         config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
-        """Inizializza il bot di scarico PDL con Playwright.
-
-        Args:
-            config: Configurazione del bot.
-            account_type: Tipo di account SafeWork.
-        """
         super().__init__(config, account_type=account_type)
         self.downloaded_files: list[str] = []
 

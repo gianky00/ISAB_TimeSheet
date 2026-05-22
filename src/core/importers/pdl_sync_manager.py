@@ -24,12 +24,14 @@ logger = get_logger(__name__)
 
 
 class ProgrammingSyncManager:
-    """Manager per la sincronizzazione dei dati di programmazione su Excel tramite Win32com."""
+    """Manager per la sincronizzazione dei dati di programmazione su Excel tramite Win32com.
+
+    Inizializza la classe.
+    """
 
     FOGLI_PDL: ClassVar[list[str]] = ["A1", "A2", "A3", "CTE", "BLENDING", "TAS", "IGCC"]
 
     def __init__(self, master_path: str) -> None:
-        """Inizializza la classe."""
         self.master_path = master_path
         self.excel_app: Any = None
         self.wb_master: Any = None

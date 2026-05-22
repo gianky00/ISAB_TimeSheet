@@ -59,16 +59,19 @@ class ContabilitaPanel(QWidget):
     - Calcolo dinamico dei totali ore su selezione utente.
     - Sincronizzazione background con file Excel esterni.
     - Visualizzazione grafica dei KPI.
+
+    Inizializza il pannello e avvia il caricamento lazy dei dati.
+
+    Args:
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        SECONDS_IN_MINUTE: Final[int: Segnale o attributo della classe.
     """
 
     SECONDS_IN_MINUTE: Final[int] = 60
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il pannello e avvia il caricamento lazy dei dati.
-
-        Args:
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.controller = ContabilitaController(self)
         self.status_labels: list[QLabel] = []

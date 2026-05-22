@@ -28,10 +28,11 @@ class HelpPanel(QWidget):
     """Knowledge Hub Enterprise.
 
     Un'esperienza immersiva per la documentazione operativa con stile moderno e contenuti ricchi.
+
+    Inizializza la classe.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.sections: list[tuple[str, str, str]] = []
         self._setup_ui()

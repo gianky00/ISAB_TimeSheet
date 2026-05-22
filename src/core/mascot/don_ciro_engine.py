@@ -50,13 +50,14 @@ class DonCiroEngine(QObject):
     """Motore di simulazione per Don Ciro.
 
     Gestisce fisica, cinematica inversa e stati comportamentali.
+
+    Inizializza la classe.
     """
 
     state_changed = Signal(object)
     physics_updated = Signal()
 
     def __init__(self, parent: QObject | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
 
         # Parametri di Scala
@@ -90,26 +91,32 @@ class DonCiroEngine(QObject):
 
     @property
     def scale(self) -> float:
+        """Restituisce il fattore di scala della mascotte."""
         return self._scale
 
     @property
     def walk_x(self) -> float:
+        """Restituisce la coordinata X corrente di cammino."""
         return self._walk_x
 
     @property
     def yaw_angle(self) -> float:
+        """Restituisce l'angolo di rotazione (imbardata) della mascotte."""
         return self._yaw_angle
 
     @property
     def look_dir(self) -> float:
+        """Restituisce la direzione dello sguardo (-1 per sinistra, 1 per destra)."""
         return self._look_dir
 
     @property
     def state(self) -> DonState:
+        """Restituisce lo stato comportamentale corrente della mascotte."""
         return self._state
 
     @property
     def weather(self) -> WeatherCond:
+        """Restituisce le condizioni meteorologiche correnti."""
         return self._weather
 
     @weather.setter
@@ -118,10 +125,12 @@ class DonCiroEngine(QObject):
 
     @property
     def tie_angle(self) -> float:
+        """Restituisce l'angolo corrente di oscillazione della cravatta."""
         return self._tie_angle
 
     @property
     def jacket_flap(self) -> float:
+        """Restituisce l'oscillazione corrente della giacca."""
         return self._jacket_flap
 
     def update_physics(self) -> None:

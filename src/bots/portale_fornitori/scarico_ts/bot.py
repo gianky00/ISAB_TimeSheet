@@ -25,7 +25,10 @@ from src.utils.helpers import sanitize_filename
 
 
 class ScaricaTSBot(SeleniumBaseBot):
-    """Bot per lo scarico automatico dei timesheet dal portale ISAB."""
+    """Bot per lo scarico automatico dei timesheet dal portale ISAB.
+
+    Inizializza il bot Scarico TS.
+    """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login Portale ISAB"),
@@ -74,7 +77,6 @@ class ScaricaTSBot(SeleniumBaseBot):
         elabora_ts: bool = False,
         **kwargs: Any,
     ) -> None:
-        """Inizializza il bot Scarico TS."""
         super().__init__(username, password, config)
         self.data_da = data_da or f"01.01.{datetime.now(UTC).year}"
         self.fornitore = fornitore

@@ -13,7 +13,10 @@ from src.core.constants import Business
 
 
 class CaricoTSBot(SeleniumBaseBot):
-    """Bot per l'estrazione e il caricamento dei dati Timesheet sul Portale Fornitori."""
+    """Bot per l'estrazione e il caricamento dei dati Timesheet sul Portale Fornitori.
+
+    Inizializza il bot Carico TS.
+    """
 
     FORNITORE = Business.DEFAULT_SUPPLIER
 
@@ -37,7 +40,6 @@ class CaricoTSBot(SeleniumBaseBot):
         config: SeleniumBotConfig | None = None,
         **kwargs: Any,
     ) -> None:
-        """Inizializza il bot Carico TS."""
         super().__init__(username, password, config)
 
     @staticmethod

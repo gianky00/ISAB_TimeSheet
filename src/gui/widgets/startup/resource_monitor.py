@@ -18,10 +18,12 @@ from src.utils.system_telemetry import FILETIME, get_current_process_ram_mb
 
 
 class ResourceMonitor(QWidget):
-    """HUD Monitor per Risorse (RAM/CPU Activity)."""
+    """HUD Monitor per Risorse (RAM/CPU Activity).
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setFixedSize(140, 38)
 

@@ -24,6 +24,8 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
     """Bot per la ricerca massiva ed esportazione Excel dei PDL da SafeWork.
 
     Permette di filtrare i permessi per sito e stato, importandoli nel database locale.
+
+    Inizializza il bot di ricerca PDL.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
@@ -42,7 +44,6 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         account_type: str = "Esecutore",
         **kwargs: Any,
     ) -> None:
-        """Inizializza il bot di ricerca PDL."""
         super().__init__(username, password, config, account_type=account_type)
         self.sites = ["IGCC", "ISAB Nord", "ISAB Sud"]
         self.exclude_closed = kwargs.get("exclude_closed", True)

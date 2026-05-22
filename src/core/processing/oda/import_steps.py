@@ -10,12 +10,14 @@ from src.core.processing.base import ProcessingStep
 
 
 class OdaExcelReadStep(ProcessingStep):
-    """Passaggio per la lettura dei dati OdA dal file Excel."""
+    """Passaggio per la lettura dei dati OdA dal file Excel.
+
+    Inizializza il passaggio con i callback e l'importer specificato.
+    """
 
     def __init__(
         self, progress_callback: Callable[[int, int], None] | None = None, importer: Any = None
     ) -> None:
-        """Inizializza il passaggio con i callback e l'importer specificato."""
         self.progress_callback = progress_callback
         self.importer = importer or StoricoOdaImporter
 
@@ -33,10 +35,12 @@ class OdaExcelReadStep(ProcessingStep):
 
 
 class OdaDatabaseSyncStep(ProcessingStep):
-    """Passaggio per la sincronizzazione dei dati OdA con il database."""
+    """Passaggio per la sincronizzazione dei dati OdA con il database.
+
+    Inizializza il passaggio con il sincronizzatore specificato.
+    """
 
     def __init__(self, synchronizer: Any = None) -> None:
-        """Inizializza il passaggio con il sincronizzatore specificato."""
         self.synchronizer = synchronizer or DataSynchronizer
 
     def execute(self, context: dict[str, Any]) -> None:

@@ -11,14 +11,16 @@ from src.gui.styles import COLORS
 
 
 class ODATreeView(QTreeView):
-    """Vista gerarchica per Storico OdA con supporto Master-Detail."""
+    """Vista gerarchica per Storico OdA con supporto Master-Detail.
+
+    Inizializza la classe.
+    """
 
     selection_changed_custom = Signal()
     row_double_clicked = Signal()
     context_menu_requested = Signal(object)  # pos
 
     def __init__(self, model: QAbstractItemModel, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setModel(model)
         self._setup_ui()

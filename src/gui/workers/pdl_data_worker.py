@@ -18,6 +18,18 @@ class PDLDataWorker(QThread):
     """Worker per l'esecuzione di query PDL in background.
 
     Supporta sia il recupero dei dati tabellari che la query per i filtri.
+
+    Inizializza il worker.
+
+    Args:
+      mode: 'fetch_data', 'update_areas', 'update_units' o 'initial_filters'.
+      *args: Argomenti posizionali per la query.
+      **kwargs: Argomenti nominali per il controller e i filtri.
+
+    Attributes:
+        data_ready: Segnale o attributo della classe.
+        error_signal: Segnale o attributo della classe.
+        filters_ready: Segnale o attributo della classe.
     """
 
     data_ready = Signal(list)  # Dati per la tabella o risultati generici
@@ -25,13 +37,6 @@ class PDLDataWorker(QThread):
     error_signal = Signal(str)
 
     def __init__(self, mode: str, *args: Any, **kwargs: Any) -> None:
-        """Inizializza il worker.
-
-        Args:
-          mode: 'fetch_data', 'update_areas', 'update_units' o 'initial_filters'.
-          *args: Argomenti posizionali per la query.
-          **kwargs: Argomenti nominali per il controller e i filtri.
-        """
         super().__init__()
 
         self.mode = mode

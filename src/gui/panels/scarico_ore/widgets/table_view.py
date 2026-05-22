@@ -15,13 +15,15 @@ from src.gui.components.scarico_ore import FilterHeaderView, ScaricoOreTableMode
 
 
 class ScaricoOreTableView(QTableView):
-    """TableView ottimizzata per lo Scarico Ore con supporto a filtri e copia TSV."""
+    """TableView ottimizzata per lo Scarico Ore con supporto a filtri e copia TSV.
+
+    Inizializza la classe.
+    """
 
     selection_totals_changed = Signal(float)
     filter_changed = Signal(int, list)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._saved_selection_real_ids: set[int] = set()
         self._setup_ui()

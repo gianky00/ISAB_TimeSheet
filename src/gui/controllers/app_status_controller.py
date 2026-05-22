@@ -19,14 +19,15 @@ logger = logging.getLogger("AppStatusController")
 
 
 class AppStatusController:
-    """Controller per la gestione degli stati e delle impostazioni globali dell'applicazione."""
+    """Controller per la gestione degli stati e delle impostazioni globali dell'applicazione.
+
+    Inizializza il controller di stato.
+
+    Args:
+        main_window: Riferimento alla finestra principale per l'aggiornamento dell'UI.
+    """
 
     def __init__(self, main_window: MainWindow) -> None:
-        """Inizializza il controller di stato.
-
-        Args:
-            main_window: Riferimento alla finestra principale per l'aggiornamento dell'UI.
-        """
         self.mw = main_window
 
     def rotate_account(self, bot_type: str) -> None:

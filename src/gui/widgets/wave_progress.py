@@ -15,6 +15,8 @@ class WaveProgressBar(QProgressBar):
     """Barra di progresso custom con animazione ad onda spettacolare.
 
     Utilizza QPainter per il disegno sinusoidale a 60fps.
+
+    Inizializza la classe.
     """
 
     # Costanti estetiche per l'animazione
@@ -26,7 +28,6 @@ class WaveProgressBar(QProgressBar):
     HEIGHT_THRESHOLD_WAVE = 15  # Soglia per ampiezza onda ridotta
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setFixedHeight(self.DEFAULT_HEIGHT)
         self.setRange(0, 100)

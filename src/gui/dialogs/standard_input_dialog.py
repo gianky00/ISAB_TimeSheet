@@ -18,6 +18,8 @@ class StandardInputDialog(QDialog):
     """Dialog standard per l'input di testo singolo.
 
     Sostituisce QInputDialog per mantenere coerenza stilistica.
+
+    Inizializza la classe.
     """
 
     def __init__(

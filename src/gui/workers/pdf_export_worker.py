@@ -17,17 +17,20 @@ class PDFExportWorker(QThread):
 
     Nota: Sebbene QPdfWriter richieda un QPainter (che di solito è Main Thread),
     la preparazione dei dati e dei documenti può essere asincrona.
+
+    Inizializza il worker.
+
+    Args:
+      exporter_instance: Istanza di CertificatiPdfExporter o simile.
+      file_path: Percorso di salvataggio.
+
+    Attributes:
+        finished_signal: Segnale o attributo della classe.
     """
 
     finished_signal = Signal(bool, str)  # (success, message)
 
     def __init__(self, exporter_instance: Any, file_path: str) -> None:
-        """Inizializza il worker.
-
-        Args:
-          exporter_instance: Istanza di CertificatiPdfExporter o simile.
-          file_path: Percorso di salvataggio.
-        """
         super().__init__()
         self.exporter = exporter_instance
         self.file_path = file_path

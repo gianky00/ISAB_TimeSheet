@@ -28,10 +28,12 @@ from src.gui.styles import COLORS
 
 
 class StandardTimelineFrame(QFrame):
-    """Frame pulito ed elegante per i log in stile Enterprise."""
+    """Frame pulito ed elegante per i log in stile Enterprise.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setStyleSheet(f"background-color: {COLORS['bg_white']}; border-radius: 12px;")
 
@@ -51,10 +53,12 @@ class StandardTimelineFrame(QFrame):
 
 
 class LogEntryWidget(QWidget):
-    """Riga di log con timestamp e feedback cromatico per livello."""
+    """Riga di log con timestamp e feedback cromatico per livello.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, text: str, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(10, 4, 10, 4)
@@ -106,12 +110,14 @@ class LogEntryWidget(QWidget):
 
 
 class EnterpriseLogConsole(QWidget):
-    """Console di log professionale con autoscroll e design coordinato."""
+    """Console di log professionale con autoscroll e design coordinato.
+
+    Inizializza la classe.
+    """
 
     log_added = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 
@@ -170,7 +176,10 @@ class EnterpriseLogConsole(QWidget):
 
 
 class MissionReportCard(QFrame):
-    """Card riassuntiva di fine missione in stile Enterprise."""
+    """Card riassuntiva di fine missione in stile Enterprise.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, duration: str, success: bool, parent: QWidget | None = None) -> None:
         super().__init__(parent)

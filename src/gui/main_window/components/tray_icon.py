@@ -19,14 +19,14 @@ class TrayIconComponent(QObject):
     """Componente responsabile dell'integrazione con la System Tray.
 
     Inizializza il TrayController e fornisce metodi di alto livello per l'invio di messaggi balloon.
+
+    Inizializza il componente Tray.
+
+    Args:
+      main_window: Riferimento alla MainWindow dell'applicazione.
     """
 
     def __init__(self, main_window: MainWindow) -> None:
-        """Inizializza il componente Tray.
-
-        Args:
-          main_window: Riferimento alla MainWindow dell'applicazione.
-        """
         super().__init__(main_window)
         self.main_window = main_window
         from src.gui.controllers.tray_controller import TrayController

@@ -15,17 +15,22 @@ logger = logging.getLogger(__name__)
 
 
 class ScaricoOreWorker(QThread):
-    """Worker thread per l'importazione asincrona di Scarico Ore."""
+    """Worker thread per l'importazione asincrona di Scarico Ore.
+
+    Inizializza il worker per l'importazione.
+
+    Args:
+      file_path: Percorso del file Excel dello Scarico Ore da importare.
+
+    Attributes:
+        finished_signal: Segnale emesso al completamento.
+        progress_signal: Segnale per l'aggiornamento del progresso.
+    """
 
     finished_signal = Signal(bool, str, int, int, float)
     progress_signal = Signal(str)
 
     def __init__(self, file_path: str) -> None:
-        """Inizializza il worker per l'importazione.
-
-        Args:
-          file_path: Percorso del file Excel dello Scarico Ore da importare.
-        """
         super().__init__()
         self.file_path = file_path
         self.start_time: float = 0.0
@@ -63,13 +68,15 @@ class ScaricoOreWorker(QThread):
 
 
 class ScaricoOreController(QObject):
-    """Controller centrale per il coordinamento dei dati di Scarico Ore."""
+    """Controller centrale per il coordinamento dei dati di Scarico Ore.
+
+    Inizializza il controller di Scarico Ore.
+    """
 
     status_changed = Signal(str)
     update_finished = Signal(bool, str)
 
     def __init__(self) -> None:
-        """Inizializza il controller di Scarico Ore."""
         super().__init__()
         self.worker: ScaricoOreWorker | None = None
 

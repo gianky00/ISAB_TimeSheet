@@ -15,18 +15,23 @@ logger = logging.getLogger(__name__)
 
 
 class ConsuntivoWorker(QThread):
-    """Worker che gestisce il pre-caricamento delle opzioni e la scansione directory."""
+    """Worker che gestisce il pre-caricamento delle opzioni e la scansione directory.
+
+    Inizializza il worker.
+
+    Args:
+      controller: Istanza del controller consuntivi.
+      scan_callback: Opzionale, riferimento alla funzione di scansione tab.
+
+    Attributes:
+        error_signal: Segnale o attributo della classe.
+        finished_signal: Segnale o attributo della classe.
+    """
 
     finished_signal = Signal(dict)
     error_signal = Signal(str)
 
     def __init__(self, controller: ConsuntivoController, scan_callback: Any = None) -> None:
-        """Inizializza il worker.
-
-        Args:
-          controller: Istanza del controller consuntivi.
-          scan_callback: Opzionale, riferimento alla funzione di scansione tab.
-        """
         super().__init__()
         self.controller = controller
         self.scan_callback = scan_callback

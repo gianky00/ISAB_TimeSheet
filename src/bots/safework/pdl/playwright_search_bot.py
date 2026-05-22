@@ -24,7 +24,18 @@ if TYPE_CHECKING:
 
 
 class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
-    """Bot per la ricerca massiva ed esportazione Excel dei PDL usando Playwright."""
+    """Bot per la ricerca massiva ed esportazione Excel dei PDL usando Playwright.
+
+    Inizializza il bot di ricerca PDL con Playwright.
+
+    Args:
+        config: Configurazione del bot.
+        account_type: Tipo di account SafeWork.
+
+    Attributes:
+        STEPS: ClassVar[list[tuple[str: Segnale o attributo della classe.
+        str: Segnale o attributo della classe.
+    """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
@@ -39,12 +50,6 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
         config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
-        """Inizializza il bot di ricerca PDL con Playwright.
-
-        Args:
-            config: Configurazione del bot.
-            account_type: Tipo di account SafeWork.
-        """
         super().__init__(config, account_type=account_type)
         self.sites = ["IGCC", "ISAB Nord", "ISAB Sud"]
         self.ricerca_pdl_page: PlaywrightRicercaPDLPage | None = None

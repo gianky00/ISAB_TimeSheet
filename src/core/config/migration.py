@@ -76,7 +76,7 @@ def check_and_migrate_local_config(base_dir: Path, load_base_func: Any, atomic_w
                     if key not in current_config or not current_config[key]:
                         current_config[key] = value
 
-                atomic_write_func(current_config, CONFIG_DIR / FileNames.CONFIG)
+                atomic_write_func(CONFIG_DIR / FileNames.CONFIG, current_config)
                 print(f"[MIGRATION] Config merged and paths updated from {legacy_dir}")
 
                 legacy_data = legacy_dir / "data"

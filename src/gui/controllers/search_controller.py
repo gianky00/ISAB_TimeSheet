@@ -17,14 +17,15 @@ logger = logging.getLogger(__name__)
 
 
 class SearchController(QObject):
-    """Controller per la ricerca universale e la navigazione ai risultati."""
+    """Controller per la ricerca universale e la navigazione ai risultati.
+
+    Inizializza il controller di ricerca.
+
+    Args:
+      main_window: Riferimento alla finestra principale per navigazione e posizionamento menu.
+    """
 
     def __init__(self, main_window: Any) -> None:
-        """Inizializza il controller di ricerca.
-
-        Args:
-          main_window: Riferimento alla finestra principale per navigazione e posizionamento menu.
-        """
         super().__init__()
         self.mw = main_window
         self.worker: SearchWorker | None = None

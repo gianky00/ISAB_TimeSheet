@@ -28,15 +28,15 @@ class StructuredLogger:
     - Rotation automatica
     - Context propagation
     - PII masking
+
+    Inizializza logger.
+
+    Args:
+      name: Nome logger (tipicamente __name__ del modulo)
+      config: Configurazione custom (opzionale)
     """
 
     def __init__(self, name: str, config: Any = None) -> None:
-        """Inizializza logger.
-
-        Args:
-          name: Nome logger (tipicamente __name__ del modulo)
-          config: Configurazione custom (opzionale)
-        """
         self.name = name
         self.config = config or get_config()
 

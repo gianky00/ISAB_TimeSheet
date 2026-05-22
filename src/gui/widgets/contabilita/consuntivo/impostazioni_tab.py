@@ -18,10 +18,12 @@ from src.gui.widgets.core_widgets import SecondaryButton, StandardListWidget
 
 
 class ImpostazioniTab(QWidget):
-    """Tab per configurare le liste dinamiche usate nei consuntivi."""
+    """Tab per configurare le liste dinamiche usate nei consuntivi.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 

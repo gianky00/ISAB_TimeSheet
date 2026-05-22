@@ -21,6 +21,14 @@ class AuditTableModel(QAbstractTableModel):
 
     Fornisce decorazioni visuali (icone di stato, colori di sfondo per errori)
     e formattazione dei metadati (durata, timestamp).
+
+    Inizializza il modello audit.
+
+    Args:
+      logs: Lista iniziale di dizionari log.
+
+    Attributes:
+        COLUMNS: ClassVar[list[str: Segnale o attributo della classe.
     """
 
     COLUMNS: ClassVar[list[str]] = [
@@ -44,11 +52,6 @@ class AuditTableModel(QAbstractTableModel):
     COL_MESSAGE = 7
 
     def __init__(self, logs: list[dict[str, Any]] | None = None) -> None:
-        """Inizializza il modello audit.
-
-        Args:
-          logs: Lista iniziale di dizionari log.
-        """
         super().__init__()
         self._logs = logs or []
         # Pre-load icons

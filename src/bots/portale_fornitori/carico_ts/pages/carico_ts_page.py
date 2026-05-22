@@ -20,10 +20,11 @@ class CaricoTSPage:
     """Page Object Model per la gestione del caricamento dei TimeSheet.
 
     Fornisce strumenti per navigare nell'area gestione e interagire con gli ordini.
+
+    Inizializza la pagina con il driver e la callback di logging.
     """
 
     def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None) -> None:
-        """Inizializza la pagina con il driver e la callback di logging."""
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.log = log_callback or print

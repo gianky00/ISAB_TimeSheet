@@ -21,10 +21,11 @@ class NotificationItem(QFrame):
     """Widget grafico per la visualizzazione di una singola notifica nel centro notifiche.
 
     Supporta diversi livelli di severit  (info, success, warning, error).
+
+    Inizializza l'item con i dati della notifica.
     """
 
     def __init__(self, notification: dict[str, Any], parent: QWidget | None = None) -> None:
-        """Inizializza l'item con i dati della notifica."""
         super().__init__(parent)
         self.notification = notification
         self.manager = NotificationManager.instance()

@@ -43,14 +43,14 @@ class ScaricoPDLPanel(BaseBotPanel):
     """Orchestratore per lo scarico PDL con gestione parametri e stati riga.
 
     Consente di definire una lista di numeri PDL, la cartella di destinazione e le opzioni di stampa.
+
+    Inizializza il pannello scarico PDL.
+
+    Args:
+        parent: Widget genitore opzionale.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il pannello scarico PDL.
-
-        Args:
-            parent: Widget genitore opzionale.
-        """
         super().__init__(
             bot_id="scarico_pdl",
             bot_name="Scarico PDL",

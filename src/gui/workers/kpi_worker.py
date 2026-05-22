@@ -19,18 +19,22 @@ class KPIWorker(QThread):
     """Worker dedicato al calcolo delle statistiche KPI.
 
     Esegue query SQL e analisi Pandas in un thread separato.
+
+    Inizializza il worker.
+
+    Args:
+      year: L'anno di riferimento per l'analisi.
+      hourly_cost_std: Il costo orario standard per il calcolo dei margini.
+
+    Attributes:
+        error_signal: Segnale o attributo della classe.
+        finished_signal: Segnale o attributo della classe.
     """
 
     finished_signal = Signal(dict)  # Restituisce il dizionario con tutti i dati calcolati
     error_signal = Signal(str)
 
     def __init__(self, year: int, hourly_cost_std: float) -> None:
-        """Inizializza il worker.
-
-        Args:
-          year: L'anno di riferimento per l'analisi.
-          hourly_cost_std: Il costo orario standard per il calcolo dei margini.
-        """
         super().__init__()
         self.year = year
         self.hourly_cost_std = hourly_cost_std

@@ -13,7 +13,10 @@ from src.bots.portale_fornitori.common.locators import CommonLocators, LoginLoca
 
 
 class PlaywrightLoginPage(PlaywrightBasePage):
-    """Page Object per la gestione della pagina di login con Playwright."""
+    """Page Object per la gestione della pagina di login con Playwright.
+
+    Inizializza la classe.
+    """
 
     def __init__(
         self,
@@ -21,7 +24,6 @@ class PlaywrightLoginPage(PlaywrightBasePage):
         logger: Callable[[str], None] | None = None,
         isab_url: str = "",
     ) -> None:
-        """Inizializza la classe."""
         super().__init__(page, logger)
         self.isab_url = isab_url
 

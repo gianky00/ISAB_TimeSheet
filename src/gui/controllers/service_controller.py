@@ -41,6 +41,15 @@ class ServiceController(QObject):
     - TelegramService per il monitoraggio remoto e l'invio di documenti.
     - Scheduler dei Bot per lo scarico automatico di timbrature, OdA e PDL.
     - Generazione e invio automatico dei report email via Outlook.
+
+    Inizializza il controller dei servizi e le code di gestione del parallelismo.
+
+    Args:
+      main_window: Riferimento alla MainWindow dell'applicazione.
+      telegram_service: Istanza del servizio Telegram.
+
+    Attributes:
+        DEFAULT_INTERVAL_DAYS: Final[int: Segnale o attributo della classe.
     """
 
     REPORT_WARNING_MIN: Final[int] = 21
@@ -48,12 +57,6 @@ class ServiceController(QObject):
     DEFAULT_INTERVAL_DAYS: Final[int] = 7
 
     def __init__(self, main_window: Any, telegram_service: Any) -> None:
-        """Inizializza il controller dei servizi e le code di gestione del parallelismo.
-
-        Args:
-          main_window: Riferimento alla MainWindow dell'applicazione.
-          telegram_service: Istanza del servizio Telegram.
-        """
         super().__init__(main_window)
         self.mw = main_window
         self.telegram = telegram_service

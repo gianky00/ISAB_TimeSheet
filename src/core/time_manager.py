@@ -16,6 +16,9 @@ def get_network_time(timeout: int = 2) -> datetime | None:
 
     Restituisce un oggetto datetime con timezone UTC.
 
+    Args:
+      timeout: Timeout in secondi per la richiesta HTTP.
+
     Returns:
       datetime: Orario UTC corrente da rete.
       None: Se impossibile contattare il server.

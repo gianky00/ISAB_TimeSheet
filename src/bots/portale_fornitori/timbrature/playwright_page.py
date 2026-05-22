@@ -15,7 +15,15 @@ from src.core.paths import CONFIG_DIR
 
 
 class PlaywrightTimbraturePage(PlaywrightBasePage):
-    """Gestisce le interazioni con la pagina Timbrature usando Playwright."""
+    """Gestisce le interazioni con la pagina Timbrature usando Playwright.
+
+    Inizializza la pagina delle timbrature.
+
+    Args:
+      page: Oggetto Page di Playwright.
+      log_callback: Funzione per l'invio dei log.
+      download_path: Percorso per il salvataggio dei file.
+    """
 
     def __init__(
         self,
@@ -23,13 +31,6 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
         log_callback: Callable[[str], None] | None = None,
         download_path: str = "",
     ) -> None:
-        """Inizializza la pagina delle timbrature.
-
-        Args:
-          page: Oggetto Page di Playwright.
-          log_callback: Funzione per l'invio dei log.
-          download_path: Percorso per il salvataggio dei file.
-        """
         super().__init__(page, log_callback)
         self.download_path = download_path
 

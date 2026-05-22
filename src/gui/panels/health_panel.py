@@ -34,6 +34,8 @@ class HealthScoreBadge(QWidget):
     """Widget circolare (Gauge) Premium per l'Health Score.
 
     Implementa gradienti dinamici e ombre interne per un look Next-Gen.
+
+    Inizializza la classe.
     """
 
     GOOD_THRESHOLD: Final[int] = 80
@@ -41,7 +43,6 @@ class HealthScoreBadge(QWidget):
     ATTENTION_THRESHOLD: Final[int] = 40
 
     def __init__(self, parent: QWidget | None = None, size: int = 180) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._score = 100
         self._size = size
@@ -115,7 +116,10 @@ class HealthScoreBadge(QWidget):
 
 
 class StatCard(ModernCard):
-    """Card statistica Premium con elevazione e icone colorate."""
+    """Card statistica Premium con elevazione e icone colorate.
+
+    Inizializza la classe.
+    """
 
     def __init__(
         self,
@@ -171,10 +175,12 @@ class StatCard(ModernCard):
 
 
 class AnomalyCard(ModernCard):
-    """Card anomalia con design a lista orizzontale e badge di severità."""
+    """Card anomalia con design a lista orizzontale e badge di severità.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, anomaly: Anomaly, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent, elevation=6)
         self._setup_content(anomaly)
 
@@ -240,13 +246,14 @@ class HealthPanel(QWidget):
     """Pannello principale Health & Observability.
 
     Integra timer di auto-refresh per mantenere i dati sempre aggiornati.
+
+    Inizializza l'interfaccia e avvia gli scheduler di monitoraggio.
     """
 
     REFRESH_INTERVAL_MS: Final[int] = 120000  # 2 min
     ALERT_CHECK_INTERVAL_MS: Final[int] = 1800000  # 30 min
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza l'interfaccia e avvia gli scheduler di monitoraggio."""
         super().__init__(parent)
         self._health_worker: HealthWorker | None = None
         self._first_refresh_done = False

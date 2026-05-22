@@ -22,12 +22,13 @@ class SidebarButton(QPushButton):
     """Pulsante ultra-moderno per la sidebar.
 
     Ottimizzato per la fluidità estrema rimuovendo gli effetti grafici costosi.
+
+    Inizializza la classe.
     """
 
     text_opacity_changed = Signal(float)
 
     def __init__(self, text: str, icon_path: str = "", parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.label_text = text
         self.icon_path = icon_path

@@ -23,6 +23,8 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
     """Bot per monitorare i flag TCL/TGO della settimana tramite Export Excel.
 
     Naviga nell'area Attivita', filtra per ditta e richiedenti, ed esporta i dati per l'analisi.
+
+    Inizializza il bot di programmazione.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
@@ -41,7 +43,6 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         account_type: str = "Esecutore",
         **kwargs: Any,
     ) -> None:
-        """Inizializza il bot di programmazione."""
         super().__init__(username, password, config, account_type=account_type)
         self.results: list[dict[str, Any]] = []
 

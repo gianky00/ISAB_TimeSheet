@@ -23,15 +23,15 @@ class PDLTimelineWidget(QWidget):
     """Widget elegante per visualizzare la cronologia delle attività di una PDL.
 
     Implementa un design moderno a timeline verticale con card informative.
+
+    Inizializza la timeline con i dati degli eventi.
+
+    Args:
+      data: Lista di dizionari, ognuno rappresentante un evento (data, tecnico, descrizione, fonte).
+      parent: Widget genitore.
     """
 
     def __init__(self, data: list[dict[str, Any]], parent: QWidget | None = None) -> None:
-        """Inizializza la timeline con i dati degli eventi.
-
-        Args:
-          data: Lista di dizionari, ognuno rappresentante un evento (data, tecnico, descrizione, fonte).
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.data = sorted(data, key=lambda x: str(x.get("data", "")), reverse=True)
         self._setup_ui()

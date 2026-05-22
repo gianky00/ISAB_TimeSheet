@@ -51,6 +51,15 @@ class AutopilotEventCard(QFrame):
     """Card per visualizzare un singolo evento programmato del bot.
 
     Include ora lo stato del database (freschezza dati) e un tasto di sync rapido.
+
+    Inizializza la card dell'evento autopilot.
+
+    Args:
+      info: Dati dell'evento (ID, nome, ora, icona, colore).
+      parent: Widget genitore.
+
+    Attributes:
+        sync_requested: Segnale o attributo della classe.
     """
 
     sync_requested = Signal(str)  # Segnale emesso quando l'utente preme il tasto sync
@@ -60,12 +69,6 @@ class AutopilotEventCard(QFrame):
         info: EventInfo,
         parent: QWidget | None = None,
     ) -> None:
-        """Inizializza la card dell'evento autopilot.
-
-        Args:
-          info: Dati dell'evento (ID, nome, ora, icona, colore).
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.bot_id = info["id"]
         self.bot_name = info["name"]

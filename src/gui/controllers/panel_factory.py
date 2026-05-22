@@ -22,14 +22,14 @@ class PanelFactory:
     """Factory per la creazione dei pannelli della MainWindow.
 
     Incapsula la logica di importazione dinamica e inizializzazione dei widget.
+
+    Inizializza la factory.
+
+    Args:
+      navigation_controller: Riferimento al controller di navigazione per l'iniezione delle dipendenze.
     """
 
     def __init__(self, navigation_controller: "NavigationController") -> None:
-        """Inizializza la factory.
-
-        Args:
-          navigation_controller: Riferimento al controller di navigazione per l'iniezione delle dipendenze.
-        """
         self.nav = navigation_controller
         self.mw: MainWindow = navigation_controller.mw
 

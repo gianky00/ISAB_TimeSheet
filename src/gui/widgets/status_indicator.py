@@ -25,10 +25,11 @@ class StatusIndicator(QWidget):
     """Indicatore di stato circolare con animazione di pulsazione.
 
     Stati supportati: 'idle', 'running', 'success', 'error'.
+
+    Inizializza la classe.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setFixedSize(20, 20)
         self.setStyleSheet(TOOLTIP_CSS)

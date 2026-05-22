@@ -23,10 +23,12 @@ from PySide6.QtWidgets import QWidget
 
 
 class Particle:
-    """Singola particella animata con profondità."""
+    """Singola particella animata con profondità.
+
+    Inizializza una particella con coordinate casuali.
+    """
 
     def __init__(self, w: int, h: int) -> None:
-        """Inizializza una particella con coordinate casuali."""
         self.x: float = 0.0
         self.y: float = 0.0
         self.size: float = 0.0
@@ -67,12 +69,14 @@ class Particle:
 
 
 class ParticleBackground(QWidget):
-    """Background con particelle, connessioni neurali, circuiti e convergenza."""
+    """Background con particelle, connessioni neurali, circuiti e convergenza.
+
+    Inizializza il widget di sfondo particellare.
+    """
 
     BORDER_RADIUS = 28
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il widget di sfondo particellare."""
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)

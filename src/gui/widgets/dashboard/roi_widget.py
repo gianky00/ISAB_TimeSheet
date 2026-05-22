@@ -36,16 +36,19 @@ class BotSavingsWidget(ModernCard):
     """Widget premium per la visualizzazione dell'efficienza delle automazioni.
 
     Calcola il tempo risparmiato, il tasso di successo e l'affidabilità basandosi sullo storico totale.
+
+    Inizializza il widget Efficienza.
+
+    Args:
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        stats_updated: Segnale o attributo della classe.
     """
 
     stats_updated = Signal(object)  # ROIMetrics
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il widget Efficienza.
-
-        Args:
-          parent: Widget genitore opzionale.
-        """
         super().__init__(elevation=5, parent=parent)
         self.setMinimumWidth(340)
         self._worker: ROIWorker | None = None

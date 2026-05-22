@@ -46,6 +46,8 @@ class BaseBot(ABC):
     """Architettura base agnostica dal driver per i bot ISAB/SafeWork.
 
     Refactored V9.0: SRP Compliance via BotStepManager and ExecutionGuard.
+
+    Inizializza le proprietà fondamentali del bot.
     """
 
     ISAB_URL = URLs.ISAB_PORTAL
@@ -60,7 +62,6 @@ class BaseBot(ABC):
         password: str,
         config: BotConfig | None = None,
     ) -> None:
-        """Inizializza le proprietà fondamentali del bot."""
         self.username = username
         self.password = password
         self.config = config or BotConfig()

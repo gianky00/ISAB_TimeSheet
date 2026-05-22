@@ -14,10 +14,12 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class StatusListWidget(QListWidget):
-    """Widget per visualizzare lo stato di elaborazione riga per riga della tabella bot."""
+    """Widget per visualizzare lo stato di elaborazione riga per riga della tabella bot.
+
+    Inizializza la lista degli stati.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la lista degli stati."""
         super().__init__(parent)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.setStyleSheet("""

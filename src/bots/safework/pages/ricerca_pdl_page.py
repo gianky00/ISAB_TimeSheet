@@ -17,18 +17,19 @@ from src.bots.safework.common.locators import SafeWorkLocators
 
 
 class RicercaPDLPage:
-    """Page Object per la pagina di ricerca PDL."""
+    """Page Object per la pagina di ricerca PDL.
+
+    Inizializza la pagina di ricerca PDL.
+
+    Args:
+        driver: Istanza del driver Selenium.
+        wait: Istanza di WebDriverWait.
+        log_func: Funzione per il logging.
+    """
 
     def __init__(
         self, driver: webdriver.Chrome, wait: WebDriverWait[webdriver.Chrome], log_func: Callable[[str], None]
     ) -> None:
-        """Inizializza la pagina di ricerca PDL.
-
-        Args:
-            driver: Istanza del driver Selenium.
-            wait: Istanza di WebDriverWait.
-            log_func: Funzione per il logging.
-        """
         self.driver = driver
         self.wait = wait
         self.log = log_func

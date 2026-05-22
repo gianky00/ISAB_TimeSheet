@@ -31,10 +31,12 @@ from src.gui.widgets.info_widgets import InfoLabel
 
 
 class DummyCanvas(QLabel):
-    """Fallback canvas utilizzato quando il backend Matplotlib Qt non  disponibile."""
+    """Fallback canvas utilizzato quando il backend Matplotlib Qt non  disponibile.
+
+    Inizializza il canvas di fallback.
+    """
 
     def __init__(self, fig: Figure) -> None:
-        """Inizializza il canvas di fallback."""
         super().__init__("Grafico disabilitato (Incompatibilit  Backend Matplotlib nativo)")
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setStyleSheet("color: #6c757d; font-style: italic;")
@@ -54,7 +56,17 @@ FigureCanvas = DummyCanvas
 
 
 class ChartContainer(QWidget):
-    """Container stilizzato per i grafici Matplotlib."""
+    """Container stilizzato per i grafici Matplotlib.
+
+    Inizializza il container stilizzato.
+
+    Args:
+      canvas: Il widget contenente il grafico Matplotlib.
+      title: Titolo del grafico.
+      height: Altezza minima del widget.
+      info_callback: Funzione chiamata al click sull'icona info.
+      parent: Widget genitore.
+    """
 
     def __init__(
         self,
@@ -64,15 +76,6 @@ class ChartContainer(QWidget):
         info_callback: Callable[[], str] | None = None,
         parent: QWidget | None = None,
     ) -> None:
-        """Inizializza il container stilizzato.
-
-        Args:
-          canvas: Il widget contenente il grafico Matplotlib.
-          title: Titolo del grafico.
-          height: Altezza minima del widget.
-          info_callback: Funzione chiamata al click sull'icona info.
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.canvas = canvas
         self.setMinimumHeight(height)
@@ -119,14 +122,15 @@ class ChartContainer(QWidget):
 
 
 class KPIChartsManager:
-    """Gestore per la creazione e l'aggiornamento dei grafici KPI."""
+    """Gestore per la creazione e l'aggiornamento dei grafici KPI.
+
+    Inizializza il manager dei grafici.
+
+    Args:
+      HOURLY_COST_STD: Costo orario standard per il calcolo dei margini.
+    """
 
     def __init__(self, HOURLY_COST_STD: float) -> None:
-        """Inizializza il manager dei grafici.
-
-        Args:
-          HOURLY_COST_STD: Costo orario standard per il calcolo dei margini.
-        """
         self.HOURLY_COST_STD = HOURLY_COST_STD
         self.annot: Annotation | None = None
 

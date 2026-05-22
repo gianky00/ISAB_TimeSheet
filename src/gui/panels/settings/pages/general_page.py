@@ -20,12 +20,14 @@ from src.gui.widgets.core_widgets import (
 
 
 class GeneralPage(QWidget):
-    """Pagina impostazioni generali e browser."""
+    """Pagina impostazioni generali e browser.
+
+    Inizializza la classe.
+    """
 
     settings_changed = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 

@@ -29,6 +29,8 @@ class ExcelTableWidget(QTableWidget):
     """QTableWidget con funzionalità Clipboard TSV.
 
     Supporta la formattazione semantica delle righe.
+
+    Inizializza la tabella configurando i trigger di modifica e la clipboard.
     """
 
     # Safe Method Injection: Copia i metodi di ClipboardMixin per evitare crash da eredit  multipla su Windows
@@ -42,7 +44,6 @@ class ExcelTableWidget(QTableWidget):
     _paste_cell_data = ClipboardMixin._paste_cell_data
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Inizializza la tabella configurando i trigger di modifica e la clipboard."""
         super().__init__(*args, **kwargs)
         self.auto_copy_headers = False
         self._placeholder_text = ""
@@ -160,20 +161,24 @@ class ExcelTableWidget(QTableWidget):
 
 
 class EditableDataTable(QWidget):
-    """Wrapper per ExcelTableWidget con gestione righe dinamica."""
+    """Wrapper per ExcelTableWidget con gestione righe dinamica.
+
+    Inizializza la tabella modificabile.
+
+    Args:
+      columns: Elenco di configurazioni per le colonne (nome, tipo, opzioni).
+      parent: Widget genitore opzionale.
+      initial_rows: Numero di righe vuote iniziali.
+
+    Attributes:
+        data_changed: Segnale o attributo della classe.
+    """
 
     data_changed = Signal()
 
     def __init__(
         self, columns: list[dict[str, Any]], parent: QWidget | None = None, initial_rows: int = 20
     ) -> None:
-        """Inizializza la tabella modificabile.
-
-        Args:
-          columns: Elenco di configurazioni per le colonne (nome, tipo, opzioni).
-          parent: Widget genitore opzionale.
-          initial_rows: Numero di righe vuote iniziali.
-        """
         super().__init__(parent)
         self.columns = columns
         self.initial_rows = initial_rows

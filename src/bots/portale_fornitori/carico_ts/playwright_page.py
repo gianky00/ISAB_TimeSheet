@@ -12,15 +12,16 @@ from src.bots.portale_fornitori.carico_ts.locators import CaricoTSLocators
 
 
 class PlaywrightCaricoTSPage(PlaywrightBasePage):
-    """Gestisce le interazioni con la pagina Carico TS usando Playwright."""
+    """Gestisce le interazioni con la pagina Carico TS usando Playwright.
+
+    Inizializza la pagina di caricamento timesheet.
+
+    Args:
+      page: Oggetto Page di Playwright.
+      log_callback: Funzione per l'invio dei log.
+    """
 
     def __init__(self, page: Page, log_callback: Callable[[str], None] | None = None) -> None:
-        """Inizializza la pagina di caricamento timesheet.
-
-        Args:
-          page: Oggetto Page di Playwright.
-          log_callback: Funzione per l'invio dei log.
-        """
         super().__init__(page, log_callback)
 
     def navigate(self) -> bool:

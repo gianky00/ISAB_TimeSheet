@@ -10,10 +10,12 @@ from src.gui.styles import COLORS
 
 
 class ShimmerItem(QFrame):
-    """Un singolo rettangolo pulsante che simula un contenuto in caricamento."""
+    """Un singolo rettangolo pulsante che simula un contenuto in caricamento.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, height: int = 20, width: int | None = None, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         if width:
             self.setFixedWidth(width)
@@ -38,10 +40,12 @@ class ShimmerItem(QFrame):
 
 
 class ShimmerSkeleton(QWidget):
-    """Un set di ShimmerItem che simula una card o una riga di tabella."""
+    """Un set di ShimmerItem che simula una card o una riga di tabella.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, rows: int = 3, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

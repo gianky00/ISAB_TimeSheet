@@ -42,15 +42,19 @@ _active_update_dialog: UpdateProgressDialog | None = None
 
 
 class UpdateProgressDialog(QDialog):
-    """Progress dialog for update downloads or network transfers."""
+    """Progress dialog for update downloads or network transfers.
+
+    Inizializza il dialog di progresso.
+
+    Args:
+      url_or_path: URL o percorso locale del file da scaricare/trasferire.
+      parent: Widget genitore.
+
+    Attributes:
+        current_value: Segnale o attributo della classe.
+    """
 
     def __init__(self, url_or_path: str, parent: QWidget | None = None) -> None:
-        """Inizializza il dialog di progresso.
-
-        Args:
-          url_or_path: URL o percorso locale del file da scaricare/trasferire.
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.setWindowTitle("Aggiornamento SyncroJob")
         self.setFixedSize(450, 200)

@@ -17,10 +17,12 @@ logger = logging.getLogger(__name__)
 
 
 class TelegramDataProcessor(QObject):
-    """Gestisce la validazione e l'inserimento dei dati nelle tabelle della UI."""
+    """Gestisce la validazione e l'inserimento dei dati nelle tabelle della UI.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, main_window: "MainWindow", telegram_service: Any) -> None:
-        """Inizializza la classe."""
         super().__init__(main_window)
         self.mw = main_window
         self.telegram = telegram_service

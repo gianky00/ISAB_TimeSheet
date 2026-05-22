@@ -32,6 +32,14 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
     Integra la logica di filtraggio per evitare l'overhead di QSortFilterProxyModel.
     Usa dati pre-formattati per rendering O(1).
+
+    Inizializza il modello e carica i dati dalla cache globale se disponibili.
+
+    Args:
+      data: Dati iniziali opzionali.
+
+    Attributes:
+        CACHE_PATH: ClassVar[Path: Segnale o attributo della classe.
     """
 
     COLUMNS: ClassVar[list[str]] = [
@@ -64,11 +72,6 @@ class ScaricoOreTableModel(QAbstractTableModel):
     loading_progress = Signal(str)
 
     def __init__(self, data: list[tuple[Any, ...]] | None = None) -> None:
-        """Inizializza il modello e carica i dati dalla cache globale se disponibili.
-
-        Args:
-          data: Dati iniziali opzionali.
-        """
         super().__init__()
         self._display_data: list[list[str]] = []
         self._search_index: list[str] = []

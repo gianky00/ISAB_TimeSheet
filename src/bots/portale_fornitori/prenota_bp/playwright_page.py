@@ -14,15 +14,16 @@ from .locators import PrenotaBPLocators
 
 
 class PlaywrightPrenotaBPPage(PlaywrightBasePage):
-    """Gestisce le interazioni con la pagina Prenotazioni BP usando Playwright."""
+    """Gestisce le interazioni con la pagina Prenotazioni BP usando Playwright.
+
+    Inizializza la pagina di prenotazione BP.
+
+    Args:
+      page: Oggetto Page di Playwright.
+      log_callback: Funzione per l'invio dei log.
+    """
 
     def __init__(self, page: Page, log_callback: Callable[[str], None] | None = None) -> None:
-        """Inizializza la pagina di prenotazione BP.
-
-        Args:
-          page: Oggetto Page di Playwright.
-          log_callback: Funzione per l'invio dei log.
-        """
         super().__init__(page, log_callback)
 
     def navigate_to_gestione_bp(self) -> None:

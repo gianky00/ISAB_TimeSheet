@@ -13,7 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 class AuditDatabase:
-    """Gestisce il database SQLite per l'Audit Log."""
+    """Gestisce il database SQLite per l'Audit Log.
+
+    Inizializza il gestore del database di audit.
+    """
 
     DB_PATH: Path = db_manager.DB_AUDIT
     _db_path_override: Path | None = None
@@ -30,7 +33,6 @@ class AuditDatabase:
         self._db_path_override = value
 
     def __init__(self) -> None:
-        """Inizializza il gestore del database di audit."""
         self._init_db()
 
     def _init_db(self) -> None:

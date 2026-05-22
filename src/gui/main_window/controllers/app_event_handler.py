@@ -21,14 +21,14 @@ class AppEventHandler(QObject):
 
     Include la gestione della chiusura (nascondi vs esci), il trigger del backup automatico
     e l'intercettazione delle scorciatoie da tastiera globali.
+
+    Inizializza l'event handler.
+
+    Args:
+        main_window: Riferimento alla MainWindow dell'applicazione.
     """
 
     def __init__(self, main_window: MainWindow) -> None:
-        """Inizializza l'event handler.
-
-        Args:
-            main_window: Riferimento alla MainWindow dell'applicazione.
-        """
         super().__init__(main_window)
         self.main_window = main_window
         self._force_quit = False

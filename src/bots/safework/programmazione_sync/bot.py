@@ -18,6 +18,8 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
     """Bot per scaricare il report Excel delle attività da SafeWork.
 
     Automatizza la navigazione alla sezione 'Visualizza Attività' ed esporta il report periodico.
+
+    Inizializza il bot di sincronizzazione programmazione.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
@@ -35,7 +37,6 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         account_type: str = "Esecutore",
         **kwargs: Any,
     ) -> None:
-        """Inizializza il bot di sincronizzazione programmazione."""
         super().__init__(username, password, config, account_type=account_type)
         self.downloaded_file: str | None = None
 

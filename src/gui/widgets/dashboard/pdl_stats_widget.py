@@ -40,12 +40,14 @@ QToolTip {
 
 
 class AreaBadge(QPushButton):
-    """Badge cliccabile per rappresentare un'area con statistiche live."""
+    """Badge cliccabile per rappresentare un'area con statistiche live.
+
+    Inizializza il badge dell'area con il nome, il conteggio e il trend.
+    """
 
     clicked_area = Signal(str)
 
     def __init__(self, name: str, count: int, trend: float, parent: QWidget | None = None) -> None:
-        """Inizializza il badge dell'area con il nome, il conteggio e il trend."""
         # Formattazione: Percentuale intera e carattere elegante
         trend_int = round(trend)
         trend_str = f"+{trend_int}%" if trend_int > 0 else f"{trend_int}%"
@@ -103,13 +105,15 @@ class AreaBadge(QPushButton):
 
 
 class PDLStatsWidget(ModernCard):
-    """Widget premium per il monitoraggio dei PDL con logica di allerta carico."""
+    """Widget premium per il monitoraggio dei PDL con logica di allerta carico.
+
+    Inizializza il widget delle statistiche PDL e avvia il timer di aggiornamento.
+    """
 
     stats_updated = Signal(object)
     area_selected = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il widget delle statistiche PDL e avvia il timer di aggiornamento."""
         super().__init__(elevation=5, parent=parent)
         self.setMinimumWidth(340)
         self._worker: PDLStatsWorker | None = None

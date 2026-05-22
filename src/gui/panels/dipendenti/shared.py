@@ -103,6 +103,8 @@ class InteractiveStatusCard(QFrame):
     """Card moderna interattiva con animazioni e ombreggiature.
 
     Utilizzata per visualizzare i conteggi aggregati (es. Abilitati, In Scadenza, Scaduti).
+
+    Inizializza la card di stato interattiva.
     """
 
     clicked = Signal(str)
@@ -116,7 +118,6 @@ class InteractiveStatusCard(QFrame):
         filter_type: str,
         parent: QWidget | None = None,
     ) -> None:
-        """Inizializza la card di stato interattiva."""
         super().__init__(parent)
         self.base_color = color
         self.filter_type = filter_type

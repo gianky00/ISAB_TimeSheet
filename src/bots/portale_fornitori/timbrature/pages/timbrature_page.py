@@ -29,7 +29,15 @@ from src.core.paths import CONFIG_DIR
 
 
 class TimbraturePage:
-    """Encapsulates interactions with the Timbrature page."""
+    """Encapsulates interactions with the Timbrature page.
+
+    Inizializza la classe.
+
+    Args:
+      driver: WebDriver per l'automazione.
+      log_callback: Funzione per il logging.
+      download_path: Percorso per i download.
+    """
 
     def __init__(
         self,
@@ -37,13 +45,6 @@ class TimbraturePage:
         log_callback: Callable[[str], None] | None = None,
         download_path: str = "",
     ) -> None:
-        """Inizializza la classe.
-
-        Args:
-          driver: WebDriver per l'automazione.
-          log_callback: Funzione per il logging.
-          download_path: Percorso per i download.
-        """
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)

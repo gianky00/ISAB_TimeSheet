@@ -19,10 +19,11 @@ class LoggingAdapter:
       logger = get_logger(__name__)
 
       # Funziona sia con vecchio che nuovo sistema!
+
+    Inizializza la classe.
     """
 
     def __init__(self, name: str) -> None:
-        """Inizializza la classe."""
         self._structured_logger = get_new_logger(name)
         self._std_logger = logging.getLogger(name)
 

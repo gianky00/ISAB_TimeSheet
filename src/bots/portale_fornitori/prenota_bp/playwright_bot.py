@@ -21,7 +21,10 @@ if TYPE_CHECKING:
 
 
 class PlaywrightPrenotaBPBot(PlaywrightBaseBot):
-    """Bot per la prenotazione massiva di Badge Provvisori (BP) usando Playwright."""
+    """Bot per la prenotazione massiva di Badge Provvisori (BP) usando Playwright.
+
+    Inizializza il bot con configurazione e parametri di filtraggio BP.
+    """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login Portale ISAB"),
@@ -59,7 +62,6 @@ class PlaywrightPrenotaBPBot(PlaywrightBaseBot):
         fornitore: str | None = None,
         **kwargs: Any,
     ) -> None:
-        """Inizializza il bot con configurazione e parametri di filtraggio BP."""
         super().__init__(config)
         current_year = datetime.now(UTC).astimezone().year
 

@@ -44,7 +44,10 @@ def get_local_setup_path(url_or_path: str) -> str:
 
 
 class DownloadWorker(QThread):
-    """Worker for resilient update downloading or network copying with progress support."""
+    """Worker for resilient update downloading or network copying with progress support.
+
+    Inizializza la classe.
+    """
 
     progress = Signal(int, int, float, float)
     finished_download = Signal(str)
@@ -52,7 +55,6 @@ class DownloadWorker(QThread):
     retrying = Signal(int)
 
     def __init__(self, url_or_path: str) -> None:
-        """Inizializza la classe."""
         super().__init__()
         self.url_or_path = url_or_path
         self._is_cancelled = False

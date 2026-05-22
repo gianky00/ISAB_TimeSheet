@@ -13,10 +13,12 @@ logger = logging.getLogger(__name__)
 
 
 class PDLController:
-    """Controller per la gestione dei dati del database PDL."""
+    """Controller per la gestione dei dati del database PDL.
+
+    Inizializza la classe.
+    """
 
     def __init__(self) -> None:
-        """Inizializza la classe."""
         self.repository = PdlRepository()
         self._cache: dict[str, list[PdlRowDTO]] = {}
 

@@ -30,18 +30,21 @@ class EditableDataTable(QWidget):
     """Una tabella interattiva che consente la modifica diretta delle celle.
 
     Supporta il salvataggio automatico e fornisce segnali per il tracciamento dei cambiamenti.
+
+    Inizializza la tabella con le colonne specificate.
+
+    Args:
+      columns: Lista di dizionari definenti le colonne (name, label, type, etc.).
+      parent: Widget genitore.
+
+    Attributes:
+        data_changed: Segnale o attributo della classe.
     """
 
     data_changed = Signal()
     """Segnale emesso ogni volta che i dati nella tabella vengono modificati."""
 
     def __init__(self, columns: list[dict[str, Any]], parent: QWidget | None = None) -> None:
-        """Inizializza la tabella con le colonne specificate.
-
-        Args:
-          columns: Lista di dizionari definenti le colonne (name, label, type, etc.).
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.columns = columns
         self._is_hovered = False

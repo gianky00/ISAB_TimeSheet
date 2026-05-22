@@ -21,7 +21,10 @@ from src.core.constants import Timeouts
 
 
 class LoginPage:
-    """Page Object per la gestione della pagina di login."""
+    """Page Object per la gestione della pagina di login.
+
+    Inizializza il Page Object di login.
+    """
 
     def __init__(
         self,
@@ -30,7 +33,6 @@ class LoginPage:
         logger: Callable[[str], None] | None = None,
         isab_url: str = "",
     ) -> None:
-        """Inizializza il Page Object di login."""
         self.driver = driver
         self.wait = wait
         self.log = logger or print

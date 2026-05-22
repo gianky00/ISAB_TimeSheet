@@ -36,10 +36,12 @@ class RenderItem:
 
 
 class DonCiroRenderer:
-    """Motore di rendering per Don Ciro."""
+    """Motore di rendering per Don Ciro.
+
+    Inizializza la classe.
+    """
 
     def __init__(self) -> None:
-        """Inizializza la classe."""
         # Palette Cinematic (Copiate dal widget originale)
         self.C_SKIN = QColor("#FFDAB9")
         self.C_SUIT = QColor("#223344")

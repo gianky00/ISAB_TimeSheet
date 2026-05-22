@@ -12,10 +12,12 @@ logger = logging.getLogger(__name__)
 
 
 class BotQueueManager:
-    """Gestisce l'accodamento e l'esecuzione sequenziale dei bot per sito."""
+    """Gestisce l'accodamento e l'esecuzione sequenziale dei bot per sito.
+
+    Inizializza la classe.
+    """
 
     def __init__(self) -> None:
-        """Inizializza la classe."""
         self.running_bots_by_site: dict[str, list[str]] = {"portale_fornitori": [], "safework": []}
         self.pending_bots_by_site: dict[str, list[tuple[str, Any, str]]] = {
             "portale_fornitori": [],

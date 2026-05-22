@@ -17,7 +17,19 @@ logger = logging.getLogger(__name__)
 
 
 class OdaIOWorker(QThread):
-    """Worker per operazioni pesanti di I/O su file Excel per gli OdA."""
+    """Worker per operazioni pesanti di I/O su file Excel per gli OdA.
+
+    Inizializza il worker.
+
+    Args:
+      mode: 'import' o 'export'.
+      file_path: Percorso del file Excel.
+      extra_data: Dati per l'export (header, query, ecc).
+      parent: Oggetto padre (PyQt).
+
+    Attributes:
+        finished_signal: Segnale o attributo della classe.
+    """
 
     finished_signal = Signal(bool, str, dict)  # success, message, stats
 
@@ -28,14 +40,6 @@ class OdaIOWorker(QThread):
         extra_data: dict[str, Any] | None = None,
         parent: QObject | None = None,
     ) -> None:
-        """Inizializza il worker.
-
-        Args:
-          mode: 'import' o 'export'.
-          file_path: Percorso del file Excel.
-          extra_data: Dati per l'export (header, query, ecc).
-          parent: Oggetto padre (PyQt).
-        """
         super().__init__(parent)
         self.mode = mode
         self.file_path = file_path

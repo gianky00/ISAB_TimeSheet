@@ -25,14 +25,15 @@ logger = logging.getLogger("UpdateController")
 
 
 class UpdateController:
-    """Controller per la gestione degli aggiornamenti dell'applicazione."""
+    """Controller per la gestione degli aggiornamenti dell'applicazione.
+
+    Inizializza il controller degli aggiornamenti.
+
+    Args:
+        main_window: Riferimento alla finestra principale per l'aggiornamento dell'UI.
+    """
 
     def __init__(self, main_window: MainWindow) -> None:
-        """Inizializza il controller degli aggiornamenti.
-
-        Args:
-            main_window: Riferimento alla finestra principale per l'aggiornamento dell'UI.
-        """
         self.mw = main_window
 
     def check_updates_startup(self) -> None:

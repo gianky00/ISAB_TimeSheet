@@ -9,12 +9,14 @@ from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoCont
 
 
 class ProgWorker(QThread):
-    """Worker per il calcolo asincrono del progressivo OdC."""
+    """Worker per il calcolo asincrono del progressivo OdC.
+
+    Inizializza la classe.
+    """
 
     finished = Signal(str)
 
     def __init__(self, controller: ConsuntivoController, year: str) -> None:
-        """Inizializza la classe."""
         super().__init__()
         self.controller = controller
         self.year = year

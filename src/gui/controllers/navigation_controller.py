@@ -33,17 +33,21 @@ class NavigationController(QObject):
     """Controller responsabile della commutazione tra le pagine nel QStackedWidget della MainWindow.
 
     Gestisce il routing e delega la creazione dei pannelli alla PanelFactory.
+
+    Inizializza il controller di navigazione e i componenti associati.
+
+    Args:
+      main_window: Riferimento alla MainWindow dell'applicazione.
+
+    Attributes:
+        panel_detached: Segnale o attributo della classe.
+        panel_reattached: Segnale o attributo della classe.
     """
 
     panel_detached = Signal(int, str)  # index, title
     panel_reattached = Signal(int)  # index
 
     def __init__(self, main_window: MainWindow) -> None:
-        """Inizializza il controller di navigazione e i componenti associati.
-
-        Args:
-          main_window: Riferimento alla MainWindow dell'applicazione.
-        """
         super().__init__(main_window)
         self.mw = main_window
 

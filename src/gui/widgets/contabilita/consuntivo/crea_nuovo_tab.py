@@ -32,13 +32,15 @@ from src.gui.widgets.modern_card import ModernContentCard
 
 
 class CreaNuovoTab(QWidget):
-    """Tab per la generazione di un nuovo consuntivo con tutti i campiùnecessari."""
+    """Tab per la generazione di un nuovo consuntivo con tutti i campiùnecessari.
+
+    Inizializza il tab con iniezione del controller.
+    """
 
     step_clicked = Signal(str)
     _prog_computed = Signal(str)
 
     def __init__(self, controller: ConsuntivoController, parent: QWidget | None = None) -> None:
-        """Inizializza il tab con iniezione del controller."""
         super().__init__(parent)
         self.controller = controller
         self.worker: GeneratoreWorker | None = None

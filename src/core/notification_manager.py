@@ -24,6 +24,8 @@ class NotificationManager(QObject):
 
     Gestisce il ciclo di vita dei messaggi (creazione, lettura, pin, eliminazione).
     Emette segnali per l'aggiornamento dinamico dell'interfaccia utente.
+
+    Inizializza il manager caricando le notifiche salvate su disco.
     """
 
     _instance: Optional["NotificationManager"] = None
@@ -65,7 +67,6 @@ class NotificationManager(QObject):
             cls._instance = None
 
     def __init__(self) -> None:
-        """Inizializza il manager caricando le notifiche salvate su disco."""
         super().__init__()
         self.notifications_file = CONFIG_DIR / FileNames.NOTIFICATIONS
         if not hasattr(self, "_lock"):

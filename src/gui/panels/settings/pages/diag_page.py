@@ -15,10 +15,12 @@ from src.utils.helpers import get_asset_path, get_colored_icon, open_folder
 
 
 class DiagPage(QWidget):
-    """Pagina Diagnostica e Licenza."""
+    """Pagina Diagnostica e Licenza.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 

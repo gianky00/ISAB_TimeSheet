@@ -27,12 +27,14 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class PathsPage(QWidget):
-    """Pagina per la gestione dei percorsi file."""
+    """Pagina per la gestione dei percorsi file.
+
+    Inizializza la classe.
+    """
 
     settings_changed = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 

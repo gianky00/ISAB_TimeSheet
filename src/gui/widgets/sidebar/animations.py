@@ -8,10 +8,12 @@ from PySide6.QtWidgets import QGraphicsOpacityEffect, QWidget
 
 
 class SidebarAnimationManager(QObject):
-    """Orchestratore delle animazioni per la Sidebar Widget."""
+    """Orchestratore delle animazioni per la Sidebar Widget.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, sidebar: QWidget) -> None:
-        """Inizializza la classe."""
         super().__init__(sidebar)
         self.sidebar = sidebar
 

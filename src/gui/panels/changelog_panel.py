@@ -77,6 +77,8 @@ class ReleaseCard(QFrame):
     """Card grafica associata ad un singolo rilascio di versione.
 
     Supporta micro-interazioni di sollevamento 3D/bagliore al passaggio del mouse e copia negli appunti.
+
+    Inizializza la classe.
     """
 
     def __init__(
@@ -328,12 +330,13 @@ class ChangelogPanel(QWidget):
     """Pannello Novità & Note di Rilascio.
 
     Rendering dinamico ed estetico del changelog strutturato con timeline DevOps e filtri sticky.
+
+    Inizializza la classe.
     """
 
     _changelog_cache: list[dict[str, Any]] | None = None
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.release_rows: list[tuple[QWidget, ReleaseCard]] = []
         self.active_filter = "all"

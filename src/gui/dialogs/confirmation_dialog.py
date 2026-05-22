@@ -25,6 +25,15 @@ class ConfirmationDialog(QDialog):
     """Dialogo versatile per conferme e avvisi.
 
     Supporta diverse varianti (INFO, WARNING, ERROR, QUESTION) con icone e colori tematici.
+
+    Inizializza il dialogo di conferma.
+
+    Args:
+      parent: Widget genitore.
+      title: Titolo della finestra.
+      message: Messaggio da visualizzare.
+      variant: Variante del dialogo (es. Variant.QUESTION).
+      is_rich_text: Se True, abilita il rendering HTML (sanificato).
     """
 
     class Variant:
@@ -43,15 +52,6 @@ class ConfirmationDialog(QDialog):
         variant: str = Variant.QUESTION,
         is_rich_text: bool = False,
     ) -> None:
-        """Inizializza il dialogo di conferma.
-
-        Args:
-          parent: Widget genitore.
-          title: Titolo della finestra.
-          message: Messaggio da visualizzare.
-          variant: Variante del dialogo (es. Variant.QUESTION).
-          is_rich_text: Se True, abilita il rendering HTML (sanificato).
-        """
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setMinimumWidth(380)

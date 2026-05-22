@@ -15,10 +15,12 @@ logger = logging.getLogger(__name__)
 
 
 class ODAController:
-    """Servizio per gestire la logica di business dei dati OdA."""
+    """Servizio per gestire la logica di business dei dati OdA.
+
+    Inizializza il controller degli OdA.
+    """
 
     def __init__(self) -> None:
-        """Inizializza il controller degli OdA."""
         self.repository = OdaRepository()
 
     def get_grouped_data(self, search_text: str = "") -> list[dict[str, Any]]:

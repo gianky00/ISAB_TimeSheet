@@ -19,10 +19,12 @@ class IntegrityWorkerSignals(QObject):
 
 
 class IntegrityWorker(QRunnable):
-    """Worker per la verifica asincrona dell'hash di integrità del database di audit."""
+    """Worker per la verifica asincrona dell'hash di integrità del database di audit.
+
+    Inizializza il worker comunicando con l'AuditManager.
+    """
 
     def __init__(self, manager: AuditManager) -> None:
-        """Inizializza il worker comunicando con l'AuditManager."""
         super().__init__()
         self.manager = manager
         self.signals = IntegrityWorkerSignals()

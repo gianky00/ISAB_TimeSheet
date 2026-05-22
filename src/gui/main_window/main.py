@@ -60,6 +60,8 @@ class MainWindow(QMainWindow):
     """Finestra principale dell'applicazione (Facade).
 
     Coordina i componenti modulari e i controller, fungendo da punto centrale di orchestrazione.
+
+    Inizializza la classe.
     """
 
     # Pannelli registrati dinamicamente (per static analysis)
@@ -79,7 +81,6 @@ class MainWindow(QMainWindow):
         return self.stacked_widget
 
     def __init__(self) -> None:
-        """Inizializza la classe."""
         super().__init__()
         self.setWindowTitle(f"SyncroJob v{VERSION}")
 

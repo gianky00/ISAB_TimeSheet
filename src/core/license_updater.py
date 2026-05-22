@@ -1,11 +1,9 @@
-"""Modulo License Updater."""
-
-# ruff: noqa: PLR2004, TRY300, TRY301, C901, PLR0911, PLR0912, PLR0915, PLC0415
 """SyncroJob - License Updater.
 
 Modulo dedicato all'aggiornamento e alla sincronizzazione dei file di licenza dal repository GitHub.
 Gestisce i periodi di grazia offline tramite token cifrati e garantisce la validità temporale del software.
 """
+# ruff: noqa: PLR2004, TRY300, TRY301, C901, PLR0911, PLR0912, PLR0915, PLC0415
 
 import json
 import sys
@@ -86,7 +84,8 @@ def check_grace_period() -> bool:
       bool: True se il periodo di grazia  valido.
 
     Raises:
-      Exception: Se il token non esiste,  scaduto o  stata rilevata manipolazione oraria.
+      Exception: Se il token non esiste, scaduto o manipolazione oraria.
+      LicenseError: Se il periodo di grazia è scaduto o orologio manomesso.
     """
     token_path = _get_validity_token_path()
     if not token_path.exists():

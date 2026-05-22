@@ -51,7 +51,10 @@ class CommandNode:
 
 
 class CommandRegistry:
-    """Singleton per definire e recuperare l'albero dei comandi."""
+    """Singleton per definire e recuperare l'albero dei comandi.
+
+    Inizializza il registro con un nodo ROOT.
+    """
 
     _instance: Optional["CommandRegistry"] = None
     _root: Optional["CommandNode"] = None
@@ -64,7 +67,6 @@ class CommandRegistry:
         return cls._instance
 
     def __init__(self) -> None:
-        """Inizializza il registro con un nodo ROOT."""
         self._root = CommandNode("ROOT", children=[])
 
     def register_root(self, node: CommandNode) -> None:

@@ -20,15 +20,15 @@ class BotController(QObject):
     - Collegare i segnali di stato di ogni pannello bot alle card informative (Portale/SafeWork).
     - Inoltrare i file prodotti dai bot (es. PDF dei PDL) direttamente sul canale Telegram.
     - Identificare il pannello bot attualmente attivo per operazioni contestuali.
+
+    Inizializza il bot controller.
+
+    Args:
+      main_window: Riferimento alla MainWindow (per accesso alle status card).
+      telegram_service: Istanza del TelegramService per l'invio di notifiche e file.
     """
 
     def __init__(self, main_window: Any, telegram_service: Any) -> None:
-        """Inizializza il bot controller.
-
-        Args:
-          main_window: Riferimento alla MainWindow (per accesso alle status card).
-          telegram_service: Istanza del TelegramService per l'invio di notifiche e file.
-        """
         super().__init__(main_window)
         self.mw = main_window
         self.telegram = telegram_service

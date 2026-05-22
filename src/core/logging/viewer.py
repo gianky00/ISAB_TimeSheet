@@ -24,14 +24,14 @@ class LogQuery:
     """Query builder per file di log in formato JSON.
 
     Permette di concatenare filtri per livello, messaggio, contesto, trace_id e range temporale.
+
+    Inizializza il query builder su un file specifico.
+
+    Args:
+      log_file: Percorso del file .json o .log da interrogare.
     """
 
     def __init__(self, log_file: Path) -> None:
-        """Inizializza il query builder su un file specifico.
-
-        Args:
-          log_file: Percorso del file .json o .log da interrogare.
-        """
         self.log_file = log_file
         self.filters: list[Callable[[dict[str, Any]], bool]] = []
         self._limit: int | None = None
@@ -192,13 +192,14 @@ class LogViewer:
     """Interfaccia ad alto livello per l'analisi dei log applicativi.
 
     Fornisce metodi aggregati per statistiche, analisi errori e monitoraggio performance.
+
+    Inizializza il viewer con la configurazione di logging corrente.
     """
 
     DEFAULT_LIMIT: Final[int] = 10
     HEALTH_PERIOD_HOURS: Final[int] = 24
 
     def __init__(self, config: "LoggingConfig | None" = None) -> None:
-        """Inizializza il viewer con la configurazione di logging corrente."""
         self.config = config or get_config()
 
     def query(self, log_type: str = "application") -> LogQuery:
@@ -209,6 +210,9 @@ class LogViewer:
 
         Returns:
           LogQuery: Istanza del builder configurata sul file corretto.
+
+        Raises:
+          ValueError: Se il log_type specificato è sconosciuto.
         """
         if log_type == "application":
             log_file = self.config.json_log_file

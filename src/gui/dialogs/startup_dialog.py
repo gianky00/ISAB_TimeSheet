@@ -55,7 +55,10 @@ logger = logging.getLogger(__name__)
 
 
 class StartupDialog(QDialog):
-    """Splash screen con animazioni fluide a 60fps e effetti 3D."""
+    """Splash screen con animazioni fluide a 60fps e effetti 3D.
+
+    Inizializza la classe.
+    """
 
     # Dimensioni del contenuto visibile (Innalzate proporzionalmente)
     CONTENT_WIDTH = 850
@@ -68,7 +71,6 @@ class StartupDialog(QDialog):
     _drag_pos: QPoint | None
 
     def __init__(self) -> None:
-        """Inizializza la classe."""
         super().__init__()
         self.setMouseTracking(True)  # Fondamentale per il Tilt 3D
         self._init_window()

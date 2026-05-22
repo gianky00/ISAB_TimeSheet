@@ -14,15 +14,16 @@ from src.bots.safework.common.locators import SafeWorkLocators
 
 
 class PlaywrightVisualizzaAttivitaPage(PlaywrightBasePage):
-    """Gestisce le interazioni con la pagina Visualizza Attivitàusando Playwright."""
+    """Gestisce le interazioni con la pagina Visualizza Attivitàusando Playwright.
+
+    Inizializza la pagina Visualizza Attività Playwright.
+
+    Args:
+        page: Pagina Playwright.
+        log_func: Funzione per il logging.
+    """
 
     def __init__(self, page: Page, log_func: Callable[[str], None]) -> None:
-        """Inizializza la pagina Visualizza Attività Playwright.
-
-        Args:
-            page: Pagina Playwright.
-            log_func: Funzione per il logging.
-        """
         super().__init__(page, log_func)
 
     def pulisci_pdl(self) -> None:

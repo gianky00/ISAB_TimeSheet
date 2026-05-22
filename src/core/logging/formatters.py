@@ -16,14 +16,14 @@ class JSONFormatter:
     """Formatter per output JSON strutturato.
 
     Produce log in formato JSON parsabile, ottimizzato per AI analysis.
+
+    Inizializza formatter.
+
+    Args:
+      mask_sensitive: Se True, maschera dati sensibili
     """
 
     def __init__(self, mask_sensitive: bool = True) -> None:
-        """Inizializza formatter.
-
-        Args:
-          mask_sensitive: Se True, maschera dati sensibili
-        """
         self.mask_sensitive = mask_sensitive
 
     def format(  # noqa: PLR0913
@@ -138,15 +138,15 @@ class HumanFormatter:
     """Formatter per output human-readable.
 
     Produce log in formato leggibile per troubleshooting manuale.
+
+    Inizializza formatter.
+
+    Args:
+      colorize: Se True, usa colori ANSI (solo per console)
+      show_context: Se True, mostra context nei log
     """
 
     def __init__(self, colorize: bool = True, show_context: bool = True) -> None:
-        """Inizializza formatter.
-
-        Args:
-          colorize: Se True, usa colori ANSI (solo per console)
-          show_context: Se True, mostra context nei log
-        """
         self.colorize = colorize and self._supports_color()
         self.show_context = show_context
 

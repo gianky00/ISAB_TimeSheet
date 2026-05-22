@@ -15,10 +15,12 @@ logger = get_logger(__name__)
 
 
 class ContabilitaRepository:
-    """Repository per l'accesso ai dati della Contabilità Strumentale."""
+    """Repository per l'accesso ai dati della Contabilità Strumentale.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, db_manager_instance: Any = None) -> None:
-        """Inizializza la classe."""
         self.db = db_manager_instance or db_manager
 
     def get_available_years(self) -> list[int]:

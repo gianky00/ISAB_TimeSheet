@@ -13,10 +13,11 @@ class BotLogSink:
     """Sink specializzato per log di singole esecuzioni bot.
 
     Ogni bot run (identificato da trace_id) ha il proprio file JSON.
+
+    Inizializza la classe.
     """
 
     def __init__(self, config: Any = None) -> None:
-        """Inizializza la classe."""
         self.config = config or get_config()
         self.formatter = JSONFormatter(mask_sensitive=True)
 
@@ -104,10 +105,11 @@ class MetricsRotatingSink:
     """Sink per metriche con rotazione automatica.
 
     Ruota file metrics quando raggiunge dimensione massima.
+
+    Inizializza la classe.
     """
 
     def __init__(self, config: Any = None, max_size_mb: float = 10.0) -> None:
-        """Inizializza la classe."""
         self.config = config or get_config()
         self.max_size_bytes = max_size_mb * 1024 * 1024
         self.metrics_file = self.config.metrics_dir / "performance.jsonl"
@@ -154,10 +156,11 @@ class AggregatedMetricsSink:
     """Sink per metriche aggregate (summary giornaliero).
 
     Calcola statistiche aggregate e le salva in file separato.
+
+    Inizializza la classe.
     """
 
     def __init__(self, config: Any = None) -> None:
-        """Inizializza la classe."""
         self.config = config or get_config()
         self.aggregated_dir = self.config.metrics_dir / "aggregated"
         self.aggregated_dir.mkdir(parents=True, exist_ok=True)

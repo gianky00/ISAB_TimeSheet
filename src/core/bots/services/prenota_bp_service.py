@@ -8,10 +8,12 @@ from src.core.bots.services.base_service import BaseBotService
 
 
 class PrenotaBPService(BaseBotService):
-    """Implementazione del servizio per la prenotazione BP."""
+    """Implementazione del servizio per la prenotazione BP.
+
+    Inizializza il servizio di prenotazione BP.
+    """
 
     def __init__(self) -> None:
-        """Inizializza il servizio di prenotazione BP."""
         super().__init__("prenota_bp")
 
     def load_config(self) -> dict[str, Any]:

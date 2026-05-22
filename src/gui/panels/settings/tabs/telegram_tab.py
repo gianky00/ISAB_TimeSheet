@@ -33,17 +33,17 @@ class SettingCard(QFrame):
     """Container a card con ombra e stile moderno per un gruppo di impostazioni.
 
     Fornisce coerenza visiva in tutto il pannello.
+
+    Inizializza la card di impostazione.
+
+    Args:
+      title: Titolo principale.
+      subtitle: Descrizione breve.
+      icon_key: Chiave icona in Icons.
+      content_widget: Widget contenuto.
     """
 
     def __init__(self, title: str, subtitle: str, icon_key: str, content_widget: QWidget) -> None:
-        """Inizializza la card di impostazione.
-
-        Args:
-          title: Titolo principale.
-          subtitle: Descrizione breve.
-          icon_key: Chiave icona in Icons.
-          content_widget: Widget contenuto.
-        """
         super().__init__()
         self.title_text = title
         self.subtitle_text = subtitle
@@ -105,17 +105,20 @@ class TelegramTab(QWidget):
     """Tab dedicato all'integrazione con il bot Telegram.
 
     Gestisce token, chat ID e fornisce strumenti di test per la connettività remota.
+
+    Inizializza il tab di Telegram.
+
+    Args:
+      parent: Widget genitore.
+
+    Attributes:
+        settings_changed: Segnale o attributo della classe.
     """
 
     settings_changed = Signal()
     """Segnale emesso quando le credenziali Telegram vengono modificate."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il tab di Telegram.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.cards: list[SettingCard] = []
         self._setup_ui()

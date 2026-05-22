@@ -18,7 +18,10 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class AccountDialog(QDialog):
-    """Dialog per aggiungere/modificare un account."""
+    """Dialog per aggiungere/modificare un account.
+
+    Inizializza la classe.
+    """
 
     def __init__(
         self,

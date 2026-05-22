@@ -30,17 +30,20 @@ class AnimatedTabWidget(QWidget):
 
     Supporta il posizionamento dei tab (North/South) e garantisce performance a 60 FPS
     grazie alla tecnica di snapshot rendering durante le transizioni.
+
+    Inizializza the widget dei tab animati.
+
+    Args:
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        currentChanged: Segnale o attributo della classe.
     """
 
     currentChanged = Signal(int)  # noqa: N815
     """Segnale emesso quando il tab attivo cambia."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza the widget dei tab animati.
-
-        Args:
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)

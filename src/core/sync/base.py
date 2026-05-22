@@ -69,6 +69,13 @@ class BaseSyncEngine:
 
         Cancella i dati esistenti per le partizioni fornite e inserisce i nuovi.
 
+        Args:
+          cursor: Cursore del database SQLite.
+          table_name: Nome della tabella di destinazione.
+          columns: Lista dei nomi delle colonne.
+          new_data: Nuovi dati da inserire.
+          partition: Configurazione della partizione.
+
         Returns:
           Tuple (aggiunti, rimossi).
         """

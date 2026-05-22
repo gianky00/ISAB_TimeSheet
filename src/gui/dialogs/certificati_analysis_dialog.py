@@ -39,7 +39,10 @@ THRESHOLD_ATTENTION = 30
 
 
 class ScadenzeAnalysisDialog(QDialog):
-    """Finestra di analisi scadenze certificati - Design professionale."""
+    """Finestra di analisi scadenze certificati - Design professionale.
+
+    Inizializza la classe.
+    """
 
     def __init__(
         self,

@@ -14,12 +14,13 @@ class FilterHeaderView(QHeaderView):
     """Header personalizzato con supporto per menu di filtraggio a discesa.
 
     Permette di cliccare sulle intestazioni per aprire popup di filtro specifici per colonna.
+
+    Inizializza la classe.
     """
 
     filterChanged = Signal(int, object)  # col, values  # noqa: N815
 
     def __init__(self, orientation: Qt.Orientation, parent: Any | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(orientation, parent)
         self.setSectionsClickable(True)
         self.setHighlightSections(True)

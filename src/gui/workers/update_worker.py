@@ -24,14 +24,16 @@ logger = logging.getLogger(__name__)
 
 
 class UpdateCheckWorker(QThread):
-    """Worker che interroga i server di aggiornamento in background."""
+    """Worker che interroga i server di aggiornamento in background.
+
+    Inizializza la classe.
+    """
 
     finished_signal = Signal(dict)  # Risultato del controllo
     no_update_signal = Signal()
     error_signal = Signal(str)
 
     def __init__(self, silent: bool = True) -> None:
-        """Inizializza la classe."""
         super().__init__()
         self.silent = silent
 

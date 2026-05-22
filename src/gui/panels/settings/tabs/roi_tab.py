@@ -24,12 +24,14 @@ from src.gui.styles import COLORS
 
 
 class ROIWeightsPage(QWidget):
-    """Pagina di dettaglio per l'editing dei pesi ROI."""
+    """Pagina di dettaglio per l'editing dei pesi ROI.
+
+    Inizializza la classe.
+    """
 
     settings_changed = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 
@@ -155,12 +157,14 @@ class ROIWeightsPage(QWidget):
 
 
 class ROITab(QWidget):
-    """Tab per la gestione dell'Efficienza (ROI)."""
+    """Tab per la gestione dell'Efficienza (ROI).
+
+    Inizializza la classe.
+    """
 
     settings_changed = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 

@@ -18,7 +18,10 @@ from src.utils.helpers import get_asset_path
 
 
 class OdaFilterWidget(QWidget):
-    """Widget contenente i filtri e i pulsanti di azione per il pannello Storico OdA."""
+    """Widget contenente i filtri e i pulsanti di azione per il pannello Storico OdA.
+
+    Inizializza la classe.
+    """
 
     search_changed = Signal(str)
     update_clicked = Signal()
@@ -26,7 +29,6 @@ class OdaFilterWidget(QWidget):
     export_clicked = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
         # Force compact height

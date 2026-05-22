@@ -10,10 +10,12 @@ from src.gui.styles import COLORS
 
 
 class ToastOverlay(QWidget):
-    """Overlay per mostrare notifiche temporanee (Toast)."""
+    """Overlay per mostrare notifiche temporanee (Toast).
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.SubWindow)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)

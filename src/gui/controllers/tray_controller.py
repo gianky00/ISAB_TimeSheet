@@ -11,10 +11,12 @@ from src.utils.helpers import get_app_icon_path, get_asset_path, get_colored_ico
 
 
 class TrayController:
-    """Gestisce l'icona e il menu della system tray."""
+    """Gestisce l'icona e il menu della system tray.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, main_window: Any) -> None:
-        """Inizializza la classe."""
         self.mw = main_window
         self.tray_icon = QSystemTrayIcon(self.mw)
         self._setup_tray_icon()

@@ -11,10 +11,12 @@ logger = get_logger(__name__)
 
 
 class ScaricoPDLService(BaseBotService):
-    """Implementazione del servizio per lo scarico PDL."""
+    """Implementazione del servizio per lo scarico PDL.
+
+    Inizializza il servizio di scarico PDL.
+    """
 
     def __init__(self) -> None:
-        """Inizializza il servizio di scarico PDL."""
         super().__init__("scarico_pdl")
 
     def load_config(self) -> dict[str, Any]:

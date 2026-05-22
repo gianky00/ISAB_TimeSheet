@@ -28,15 +28,15 @@ class DipendentiPanel(QWidget):
     Coordina i sotto-pannelli organizzati in tab:
     - Monitoraggio: Analisi abilitazioni e accessi.
     - Configurazione: Gestione anagrafica (CRUD).
+
+    Inizializza il pannello dipendenti con iniezione del controller.
+
+    Args:
+      controller: Istanza del controller per la logica di business.
+      parent: Widget genitore.
     """
 
     def __init__(self, controller: "AnagraficaController", parent: QWidget | None = None) -> None:
-        """Inizializza il pannello dipendenti con iniezione del controller.
-
-        Args:
-          controller: Istanza del controller per la logica di business.
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.controller = controller
         self._setup_ui()

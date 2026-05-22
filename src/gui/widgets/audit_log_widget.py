@@ -51,12 +51,13 @@ class AuditLogWidget(QWidget):
     """Dashboard avanzata per l'Audit Log V2.
 
     Widget modulare con filtri, paginazione e Live Mode.
+
+    Inizializza il widget.
     """
 
     PAGE_SIZE = 50
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il widget."""
         super().__init__(parent)
         self.manager = AuditManager.instance()
         self.current_page = 0

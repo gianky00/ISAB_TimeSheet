@@ -21,10 +21,12 @@ logger = logging.getLogger(__name__)
 
 
 class EmployeeDetailView(QWidget):
-    """Pannello laterale per la visualizzazione dei dettagli del dipendente."""
+    """Pannello laterale per la visualizzazione dei dettagli del dipendente.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setFixedWidth(360)
         self.setStyleSheet(f"QWidget {{ background-color: {COLORS['bg_light']}; }}")

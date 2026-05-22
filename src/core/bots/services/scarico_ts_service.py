@@ -7,10 +7,12 @@ from src.core.bots.services.base_service import BaseBotService
 
 
 class ScaricoTSService(BaseBotService):
-    """Implementazione del servizio per lo scarico Timesheet."""
+    """Implementazione del servizio per lo scarico Timesheet.
+
+    Inizializza il servizio di scarico Timesheet.
+    """
 
     def __init__(self) -> None:
-        """Inizializza il servizio di scarico Timesheet."""
         super().__init__("scarico_ts")
 
     def load_config(self) -> dict[str, Any]:

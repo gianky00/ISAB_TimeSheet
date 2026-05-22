@@ -26,7 +26,18 @@ IDX_AREA: Final[int] = 24
 
 
 class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
-    """Bot per monitorare i flag TCL/TGO della settimana usando Playwright."""
+    """Bot per monitorare i flag TCL/TGO della settimana usando Playwright.
+
+    Inizializza il bot per la programmazione PDL con Playwright.
+
+    Args:
+      config: Configurazione del bot Selenium.
+      account_type: Tipologia di account (es. Esecutore).
+
+    Attributes:
+        STEPS: ClassVar[list[tuple[str: Segnale o attributo della classe.
+        str: Segnale o attributo della classe.
+    """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
@@ -41,12 +52,6 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
         config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
-        """Inizializza il bot per la programmazione PDL con Playwright.
-
-        Args:
-          config: Configurazione del bot Selenium.
-          account_type: Tipologia di account (es. Esecutore).
-        """
         super().__init__(config, account_type=account_type)
         self.results: list[dict[str, Any]] = []
         self.attivita_page: PlaywrightVisualizzaAttivitaPage | None = None

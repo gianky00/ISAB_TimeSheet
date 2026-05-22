@@ -21,14 +21,14 @@ class BootTelemetryWidget(QWidget):
     """Telemetria avanzata real-time visualizzata durante il caricamento (Boot).
 
     Mostra informazioni su OS, Hostname, utilizzo CPU e RAM.
+
+    Inizializza il widget della telemetria.
+
+    Args:
+      parent: Widget genitore.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il widget della telemetria.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 2, 10, 2)

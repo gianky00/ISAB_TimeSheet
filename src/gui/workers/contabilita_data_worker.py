@@ -15,19 +15,24 @@ logger = logging.getLogger(__name__)
 
 
 class ContabilitaDataWorker(QThread):
-    """Worker per il caricamento generico di liste dati dal database contabilità."""
+    """Worker per il caricamento generico di liste dati dal database contabilità.
+
+    Inizializza il worker.
+
+    Args:
+      fetch_func_name: Nome del metodo di ContabilitaManager da chiamare.
+      *args: Argomenti posizionali per la funzione.
+      **kwargs: Argomenti nominali per la funzione.
+
+    Attributes:
+        error_signal: Segnale o attributo della classe.
+        finished_signal: Segnale o attributo della classe.
+    """
 
     finished_signal = Signal(list)
     error_signal = Signal(str)
 
     def __init__(self, fetch_func_name: str, *args: Any, **kwargs: Any) -> None:
-        """Inizializza il worker.
-
-        Args:
-          fetch_func_name: Nome del metodo di ContabilitaManager da chiamare.
-          *args: Argomenti posizionali per la funzione.
-          **kwargs: Argomenti nominali per la funzione.
-        """
         super().__init__()
         self.fetch_func_name = fetch_func_name
         self.args = args

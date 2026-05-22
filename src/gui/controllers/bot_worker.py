@@ -24,6 +24,23 @@ class BotWorker(QThread):
     """Thread worker per eseguire i bot in background.
 
     Gestisce l'inizializzazione del bot (pesante) e l'esecuzione.
+
+    Inizializza il worker del bot.
+
+    Args:
+      bot_id: ID del bot da creare o istanza già creata.
+      bot_params: Parametri per create_bot (se bot_id  str).
+      data: I dati di input per il bot.
+      telegram_service: Servizio opzionale per notifiche Telegram.
+
+    Attributes:
+        critical_error_signal: Segnale o attributo della classe.
+        finished_signal: Segnale o attributo della classe.
+        log_signal: Segnale o attributo della classe.
+        request_input_signal: Segnale o attributo della classe.
+        row_status_signal: Segnale o attributo della classe.
+        status_signal: Segnale o attributo della classe.
+        step_changed_signal: Segnale o attributo della classe.
     """
 
     log_signal = Signal(str)
@@ -41,14 +58,6 @@ class BotWorker(QThread):
         data: Any | None = None,
         telegram_service: Any | None = None,
     ) -> None:
-        """Inizializza il worker del bot.
-
-        Args:
-          bot_id: ID del bot da creare o istanza già creata.
-          bot_params: Parametri per create_bot (se bot_id  str).
-          data: I dati di input per il bot.
-          telegram_service: Servizio opzionale per notifiche Telegram.
-        """
         super().__init__()
         self.bot_id = bot_id
         self.bot_params = bot_params or {}

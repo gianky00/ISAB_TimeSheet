@@ -15,10 +15,12 @@ logger = logging.getLogger(__name__)
 
 
 class DatabaseMaintenanceWorker(Thread):
-    """Worker in background per eseguire operazioni di manutenzione database e pulizia file."""
+    """Worker in background per eseguire operazioni di manutenzione database e pulizia file.
+
+    Inizializza la classe.
+    """
 
     def __init__(self) -> None:
-        """Inizializza la classe."""
         super().__init__(daemon=True, name="DatabaseMaintenanceWorker")
         self.databases = [
             db_manager.DB_CONTABILITA,

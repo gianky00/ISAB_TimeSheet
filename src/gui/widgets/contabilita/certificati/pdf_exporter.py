@@ -16,7 +16,10 @@ from src.core.version import __version__
 
 
 class CertificatiPdfExporter:
-    """Genera report PDF professionale per i certificati campione - Versione Legacy Ripristinata."""
+    """Genera report PDF professionale per i certificati campione - Versione Legacy Ripristinata.
+
+    Inizializza la classe.
+    """
 
     def __init__(
         self,

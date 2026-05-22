@@ -14,18 +14,18 @@ class FooterRightWidget(QWidget):
     """Parte destra del footer: contiene la Progress Bar globale e le Status Cards dei Bot.
 
     Gestisce il passaggio tra la modalità di caricamento e quella operativa.
+
+    Inizializza il widget del footer destro.
+
+    Args:
+      status_portale: Widget che visualizza lo stato del portale ISAB.
+      status_safework: Widget che visualizza lo stato del portale SafeWork.
+      parent: Widget genitore.
     """
 
     def __init__(
         self, status_portale: QWidget, status_safework: QWidget, parent: QWidget | None = None
     ) -> None:
-        """Inizializza il widget del footer destro.
-
-        Args:
-          status_portale: Widget che visualizza lo stato del portale ISAB.
-          status_safework: Widget che visualizza lo stato del portale SafeWork.
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 15, 0)

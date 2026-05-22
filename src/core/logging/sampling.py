@@ -11,6 +11,13 @@ class ContextAwareSampler:
     2. Eventi con performance anomala: SEMPRE loggati (100%)
     3. Eventi con trace_id specifico: Basato su config
     4. Eventi normali: Sampling rate configurabile
+
+    Inizializza sampler.
+
+    Args:
+      default_rate: Rate default (0.0-1.0, default 1.0 = 100%)
+      error_rate: Rate per errori (default 1.0 = 100%)
+      slow_operation_rate: Rate per operazioni lente (default 1.0 = 100%)
     """
 
     def __init__(
@@ -19,13 +26,6 @@ class ContextAwareSampler:
         error_rate: float = 1.0,
         slow_operation_rate: float = 1.0,
     ) -> None:
-        """Inizializza sampler.
-
-        Args:
-          default_rate: Rate default (0.0-1.0, default 1.0 = 100%)
-          error_rate: Rate per errori (default 1.0 = 100%)
-          slow_operation_rate: Rate per operazioni lente (default 1.0 = 100%)
-        """
         self.default_rate = self._validate_rate(default_rate)
         self.error_rate = self._validate_rate(error_rate)
         self.slow_operation_rate = self._validate_rate(slow_operation_rate)

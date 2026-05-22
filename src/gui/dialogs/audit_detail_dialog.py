@@ -26,10 +26,12 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class AuditDetailDialog(QDialog):
-    """Dialog per visualizzare i dettagli completi di un log."""
+    """Dialog per visualizzare i dettagli completi di un log.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, log_data: dict[str, Any], parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.log_data = log_data
         self.setWindowTitle("Dettagli Audit Log")

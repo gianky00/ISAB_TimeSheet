@@ -15,6 +15,8 @@ class DashboardStatCard(ModernCard):
     """Card informativa per la Dashboard.
 
     Mostra un valore, un'etichetta e un'icona tematica.
+
+    Inizializza la classe.
     """
 
     def __init__(

@@ -18,15 +18,16 @@ from src.gui.workers.consuntivo_worker import ConsuntivoWorker
 
 
 class ConsuntivoPanel(QWidget):
-    """Pannello Root che organizza la suite Premium dei Consuntivi."""
+    """Pannello Root che organizza la suite Premium dei Consuntivi.
+
+    Inizializza il pannello consuntivo con iniezione del controller.
+
+    Args:
+      controller: Istanza del controller per la logica di business.
+      parent: Widget genitore opzionale.
+    """
 
     def __init__(self, controller: ConsuntivoController, parent: QWidget | None = None) -> None:
-        """Inizializza il pannello consuntivo con iniezione del controller.
-
-        Args:
-          controller: Istanza del controller per la logica di business.
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.controller = controller
         self._data_preloaded = False

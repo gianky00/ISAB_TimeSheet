@@ -101,6 +101,7 @@ class DatabaseManager:
     DB_AUDIT = DB_DIR / FileNames.DB_AUDIT_LOG
 
     def __new__(cls) -> "DatabaseManager":
+        """Metodo magico della classe."""
         if cls._instance is None:
             with cls._write_lock:
                 if cls._instance is None:

@@ -51,7 +51,10 @@ class ToastParams:
 
 
 class Toast(QWidget):
-    """Notifica toast animata non bloccante con supporto pausa al passaggio del mouse."""
+    """Notifica toast animata non bloccante con supporto pausa al passaggio del mouse.
+
+    Inizializza il toast con i parametri di configurazione.
+    """
 
     class Type:
         """Costanti per il tipo di notifica."""
@@ -69,7 +72,6 @@ class Toast(QWidget):
     }
 
     def __init__(self, params: ToastParams) -> None:
-        """Inizializza il toast con i parametri di configurazione."""
         super().__init__(params.parent)
         self._duration = params.duration
         self._type = params.toast_type

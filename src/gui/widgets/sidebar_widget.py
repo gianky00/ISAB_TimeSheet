@@ -39,17 +39,22 @@ class SidebarWidget(QFrame):
     """Orchestratore della Sidebar con navigazione profonda e track magnetico.
 
     Gestisce l'espansione automatica all'hover e la gerarchia dei menu a 3 livelli.
+
+    Inizializza il componente sidebar.
+
+    Args:
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        navigation_requested: Segnale o attributo della classe.
+        palette_requested: Segnale o attributo della classe.
+        sidebar_width: Segnale o attributo della classe.
     """
 
     navigation_requested = Signal(int, int, int)  # (page, sub, bot)
     palette_requested = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il componente sidebar.
-
-        Args:
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self._initialize_constants()
         self._initialize_ui_elements()

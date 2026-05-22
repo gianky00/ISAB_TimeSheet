@@ -21,19 +21,19 @@ class FooterItemWidget(QWidget):
     """Elemento informativo composto da un tag (etichetta) e un valore.
 
     Usato per visualizzare metadati semplici nel footer.
+
+    Inizializza l'elemento del footer.
+
+    Args:
+      label: Etichetta del dato.
+      value: Valore iniziale.
+      color: Colore dell'etichetta (default: text_muted).
+      parent: Widget genitore.
     """
 
     def __init__(
         self, label: str, value: str = "", color: str | None = None, parent: QWidget | None = None
     ) -> None:
-        """Inizializza l'elemento del footer.
-
-        Args:
-          label: Etichetta del dato.
-          value: Valore iniziale.
-          color: Colore dell'etichetta (default: text_muted).
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(5, 0, 5, 0)
@@ -61,14 +61,14 @@ class StartupConsole(QLabel):
     """Console per log di sistema nel footer (FASE 1: Boot).
 
     Visualizza i messaggi di inizializzazione durante l'avvio dell'applicazione.
+
+    Inizializza la console di startup.
+
+    Args:
+      parent: Widget genitore.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la console di startup.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.setText("Sistema Operativo Pronto")
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -98,16 +98,19 @@ class ClickableLabel(QLabel):
     """Label interattiva con effetti hover e segnale di click.
 
     Utilizzata per i dati del footer che richiedono un'azione (es. cambio account).
+
+    Inizializza la label cliccabile.
+
+    Args:
+      parent: Widget genitore.
+
+    Attributes:
+        clicked: Segnale o attributo della classe.
     """
 
     clicked = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la label cliccabile.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self._base_style = ""
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -142,16 +145,17 @@ class ClickableLabel(QLabel):
 
 
 class StatsCard(QFrame):
-    """Widget card per la visualizzazione di una singola metrica statistica nel footer espandibile."""
+    """Widget card per la visualizzazione di una singola metrica statistica nel footer espandibile.
+
+    Inizializza la card statistica.
+
+    Args:
+      title: Titolo della metrica.
+      value: Valore della metrica.
+      icon: Icona associata.
+      parent: Widget genitore.
+    """
 
     def __init__(self, title: str, value: str, icon: Any, parent: QWidget | None = None) -> None:
-        """Inizializza la card statistica.
-
-        Args:
-          title: Titolo della metrica.
-          value: Valore della metrica.
-          icon: Icona associata.
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self.setCursor(Qt.CursorShape.PointingHandCursor)

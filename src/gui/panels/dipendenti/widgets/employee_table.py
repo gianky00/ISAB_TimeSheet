@@ -25,18 +25,23 @@ logger = logging.getLogger(__name__)
 
 
 class EmployeeTableView(QTableView):
-    """Tabella specializzata per l'anagrafica dipendenti con delegati e menu contestuale."""
+    """Tabella specializzata per l'anagrafica dipendenti con delegati e menu contestuale.
+
+    Inizializza la tabella dipendenti.
+
+    Args:
+      model: Il modello dati (FastTableModel).
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        employee_selected: Segnale o attributo della classe.
+        monitoring_toggled: Segnale o attributo della classe.
+    """
 
     monitoring_toggled = Signal(str, bool)  # id_risorsa, enable
     employee_selected = Signal(int)  # row_idx
 
     def __init__(self, model: Any, parent: QWidget | None = None) -> None:
-        """Inizializza la tabella dipendenti.
-
-        Args:
-          model: Il modello dati (FastTableModel).
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.setModel(model)
         self._setup_ui()

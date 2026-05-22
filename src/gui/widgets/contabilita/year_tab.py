@@ -27,10 +27,12 @@ if TYPE_CHECKING:
 
 
 class MultiColumnFilterProxyModel(QSortFilterProxyModel):
-    """Proxy model che filtra su tutte le colonne con supporto multi-termine."""
+    """Proxy model che filtra su tutte le colonne con supporto multi-termine.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QObject | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._filter_text = ""
 
@@ -62,7 +64,10 @@ class MultiColumnFilterProxyModel(QSortFilterProxyModel):
 
 
 class ContabilitaYearTab(QWidget):
-    """Tab per un singolo anno ottimizzato per massima reattività."""
+    """Tab per un singolo anno ottimizzato per massima reattività.
+
+    Inizializza la classe.
+    """
 
     COLUMNS: ClassVar[list[str]] = [
         "DATA\nPREV.",
@@ -80,7 +85,6 @@ class ContabilitaYearTab(QWidget):
     ]
 
     def __init__(self, year: int, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.year = year
         self.model = FastTableModel([], self.COLUMNS)

@@ -22,6 +22,16 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
     """Classe base specifica per SafeWork (Playwright).
 
     Isola le logiche SafeWork da quelle del Portale Fornitori.
+
+    Inizializza il bot base SafeWork Playwright.
+
+    Args:
+        config: Configurazione del bot.
+        account_type: Tipo di account SafeWork.
+
+    Attributes:
+        ISAB_URL: Segnale o attributo della classe.
+        SAFEWORK_URL: Segnale o attributo della classe.
     """
 
     SAFEWORK_URL = URLs.SAFEWORK_URL
@@ -32,12 +42,6 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
         config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
-        """Inizializza il bot base SafeWork Playwright.
-
-        Args:
-            config: Configurazione del bot.
-            account_type: Tipo di account SafeWork.
-        """
         super().__init__(config)
         self.account_type = account_type
         self.safework_login_page: PlaywrightSafeWorkLoginPage | None = None

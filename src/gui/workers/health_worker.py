@@ -16,17 +16,22 @@ logger = logging.getLogger(__name__)
 
 
 class HealthWorker(QThread):
-    """Worker che esegue analisi pesanti sui log e calcola l'Health Score in background."""
+    """Worker che esegue analisi pesanti sui log e calcola l'Health Score in background.
+
+    Inizializza il worker.
+
+    Args:
+      hours: Intervallo temporale di analisi (default 24h).
+
+    Attributes:
+        error_signal: Segnale o attributo della classe.
+        finished_signal: Segnale o attributo della classe.
+    """
 
     finished_signal = Signal(dict)
     error_signal = Signal(str)
 
     def __init__(self, hours: int = 24) -> None:
-        """Inizializza il worker.
-
-        Args:
-          hours: Intervallo temporale di analisi (default 24h).
-        """
         super().__init__()
         self.hours = hours
 

@@ -18,6 +18,8 @@ class WeatherService(QObject):
     """Servizio Singleton per la gestione delle richieste meteo verso Open-Meteo.
 
     Mantiene lo stato della richiesta e notifica i sottoscrittori tramite segnali.
+
+    Inizializza il network manager per le richieste API.
     """
 
     _instance: Optional["WeatherService"] = None
@@ -34,7 +36,6 @@ class WeatherService(QObject):
         return cls._instance
 
     def __init__(self) -> None:
-        """Inizializza il network manager per le richieste API."""
         super().__init__()
         self.network_manager = QNetworkAccessManager(self)
         self._is_loading = False

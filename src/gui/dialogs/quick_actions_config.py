@@ -19,10 +19,12 @@ from src.gui.widgets.quick_actions_registry import AVAILABLE_ACTIONS
 
 
 class QuickActionsConfigDialog(QDialog):
-    """Dialogo per configurare quali azioni rapide mostrare (ad Albero)."""
+    """Dialogo per configurare quali azioni rapide mostrare (ad Albero).
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setWindowTitle("Configura Azioni Rapide")
         dialog_width = 450

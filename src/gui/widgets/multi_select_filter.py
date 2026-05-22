@@ -20,7 +20,10 @@ from src.utils.helpers import get_asset_path
 
 
 class MultiSelectDialog(QDialog):
-    """Dialogo di selezione multipla con ricerca."""
+    """Dialogo di selezione multipla con ricerca.
+
+    Inizializza la classe.
+    """
 
     def __init__(
         self, title: str, items: list[str], selected: list[str], parent: QWidget | None = None
@@ -109,12 +112,14 @@ class MultiSelectDialog(QDialog):
 
 
 class MultiSelectFilter(QWidget):
-    """Widget che mostra un pulsante di selezione e gestisce la multiselezione."""
+    """Widget che mostra un pulsante di selezione e gestisce la multiselezione.
+
+    Inizializza la classe.
+    """
 
     changed = Signal(list)
 
     def __init__(self, label: str, placeholder: str = "Seleziona...", parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.label_text = label
         self.placeholder = placeholder

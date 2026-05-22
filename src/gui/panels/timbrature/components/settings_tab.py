@@ -23,12 +23,14 @@ from src.gui.widgets.modern_button import ModernButton
 
 
 class TimbratureSettingsTab(QWidget):
-    """Tab per la gestione delle impostazioni (Dipendenti, Reparti, Cantieri)."""
+    """Tab per la gestione delle impostazioni (Dipendenti, Reparti, Cantieri).
+
+    Inizializza la classe.
+    """
 
     settings_changed = Signal()  # Emesso quando cambiano le liste o i dati
 
     def __init__(self, storage: Any, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.storage = storage
         self.lists = self.storage.get_lists()

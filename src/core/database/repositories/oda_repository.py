@@ -12,10 +12,12 @@ logger = get_logger(__name__)
 
 
 class OdaRepository:
-    """Repository per l'accesso ai dati dello Storico OdA."""
+    """Repository per l'accesso ai dati dello Storico OdA.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, db_manager_instance: Any = None) -> None:
-        """Inizializza la classe."""
         self.db = db_manager_instance or db_manager
         self.columns = [
             "org_acq",

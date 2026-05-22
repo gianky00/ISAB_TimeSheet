@@ -37,10 +37,11 @@ class MetricsSink:
     """Sink per metriche di performance.
 
     Scrive metriche in file JSONL (newline-delimited JSON).
+
+    Inizializza la classe.
     """
 
     def __init__(self, config: Any = None) -> None:
-        """Inizializza la classe."""
         self.config = config or get_config()
         self.metrics_file = self.config.metrics_dir / "performance.jsonl"
 
@@ -114,6 +115,8 @@ class PerformanceTracker:
     - Registra metriche
     - Calcola statistiche (avg, min, max, p95, p99)
     - Rileva anomalie (operazioni lente)
+
+    Inizializza la classe.
     """
 
     _instance: Optional["PerformanceTracker"] = None
@@ -126,7 +129,6 @@ class PerformanceTracker:
         return cls._instance
 
     def __init__(self) -> None:
-        """Inizializza la classe."""
         self.sink = MetricsSink()
         self._in_memory_metrics: dict[str, list[float]] = defaultdict(list)  # operation -> [durations]
         self._baselines: dict[str, float] = {}  # operation -> baseline_ms

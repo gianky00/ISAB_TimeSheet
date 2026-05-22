@@ -23,13 +23,15 @@ logger = logging.getLogger(__name__)
 
 
 class ProgrammazioneTableWidget(StandardTable):
-    """Tabella specializzata per la programmazione PDL con supporto per espansione Timeline."""
+    """Tabella specializzata per la programmazione PDL con supporto per espansione Timeline.
+
+    Inizializza la classe.
+    """
 
     row_expanded = Signal(int, bool)  # row, is_expanded
     selection_changed_custom = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(0, 0, parent)
         self._setup_ui()
 

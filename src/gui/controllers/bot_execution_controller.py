@@ -20,6 +20,21 @@ class BotExecutionController(QObject):
     """Controller universale per la gestione dell'esecuzione dei bot.
 
     Centralizza la logica di avvio, stop e gestione dei segnali.
+
+    Inizializza il controller.
+
+    Args:
+        bot_id: Identificativo del bot da gestire.
+        parent: Oggetto genitore.
+
+    Attributes:
+        critical_error: Segnale o attributo della classe.
+        execution_finished: Segnale o attributo della classe.
+        input_requested: Segnale o attributo della classe.
+        log_received: Segnale o attributo della classe.
+        row_status_updated: Segnale o attributo della classe.
+        status_updated: Segnale o attributo della classe.
+        step_changed: Segnale o attributo della classe.
     """
 
     log_received = Signal(str)
@@ -31,12 +46,6 @@ class BotExecutionController(QObject):
     input_requested = Signal(str, dict, object)  # prompt, result_container, event
 
     def __init__(self, bot_id: str, parent: QObject | None = None) -> None:
-        """Inizializza il controller.
-
-        Args:
-            bot_id: Identificativo del bot da gestire.
-            parent: Oggetto genitore.
-        """
         super().__init__(parent)
         self.bot_id = bot_id
         self.worker: BotWorker | None = None

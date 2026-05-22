@@ -27,14 +27,15 @@ if TYPE_CHECKING:
 
 
 class ScaricaTSPanel(BaseBotPanel):
-    """Pannello per il bot Scarico TS."""
+    """Pannello per il bot Scarico TS.
+
+    Inizializza il pannello Scarico TS.
+
+    Args:
+        parent: Widget genitore.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il pannello Scarico TS.
-
-        Args:
-            parent: Widget genitore.
-        """
         super().__init__(
             bot_id="scarico_ts",
             bot_name="Scarico TS",

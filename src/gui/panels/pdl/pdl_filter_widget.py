@@ -19,7 +19,10 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class PDLFilterWidget(QWidget):
-    """Widget contenente i filtri e i pulsanti di azione per il pannello PDL."""
+    """Widget contenente i filtri e i pulsanti di azione per il pannello PDL.
+
+    Inizializza la classe.
+    """
 
     filter_changed = Signal()
     site_changed = Signal(str)
@@ -40,7 +43,6 @@ class PDLFilterWidget(QWidget):
     lbl_sync_status: QLabel
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
         # Force compact height

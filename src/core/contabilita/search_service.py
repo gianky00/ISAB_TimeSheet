@@ -20,6 +20,10 @@ class ContabilitaSearch:
     def search_oda(cls, db_path: Path, query: str) -> list[dict[str, Any]]:
         """Cerca OdA per codice, descrizione o ODC.
 
+        Args:
+            db_path: Percorso del database.
+            query: Query di ricerca.
+
         Returns:
           List[Dict]: Lista di risultati [{'codice_oda': '...', 'descrizione': '...'}, ...].
         """

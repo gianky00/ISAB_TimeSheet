@@ -41,6 +41,8 @@ class BaseBotPanel(QWidget):
     """Classe base orchestratrice per i pannelli dei bot.
 
     Gestisce il ciclo di vita del bot delegando logica e UI a componenti specializzati.
+
+    Inizializza il pannello base e i suoi componenti.
     """
 
     bot_started = Signal()
@@ -54,7 +56,6 @@ class BaseBotPanel(QWidget):
     def __init__(
         self, bot_id: str, bot_name: str, bot_description: str, parent: QWidget | None = None
     ) -> None:
-        """Inizializza il pannello base e i suoi componenti."""
         super().__init__(parent)
         self.bot_id = bot_id
         self.bot_name = bot_name

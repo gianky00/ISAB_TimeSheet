@@ -28,10 +28,11 @@ class DettagliOdAPage:
     """Page Object Model per la gestione della pagina Dettagli OdA (Ordini di Acquisto).
 
     Fornisce metodi per navigare, filtrare ed esportare i dettagli degli ordini.
+
+    Inizializza la pagina con il driver Selenium e la callback di log.
     """
 
     def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None) -> None:
-        """Inizializza la pagina con il driver Selenium e la callback di log."""
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)

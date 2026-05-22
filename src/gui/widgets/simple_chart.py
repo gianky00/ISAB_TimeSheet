@@ -12,10 +12,12 @@ from src.gui.styles import COLORS
 
 
 class DonutChart(QWidget):
-    """Grafico a ciambella leggero disegnato con QPainter."""
+    """Grafico a ciambella leggero disegnato con QPainter.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, title: str = "Success Rate", parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.title = title
         self.values = [0, 0]  # [Success, Error]
@@ -100,10 +102,12 @@ class DonutChart(QWidget):
 
 
 class StatCard(QWidget):
-    """Container per il grafico con titolo."""
+    """Container per il grafico con titolo.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, title: str, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)

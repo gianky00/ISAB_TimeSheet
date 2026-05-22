@@ -14,18 +14,19 @@ from src.bots.safework.common.locators import SafeWorkLocators
 
 
 class SafeWorkLoginPage:
-    """Gestisce l'accesso al portale SafeWork."""
+    """Gestisce l'accesso al portale SafeWork.
+
+    Inizializza la pagina di login SafeWork.
+
+    Args:
+      driver: Istanza di WebDriver Chrome.
+      wait: Oggetto WebDriverWait configurato.
+      log_func: Funzione di callback per il logging.
+    """
 
     def __init__(
         self, driver: webdriver.Chrome, wait: WebDriverWait[webdriver.Chrome], log_func: Callable[[str], None]
     ) -> None:
-        """Inizializza la pagina di login SafeWork.
-
-        Args:
-          driver: Istanza di WebDriver Chrome.
-          wait: Oggetto WebDriverWait configurato.
-          log_func: Funzione di callback per il logging.
-        """
         self.driver = driver
         self.wait = wait
         self.log = log_func

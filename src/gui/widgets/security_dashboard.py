@@ -37,10 +37,11 @@ class SecurityDashboard(QWidget):
     """Dashboard di sicurezza e audit log.
 
     Visualizza statistiche, grafici semplificati e log critici.
+
+    Inizializza la classe.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.audit_manager = AuditManager.instance()
         self.setStyleSheet(TOOLTIP_CSS)

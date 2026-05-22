@@ -18,10 +18,11 @@ class EmployeeManager:
 
     tra la GUI/Bot e il Database SQLite.
     Delegato al nuovo EmployeeRepository per l'accesso ai dati.
+
+    Inizializza la classe.
     """
 
     def __init__(self, db_manager_instance: Any = None) -> None:
-        """Inizializza la classe."""
         self.db = db_manager_instance or db_manager
         self._repo = EmployeeRepository(self.db)
 

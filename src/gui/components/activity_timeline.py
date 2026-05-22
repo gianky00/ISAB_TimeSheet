@@ -42,14 +42,14 @@ class TimelineNode:
     """Rappresenta un singolo nodo all'interno della timeline delle attività.
 
     Mantiene lo stato, il tempo di inizio e la durata dell'operazione.
+
+    Inizializza un nuovo nodo.
+
+    Args:
+        name: Nome visualizzato dello step.
     """
 
     def __init__(self, name: str) -> None:
-        """Inizializza un nuovo nodo.
-
-        Args:
-            name: Nome visualizzato dello step.
-        """
         self.name = name
         self.status = StepStatus.PENDING
         self.start_time = 0.0
@@ -60,17 +60,23 @@ class ActivityTimelineWidget(QWidget):
     """Widget grafico avanzato (Cyber-Stepper V5) per il monitoraggio dei bot.
 
     Visualizza una timeline verticale con animazioni neon, griglia tattica e flussi dati.
+
+    Inizializza il widget e configura le animazioni e i colori.
+
+    Args:
+        parent: Widget genitore.
+
+    Attributes:
+        border_pulse: Segnale o attributo della classe.
+        border_pulse_changed: Segnale o attributo della classe.
+        pulse_value: Segnale o attributo della classe.
+        pulse_value_changed: Segnale o attributo della classe.
     """
 
     border_pulse_changed = Signal(float)
     pulse_value_changed = Signal(float)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il widget e configura le animazioni e i colori.
-
-        Args:
-            parent: Widget genitore.
-        """
         super().__init__(parent)
         self.nodes: list[TimelineNode] = []
 

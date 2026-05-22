@@ -36,10 +36,11 @@ class DashboardPanel(QWidget):
     """Dashboard Home evoluta.
 
     Sostituisce le card statiche con indicatori dinamici di valore (ROI) e contesto (Meteo/PDL).
+
+    Inizializza la classe.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)

@@ -15,10 +15,12 @@ logger = logging.getLogger(__name__)
 
 
 class TelegramUICommands(QObject):
-    """Esegue comandi di navigazione e avvio bot desktop."""
+    """Esegue comandi di navigazione e avvio bot desktop.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, main_window: "MainWindow", telegram_service: Any) -> None:
-        """Inizializza la classe."""
         super().__init__(main_window)
         self.mw = main_window
         self.telegram = telegram_service

@@ -80,6 +80,7 @@ nuitka = "^4.0.5"
 pytest-playwright = "^0.7.2"
 types-pillow = "^10.2.0.20240822"
 types-setuptools = "^82.0.0.20260508"
+pydoclint = "^0.8.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -370,3 +371,12 @@ ignore = [
     "FURB111", # Redundant lambda (Pericoloso con segnali PySide6/Qt)
     "FURB184", # Chained statements (Peggiore leggibilità in casi complessi)
 ]
+
+[tool.pydoclint]
+style = "google"
+exclude = '\.git|\.tox|tests/data|build|dist|\.venv'
+require-return-section-when-returning-nothing = false
+arg-type-hints-in-docstring = false
+arg-type-hints-in-signature = true
+check-return-types = false
+check-class-attributes = false

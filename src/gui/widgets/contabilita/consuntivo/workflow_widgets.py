@@ -13,7 +13,21 @@ from src.gui.styles import COLORS
 
 
 class WorkflowStepButton(QFrame):
-    """Card pulsante premium per uno step del workflow consuntivo con animazione Glow."""
+    """Card pulsante premium per uno step del workflow consuntivo con animazione Glow.
+
+    Inizializza la card dello step.
+
+    Args:
+      step_id: Identificativo unico dello step.
+      step_number: Numero d'ordine visualizzato.
+      title: Titolo breve dello step.
+      description: Descrizione estesa.
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        clicked: Segnale o attributo della classe.
+        glow_opacity: Segnale o attributo della classe.
+    """
 
     clicked = Signal(str)
 
@@ -33,15 +47,6 @@ class WorkflowStepButton(QFrame):
         description: str,
         parent: QWidget | None = None,
     ) -> None:
-        """Inizializza la card dello step.
-
-        Args:
-          step_id: Identificativo unico dello step.
-          step_number: Numero d'ordine visualizzato.
-          title: Titolo breve dello step.
-          description: Descrizione estesa.
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self._step_id = step_id
         self._step_number = step_number
@@ -228,7 +233,19 @@ class WorkflowStepButton(QFrame):
 
 
 class WorkflowMapWidget(QWidget):
-    """Widget mappa workflow con step connessi da frecce."""
+    """Widget mappa workflow con step connessi da frecce.
+
+    Inizializza la mappa del workflow.
+
+    Args:
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        ACTIONS: ClassVar[list[tuple[str: Segnale o attributo della classe.
+        int: Segnale o attributo della classe.
+        str: Segnale o attributo della classe.
+        str: Segnale o attributo della classe.
+    """
 
     step_clicked = Signal(str)
 
@@ -263,11 +280,6 @@ class WorkflowMapWidget(QWidget):
     }
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la mappa del workflow.
-
-        Args:
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.setMinimumHeight(300)
         self._step_buttons: dict[str, WorkflowStepButton] = {}

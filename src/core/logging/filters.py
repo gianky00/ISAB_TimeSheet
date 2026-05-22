@@ -163,15 +163,15 @@ class SamplingFilter:
     """Filtro per sampling dei log (riduce volume).
 
     Utile per log ad alto volume (es: ogni riga processata).
+
+    Inizializza filter.
+
+    Args:
+      sample_rate: Percentuale di log da mantenere (0.0-1.0)
+            1.0 = 100% (tutti), 0.01 = 1%
     """
 
     def __init__(self, sample_rate: float = 1.0) -> None:
-        """Inizializza filter.
-
-        Args:
-          sample_rate: Percentuale di log da mantenere (0.0-1.0)
-                1.0 = 100% (tutti), 0.01 = 1%
-        """
         self.sample_rate = max(0.0, min(1.0, sample_rate))
         self._counter = 0
 

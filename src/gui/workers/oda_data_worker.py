@@ -14,18 +14,23 @@ logger = logging.getLogger(__name__)
 
 
 class ODADataWorker(QThread):
-    """Worker che esegue query ODA e raggruppamento dati in background."""
+    """Worker che esegue query ODA e raggruppamento dati in background.
+
+    Inizializza il worker.
+
+    Args:
+      controller: Istanza di ODAController.
+      search_text: Filtro di ricerca testuale.
+
+    Attributes:
+        error_signal: Segnale o attributo della classe.
+        finished_signal: Segnale o attributo della classe.
+    """
 
     finished_signal = Signal(list)
     error_signal = Signal(str)
 
     def __init__(self, controller: ODAController, search_text: str = "") -> None:
-        """Inizializza il worker.
-
-        Args:
-          controller: Istanza di ODAController.
-          search_text: Filtro di ricerca testuale.
-        """
         super().__init__()
         self.controller = controller
         self.search_text = search_text

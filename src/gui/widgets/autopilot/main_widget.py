@@ -45,16 +45,19 @@ class AutopilotWidget(QWidget):
 
     Supporta una modalità di visualizzazione (Live) e una di configurazione.
     Utilizza animazioni per le transizioni e indicatori visivi per lo stato del sistema.
+
+    Inizializza il widget Autopilot.
+
+    Args:
+      parent: Widget genitore.
+
+    Attributes:
+        bot_sync_requested: Segnale o attributo della classe.
     """
 
     bot_sync_requested = Signal(str)  # Segnale per richiedere il sync di un bot specifico
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il widget Autopilot.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         self._config_mode = False
         self.footer_left_widget: Any = None

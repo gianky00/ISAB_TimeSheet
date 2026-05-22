@@ -21,6 +21,8 @@ class TimbratureBot(SeleniumBaseBot):
     """Bot per lo scarico automatico delle timbrature dipendenti.
 
     Semplificato e uniformato al nuovo pattern asincrono.
+
+    Inizializza il bot Timbrature.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
@@ -41,7 +43,6 @@ class TimbratureBot(SeleniumBaseBot):
         fornitore: str | None = None,
         **kwargs: Any,
     ) -> None:
-        """Inizializza il bot Timbrature."""
         super().__init__(username, password, config)
         current_year = datetime.now(UTC).year
         self.data_da = data_da or kwargs.get("data_da") or f"01.01.{current_year}"

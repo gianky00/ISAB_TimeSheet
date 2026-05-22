@@ -48,10 +48,11 @@ class TimbratureDBPanel(QWidget):
     """Pannello per la visualizzazione del Database Timbrature Isab con architettura Master-Detail.
 
     Refactored: usa componenti modulari.
+
+    Inizializza la classe.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
 
         # Member declarations

@@ -29,10 +29,12 @@ from src.gui.widgets.modern_button import ModernButton
 
 
 class EmployeeEditorDialog(QDialog):
-    """Dialog per aggiunta/modifica dipendente."""
+    """Dialog per aggiunta/modifica dipendente.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None, employee_data: dict[str, Any] | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setWindowTitle("Scheda Dipendente")
         self.setMinimumWidth(400)
@@ -84,12 +86,14 @@ class EmployeeEditorDialog(QDialog):
 
 
 class DipendentiManagerPanel(QWidget):
-    """Pannello di gestione CRUD Dipendenti."""
+    """Pannello di gestione CRUD Dipendenti.
+
+    Inizializza la classe.
+    """
 
     data_changed = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setObjectName("DipendentiManagerPanel")
 

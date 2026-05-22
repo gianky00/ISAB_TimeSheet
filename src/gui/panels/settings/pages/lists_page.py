@@ -20,13 +20,14 @@ class ListsPage(QWidget):
     """Pagina per la gestione delle liste dati.
 
     Fornisce sezioni modulari per l'anagrafica operativa.
+
+    Inizializza la classe.
     """
 
     settings_changed = Signal()
     """Segnale emesso quando una lista viene modificata."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 

@@ -14,7 +14,10 @@ from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
 
 class PlaywrightTimbratureBot(PlaywrightBaseBot):
-    """Bot per lo scarico e l'archiviazione automatica delle timbrature usando Playwright."""
+    """Bot per lo scarico e l'archiviazione automatica delle timbrature usando Playwright.
+
+    Inizializza il bot con i parametri temporali e il fornitore.
+    """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login Portale ISAB"),
@@ -45,7 +48,6 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
         ]
 
     def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs: Any) -> None:
-        """Inizializza il bot con i parametri temporali e il fornitore."""
         kwargs.pop("societa", None)
         super().__init__(**kwargs)
         self.data_da = data_da

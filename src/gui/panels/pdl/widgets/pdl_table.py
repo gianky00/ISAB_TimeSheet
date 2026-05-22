@@ -10,7 +10,10 @@ from src.gui.panels.pdl.pdl_delegate import PDLDelegate
 
 
 class PDLTableView(QTableView):
-    """Tabella specializzata per il Database PDL con Master-Detail support."""
+    """Tabella specializzata per il Database PDL con Master-Detail support.
+
+    Inizializza la classe.
+    """
 
     header_clicked = Signal(int)
     row_double_clicked = Signal()
@@ -18,7 +21,6 @@ class PDLTableView(QTableView):
     context_menu_requested = Signal(object)  # pos
 
     def __init__(self, model: QAbstractItemModel, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setModel(model)
         self._setup_ui()

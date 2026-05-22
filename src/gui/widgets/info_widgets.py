@@ -24,10 +24,12 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class DetailedInfoDialog(QDialog):
-    """Dialogo modale per spiegazioni dettagliate KPI."""
+    """Dialogo modale per spiegazioni dettagliate KPI.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, title: str, content: str, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setWindowTitle("Dettaglio KPI")
         self.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)
@@ -69,7 +71,10 @@ class DetailedInfoDialog(QDialog):
 
 
 class InfoLabel(QPushButton):
-    """Bottone informativo accessibile (icona SVG)."""
+    """Bottone informativo accessibile (icona SVG).
+
+    Inizializza la classe.
+    """
 
     def __init__(
         self, title: str, get_text_callback: str | Callable[[], str], parent: QWidget | None = None
@@ -115,7 +120,10 @@ class InfoLabel(QPushButton):
 
 
 class KPIBigCard(QFrame):
-    """Card per mostrare un KPiùnumerico principale."""
+    """Card per mostrare un KPiùnumerico principale.
+
+    Inizializza la classe.
+    """
 
     def __init__(
         self,

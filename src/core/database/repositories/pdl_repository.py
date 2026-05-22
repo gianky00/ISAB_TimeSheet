@@ -10,10 +10,12 @@ logger = get_logger(__name__)
 
 
 class PdlRepository:
-    """Repository per l'accesso ai dati dei Permessi di Lavoro (PDL)."""
+    """Repository per l'accesso ai dati dei Permessi di Lavoro (PDL).
+
+    Inizializza la classe.
+    """
 
     def __init__(self, db_manager_instance: Any = None) -> None:
-        """Inizializza la classe."""
         self.db = db_manager_instance or db_manager
         self.columns = [
             "id",

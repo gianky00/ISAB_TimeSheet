@@ -1,6 +1,3 @@
-"""Modulo Bug Reporter."""
-
-# ruff: noqa: TRY300, PLR2004
 """SyncroJob - Enhanced Bug Reporter.
 
 Raccoglie diagnostica completa per segnalazioni bug, integrando:
@@ -9,6 +6,7 @@ Raccoglie diagnostica completa per segnalazioni bug, integrando:
 - Audit trail (ultime azioni)
 - Info sistema
 """
+# ruff: noqa: TRY300, PLR2004
 
 import json
 import logging

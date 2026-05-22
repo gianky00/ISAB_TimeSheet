@@ -33,7 +33,10 @@ if TYPE_CHECKING:
 
 
 class GiornaliereYearTab(QWidget):
-    """Tab per un singolo anno (Giornaliere)."""
+    """Tab per un singolo anno (Giornaliere).
+
+    Inizializza la classe.
+    """
 
     COLUMNS: ClassVar[list[str]] = [
         "DATA",
@@ -53,7 +56,6 @@ class GiornaliereYearTab(QWidget):
     IDX_NOMEFILE: int = 10
 
     def __init__(self, year: int, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.year = year
         self.worker: ContabilitaDataWorker | None = None

@@ -25,6 +25,17 @@ class FooterLeftWidget(QWidget):
     """Parte sinistra del footer: Business Info.
 
     Visualizza il nome del cliente, la scadenza della licenza, l'ID hardware e gli account dei portali.
+
+    Inizializza il widget del footer sinistro.
+
+    Args:
+      parent: Widget genitore.
+
+    Attributes:
+        engine_clicked: Segnale o attributo della classe.
+        headless_clicked: Segnale o attributo della classe.
+        portale_clicked: Segnale o attributo della classe.
+        safework_clicked: Segnale o attributo della classe.
     """
 
     portale_clicked = Signal()
@@ -33,11 +44,6 @@ class FooterLeftWidget(QWidget):
     headless_clicked = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il widget del footer sinistro.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 2, 0, 2)

@@ -55,10 +55,12 @@ class EmployeeCsvReadStep(ProcessingStep):
 
 
 class EmployeeDatabaseSyncStep(ProcessingStep):
-    """Passaggio per la sincronizzazione dei dipendenti con il database."""
+    """Passaggio per la sincronizzazione dei dipendenti con il database.
+
+    Inizializza il passaggio con il repository specificato.
+    """
 
     def __init__(self, repository: EmployeeRepository | None = None) -> None:
-        """Inizializza il passaggio con il repository specificato."""
         self.repo = repository or EmployeeRepository()
 
     def execute(self, context: dict[str, Any]) -> None:

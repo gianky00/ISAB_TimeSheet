@@ -22,6 +22,8 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
     """Bot per lo scarico automatico dei timesheet dal portale ISAB usando Playwright.
 
     Gestisce la navigazione, il filtraggio per OdA e l'esportazione Excel massiva.
+
+    Inizializza le propriet  del bot Playwright.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
@@ -59,7 +61,6 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
         elabora_ts: bool = False,
         **kwargs: Any,
     ) -> None:
-        """Inizializza le propriet  del bot Playwright."""
         super().__init__(**kwargs)
         self.data_da = data_da or f"01.01.{datetime.now(UTC).year}"
         self.fornitore = fornitore

@@ -37,14 +37,14 @@ class StatusBarComponent(QObject):
 
     Organizza i widget del footer in zone (Sinistra: Info/Telemetria, Centro: Console, Destra: Stati Bot).
     Implementa logica di aggiornamento per licenza e countdown Autopilot.
+
+    Inizializza il componente della barra di stato.
+
+    Args:
+      main_window: Riferimento alla MainWindow dell'applicazione.
     """
 
     def __init__(self, main_window: MainWindow) -> None:
-        """Inizializza il componente della barra di stato.
-
-        Args:
-          main_window: Riferimento alla MainWindow dell'applicazione.
-        """
         super().__init__(main_window)
         self.main_window = main_window
         self._footer_stats_mode = False

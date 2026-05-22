@@ -19,14 +19,14 @@ class SignalConnector(QObject):
     """Gestisce la connessione dei segnali PySide6 tra i Singleton Manager e la UI.
 
     Sìoccupa di aggiornare badge, mostrare toast e gestire la navigazione dalla sidebar.
+
+    Inizializza il connettore di segnali.
+
+    Args:
+      main_window: Riferimento alla MainWindow dell'applicazione.
     """
 
     def __init__(self, main_window: "MainWindow") -> None:
-        """Inizializza il connettore di segnali.
-
-        Args:
-          main_window: Riferimento alla MainWindow dell'applicazione.
-        """
         super().__init__(main_window)
         self.main_window = main_window
 

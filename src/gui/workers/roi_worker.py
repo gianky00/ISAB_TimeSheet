@@ -14,7 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 class ROIWorker(QThread):
-    """Worker che esegue il calcolo del ROI in background."""
+    """Worker che esegue il calcolo del ROI in background.
+
+    Inizializza la classe.
+    """
 
     finished_signal = Signal(object)  # Restituisce l'oggetto ROIMetrics
     error_signal = Signal(str)

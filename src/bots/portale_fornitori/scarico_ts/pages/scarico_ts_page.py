@@ -23,10 +23,12 @@ from src.utils.helpers import cleanup_chrome_temp_files
 
 
 class ScaricoTSPage:
-    """Encapsulates interactions with the Scarico TS page."""
+    """Encapsulates interactions with the Scarico TS page.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None) -> None:
-        """Inizializza la classe."""
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)

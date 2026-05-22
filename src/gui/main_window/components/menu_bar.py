@@ -28,14 +28,14 @@ class MenuBarComponent(QObject):
     """Gestisce l'interazione con i comandi globali tramite tastiera e interfaccia Spotlight.
 
     Coordina l'inizializzazione della Command Palette e la costruzione dell'albero dei comandi.
+
+    Inizializza il componente menu e registra le scorciatoie.
+
+    Args:
+      main_window: Riferimento alla MainWindow dell'applicazione.
     """
 
     def __init__(self, main_window: MainWindow) -> None:
-        """Inizializza il componente menu e registra le scorciatoie.
-
-        Args:
-          main_window: Riferimento alla MainWindow dell'applicazione.
-        """
         super().__init__(main_window)
         self.main_window = main_window
         self.command_palette: CommandPaletteDialog | None = None

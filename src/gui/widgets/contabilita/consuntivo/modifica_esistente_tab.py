@@ -37,14 +37,16 @@ from src.gui.widgets.modern_card import ModernContentCard
 
 
 class ModificaEsistenteTab(QWidget):
-    """Tab intelligente per la gestione di consuntivi esistenti con caching delle scansioni di rete."""
+    """Tab intelligente per la gestione di consuntivi esistenti con caching delle scansioni di rete.
+
+    Inizializza la classe.
+    """
 
     step_clicked = Signal(str)
     _scan_finished = Signal()
     _scan_error = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.macro_worker: MacroWorker | None = None
         self.loaded_file: str | None = None

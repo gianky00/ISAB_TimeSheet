@@ -11,10 +11,12 @@ from src.utils.helpers import get_asset_path
 
 
 class CalendarDateEdit(QDateEdit):
-    """QDateEdit con popup calendario e stile personalizzato."""
+    """QDateEdit con popup calendario e stile personalizzato.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setCalendarPopup(True)
         self.setDisplayFormat("dd.MM.yyyy")

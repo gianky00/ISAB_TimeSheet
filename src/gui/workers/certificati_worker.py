@@ -18,17 +18,21 @@ class CertificatiWorker(QThread):
     """Worker per il caricamento asincrono dei certificati.
 
     Delega l'elaborazione pesante (SQL, Raggruppamento, Priorità) a un thread secondario.
+
+    Inizializza il worker.
+
+    Args:
+      engine: Istanza di CertificatiEngine da utilizzare per il raggruppamento.
+
+    Attributes:
+        error_signal: Segnale o attributo della classe.
+        finished_signal: Segnale o attributo della classe.
     """
 
     finished_signal = Signal(list)  # Restituisce la lista di gruppi prioritizzati
     error_signal = Signal(str)
 
     def __init__(self, engine: CertificatiEngine) -> None:
-        """Inizializza il worker.
-
-        Args:
-          engine: Istanza di CertificatiEngine da utilizzare per il raggruppamento.
-        """
         super().__init__()
         self.engine = engine
 

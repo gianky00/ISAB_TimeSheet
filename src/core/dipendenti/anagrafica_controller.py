@@ -22,10 +22,12 @@ logger = logging.getLogger(__name__)
 
 
 class AnagraficaController:
-    """Controller per la gestione dei dati dell'anagrafica dipendenti."""
+    """Controller per la gestione dei dati dell'anagrafica dipendenti.
+
+    Inizializza il controller dell'anagrafica dipendenti.
+    """
 
     def __init__(self) -> None:
-        """Inizializza il controller dell'anagrafica dipendenti."""
         self.repository = EmployeeRepository()
 
     def get_employees(self, search_text: str = "") -> list[EmployeeRecord]:

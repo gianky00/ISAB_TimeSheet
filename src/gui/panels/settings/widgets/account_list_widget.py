@@ -35,18 +35,21 @@ class AccountListWidget(QWidget):
     """Gestisce una lista di account con icone di default e dialoghi cifrati.
 
     Consente l'aggiunta, modifica, rimozione e impostazione dell'account predefinito.
+
+    Inizializza il widget lista account.
+
+    Args:
+      title: Titolo del gruppo (es. 'Account ISAB').
+      show_type: Se True, mostra il campo tipologiànel dialogo account.
+      parent: Widget genitore opzionale.
+
+    Attributes:
+        changed: Segnale o attributo della classe.
     """
 
     changed = Signal()
 
     def __init__(self, title: str, show_type: bool = False, parent: QWidget | None = None) -> None:
-        """Inizializza il widget lista account.
-
-        Args:
-          title: Titolo del gruppo (es. 'Account ISAB').
-          show_type: Se True, mostra il campo tipologiànel dialogo account.
-          parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.title = title
         self.show_type = show_type

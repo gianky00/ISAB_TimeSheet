@@ -23,10 +23,12 @@ from .quick_actions_registry import AVAILABLE_ACTIONS
 
 
 class ActionChip(QPushButton):
-    """Pulsante 'Chip' per azione rapida."""
+    """Pulsante 'Chip' per azione rapida.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, text: str, icon_path: str, color: str, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.setText(f" {text}")  # Spazio per icona
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -60,12 +62,14 @@ class ActionChip(QPushButton):
 
 
 class QuickActions(QWidget):
-    """Toolbar orizzontale scrollabile con azioni rapide configurabili."""
+    """Toolbar orizzontale scrollabile con azioni rapide configurabili.
+
+    Inizializza la classe.
+    """
 
     action_clicked = Signal(str)  # Emits action key
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self._setup_ui()
 

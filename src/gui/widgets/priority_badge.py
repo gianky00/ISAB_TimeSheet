@@ -14,7 +14,10 @@ from src.gui.styles import COLORS
 
 
 class PriorityBadge(QWidget):
-    """Badge circolare con animazione di pulsazione (glow)."""
+    """Badge circolare con animazione di pulsazione (glow).
+
+    Inizializza la classe.
+    """
 
     pulse_scale_changed = Signal(float)
 
@@ -26,7 +29,6 @@ class PriorityBadge(QWidget):
     }
 
     def __init__(self, priority: str = "media", parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.priority = priority.lower()
         self._pulse_scale = 1.0

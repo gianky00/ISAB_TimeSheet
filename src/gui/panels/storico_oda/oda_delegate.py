@@ -10,10 +10,12 @@ from src.gui.styles import COLORS
 
 
 class ChildDescriptionDelegate(QStyledItemDelegate):
-    """Delegate per gestire lo stile delle righe figlie nel QTreeView degli OdA."""
+    """Delegate per gestire lo stile delle righe figlie nel QTreeView degli OdA.
+
+    Inizializza il delegate associandolo alla vista ad albero degli OdA.
+    """
 
     def __init__(self, tree_view: QTreeView) -> None:
-        """Inizializza il delegate associandolo alla vista ad albero degli OdA."""
         super().__init__(tree_view)
         self.tree = tree_view
 

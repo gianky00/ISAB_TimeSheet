@@ -6,10 +6,12 @@ from src.gui.widgets.info_widgets import KPIBigCard
 
 
 class KPICardsRow(QWidget):
-    """Widget che raggruppa una riga di KPiùcards."""
+    """Widget che raggruppa una riga di KPiùcards.
+
+    Inizializza la classe.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__(parent)
         self.main_layout = QHBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)

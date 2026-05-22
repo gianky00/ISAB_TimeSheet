@@ -133,6 +133,13 @@ class FastTableModel(QAbstractTableModel):
     - Formattazione specifica per colonna (DisplayRole).
     - Ordinamento nativo sui dati grezzi.
     - Allineamento intelligente (Numeri a destra).
+
+    Inizializza il modello dati veloce.
+
+    Args:
+      data: Lista di righe dati.
+      headers: Intestazioni delle colonne.
+      metadata: Metadati opzionali paralleli ai dati.
     """
 
     def __init__(
@@ -141,13 +148,6 @@ class FastTableModel(QAbstractTableModel):
         headers: list[str] | None = None,
         metadata: list[Any] | None = None,
     ) -> None:
-        """Inizializza il modello dati veloce.
-
-        Args:
-          data: Lista di righe dati.
-          headers: Intestazioni delle colonne.
-          metadata: Metadati opzionali paralleli ai dati.
-        """
         super().__init__()
         self._data: list[list[Any]] = data or []
         self._headers: list[str] = headers or []

@@ -30,14 +30,14 @@ class CaricoTSPanel(BaseBotPanel):
     """Pannello per l'automazione del caricamento dei TimeSheet (Carico TS).
 
     Gestisce l'input dei dati e l'avvio del bot CaricoTSBot.
+
+    Inizializza il pannello Carico TS.
+
+    Args:
+      parent: Widget genitore.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il pannello Carico TS.
-
-        Args:
-          parent: Widget genitore.
-        """
         super().__init__(
             bot_id="carico_ts",
             bot_name="Carico TS",

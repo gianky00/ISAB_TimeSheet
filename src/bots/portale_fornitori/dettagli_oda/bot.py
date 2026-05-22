@@ -16,7 +16,23 @@ from src.core.oda_manager import OdaManager
 
 
 class DettagliOdABot(SeleniumBaseBot):
-    """Bot per lo scarico dei dettagli degli Ordini di Acquisto (OdA) dal Portale Fornitori."""
+    """Bot per lo scarico dei dettagli degli Ordini di Acquisto (OdA) dal Portale Fornitori.
+
+    Inizializza il bot Dettagli OdA.
+
+    Args:
+      username: Nome utente per il login.
+      password: Password per il login.
+      config: Configurazione del bot.
+      data_da: Data di inizio ricerca.
+      data_a: Data di fine ricerca.
+      fornitore: Fornitore da selezionare.
+      **kwargs: Argomenti aggiuntivi.
+
+    Attributes:
+        STEPS: ClassVar[list[tuple[str: Segnale o attributo della classe.
+        str: Segnale o attributo della classe.
+    """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login Portale ISAB"),
@@ -64,17 +80,6 @@ class DettagliOdABot(SeleniumBaseBot):
         fornitore: str | None = None,
         **kwargs: Any,
     ) -> None:
-        """Inizializza il bot Dettagli OdA.
-
-        Args:
-          username: Nome utente per il login.
-          password: Password per il login.
-          config: Configurazione del bot.
-          data_da: Data di inizio ricerca.
-          data_a: Data di fine ricerca.
-          fornitore: Fornitore da selezionare.
-          **kwargs: Argomenti aggiuntivi.
-        """
         super().__init__(username, password, config)
         current_year = datetime.now(UTC).astimezone().year
 

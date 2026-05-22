@@ -72,7 +72,7 @@ def with_context(**context_data: Any) -> Generator[None, None, None]:
       **context_data: Chiavi e valori da aggiungere al context
 
     Yields:
-      None
+      None: Fornisce solo il contesto.
     """
     ctx = get_context()
 

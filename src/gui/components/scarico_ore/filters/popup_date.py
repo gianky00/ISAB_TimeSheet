@@ -19,10 +19,12 @@ from src.gui.widgets.core_widgets import (
 
 
 class DateFilterPopupWidget(QWidget):
-    """Widget filtro gerarchico per date (Anno -> Mese -> Giorno)."""
+    """Widget filtro gerarchico per date (Anno -> Mese -> Giorno).
+
+    Inizializza la classe.
+    """
 
     def __init__(self, values: list[str], selected_values: list[str] | None = None) -> None:
-        """Inizializza la classe."""
         super().__init__()
         self.values = values
         self.applied = False
