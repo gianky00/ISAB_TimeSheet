@@ -45,7 +45,6 @@ class TestPdlRepository:
 
     @patch("src.core.database.repositories.pdl_repository.dict", side_effect=lambda x: x)
     def test_get_filtered_objects(self, mock_dict, repo, mock_db):
-        # Setup mock row
         row = dict.fromkeys(repo.columns, "")
         row["n_pdl"] = "100"
         mock_db.execute_query.return_value = [row]
@@ -103,17 +102,17 @@ class TestPdlRepository:
         assert mock_db.execute_query.called  # DELETE
         assert mock_conn.executemany.called  # INSERT
 
-    @patch("src.core.database.repositories.pdl_repository.sqlite3.connect")
+    @patch("sqlite3.connect")
     def test_get_interventions(self, mock_connect, repo):
         mock_conn = MagicMock()
         mock_connect.return_value.__enter__.return_value = mock_conn
         mock_cursor = MagicMock()
         mock_conn.cursor.return_value = mock_cursor
 
-        # Simula sqlite3.Row behavior
         mock_row = {"fonte": "F1", "tecnico": "T1"}
         mock_cursor.fetchall.return_value = [mock_row]
 
+        # Patching dict in the repository module to handle sqlite3.Row conversion
         with patch("src.core.database.repositories.pdl_repository.dict", side_effect=lambda x: x):
             res = repo.get_interventions("123", "ext.db")
             assert len(res) == 1

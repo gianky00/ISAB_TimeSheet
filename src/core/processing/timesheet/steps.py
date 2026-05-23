@@ -76,7 +76,7 @@ class ExtractMetadataStep(ProcessingStep):
             odc=odc, pos_values=pos_values, first_pos_cleaned=first_pos_cleaned
         )
 
-    def _clean_pos_value(self, val: str) -> str:
+    def _clean_pos_value(self, val: str | None) -> str:
         """Converte un valore POS in stringa intera pulita."""
         if val is None:
             return ""

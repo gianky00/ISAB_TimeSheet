@@ -1,5 +1,5 @@
 {
   "passed": [
-    "tests/unit/core/database/repositories/test_oda_repository.py"
+    "tests/unit/core/test_excel_importer_facade.py"
   ]
 }
