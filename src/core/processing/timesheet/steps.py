@@ -78,9 +78,12 @@ class ExtractMetadataStep(ProcessingStep):
 
     def _clean_pos_value(self, val: str) -> str:
         """Converte un valore POS in stringa intera pulita."""
-        if val.replace(".", "", 1).isdigit():
+        if val is None:
+            return ""
+        s = val.strip()
+        if s.replace(".", "", 1).isdigit():
             with suppress(Exception):
-                return str(int(float(val)))
+                return str(int(float(s)))
         return val
 
     def _deduce_odc_from_filename(self, file_path_str: str | Path) -> str:

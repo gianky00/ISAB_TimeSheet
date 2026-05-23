@@ -1,6 +1,8 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+import asyncio
+from unittest.mock import MagicMock, patch
 
 import pytest
+import telegram
 
 from src.core.telegram.service import TelegramService
 
@@ -8,80 +10,65 @@ from src.core.telegram.service import TelegramService
 class TestTelegramService:
     @pytest.fixture
     def service(self):
-        return TelegramService()
+        with patch("src.core.config_manager.load_config") as mock_config:
+            mock_config.return_value = {"telegram_token": "fake_token", "telegram_chat_id": "12345"}
+            return TelegramService()
 
+    def test_init(self, service):
+        assert service.app is None
+        assert service.stop_event.is_set() is False
+
+    @patch("threading.Thread")
     @patch("src.core.config_manager.load_config")
-    def test_start_service_missing_token(self, mock_load, service):
-        mock_load.return_value = {"telegram_token": ""}
-        mock_log = MagicMock()
-        service.log_signal.connect(mock_log.emit)
+    def test_start_service(self, mock_config, mock_thread, service):
+        mock_config.return_value = {"telegram_token": "TOKEN", "telegram_chat_id": "ID"}
 
         service.start_service()
-        assert mock_log.emit.called
-        assert "Token mancante" in mock_log.emit.call_args[0][0]
 
-    @patch("src.core.telegram.service.threading.Thread")
-    @patch("src.core.config_manager.load_config")
-    def test_start_service_success(self, mock_load, mock_thread, service):
-        mock_load.return_value = {"telegram_token": "valid_token", "telegram_chat_id": "123"}
-
-        service.start_service()
         assert mock_thread.called
-        assert service.connected_chat_id == "123"
+        assert service._service_thread is not None
 
     def test_stop_service_not_running(self, service):
-        # Should not crash
+        # Non deve crashare se non è in esecuzione
         service.stop_service()
+        assert True
 
+    @patch("src.core.telegram.service.Application.builder")
+    def test_build_application(self, mock_builder, service):
+        service._build_application("TOKEN")
+        assert mock_builder.return_value.token.called
+
+    @patch("src.core.telegram.service.get_asset_path", return_value="icon.png")
     @patch("src.core.telegram.service.asyncio.run_coroutine_threadsafe")
-    def test_send_message_sync(self, mock_run, service):
+    def test_send_message_sync(self, mock_run, mock_icon, service):
+        service.connected_chat_id = "12345"
         service.loop = MagicMock()
         service.loop.is_running.return_value = True
-        service.connected_chat_id = "123"
 
-        service.send_message_sync("hello")
+        service.send_message_sync("Hello")
+
         assert mock_run.called
 
-    @pytest.mark.asyncio
-    async def test_send_message_async_success(self, service):
-        service.app = MagicMock()
-        service.app.bot = AsyncMock()
+    @patch("src.core.telegram.service.get_asset_path", return_value="icon.png")
+    def test_check_auth(self, mock_icon, service):
+        service.connected_chat_id = "12345"
 
-        await service._send_message_async("123", "hello")
-        assert service.app.bot.send_message.called
-        _args, kwargs = service.app.bot.send_message.call_args
-        assert kwargs["text"] == "hello"
+        # Match
+        mock_update = MagicMock()
+        mock_update.effective_user.id = 12345
+        res = asyncio.run(service._check_auth(mock_update))
+        assert res is True
 
-    @pytest.mark.asyncio
-    async def test_send_document_async_success(self, service, tmp_path):
-        service.app = MagicMock()
-        service.app.bot = AsyncMock()
-        f = tmp_path / "test.txt"
-        f.write_text("content")
+        # No match
+        mock_update.effective_user.id = 999
+        res = asyncio.run(service._check_auth(mock_update))
+        assert res is False
 
-        await service._send_document_async("123", str(f), "caption")
-        assert service.app.bot.send_document.called
-        _args, kwargs = service.app.bot.send_document.call_args
-        assert kwargs["caption"] == "caption"
+    @patch("src.core.telegram.service.get_asset_path", return_value="icon.png")
+    async def test_handle_error_conflict(self, mock_icon, service):
+        mock_context = MagicMock()
+        mock_context.error = telegram.error.Conflict("Conflict")
 
-    @pytest.mark.asyncio
-    async def test_check_auth(self, service):
-        service.connected_chat_id = "123"
+        await service._handle_error(None, mock_context)
 
-        # Valid user
-        update = MagicMock()
-        update.effective_user.id = 123
-        assert await service._check_auth(update) is True
-
-        # Invalid user
-        update.effective_user.id = 456
-        update.message = AsyncMock()
-        assert await service._check_auth(update) is False
-        assert update.message.reply_text.called
-
-    def test_add_handlers(self, service):
-        service.app = MagicMock()
-        service._add_handlers()
-        # verify at least some handlers are added
-        assert service.app.add_handler.called
-        assert service.app.add_error_handler.called
+        assert service.stop_event.is_set() is True

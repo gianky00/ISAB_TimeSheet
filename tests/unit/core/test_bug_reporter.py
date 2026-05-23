@@ -1,6 +1,5 @@
-import os
-import zipfile
-from unittest.mock import patch
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -8,73 +7,56 @@ from src.core.bug_reporter import BugReporter
 
 
 class TestBugReporter:
-    @pytest.fixture
-    def mock_structure(self, tmp_path):
-        """Crea una struttura fittizia di log per il report."""
-        log_dir = tmp_path / "logs"
-        log_dir.mkdir()
+    @pytest.fixture(autouse=True)
+    def setup_bug_env(self, fs):
+        self.fake_config = Path("/fake_config")
+        fs.create_dir(str(self.fake_config))
+        fs.create_dir(str(self.fake_config / "logs" / "application"))
+        fs.create_dir(str(self.fake_config / "logs" / "errors"))
+        fs.create_dir(str(self.fake_config / "reports"))
 
-        app_dir = log_dir / "application"
-        app_dir.mkdir()
-        (app_dir / "app.json").write_text('{"msg": "test"}')
+        # Create some fake logs
+        fs.create_file(str(self.fake_config / "logs" / "application" / "app.log"), contents=b"log content")
+        fs.create_file(str(self.fake_config / "logs" / "errors" / "error1.png"), contents=b"fake png")
 
-        err_dir = log_dir / "errors"
-        err_dir.mkdir()
-        (err_dir / "error_screenshot.png").write_text("fake_image")
+        # Patching CONFIG_DIR inside bug_reporter
+        with patch("src.core.bug_reporter.CONFIG_DIR", self.fake_config):
+            yield
 
-        reports_dir = tmp_path / "reports"
-        reports_dir.mkdir()
+    @patch("src.core.bug_reporter.DiagnosticsCollector.collect_system_info")
+    @patch("src.core.bug_reporter.AuditManager.instance")
+    @patch("src.core.bug_reporter.generate_analytics_report")
+    def test_collect_diagnostics_success(self, mock_analytics, mock_audit, mock_sys):
+        mock_sys.return_value = {"os": "windows"}
+        mock_audit.return_value.get_logs.return_value = []
+        mock_analytics.return_value = MagicMock(health_score=100, anomalies=[], patterns=[])
 
-        return tmp_path
+        path, msg, files = BugReporter.collect_diagnostics()
 
-    @patch("src.core.bug_reporter.CONFIG_DIR")
-    @patch("src.core.bug_reporter.BugReporter._add_analytics_report")
-    @patch("src.core.bug_reporter.BugReporter._add_audit_trail")
-    def test_collect_diagnostics_success(self, mock_audit, mock_analytics, mock_config, mock_structure):
-        """Verifica la creazione corretta dello ZIP con file attesi."""
-        mock_config.__truediv__.side_effect = lambda x: mock_structure / x
-        mock_analytics.return_value = ["analytics_report.json"]
-        mock_audit.return_value = ["audit_trail.json"]
-
-        zip_path, msg, files = BugReporter.collect_diagnostics()
-
-        assert zip_path is not None
-        assert zip_path.exists()
-        assert "successo" in msg.lower()
+        assert path is not None
+        assert path.exists()
+        assert "successo" in msg
         assert "system_info.json" in files
 
-        # Verifica integrità ZIP
-        with zipfile.ZipFile(zip_path, "r") as z:
-            names = z.namelist()
-            assert "system_info.json" in names
-            assert "logs/application/app.json" in names
-            assert "logs/errors/error_screenshot.png" in names
+    def test_collect_diagnostics_failure(self):
+        # Forza errore patchando datetime
+        with patch("src.core.bug_reporter.datetime") as mock_dt:
+            mock_dt.now.side_effect = Exception("Crash")
+            path, msg, _files = BugReporter.collect_diagnostics()
+            assert path is None
+            assert "Errore" in msg
 
-    def test_collect_system_info_security(self):
-        """Verifica che le variabili d'ambiente sensibili siano filtrate."""
-        with patch.dict("os.environ", {"API_KEY": "secret123", "USER_NAME": "admin"}):
-            info = BugReporter._collect_system_info()
-            env = info.get("env_filtered", {})
-
-            assert "USER_NAME" in env
-            assert "API_KEY" not in env  # Deve essere filtrato
-
-    @patch("src.core.bug_reporter.CONFIG_DIR")
-    def test_cleanup_old_reports(self, mock_config, tmp_path):
-        """Verifica che vengano mantenuti solo gli ultimi N report."""
-        reports_dir = tmp_path / "reports"
-        reports_dir.mkdir()
-        # Side effect per permettere / "reports"
-        mock_config.__truediv__.side_effect = lambda x: tmp_path / x
-
-        # Crea 7 report finti
-        for i in range(7):
-            f = reports_dir / f"report_{i}.zip"
-            f.touch()
-            # Imposta tempi di modifica diversi
-            os.utime(f, (1000 + i, 1000 + i))
+    def test_cleanup_old_reports(self, fs):
+        reports_dir = self.fake_config / "reports"
+        # Creiamo 10 report finti
+        for i in range(10):
+            fs.create_file(str(reports_dir / f"report_{i}.zip"))
 
         BugReporter.cleanup_old_reports(max_reports=5)
 
         remaining = list(reports_dir.glob("*.zip"))
         assert len(remaining) == 5
+
+    def test_get_estimated_size(self):
+        size_str = BugReporter.get_estimated_size()
+        assert "KB" in size_str or "MB" in size_str

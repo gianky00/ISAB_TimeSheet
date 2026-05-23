@@ -1,0 +1,5 @@
+{
+  "passed": [
+    "tests/unit/core/database/repositories/test_oda_repository.py"
+  ]
+}

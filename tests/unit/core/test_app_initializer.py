@@ -49,16 +49,13 @@ class TestAppInitializer:
 
     @patch("src.core.app_initializer.get_available_bots", return_value=[])
     @patch("src.utils.resource_manager.ResourceManager.ensure_automation_driver")
-    def test_verify_environment(self, mock_driver, mock_bots, fs):
-        # Usiamo fs (pyfakefs) per testare la creazione della directory
+    @patch("src.core.app_initializer.CONFIG_DIR")
+    def test_verify_environment(self, mock_config_dir, mock_driver, mock_bots):
         step = MagicMock()
         AppInitializer._verify_environment(step)
         assert mock_driver.called
         assert step.called
-        # La cartella CONFIG_DIR deve esistere (il path reale è mockato da pyfakefs)
-        from src.core.paths import CONFIG_DIR
-
-        assert CONFIG_DIR.exists()
+        assert mock_config_dir.mkdir.called
 
     def test_init_generator_success(self):
         mw = MagicMock()
@@ -81,8 +78,8 @@ class TestAppInitializer:
         # Non deve bloccarsi se un pannello fallisce
         assert results[-1] == ("Sistema Pronto", 100)
 
-    @patch("src.core.app_initializer.cleanup_bot_processes")
-    @patch("src.core.app_initializer.sync_playwright")
+    @patch("src.utils.helpers.cleanup_bot_processes")
+    @patch("playwright.sync_api.sync_playwright")
     def test_preload_heavy_modules(self, mock_pw, mock_cleanup):
         # Mock per evitare l'avvio reale di Chromium
         mock_instance = MagicMock()
