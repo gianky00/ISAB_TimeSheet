@@ -106,6 +106,98 @@ def run_command(
         return False
 
 
+def run_command_safe(
+    cmd: list[str], description: str, capture: bool = False
+) -> tuple[bool, str]:
+    """Come run_command ma NON chiama sys.exit: restituisce (successo, output).
+
+    Usato nelle fasi post-bump in modo da poter effettuare rollback prima di uscire.
+    """
+    print(f"\n[STEP] {description}...")
+    sys.stdout.flush()
+
+    if cmd[0] == "git":
+        cmd[0] = find_git_executable()
+
+    try:
+        env = os.environ.copy()
+        env["PYTHONUNBUFFERED"] = "1"
+
+        process = subprocess.Popen(
+            cmd,
+            cwd=ROOT_DIR,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            env=env,
+            bufsize=1,
+            universal_newlines=True,
+        )
+
+        output_lines: list[str] = []
+        if process.stdout:
+            for line in process.stdout:
+                sys.stdout.write(line)
+                sys.stdout.flush()
+                output_lines.append(line)
+
+        returncode = process.wait()
+        return returncode == 0, "".join(output_lines)
+    except Exception as e:
+        print(f"[ERROR] Errore durante: {description}")
+        print(f"        Dettaglio: {e}")
+        sys.stdout.flush()
+        return False, str(e)
+
+
+# ---------------------------------------------------------------------------
+# File snapshot / rollback
+# ---------------------------------------------------------------------------
+
+#: File che vengono modificati dal processo di bump + changelog.
+_VERSIONED_FILES: list[Path] = [
+    ROOT_DIR / "src" / "core" / "version.py",
+    ROOT_DIR / "pyproject.toml",
+    ROOT_DIR / "src" / "core" / "changelog.json",
+    ROOT_DIR / "CHANGELOG.md",
+]
+
+
+def snapshot_versioned_files() -> dict[Path, str | None]:
+    """Cattura il contenuto corrente dei file di versione prima del bump.
+
+    Returns:
+        Dizionario {path: contenuto} per ciascun file monitorato.
+        Il valore è ``None`` se il file non esiste ancora.
+    """
+    snap: dict[Path, str | None] = {}
+    for p in _VERSIONED_FILES:
+        snap[p] = p.read_text(encoding="utf-8") if p.exists() else None
+    return snap
+
+
+def rollback_versioned_files(snapshot: dict[Path, str | None]) -> None:
+    """Ripristina i file di versione allo stato precedente al bump.
+
+    Args:
+        snapshot: Il dizionario restituito da :func:`snapshot_versioned_files`.
+    """
+    print("\n[ROLLBACK] Ripristino dei file di versione allo stato pre-bump...")
+    for path, content in snapshot.items():
+        try:
+            if content is None:
+                # Il file non esisteva prima: lo eliminiamo se è stato creato
+                if path.exists():
+                    path.unlink()
+                    print(f"  ✓ Rimosso (era nuovo): {path.name}")
+            else:
+                path.write_text(content, encoding="utf-8")
+                print(f"  ✓ Ripristinato: {path.name}")
+        except Exception as e:
+            print(f"  ⚠️  Impossibile ripristinare {path.name}: {e}")
+    print("[ROLLBACK] Completato. La versione è tornata a quella precedente.\n")
+
+
 def get_current_version() -> str:
     """Extracts the current version string from src/core/version.py."""
     version_file = ROOT_DIR / "src" / "core" / "version.py"
@@ -324,21 +416,66 @@ def prompt_interactive_release(args: argparse.Namespace) -> None:
     print("\n" + "=" * 60 + "\n")
 
 
-def run_git_operations(new_version: str, args: argparse.Namespace) -> None:
-    """Esegue il commit e il tagging della nuova versione in Git."""
+def run_git_operations(
+    new_version: str, args: argparse.Namespace, snapshot: dict[Path, str | None]
+) -> bool:
+    """Esegue il commit e il tagging della nuova versione in Git.
+
+    Se una qualsiasi operazione fallisce, esegue il rollback automatico dei file
+    di versione modificati dal bump e restituisce ``False``.
+
+    Args:
+        new_version: La nuova stringa di versione (es. ``"1.50.0"``)
+        args: I parametri del processo di rilascio.
+        snapshot: Lo snapshot pre-bump per il rollback.
+
+    Returns:
+        ``True`` se tutte le operazioni Git sono riuscite, ``False`` altrimenti.
+    """
     if args.no_git:
-        return
+        return True
+
+    # Pre-genera .ai-context.json prima dello staging per evitare che il pre-commit
+    # hook "generate-ai-context" lo modifichi durante il commit (pattern noto che causa
+    # "files were modified by this hook" e quindi il fallimento del commit).
+    ai_context_script = ROOT_DIR / "tools" / "generate_ai_context.py"
+    if ai_context_script.exists():
+        run_command(
+            [str(VENV_PYTHON), str(ai_context_script)],
+            "Pre-generating .ai-context.json",
+        )
+
     run_command(["git", "add", "."], "Staging changes")
-    run_command(
+
+    ok, _ = run_command_safe(
         ["git", "commit", "-m", f"chore: release v{new_version} [auto]"],
         f"Committing v{new_version}",
     )
-    run_command(
+    if not ok:
+        print(f"\n[ERROR] Comando fallito: Committing v{new_version}")
+        rollback_versioned_files(snapshot)
+        # Annulla anche lo staging già eseguito
+        git_bin = find_git_executable()
+        subprocess.run([git_bin, "reset", "HEAD"], cwd=ROOT_DIR, check=False)
+        return False
+
+    ok, _ = run_command_safe(
         ["git", "tag", "-a", f"v{new_version}", "-m", f"Release v{new_version}"],
         f"Tagging v{new_version}",
     )
+    if not ok:
+        print(f"\n[ERROR] Comando fallito: Tagging v{new_version}")
+        rollback_versioned_files(snapshot)
+        return False
+
     if args.push:
-        run_command(["git", "push", "origin", "main", "--tags"], "Pushing to remote")
+        ok, _ = run_command_safe(["git", "push", "origin", "main", "--tags"], "Pushing to remote")
+        if not ok:
+            print("\n[ERROR] Comando fallito: Pushing to remote")
+            rollback_versioned_files(snapshot)
+            return False
+
+    return True
 
 
 def run_build_operations(new_version: str, args: argparse.Namespace, start_time: float) -> None:
@@ -425,6 +562,11 @@ def main() -> None:
         bump_type = detect_bump_type()
         print(f"🔍 Detected bump type: {bump_type}")
 
+    # ── SNAPSHOT pre-bump ────────────────────────────────────────────────────
+    # Salviamo il contenuto corrente dei file di versione PRIMA di modificarli.
+    # In caso di fallimento delle operazioni Git, potremo ripristinarli esattamente.
+    pre_bump_snapshot = snapshot_versioned_files()
+
     # 4. Version Bump
     run_command([str(VENV_PYTHON), "admin/bump_version.py", bump_type], f"Bumping {bump_type}")
 
@@ -437,8 +579,12 @@ def main() -> None:
     # 4.3 Update JSON Changelog strutturato
     update_json_changelog(new_version, git_bin)
 
-    # 5. Operazioni Git
-    run_git_operations(new_version, args)
+    # 5. Operazioni Git (con rollback automatico in caso di fallimento)
+    git_ok = run_git_operations(new_version, args, pre_bump_snapshot)
+    if not git_ok:
+        print("\n[FAILED] Il processo di rilascio è stato annullato a causa di un errore Git.")
+        print("         I file di versione sono stati ripristinati allo stato pre-bump.")
+        sys.exit(1)
 
     # 6. Compilazione e notifiche
     run_build_operations(new_version, args, start_time)

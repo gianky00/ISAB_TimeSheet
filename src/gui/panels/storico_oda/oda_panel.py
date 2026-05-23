@@ -28,6 +28,7 @@ from src.gui.workers.oda_io_worker import OdaIOWorker
 from src.utils.helpers import safe_open
 
 from .oda_filter_widget import OdaFilterWidget
+from .oda_legend import OdaLegendWidget
 from .utils.oda_adapter import ODAAdapter
 from .widgets.oda_tree import ODATreeView
 
@@ -180,8 +181,9 @@ class StoricoOdaPanel(QWidget):
             self.empty_state.hide()
 
     def _setup_toolbar(self, parent_layout: QVBoxLayout) -> None:
-        """Configura la barra dei filtri."""
+        """Configura la barra dei filtri e la legenda."""
         parent_layout.addWidget(self.filters)
+        parent_layout.addWidget(OdaLegendWidget())
 
     def _setup_scroll_area(self, parent_layout: QVBoxLayout) -> None:
         """Configura l'area di visualizzazione del tree."""
@@ -267,7 +269,7 @@ class StoricoOdaPanel(QWidget):
         menu = QMenu(self)
 
         # Azione Dettaglio
-        menu.addAction("[CERCA] Mostra dettaglio completo").triggered.connect(
+        menu.addAction("Mostra dettaglio completo").triggered.connect(
             lambda: self._open_detail_for_index(idx)
         )
 
