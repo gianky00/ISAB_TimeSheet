@@ -51,14 +51,14 @@ AQI_UNHEALTHY_SENSITIVE = 60
 AQI_UNHEALTHY = 80
 
 # Stile forzato per evitare il bug della Dark Mode / Tooltip nero in PySide6.
-TOOLTIP_CSS = f"""
-QToolTip {{
+TOOLTIP_CSS = """
+QToolTip {
   background-color: #FFFFFF;
   color: #212121;
   border: 1px solid #CCCCCC;
   border-radius: 6px;
   padding: 8px 12px;
-}}
+}
 """
 
 

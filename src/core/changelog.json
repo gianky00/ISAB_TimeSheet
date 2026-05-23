@@ -3,1125 +3,3564 @@
     "version": "1.50.0",
     "date": "2026-05-23",
     "notes": [
-      "add",
-      "chore(docs): clean up obsolete documentation and include new structural docs",
-      "refactor(core): scomposizione SRP completa di AppInitializer e BackupManager",
-      "docs: integra l'analisi completa della coesione LCOM in implementation_plan.md",
-      "docs(refactor): update implementation plan with completed status",
-      "refactor(core): decouple autopilot scheduling and system diagnostics for SRP compliance",
-      "refactor(gui): decompose search_controller into search_results_menu for SRP",
-      "feat: integrate cohesion library for SRP and LCOM metrics mapping and update documents",
-      "feat: integrate pydantic-settings and libcst libraries with typed SyncroJobSettings model and context documentation",
-      "chore: exclude utility scripts from mypy in pyproject.toml",
-      "docs: add AI context files (llm.txt, llm-full.txt) and semantic typing guidelines",
-      "docs: risoluzione massiva delle segnalazioni pydoclint (DOC301, DOC601, DOC603) e Ruff",
-      "fix(quality): resolve ruff and mypy strict violations in gui and core",
-      "chore: remove accidental byproduct file",
-      "fix(quality): final type cleanup in safework base",
-      "docs(quality): 100% docstring coverage for optimized modules and ruff fixes",
-      "fix(quality): full mypy strict compliance across all modules",
-      "fix(quality): final ruff formatting and type fixes",
-      "refactor: radical gui optimization for extreme fluidity (Zero-I/O UI)",
-      "chore: apply automated linting and formatting fixes (Ruff/pre-commit)",
-      "Merge branch 'feature/dynamic-changelog-safety-checks'",
-      "Merge branch 'feature/dynamic-changelog-safety-checks'",
-      "fix: ripristinati cast espliciti per conformità MyPy Strict",
-      "fix(contabilita): risolto bug aggiornamento certificati e unificati percorsi DB",
-      "refactor: ottimizzazione codice via refurb e personalizzazioni GUI",
-      "add",
-      "chore: release v1.49.0 [auto]",
-      "fix(security): risolte vulnerabilità Bandit e allineati controlli Ruff",
-      "feat(splash): implementata Laser-Track Progress Bar con percentuale olografica dinamica",
-      "feat(splash): raffinamento totale macro-status per eliminare fallback generici",
-      "fix(splash): risolto bug visibilità notifica LICENZA VALIDATA e sincronizzato effetto typewriter",
-      "feat(splash): riorganizzazione header con info stack laterale (versione sopra, rilascio sotto)",
-      "feat(splash): upgrade animazione LICENZA VALIDATA con effetto typewriter e breathing fluido",
-      "feat(splash): aggiunto feedback olografico LICENZA VALIDATA con animazione breathing",
-      "style(splash): ottimizzato contrasto e leggibilità data di rilascio nell'header",
-      "feat(splash): espansione verticale e riorganizzazione finale layout header/footer",
-      "feat(splash): riorganizzazione layout con data sotto il titolo e credits centrati a piè di pagina",
-      "style(splash): uniformato colore data rilascio al blu della versione",
-      "feat(splash): spostata e rinominata data rilascio accanto alla versione nell'header",
-      "feat(splash): aggiunta Build Date dinamica dal changelog nel box metadati",
-      "feat(splash): perfezionata animazione breathing crediti con ciclo fluido e fix indentazione",
-      "feat(splash): animazione typewriter e breathing pulse per i crediti developer",
-      "feat(splash): aggiunto system credit olografico e risolti errori import Ruff",
-      "feat(splash): raffinamento mappatura macro-status per eliminare fallback AVVIO IN CORSO",
-      "feat(splash): raggruppamento macro-fasi e conformità totale QA",
-      "feat(splash): unificato header brand-versione con scaling dinamico",
-      "feat(splash): aggiunto orologio live e DNA tech-trace nel changelog",
-      "feat(splash): sostituita animazione caricamento testuale con PulseIndicator grafico",
-      "style(splash): armonizzazione cromatica blu, effetto glow header e pulizia titoli console",
-      "style(splash): restyling header changelog con effetto glow e rimozione parentesi",
-      "style(splash): aggiornato titolo header changelog ticker per rimuovere ridondanza versione",
-      "feat(splash): aggiunto titolo dinamico della versione e refactoring per standard Ruff",
-      "fix(splash): risolto bug sovrapposizione righe changelog ticker tramite ancoraggio posizioni statiche",
-      "style(splash): riduzione intervallo changelog ticker a 3.5 secondi",
-      "feat(splash): animazione Slide-Up & Fade con easing OutBack per il changelog ticker",
-      "style(splash): standardizzazione etichette changelog in NEW, FIX e UPDATE",
-      "style(splash): rimozione bordi sottili dalle righe del changelog ticker",
-      "style(splash): espansione orizzontale changelog ticker a 750px per evitare troncamenti",
-      "style(splash): upscale proporzionale dello splash screen a 850x560",
-      "style(splash): restyling premium con effetti neon, bagliori dinamici e contenitori olografici",
-      "feat(splash): implementazione Ticker multi-riga per il changelog",
-      "style(gui): uniformati tooltip per ModernButton in Light Mode",
-      "feat(splash): implementazione ChangelogTicker nello splashscreen",
-      "feat(gui): persistenza dello stato dettagli della card meteo al riavvio",
-      "style(gui): uniformati tutti i tooltip in Light Mode e corretti errori linter",
-      "feat(gui): aggiunti pulsanti dettaglio/ritorno in WeatherWidget con animazione spin di Don Ciro",
-      "feat(ui): implement dynamic version badge with sparkles in sidebar changelog",
-      "fix(updater): resolve 'Install Now' failure on Windows",
-      "docs(quality): achieve 100% docstring coverage globally",
-      "chore: release v1.48.0 [auto]",
-      "chore(quality): global code quality cleanup and documentation enhancement",
-      "refactor(bots): enhance interaction robustness and migrate to structural locators",
-      "feat(timbrature): implement massive import and real-time access monitoring",
-      "fix(bot): resolve Excel download ambiguity in Timbrature bot using FontAwesome unicode",
-      "fix(browser): remove --no-sandbox, --disable-gpu to resolve STATUS_BREAKPOINT crashes",
-      "fix(splash): pipe license details dynamically to standalone splash screen via binary unbuffered stdin",
-      "fix(bot): prevent TypeError on unexpected societa parameter in Playwright base and Timbrature bot",
-      "perf(gui): optimize splash screen and startup dialog with async license and HWID IPC",
-      "feat(ui): implement dynamic changelog and sidebar breathing warning pulse",
-      "feat(gui): improve changelog UI with light-mode tooltips, clear filters and dynamic next release handling",
-      "Merge pull request #152 from gianky00/feature/refactor-contabilita-srp",
-      "feat(report): aggiunta postilla audit per strumenti senza scadenza nel PDF",
-      "fix(updater): improve installer launch robustness on Windows with delay and detached process",
-      "chore: release v1.47.0 [auto]",
-      "build: pulizia repository e aggiornamento .gitignore",
-      "refactor(core): allineamento suite di test alla nuova architettura SRP e fix MyPy",
-      "fix(core): remove blocking run_update() from BotWorker to prevent getaddrinfo GIL freeze",
-      "perf(core): aggiunge riscaldamento WMI/psutil nello splashscreen per eliminare il blocco GIL causato dall'iterazione dei processi al primo avvio",
-      "perf(core): pre-carica i moduli pesanti (Playwright, PDF, Excel) nello splashscreen per eliminare lag al primo avvio",
-      "perf(gui): elimina freeze GIL al primo avvio centralizzando i log con QApplication.processEvents",
-      "perf(bots): elimina timeout chiusura Playwright tramite rimozione page.close ridondanti e cleanup forzato dei processi",
-      "perf(gui): elimina freeze GUI al termine del bot tramite QThread asincroni",
-      "refactor(bots): hardening pass dati, gestione sessione attiva, timesheet vuoti, race condition e click nativo cerca",
-      "fix(bots/db): corretti errori di sintassi XPath in locators e query SQL nel repository PDL",
-      "fix(bots): corretto errore sintassi XPath nei locators del portale fornitori",
-      "fix(gui): risolto ripristino parametri all'avvio e prevenuto salvataggio spurio allo spegnimento",
-      "style(tests): risolte segnalazioni ruff e mypy nei test (completamento)",
-      "style(tests): risolte tutte le segnalazioni ruff e mypy nei test",
-      "test: stabilizzazione suite di test e allineamento patch mock",
-      "test: ristrutturazione gerarchica suite test (migrazione e pulizia duplicati)",
-      "test: implementazione massiva test unitari e refactor copertura (Stream J, D, B/E)",
-      "refactor: reach zero Ruff/MyPy reports and fix bot logic type safety",
-      "test: add and fix unit tests (Stream B/E) and apply linter fixes",
-      "feat: implement button elevation effect",
-      "feat: apply Modern Card restyling to all bot panels",
-      "feat: apply Modern Card style to Storico OdA panel",
-      "feat: apply Modern Card style and animations to KPI Panel",
-      "feat: implement modern UI effects and card styles",
-      "feat: implement centralized design system typography constants",
-      "feat: implement self-cleaning logic in maintenance worker",
-      "feat: implement database maintenance worker and background optimization",
-      "fix: risoluzione errori linter pre-commit e stabilità finale",
-      "fix: risoluzione finale bug database, mock test e importazione certificati",
-      "refactor: complete SRP decomposition & industrial-grade standardization (final stability batch)",
-      "add",
-      "refactor: code quality cleanup (zero MyPy errors & Ruff optimization)",
-      "fix: ripristino icone certificati, sincronizzazione ubicazione e pulizia QA totale",
-      "chore: release v1.46.3 [auto]",
-      "fix: risoluzione violazioni Ruff e 80 segnalazioni Mypy",
-      "chore: release v1.46.2 [auto]",
-      "chore: release v1.46.1 [auto]",
-      "add",
-      "merge: integrate backup system and 100% QA compliance from pyside6-phase3",
-      "chore: release v1.46.0 [auto]",
-      "fix(certificati): bugfix autopilot e ottimizzazione workflow email audit",
-      "add",
-      "feat(autopilot): automazione certificati campione e unificazione logica Outlook",
-      "fix(gui): correct type hints for resizeEvent and paintEvent in ActivityTimeline",
-      "perf: implement industrial-grade PySide6 optimizations",
-      "docs: add PySide6 specific improvements analysis (Slot, shiboken6, Property notify, QEnum, CLI tools)",
-      "docs: update LINTING_REMEDIATION_PLAN and TODO_QUALITY to reflect industrial grade completion (Ruff 0 | MyPy 0 | startup crash fixed)",
-      "fix: resolve startup hang due to QObject access violation in background threads",
-      "chore: Hardening completo MyPy e Ruff (0 warnings, 0 bypass globali)",
-      "style: industrial grade cleanup complete (100% ruff/mypy compliance)",
-      "Progress save: resolving Ruff/MyPy violations",
-      "refactor: risolte violazioni MyPy e Ruff (standardizzazione tipi DB, logging e UI) e applicati fix automatici Ruff",
-      "fix(core): resolve syntax error and ruff warnings in bug_reporter.py",
-      "fix(license): resolve circular import and satisfy ruff",
-      "fix(core): resolve critical circular dependency",
-      "add",
-      "Industrializzazione avvio e bonifica ruff/mypy (Phase 3)",
-      "fix(deps): resolve circular import in DettagliOdABot and stabilize bot initialization",
-      "refactor: global synchronization, structural hardening, and UI standardization -- [NO-HOOKS]",
-      "style: finalizzazione rebranding SyncroJob e ottimizzazione stabilità UI",
-      "chore: cleanup scratch scripts and synchronize core/GUI updates",
-      "refactor: massive structural hardening and UI standardization",
-      "Fix UI encoding issues and upgrade diagnostic emojis",
-      "fix(startup): final repairs and structural hardening",
-      "refactor(quality): 100% Ruff/MyPy compliance and UI hardening",
-      "refactor(quality): project-wide Rank B compliance and final hardening V9.2",
-      "add",
-      "refactor(quality): achieve 100% PASS on all quality tools (Ruff, MyPy, Xenon, Bandit) V9.0 Final Compliance",
-      "refactor(quality): resolve Ruff/MyPy issues and synchronize codebase standards V9.0",
-      "refactor(quality): project-wide hardening and PlaywrightBaseBot decomposition",
-      "chore: release v1.45.4 [auto]",
-      "a",
-      "chore: release v1.45.3 [auto]",
-      "chore: release v1.45.2 [auto]",
-      "Add docstrings and small fixes across codebase",
-      "chore: release v1.45.1 [auto]",
-      "fix: automate downloads and suppress 'Save As' dialog",
-      "fix: suppress 'change password' security alerts in Playwright",
-      "chore: release v1.45.0 [auto]",
-      "add",
-      "refactor: finalize SRP and complexity improvements across bots and GUI",
-      "docs: update quality plan for ScaricaTSBot completion",
-      "refactor(bot): reduce complexity in ScaricaTSBot",
-      "refactor(core): reduce complexity in ContabilitaImporter",
-      "refactor(core): reduce complexity in AuditManager",
-      "refactor: reduce complexity in TreeWidget helpers and Log Humanizer",
-      "refactor(bot): reduce complexity in SafeWorkPDLBot",
-      "docs: update quality plan as completed SRP refactors",
-      "refactor(gui): finalize BaseBotPanel SRP decomposition",
-      "fix(test): align unit tests to BaseBot refactor and sync logic",
-      "fix(admin): make HWID detection standalone and generic",
-      "Merge branch 'main' into fix/align-tests",
-      "merge: integrate HWID tools from main",
-      "feat(admin): add HWID detection script and automated batch tool",
-      "refactor(core): reduce complexity in DataSynchronizer and ContabilitaSyncEngine",
-      "refactor(gui): apply SRP to DonCiroWidget and integrate real weather",
-      "refactor(gui): apply SRP to WeatherWidget and NavigationController",
-      "fix(gui): implement trigger_pdl_print in MainWindow",
-      "fix(test): align test suite to V9.0 architecture and fix import_config bug",
-      "chore: release v1.44.0 [auto]",
-      "feat(certificati): implement professional toolbar and layout optimization",
-      "Update Report Certificati Campione Secondari ISAB SUD al 24-04-2026.pdf",
-      "refactor: scomposizione logica statistiche e fix qualità core",
-      "chore: completamento transizione Poetry e pulizia documentazione",
-      "merge: risoluzione conflitti e integrazione refactoring certificati",
-      "refactor(certificati): centralizzazione costanti e separazione logica statistiche",
-      "style(pdf): ridenominata sezione 'CERTIFICATI' in 'STATO CERTIFICATI'",
-      "style(pdf): rinominata etichetta riepilogo 'In campo' in 'Assegnati ai Tecnici'",
-      "feat(pdf): aggiunta categoria strumenti Assenti e perfezionamento layout padri",
-      "style(pdf): righe padre in grassetto e formattazione stati definitiva",
-      "feat(certificati): ripristino logica scadenze e ottimizzazione report PDF",
-      "feat(certificati): aggiornamento elenco ubicazioni e migrazione dati",
-      "Merge branch 'task/align-tests'",
-      "merge: integrazione modifiche di qualità e stabilizzazione test da task/align-tests",
-      "chore(quality): risoluzione violazioni Ruff/Mypy e stabilizzazione test suite",
-      "docs(pdf): rimozione abbreviazioni gg/rim nel report per un linguaggio più esteso",
-      "fix(certificati): ottimizzazione layout PDF e risoluzione crash in analisi scadenze",
-      "feat(certificati): implementazione full mirroring 1:1, ripristino metadati da PDF e ricerca avanzata per ID-COEMI",
-      "test: align tests and implement robust configuration isolation",
-      "chore: release v1.43.2 [auto]",
-      "chore: release v1.43.1 [auto]",
-      "chore: release v1.43.0 [auto]",
-      "fix(pw): change password input type to text before submit to completely bypass chromium password compromised alert",
-      "fix(pw): ultra-aggressive alert handling and hardened password suppression",
-      "feat: align project and improve browser security (removed large binaries)",
-      "add",
-      "fix(portale-fornitori): implement ultra-robust PW interaction pattern and accelerate login",
-      "chore: release v1.42.1 [auto]",
-      "refactor: rimozione globale emoji per risolvere l'errore di encoding charmap / cp1252",
-      "fix(portale-fornitori): implement robust interaction pattern for PW bots and fix scarico_ts timeout",
-      "chore: release v1.42.0 [auto]",
-      "chore: finalize technical debt cleanup and test isolation implementation",
-      "refactor: allineamento suite di test, fix linting ruff/mypy e aggiornamento componenti GUI",
-      "fix(runner): V5.3.1 - Fail-Fast aggressivo, isolamento coverage e bonifica suite test",
-      "docs: aggiornamento CHANGELOG v1.42.1 e TODO_QUALITY per audit runner V5.1\"",
-      "fix(runner): V5.1 - Fix 6 bug + 2 miglioramenti architetturali\\n\\nBUG-1: Fix doppio conteggio passed/failed nella fase isolamento SHOTGUN\\nBUG-2: _parse_pytest_summary ora cattura sia 'failed' che 'error' con findall\\nBUG-3: Commento correttivo su AssertionError match\\nBUG-4: SNIPER retry usa --last-failed invece di rieseguire tutti i target\\nBUG-5: Pattern E-prefix non piu' limitato a 'not failures'\\nBUG-6: _extract_traceback_block matching preciso con delimitatori pytest\\nARCH-2: sys.exit() centralizzato in __main__, metodi usano _exit_code\\nARCH-4: Report IA troncato a MAX_OUTPUT_CHARS, -80% dimensione\\n\\nAggiunto test suite: tests/unit/test_runner_internals.py (34 test)\"",
-      "chore: remove obsolete requirements sync from release process",
-      "feat: automate CHANGELOG.md generation in release process via Commitizen",
-      "docs: reconstruct CHANGELOG.md history to align with real version v1.41.2 and documented milestones",
-      "docs: update CHANGELOG.md for structural cleanup and poetry migration",
-      "chore: project cleanup, organization of data files, and script path update",
-      "fix: implementato metodo show_settings in MainWindow per attivare l'ingranaggio dei parametri bot",
-      "fix: corretto locatore Società in 'Company' e migliorata robustezza login Playwright/Selenium",
-      "feat: aggiunto selettore SOCIETA' (ISAB/PSER) per login portale fornitori e aggiornata logica bot (Selenium/Playwright)",
-      "refactor: stabilizzazione Playwright, soppressione popup Chromium, bugfix switch account e 100% qualità (Ruff/MyPy/Interrogate)",
-      "feat: consolidamento architettura Playwright, fix locatori SafeWork e controlli dinamici nel footer",
-      "add",
-      "fix: Correzione nome attributo locatore ScaricoTSLocators",
-      "fix: Risoluzione errore 'Unknown engine name' e centralizzazione selettori Playwright",
-      "fix: risolto errore importazione PrenotaBP e implementato caricamento granulare bot Playwright",
-      "fix: risolto problema switch motore automazione invalidando la cache config",
-      "feat: migrazione strutturale a Playwright con supporto dual-engine e migrazione di tutti i bot principali",
-      "chore: release v1.41.2 [auto]",
-      "add",
-      "chore: release v1.41.1 [auto]",
-      "chore: release v1.41.0 [auto]",
-      "Add dettagli_oda trace and update bot code",
-      "chore: bump version to 1.40.3",
-      "feat: update engine optimization and premium wave animation integration",
-      "Delete scarico_pdl_trace_6b175811bb764a12.json",
-      "chore: release v1.40.3 [auto]",
-      "chore: restore version to 1.40.2",
-      "fix: resolve updater crash by removing duplicate signal connections and adding error handling",
-      "fix: update banner labels, progress formatting and completion handler",
-      "fix: resolve update banner version display and initialization hang; reset version to 1.40.1",
-      "chore: release v1.40.2 [auto]",
-      "cleanup: remove temporary comparison file",
-      "style: restore logo border and background from main branch",
-      "refactor: QA cleanup main.py, splash_standalone and quality tools enforcement (ruff, mypy, refurb)",
-      "fix: resolve command palette opening issue and F1 shortcut conflict",
-      "fix: add ESITO to Scarico TS, dynamic PDL filters and bot path fix",
-      "refactor: optimize startup path, bot logic and GUI components",
-      "chore: release v1.40.1 [auto]",
-      "fix(gui): restore main branch sizing and fix all static analysis issues (ruff, mypy, refurb)",
-      "Refactor startup, license checks & UI lazy-loads",
-      "fix(gui): responsive startup sizing and tray icon type crash",
-      "style: fix all Ruff and Mypy warnings (100% type-safe)",
-      "fix: layout sidebar, startup sequence, menu routing and KPI charts crash",
-      "add",
-      "chore: activate global strict typing mode and update widget registry",
-      "chore: finish phase 4 - final typing remediation and event signatures fix",
-      "chore: progress on phase 4 - GUI typing remediation and structural stability",
-      "fix: resolve E402 and final startup tweaks",
-      "chore: finish phase 3 - architectural modularity and imports remediation",
-      "chore: progress on phase 3 - path management and GUI controllers decomposition (fixed errors)",
-      "chore: complete phase 2 part 2 - remediation of core models and engines (final noqas)",
-      "chore: complete phase 2 part 1 - remediation of src/utils/",
-      "chore: setup strict linting with test ignores and fix easy warnings",
-      "chore: apply strict ruff and mypy configurations and add noqas",
-      "test: cleanup obsolete tests and update documentation",
-      "test: espansione copertura CORE e bugfixing critico sincronizzazione",
-      "test: fix test suite post-refactoring e risoluzione dipendenze circolari",
-      "refactor(core,gui): disaccoppiamento completo, DIP e ottimizzazione memoria",
-      "chore: release v1.40.0 [auto]",
-      "style: formattazione globale e correzioni ruff su tutto il progetto",
-      "chore: miglioramento qualità codice e risoluzione segnalazioni linter",
-      "fix: risoluzione bug critici e miglioramento integrità sistema",
-      "test: aggiornamento report e fix test di notifica e prenotazione",
-      "feat(contabilita): aggiunta opzione per esportare PDF certificati senza storico e fix robustezza",
-      "chore: release v1.39.0 [auto]",
-      "chore: release v1.38.0 [auto]",
-      "chore: release v1.37.0 [auto]",
-      "fix: risolto bug perdita dati in Certificati e migliorata qualità codice",
-      "chore: release v1.36.0 [auto]",
-      "fix: risolto problema avvio installer e riavvio post-aggiornamento",
-      "chore: release v1.35.0 [auto]",
-      "chore: release v1.34.0 [auto]",
-      "chore(quality): risolte segnalazioni ruff, mypy e refurb nello splash screen",
-      "feat(splash): implementazione animazioni high-tech avanzate",
-      "fix(splash): eliminati artefatti grafici negli angoli e rifinitura finale",
-      "feat(splash): implementazione Zero-Stutter e look Enterprise finale",
-      "feat(splash): potenziamento log tecnici reali e fix import",
-      "perf(splash): implementazione Zero-Stutter via processo standalone",
-      "feat(setup): permette all'utente di scegliere se avviare l'app dopo l'aggiornamento",
-      "chore: release v1.33.1 [auto]",
-      "refactor(sidebar): pulizia codice e risoluzione segnalazioni linter",
-      "fix(sidebar): risolte sovrapposizioni e artefatti grafici",
-      "fix(sidebar): ripristinato sfondo e ottimizzata fluidità animazione",
-      "perf(sidebar): ottimizzazione grafica aggressiva e rimozione ombre",
-      "perf(sidebar): eliminazione lag e ottimizzazione rendering",
-      "perf(sidebar): ottimizzazione reattività e fluidità animazioni",
-      "chore: raggiunta copertura 100% docstring e risolte segnalazioni bandit/codespell",
-      "chore: release v1.33.0 [auto]",
-      "security(contabilita): risolto falso positivo SQL injection (B608)",
-      "ADD",
-      "fix(certificati): ordinamento globale ID-COEMI e fix troncamento PDF",
-      "fix(certificati): implementata dashboard riassuntiva e ordinamento naturale PDF",
-      "fix(certificati): forza larghezza colonne PDF con attributi HTML",
-      "fix(certificati): risolto wrap anomalo su colonne PDF",
-      "fix(certificati): migliora UI, export PDF e ordinamento colonne",
-      "Improve certificati UI, PDF export, and formatting",
-      "feat(contabilita): advanced certificate management with inline editing and professional PDF export",
-      "fix(core/gui): persistent filters and duplicate removal for Certificati Campione",
-      "refactor(core/gui): code hardening via Ruff, Mypy and Refurb optimization",
-      "fix(gui): initialize footer_btns in SidebarWidget to resolve AttributeError",
-      "fix(gui): risolto AttributeError e ripristinata visibilità contenuti sidebar",
-      "fix(gui): ripristinata visibilità sidebar e ottimizzata fluidità animazione",
-      "fix(gui): corretto ordine chiamate animazione sidebar per evitare warning Qt",
-      "fix(startup): risolto freeze splash screen tramite caricamento differito e asincrono dei pannelli pesanti",
-      "fix: risolti errori critici di inizializzazione, NameError AuditManager e ImportError utils. Implementato sistema di cleanup processi stale per Selenium e riscrittura di sicurezza per conformita' Regola #1.",
-      "fix(bot): offload dell'importazione massiva storico OdA su ProcessPoolExecutor per evitare GIL freeze della GUI",
-      "fix(gui): rimozione type hint e migrazione completa asincrona pannelli per evitare freeze",
-      "Pre-warm chromedriver and async bot workers"
+      {
+        "message": "add",
+        "sha": "cfe66a68"
+      },
+      {
+        "message": "chore(docs): clean up obsolete documentation and include new structural docs",
+        "sha": "09572c61"
+      },
+      {
+        "message": "refactor(core): scomposizione SRP completa di AppInitializer e BackupManager",
+        "sha": "40ca5ab5"
+      },
+      {
+        "message": "docs: integra l'analisi completa della coesione LCOM in implementation_plan.md",
+        "sha": "64d3bee5"
+      },
+      {
+        "message": "docs(refactor): update implementation plan with completed status",
+        "sha": "9707812b"
+      },
+      {
+        "message": "refactor(core): decouple autopilot scheduling and system diagnostics for SRP compliance",
+        "sha": "a6333fc2"
+      },
+      {
+        "message": "refactor(gui): decompose search_controller into search_results_menu for SRP",
+        "sha": "29718994"
+      },
+      {
+        "message": "feat: integrate cohesion library for SRP and LCOM metrics mapping and update documents",
+        "sha": "49960a86"
+      },
+      {
+        "message": "feat: integrate pydantic-settings and libcst libraries with typed SyncroJobSettings model and context documentation",
+        "sha": "cb2dc684"
+      },
+      {
+        "message": "chore: exclude utility scripts from mypy in pyproject.toml",
+        "sha": "7373ef54"
+      },
+      {
+        "message": "docs: add AI context files (llm.txt, llm-full.txt) and semantic typing guidelines",
+        "sha": "764336e5"
+      },
+      {
+        "message": "docs: risoluzione massiva delle segnalazioni pydoclint (DOC301, DOC601, DOC603) e Ruff",
+        "sha": "e34647bc"
+      },
+      {
+        "message": "fix(quality): resolve ruff and mypy strict violations in gui and core",
+        "sha": "a69398de"
+      },
+      {
+        "message": "chore: remove accidental byproduct file",
+        "sha": "66cb43f3"
+      },
+      {
+        "message": "fix(quality): final type cleanup in safework base",
+        "sha": "bcd139b8"
+      },
+      {
+        "message": "docs(quality): 100% docstring coverage for optimized modules and ruff fixes",
+        "sha": "0ebaa327"
+      },
+      {
+        "message": "fix(quality): full mypy strict compliance across all modules",
+        "sha": "e3b4c878"
+      },
+      {
+        "message": "fix(quality): final ruff formatting and type fixes",
+        "sha": "b77b086e"
+      },
+      {
+        "message": "refactor: radical gui optimization for extreme fluidity (Zero-I/O UI)",
+        "sha": "c3d67bdd"
+      },
+      {
+        "message": "chore: apply automated linting and formatting fixes (Ruff/pre-commit)",
+        "sha": "68f22470"
+      },
+      {
+        "message": "Merge branch 'feature/dynamic-changelog-safety-checks'",
+        "sha": "3984a35a"
+      },
+      {
+        "message": "Merge branch 'feature/dynamic-changelog-safety-checks'",
+        "sha": "3984a35a"
+      },
+      {
+        "message": "fix: ripristinati cast espliciti per conformità MyPy Strict",
+        "sha": "4564acc2"
+      },
+      {
+        "message": "fix(contabilita): risolto bug aggiornamento certificati e unificati percorsi DB",
+        "sha": "88f5c14f"
+      },
+      {
+        "message": "refactor: ottimizzazione codice via refurb e personalizzazioni GUI",
+        "sha": "3fb019b3"
+      },
+      {
+        "message": "add",
+        "sha": "cfe66a68"
+      },
+      {
+        "message": "chore: release v1.49.0 [auto]",
+        "sha": "21cc0dfc"
+      },
+      {
+        "message": "fix(security): risolte vulnerabilità Bandit e allineati controlli Ruff",
+        "sha": "1d2fd16c"
+      },
+      {
+        "message": "feat(splash): implementata Laser-Track Progress Bar con percentuale olografica dinamica",
+        "sha": "1267ef53"
+      },
+      {
+        "message": "feat(splash): raffinamento totale macro-status per eliminare fallback generici",
+        "sha": "1b3f5eb0"
+      },
+      {
+        "message": "fix(splash): risolto bug visibilità notifica LICENZA VALIDATA e sincronizzato effetto typewriter",
+        "sha": "8b245d9c"
+      },
+      {
+        "message": "feat(splash): riorganizzazione header con info stack laterale (versione sopra, rilascio sotto)",
+        "sha": "50f5ed1e"
+      },
+      {
+        "message": "feat(splash): upgrade animazione LICENZA VALIDATA con effetto typewriter e breathing fluido",
+        "sha": "e45553ce"
+      },
+      {
+        "message": "feat(splash): aggiunto feedback olografico LICENZA VALIDATA con animazione breathing",
+        "sha": "04e18480"
+      },
+      {
+        "message": "style(splash): ottimizzato contrasto e leggibilità data di rilascio nell'header",
+        "sha": "bc524da0"
+      },
+      {
+        "message": "feat(splash): espansione verticale e riorganizzazione finale layout header/footer",
+        "sha": "3daaf83a"
+      },
+      {
+        "message": "feat(splash): riorganizzazione layout con data sotto il titolo e credits centrati a piè di pagina",
+        "sha": "e1a11611"
+      },
+      {
+        "message": "style(splash): uniformato colore data rilascio al blu della versione",
+        "sha": "ddd92661"
+      },
+      {
+        "message": "feat(splash): spostata e rinominata data rilascio accanto alla versione nell'header",
+        "sha": "df98eefc"
+      },
+      {
+        "message": "feat(splash): aggiunta Build Date dinamica dal changelog nel box metadati",
+        "sha": "c4bc462f"
+      },
+      {
+        "message": "feat(splash): perfezionata animazione breathing crediti con ciclo fluido e fix indentazione",
+        "sha": "163f3dfd"
+      },
+      {
+        "message": "feat(splash): animazione typewriter e breathing pulse per i crediti developer",
+        "sha": "2f6086f4"
+      },
+      {
+        "message": "feat(splash): aggiunto system credit olografico e risolti errori import Ruff",
+        "sha": "8fcdf933"
+      },
+      {
+        "message": "feat(splash): raffinamento mappatura macro-status per eliminare fallback AVVIO IN CORSO",
+        "sha": "4f46b84f"
+      },
+      {
+        "message": "feat(splash): raggruppamento macro-fasi e conformità totale QA",
+        "sha": "fcaefb5d"
+      },
+      {
+        "message": "feat(splash): unificato header brand-versione con scaling dinamico",
+        "sha": "6fd154d9"
+      },
+      {
+        "message": "feat(splash): aggiunto orologio live e DNA tech-trace nel changelog",
+        "sha": "07d818e3"
+      },
+      {
+        "message": "feat(splash): sostituita animazione caricamento testuale con PulseIndicator grafico",
+        "sha": "33047d90"
+      },
+      {
+        "message": "style(splash): armonizzazione cromatica blu, effetto glow header e pulizia titoli console",
+        "sha": "43b9c57e"
+      },
+      {
+        "message": "style(splash): restyling header changelog con effetto glow e rimozione parentesi",
+        "sha": "e50c6d2f"
+      },
+      {
+        "message": "style(splash): aggiornato titolo header changelog ticker per rimuovere ridondanza versione",
+        "sha": "84797d11"
+      },
+      {
+        "message": "feat(splash): aggiunto titolo dinamico della versione e refactoring per standard Ruff",
+        "sha": "baefb27e"
+      },
+      {
+        "message": "fix(splash): risolto bug sovrapposizione righe changelog ticker tramite ancoraggio posizioni statiche",
+        "sha": "ddc79b1d"
+      },
+      {
+        "message": "style(splash): riduzione intervallo changelog ticker a 3.5 secondi",
+        "sha": "c7753788"
+      },
+      {
+        "message": "feat(splash): animazione Slide-Up & Fade con easing OutBack per il changelog ticker",
+        "sha": "de548cae"
+      },
+      {
+        "message": "style(splash): standardizzazione etichette changelog in NEW, FIX e UPDATE",
+        "sha": "e74c68b1"
+      },
+      {
+        "message": "style(splash): rimozione bordi sottili dalle righe del changelog ticker",
+        "sha": "e8a7ab1b"
+      },
+      {
+        "message": "style(splash): espansione orizzontale changelog ticker a 750px per evitare troncamenti",
+        "sha": "8039b360"
+      },
+      {
+        "message": "style(splash): upscale proporzionale dello splash screen a 850x560",
+        "sha": "f725998a"
+      },
+      {
+        "message": "style(splash): restyling premium con effetti neon, bagliori dinamici e contenitori olografici",
+        "sha": "db1364b5"
+      },
+      {
+        "message": "feat(splash): implementazione Ticker multi-riga per il changelog",
+        "sha": "2aebec25"
+      },
+      {
+        "message": "style(gui): uniformati tooltip per ModernButton in Light Mode",
+        "sha": "5d33ae28"
+      },
+      {
+        "message": "feat(splash): implementazione ChangelogTicker nello splashscreen",
+        "sha": "611900bc"
+      },
+      {
+        "message": "feat(gui): persistenza dello stato dettagli della card meteo al riavvio",
+        "sha": "3f220afc"
+      },
+      {
+        "message": "style(gui): uniformati tutti i tooltip in Light Mode e corretti errori linter",
+        "sha": "67724da9"
+      },
+      {
+        "message": "feat(gui): aggiunti pulsanti dettaglio/ritorno in WeatherWidget con animazione spin di Don Ciro",
+        "sha": "f726487a"
+      },
+      {
+        "message": "feat(ui): implement dynamic version badge with sparkles in sidebar changelog",
+        "sha": "e0ac3d0f"
+      },
+      {
+        "message": "fix(updater): resolve 'Install Now' failure on Windows",
+        "sha": "a76c84da"
+      },
+      {
+        "message": "docs(quality): achieve 100% docstring coverage globally",
+        "sha": "e1ebb709"
+      },
+      {
+        "message": "chore: release v1.48.0 [auto]",
+        "sha": "4f5da98c"
+      },
+      {
+        "message": "chore(quality): global code quality cleanup and documentation enhancement",
+        "sha": "fb5f43c1"
+      },
+      {
+        "message": "refactor(bots): enhance interaction robustness and migrate to structural locators",
+        "sha": "92e7ea9f"
+      },
+      {
+        "message": "feat(timbrature): implement massive import and real-time access monitoring",
+        "sha": "4a36bfa7"
+      },
+      {
+        "message": "fix(bot): resolve Excel download ambiguity in Timbrature bot using FontAwesome unicode",
+        "sha": "0b96e466"
+      },
+      {
+        "message": "fix(browser): remove --no-sandbox, --disable-gpu to resolve STATUS_BREAKPOINT crashes",
+        "sha": "2baf75b1"
+      },
+      {
+        "message": "fix(splash): pipe license details dynamically to standalone splash screen via binary unbuffered stdin",
+        "sha": "dbaa0a3b"
+      },
+      {
+        "message": "fix(bot): prevent TypeError on unexpected societa parameter in Playwright base and Timbrature bot",
+        "sha": "453303cc"
+      },
+      {
+        "message": "perf(gui): optimize splash screen and startup dialog with async license and HWID IPC",
+        "sha": "5b3ddc09"
+      },
+      {
+        "message": "feat(ui): implement dynamic changelog and sidebar breathing warning pulse",
+        "sha": "98cbac43"
+      },
+      {
+        "message": "feat(gui): improve changelog UI with light-mode tooltips, clear filters and dynamic next release handling",
+        "sha": "6be8b7d2"
+      },
+      {
+        "message": "Merge pull request #152 from gianky00/feature/refactor-contabilita-srp",
+        "sha": "92a8a858"
+      },
+      {
+        "message": "feat(report): aggiunta postilla audit per strumenti senza scadenza nel PDF",
+        "sha": "c7868a76"
+      },
+      {
+        "message": "fix(updater): improve installer launch robustness on Windows with delay and detached process",
+        "sha": "e7916371"
+      },
+      {
+        "message": "chore: release v1.47.0 [auto]",
+        "sha": "d9312285"
+      },
+      {
+        "message": "build: pulizia repository e aggiornamento .gitignore",
+        "sha": "289527dc"
+      },
+      {
+        "message": "refactor(core): allineamento suite di test alla nuova architettura SRP e fix MyPy",
+        "sha": "8848bac6"
+      },
+      {
+        "message": "fix(core): remove blocking run_update() from BotWorker to prevent getaddrinfo GIL freeze",
+        "sha": "636c75a3"
+      },
+      {
+        "message": "perf(core): aggiunge riscaldamento WMI/psutil nello splashscreen per eliminare il blocco GIL causato dall'iterazione dei processi al primo avvio",
+        "sha": "4e4bae3d"
+      },
+      {
+        "message": "perf(core): pre-carica i moduli pesanti (Playwright, PDF, Excel) nello splashscreen per eliminare lag al primo avvio",
+        "sha": "e9451454"
+      },
+      {
+        "message": "perf(gui): elimina freeze GIL al primo avvio centralizzando i log con QApplication.processEvents",
+        "sha": "712d03e7"
+      },
+      {
+        "message": "perf(bots): elimina timeout chiusura Playwright tramite rimozione page.close ridondanti e cleanup forzato dei processi",
+        "sha": "8003f104"
+      },
+      {
+        "message": "perf(gui): elimina freeze GUI al termine del bot tramite QThread asincroni",
+        "sha": "a507d675"
+      },
+      {
+        "message": "refactor(bots): hardening pass dati, gestione sessione attiva, timesheet vuoti, race condition e click nativo cerca",
+        "sha": "e692fbf3"
+      },
+      {
+        "message": "fix(bots/db): corretti errori di sintassi XPath in locators e query SQL nel repository PDL",
+        "sha": "0fc16f83"
+      },
+      {
+        "message": "fix(bots): corretto errore sintassi XPath nei locators del portale fornitori",
+        "sha": "a3ac0f3c"
+      },
+      {
+        "message": "fix(gui): risolto ripristino parametri all'avvio e prevenuto salvataggio spurio allo spegnimento",
+        "sha": "39eb0a85"
+      },
+      {
+        "message": "style(tests): risolte segnalazioni ruff e mypy nei test (completamento)",
+        "sha": "124d07d6"
+      },
+      {
+        "message": "style(tests): risolte tutte le segnalazioni ruff e mypy nei test",
+        "sha": "8650865c"
+      },
+      {
+        "message": "test: stabilizzazione suite di test e allineamento patch mock",
+        "sha": "6cce95b5"
+      },
+      {
+        "message": "test: ristrutturazione gerarchica suite test (migrazione e pulizia duplicati)",
+        "sha": "3a275aad"
+      },
+      {
+        "message": "test: implementazione massiva test unitari e refactor copertura (Stream J, D, B/E)",
+        "sha": "db444544"
+      },
+      {
+        "message": "refactor: reach zero Ruff/MyPy reports and fix bot logic type safety",
+        "sha": "8c336717"
+      },
+      {
+        "message": "test: add and fix unit tests (Stream B/E) and apply linter fixes",
+        "sha": "509c8f38"
+      },
+      {
+        "message": "feat: implement button elevation effect",
+        "sha": "77be7860"
+      },
+      {
+        "message": "feat: apply Modern Card restyling to all bot panels",
+        "sha": "f5ee28c5"
+      },
+      {
+        "message": "feat: apply Modern Card style to Storico OdA panel",
+        "sha": "c1d8209f"
+      },
+      {
+        "message": "feat: apply Modern Card style and animations to KPI Panel",
+        "sha": "459500a5"
+      },
+      {
+        "message": "feat: implement modern UI effects and card styles",
+        "sha": "d354083e"
+      },
+      {
+        "message": "feat: implement centralized design system typography constants",
+        "sha": "1aea96e2"
+      },
+      {
+        "message": "feat: implement self-cleaning logic in maintenance worker",
+        "sha": "72518176"
+      },
+      {
+        "message": "feat: implement database maintenance worker and background optimization",
+        "sha": "35d44831"
+      },
+      {
+        "message": "fix: risoluzione errori linter pre-commit e stabilità finale",
+        "sha": "0ccbf522"
+      },
+      {
+        "message": "fix: risoluzione finale bug database, mock test e importazione certificati",
+        "sha": "e59ca6ea"
+      },
+      {
+        "message": "refactor: complete SRP decomposition & industrial-grade standardization (final stability batch)",
+        "sha": "a3c4c6e9"
+      },
+      {
+        "message": "add",
+        "sha": "cfe66a68"
+      },
+      {
+        "message": "refactor: code quality cleanup (zero MyPy errors & Ruff optimization)",
+        "sha": "3567653d"
+      },
+      {
+        "message": "fix: ripristino icone certificati, sincronizzazione ubicazione e pulizia QA totale",
+        "sha": "0ee79e6e"
+      },
+      {
+        "message": "chore: release v1.46.3 [auto]",
+        "sha": "c9b0e2b0"
+      },
+      {
+        "message": "fix: risoluzione violazioni Ruff e 80 segnalazioni Mypy",
+        "sha": "66993766"
+      },
+      {
+        "message": "chore: release v1.46.2 [auto]",
+        "sha": "ed2a7509"
+      },
+      {
+        "message": "chore: release v1.46.1 [auto]",
+        "sha": "e9640657"
+      },
+      {
+        "message": "add",
+        "sha": "cfe66a68"
+      },
+      {
+        "message": "merge: integrate backup system and 100% QA compliance from pyside6-phase3",
+        "sha": "9898e4f4"
+      },
+      {
+        "message": "chore: release v1.46.0 [auto]",
+        "sha": "cb35f8fd"
+      },
+      {
+        "message": "fix(certificati): bugfix autopilot e ottimizzazione workflow email audit",
+        "sha": "c0cda91f"
+      },
+      {
+        "message": "add",
+        "sha": "cfe66a68"
+      },
+      {
+        "message": "feat(autopilot): automazione certificati campione e unificazione logica Outlook",
+        "sha": "3e46cc38"
+      },
+      {
+        "message": "fix(gui): correct type hints for resizeEvent and paintEvent in ActivityTimeline",
+        "sha": "a1fe0cf0"
+      },
+      {
+        "message": "perf: implement industrial-grade PySide6 optimizations",
+        "sha": "df4ed3a6"
+      },
+      {
+        "message": "docs: add PySide6 specific improvements analysis (Slot, shiboken6, Property notify, QEnum, CLI tools)",
+        "sha": "6971c988"
+      },
+      {
+        "message": "docs: update LINTING_REMEDIATION_PLAN and TODO_QUALITY to reflect industrial grade completion (Ruff 0 | MyPy 0 | startup crash fixed)",
+        "sha": "68e2e31b"
+      },
+      {
+        "message": "fix: resolve startup hang due to QObject access violation in background threads",
+        "sha": "c98cd4c1"
+      },
+      {
+        "message": "chore: Hardening completo MyPy e Ruff (0 warnings, 0 bypass globali)",
+        "sha": "4b28ae66"
+      },
+      {
+        "message": "style: industrial grade cleanup complete (100% ruff/mypy compliance)",
+        "sha": "b365c11e"
+      },
+      {
+        "message": "Progress save: resolving Ruff/MyPy violations",
+        "sha": "8aa48659"
+      },
+      {
+        "message": "refactor: risolte violazioni MyPy e Ruff (standardizzazione tipi DB, logging e UI) e applicati fix automatici Ruff",
+        "sha": "d72c51bf"
+      },
+      {
+        "message": "fix(core): resolve syntax error and ruff warnings in bug_reporter.py",
+        "sha": "74547cdc"
+      },
+      {
+        "message": "fix(license): resolve circular import and satisfy ruff",
+        "sha": "3836e287"
+      },
+      {
+        "message": "fix(core): resolve critical circular dependency",
+        "sha": "f511f191"
+      },
+      {
+        "message": "add",
+        "sha": "cfe66a68"
+      },
+      {
+        "message": "Industrializzazione avvio e bonifica ruff/mypy (Phase 3)",
+        "sha": "603275d0"
+      },
+      {
+        "message": "fix(deps): resolve circular import in DettagliOdABot and stabilize bot initialization",
+        "sha": "aafb7440"
+      },
+      {
+        "message": "refactor: global synchronization, structural hardening, and UI standardization -- [NO-HOOKS]",
+        "sha": "b11aee76"
+      },
+      {
+        "message": "style: finalizzazione rebranding SyncroJob e ottimizzazione stabilità UI",
+        "sha": "8dbc6327"
+      },
+      {
+        "message": "chore: cleanup scratch scripts and synchronize core/GUI updates",
+        "sha": "31062bf4"
+      },
+      {
+        "message": "refactor: massive structural hardening and UI standardization",
+        "sha": "d27ae4ba"
+      },
+      {
+        "message": "Fix UI encoding issues and upgrade diagnostic emojis",
+        "sha": "6d347589"
+      },
+      {
+        "message": "fix(startup): final repairs and structural hardening",
+        "sha": "fcda4f7f"
+      },
+      {
+        "message": "refactor(quality): 100% Ruff/MyPy compliance and UI hardening",
+        "sha": "32964840"
+      },
+      {
+        "message": "refactor(quality): project-wide Rank B compliance and final hardening V9.2",
+        "sha": "d877e85f"
+      },
+      {
+        "message": "add",
+        "sha": "cfe66a68"
+      },
+      {
+        "message": "refactor(quality): achieve 100% PASS on all quality tools (Ruff, MyPy, Xenon, Bandit) V9.0 Final Compliance",
+        "sha": "9ad3365c"
+      },
+      {
+        "message": "refactor(quality): resolve Ruff/MyPy issues and synchronize codebase standards V9.0",
+        "sha": "eb97c560"
+      },
+      {
+        "message": "refactor(quality): project-wide hardening and PlaywrightBaseBot decomposition",
+        "sha": "fbe6698a"
+      },
+      {
+        "message": "chore: release v1.45.4 [auto]",
+        "sha": "d6881d2a"
+      },
+      {
+        "message": "a",
+        "sha": "9c4a8d33"
+      },
+      {
+        "message": "chore: release v1.45.3 [auto]",
+        "sha": "e49e7fc1"
+      },
+      {
+        "message": "chore: release v1.45.2 [auto]",
+        "sha": "957e2986"
+      },
+      {
+        "message": "Add docstrings and small fixes across codebase",
+        "sha": "8fadacd7"
+      },
+      {
+        "message": "chore: release v1.45.1 [auto]",
+        "sha": "8acf9fef"
+      },
+      {
+        "message": "fix: automate downloads and suppress 'Save As' dialog",
+        "sha": "e83f2f40"
+      },
+      {
+        "message": "fix: suppress 'change password' security alerts in Playwright",
+        "sha": "6077a87b"
+      },
+      {
+        "message": "chore: release v1.45.0 [auto]",
+        "sha": "7e59de79"
+      },
+      {
+        "message": "add",
+        "sha": "cfe66a68"
+      },
+      {
+        "message": "refactor: finalize SRP and complexity improvements across bots and GUI",
+        "sha": "192bd018"
+      },
+      {
+        "message": "docs: update quality plan for ScaricaTSBot completion",
+        "sha": "2f13621a"
+      },
+      {
+        "message": "refactor(bot): reduce complexity in ScaricaTSBot",
+        "sha": "59e8965c"
+      },
+      {
+        "message": "refactor(core): reduce complexity in ContabilitaImporter",
+        "sha": "89bdd560"
+      },
+      {
+        "message": "refactor(core): reduce complexity in AuditManager",
+        "sha": "1f52a031"
+      },
+      {
+        "message": "refactor: reduce complexity in TreeWidget helpers and Log Humanizer",
+        "sha": "1cf49b37"
+      },
+      {
+        "message": "refactor(bot): reduce complexity in SafeWorkPDLBot",
+        "sha": "73484f5e"
+      },
+      {
+        "message": "docs: update quality plan as completed SRP refactors",
+        "sha": "fd8da877"
+      },
+      {
+        "message": "refactor(gui): finalize BaseBotPanel SRP decomposition",
+        "sha": "ea713086"
+      },
+      {
+        "message": "fix(test): align unit tests to BaseBot refactor and sync logic",
+        "sha": "84a7058e"
+      },
+      {
+        "message": "fix(admin): make HWID detection standalone and generic",
+        "sha": "c16706fb"
+      },
+      {
+        "message": "Merge branch 'main' into fix/align-tests",
+        "sha": "7bf75936"
+      },
+      {
+        "message": "merge: integrate HWID tools from main",
+        "sha": "a8bd9aab"
+      },
+      {
+        "message": "feat(admin): add HWID detection script and automated batch tool",
+        "sha": "33d19841"
+      },
+      {
+        "message": "refactor(core): reduce complexity in DataSynchronizer and ContabilitaSyncEngine",
+        "sha": "507eaee4"
+      },
+      {
+        "message": "refactor(gui): apply SRP to DonCiroWidget and integrate real weather",
+        "sha": "cd8802b9"
+      },
+      {
+        "message": "refactor(gui): apply SRP to WeatherWidget and NavigationController",
+        "sha": "b611344b"
+      },
+      {
+        "message": "fix(gui): implement trigger_pdl_print in MainWindow",
+        "sha": "52e52ee7"
+      },
+      {
+        "message": "fix(test): align test suite to V9.0 architecture and fix import_config bug",
+        "sha": "c51984d2"
+      },
+      {
+        "message": "chore: release v1.44.0 [auto]",
+        "sha": "1d0530f2"
+      },
+      {
+        "message": "feat(certificati): implement professional toolbar and layout optimization",
+        "sha": "64082905"
+      },
+      {
+        "message": "Update Report Certificati Campione Secondari ISAB SUD al 24-04-2026.pdf",
+        "sha": "6a28d623"
+      },
+      {
+        "message": "refactor: scomposizione logica statistiche e fix qualità core",
+        "sha": "05535792"
+      },
+      {
+        "message": "chore: completamento transizione Poetry e pulizia documentazione",
+        "sha": "6c5394d3"
+      },
+      {
+        "message": "merge: risoluzione conflitti e integrazione refactoring certificati",
+        "sha": "7b127aa1"
+      },
+      {
+        "message": "refactor(certificati): centralizzazione costanti e separazione logica statistiche",
+        "sha": "87f9447f"
+      },
+      {
+        "message": "style(pdf): ridenominata sezione 'CERTIFICATI' in 'STATO CERTIFICATI'",
+        "sha": "a4b90088"
+      },
+      {
+        "message": "style(pdf): rinominata etichetta riepilogo 'In campo' in 'Assegnati ai Tecnici'",
+        "sha": "18cae886"
+      },
+      {
+        "message": "feat(pdf): aggiunta categoria strumenti Assenti e perfezionamento layout padri",
+        "sha": "d350569c"
+      },
+      {
+        "message": "style(pdf): righe padre in grassetto e formattazione stati definitiva",
+        "sha": "77b4e657"
+      },
+      {
+        "message": "feat(certificati): ripristino logica scadenze e ottimizzazione report PDF",
+        "sha": "fb8ef4d9"
+      },
+      {
+        "message": "feat(certificati): aggiornamento elenco ubicazioni e migrazione dati",
+        "sha": "74371168"
+      },
+      {
+        "message": "Merge branch 'task/align-tests'",
+        "sha": "0341236a"
+      },
+      {
+        "message": "merge: integrazione modifiche di qualità e stabilizzazione test da task/align-tests",
+        "sha": "e048c7e2"
+      },
+      {
+        "message": "chore(quality): risoluzione violazioni Ruff/Mypy e stabilizzazione test suite",
+        "sha": "b515d8dc"
+      },
+      {
+        "message": "docs(pdf): rimozione abbreviazioni gg/rim nel report per un linguaggio più esteso",
+        "sha": "56f16a4a"
+      },
+      {
+        "message": "fix(certificati): ottimizzazione layout PDF e risoluzione crash in analisi scadenze",
+        "sha": "1a16cfa8"
+      },
+      {
+        "message": "feat(certificati): implementazione full mirroring 1:1, ripristino metadati da PDF e ricerca avanzata per ID-COEMI",
+        "sha": "0ef6dbd7"
+      },
+      {
+        "message": "test: align tests and implement robust configuration isolation",
+        "sha": "b50c0367"
+      },
+      {
+        "message": "chore: release v1.43.2 [auto]",
+        "sha": "4cc7d569"
+      },
+      {
+        "message": "chore: release v1.43.1 [auto]",
+        "sha": "0d460561"
+      },
+      {
+        "message": "chore: release v1.43.0 [auto]",
+        "sha": "c08e91ca"
+      },
+      {
+        "message": "fix(pw): change password input type to text before submit to completely bypass chromium password compromised alert",
+        "sha": "c4d2c5c7"
+      },
+      {
+        "message": "fix(pw): ultra-aggressive alert handling and hardened password suppression",
+        "sha": "53f6b7cf"
+      },
+      {
+        "message": "feat: align project and improve browser security (removed large binaries)",
+        "sha": "3e7bf644"
+      },
+      {
+        "message": "add",
+        "sha": "cfe66a68"
+      },
+      {
+        "message": "fix(portale-fornitori): implement ultra-robust PW interaction pattern and accelerate login",
+        "sha": "35806e81"
+      },
+      {
+        "message": "chore: release v1.42.1 [auto]",
+        "sha": "4711cf5a"
+      },
+      {
+        "message": "refactor: rimozione globale emoji per risolvere l'errore di encoding charmap / cp1252",
+        "sha": "f07a6920"
+      },
+      {
+        "message": "fix(portale-fornitori): implement robust interaction pattern for PW bots and fix scarico_ts timeout",
+        "sha": "06bfa261"
+      },
+      {
+        "message": "chore: release v1.42.0 [auto]",
+        "sha": "0e149948"
+      },
+      {
+        "message": "chore: finalize technical debt cleanup and test isolation implementation",
+        "sha": "44d629ae"
+      },
+      {
+        "message": "refactor: allineamento suite di test, fix linting ruff/mypy e aggiornamento componenti GUI",
+        "sha": "b71d4132"
+      },
+      {
+        "message": "fix(runner): V5.3.1 - Fail-Fast aggressivo, isolamento coverage e bonifica suite test",
+        "sha": "4f1d03a4"
+      },
+      {
+        "message": "docs: aggiornamento CHANGELOG v1.42.1 e TODO_QUALITY per audit runner V5.1\"",
+        "sha": "962e7ae7"
+      },
+      {
+        "message": "fix(runner): V5.1 - Fix 6 bug + 2 miglioramenti architetturali\\n\\nBUG-1: Fix doppio conteggio passed/failed nella fase isolamento SHOTGUN\\nBUG-2: _parse_pytest_summary ora cattura sia 'failed' che 'error' con findall\\nBUG-3: Commento correttivo su AssertionError match\\nBUG-4: SNIPER retry usa --last-failed invece di rieseguire tutti i target\\nBUG-5: Pattern E-prefix non piu' limitato a 'not failures'\\nBUG-6: _extract_traceback_block matching preciso con delimitatori pytest\\nARCH-2: sys.exit() centralizzato in __main__, metodi usano _exit_code\\nARCH-4: Report IA troncato a MAX_OUTPUT_CHARS, -80% dimensione\\n\\nAggiunto test suite: tests/unit/test_runner_internals.py (34 test)\"",
+        "sha": "c05a249b"
+      },
+      {
+        "message": "chore: remove obsolete requirements sync from release process",
+        "sha": "855d2967"
+      },
+      {
+        "message": "feat: automate CHANGELOG.md generation in release process via Commitizen",
+        "sha": "1ab67e47"
+      },
+      {
+        "message": "docs: reconstruct CHANGELOG.md history to align with real version v1.41.2 and documented milestones",
+        "sha": "decc6b92"
+      },
+      {
+        "message": "docs: update CHANGELOG.md for structural cleanup and poetry migration",
+        "sha": "65f9866f"
+      },
+      {
+        "message": "chore: project cleanup, organization of data files, and script path update",
+        "sha": "240b67ed"
+      },
+      {
+        "message": "fix: implementato metodo show_settings in MainWindow per attivare l'ingranaggio dei parametri bot",
+        "sha": "bf2932fe"
+      },
+      {
+        "message": "fix: corretto locatore Società in 'Company' e migliorata robustezza login Playwright/Selenium",
+        "sha": "e7ccf50a"
+      },
+      {
+        "message": "feat: aggiunto selettore SOCIETA' (ISAB/PSER) per login portale fornitori e aggiornata logica bot (Selenium/Playwright)",
+        "sha": "cff26deb"
+      },
+      {
+        "message": "refactor: stabilizzazione Playwright, soppressione popup Chromium, bugfix switch account e 100% qualità (Ruff/MyPy/Interrogate)",
+        "sha": "9072c1f3"
+      },
+      {
+        "message": "feat: consolidamento architettura Playwright, fix locatori SafeWork e controlli dinamici nel footer",
+        "sha": "6fe2f26e"
+      },
+      {
+        "message": "add",
+        "sha": "cfe66a68"
+      },
+      {
+        "message": "fix: Correzione nome attributo locatore ScaricoTSLocators",
+        "sha": "9343399a"
+      },
+      {
+        "message": "fix: Risoluzione errore 'Unknown engine name' e centralizzazione selettori Playwright",
+        "sha": "deca5a8d"
+      },
+      {
+        "message": "fix: risolto errore importazione PrenotaBP e implementato caricamento granulare bot Playwright",
+        "sha": "6380bdaf"
+      },
+      {
+        "message": "fix: risolto problema switch motore automazione invalidando la cache config",
+        "sha": "bd4b87f5"
+      },
+      {
+        "message": "feat: migrazione strutturale a Playwright con supporto dual-engine e migrazione di tutti i bot principali",
+        "sha": "2310deb1"
+      },
+      {
+        "message": "chore: release v1.41.2 [auto]",
+        "sha": "1cbad52c"
+      },
+      {
+        "message": "add",
+        "sha": "cfe66a68"
+      },
+      {
+        "message": "chore: release v1.41.1 [auto]",
+        "sha": "d3186883"
+      },
+      {
+        "message": "chore: release v1.41.0 [auto]",
+        "sha": "8813c13b"
+      },
+      {
+        "message": "Add dettagli_oda trace and update bot code",
+        "sha": "7cef1a29"
+      },
+      {
+        "message": "chore: bump version to 1.40.3",
+        "sha": "adbc5cd0"
+      },
+      {
+        "message": "feat: update engine optimization and premium wave animation integration",
+        "sha": "cf274927"
+      },
+      {
+        "message": "Delete scarico_pdl_trace_6b175811bb764a12.json",
+        "sha": "d4d280cf"
+      },
+      {
+        "message": "chore: release v1.40.3 [auto]",
+        "sha": "82873cc0"
+      },
+      {
+        "message": "chore: restore version to 1.40.2",
+        "sha": "a0cd37f0"
+      },
+      {
+        "message": "fix: resolve updater crash by removing duplicate signal connections and adding error handling",
+        "sha": "68a8cae9"
+      },
+      {
+        "message": "fix: update banner labels, progress formatting and completion handler",
+        "sha": "d31f14a5"
+      },
+      {
+        "message": "fix: resolve update banner version display and initialization hang; reset version to 1.40.1",
+        "sha": "d56eeeab"
+      },
+      {
+        "message": "chore: release v1.40.2 [auto]",
+        "sha": "b8857627"
+      },
+      {
+        "message": "cleanup: remove temporary comparison file",
+        "sha": "1e4b6c39"
+      },
+      {
+        "message": "style: restore logo border and background from main branch",
+        "sha": "bbf5548e"
+      },
+      {
+        "message": "refactor: QA cleanup main.py, splash_standalone and quality tools enforcement (ruff, mypy, refurb)",
+        "sha": "002fa299"
+      },
+      {
+        "message": "fix: resolve command palette opening issue and F1 shortcut conflict",
+        "sha": "c08d4c88"
+      },
+      {
+        "message": "fix: add ESITO to Scarico TS, dynamic PDL filters and bot path fix",
+        "sha": "c40d3d8e"
+      },
+      {
+        "message": "refactor: optimize startup path, bot logic and GUI components",
+        "sha": "be4b9320"
+      },
+      {
+        "message": "chore: release v1.40.1 [auto]",
+        "sha": "8563c583"
+      },
+      {
+        "message": "fix(gui): restore main branch sizing and fix all static analysis issues (ruff, mypy, refurb)",
+        "sha": "52042703"
+      },
+      {
+        "message": "Refactor startup, license checks & UI lazy-loads",
+        "sha": "b81c2edd"
+      },
+      {
+        "message": "fix(gui): responsive startup sizing and tray icon type crash",
+        "sha": "7cc46c04"
+      },
+      {
+        "message": "style: fix all Ruff and Mypy warnings (100% type-safe)",
+        "sha": "cecc1adf"
+      },
+      {
+        "message": "fix: layout sidebar, startup sequence, menu routing and KPI charts crash",
+        "sha": "bc4f113f"
+      },
+      {
+        "message": "add",
+        "sha": "cfe66a68"
+      },
+      {
+        "message": "chore: activate global strict typing mode and update widget registry",
+        "sha": "dcbdb888"
+      },
+      {
+        "message": "chore: finish phase 4 - final typing remediation and event signatures fix",
+        "sha": "dcd61d53"
+      },
+      {
+        "message": "chore: progress on phase 4 - GUI typing remediation and structural stability",
+        "sha": "c09fe8b4"
+      },
+      {
+        "message": "fix: resolve E402 and final startup tweaks",
+        "sha": "ecef2545"
+      },
+      {
+        "message": "chore: finish phase 3 - architectural modularity and imports remediation",
+        "sha": "4b87a98e"
+      },
+      {
+        "message": "chore: progress on phase 3 - path management and GUI controllers decomposition (fixed errors)",
+        "sha": "2723af1c"
+      },
+      {
+        "message": "chore: complete phase 2 part 2 - remediation of core models and engines (final noqas)",
+        "sha": "1ca74e79"
+      },
+      {
+        "message": "chore: complete phase 2 part 1 - remediation of src/utils/",
+        "sha": "2579a91d"
+      },
+      {
+        "message": "chore: setup strict linting with test ignores and fix easy warnings",
+        "sha": "5f8a349c"
+      },
+      {
+        "message": "chore: apply strict ruff and mypy configurations and add noqas",
+        "sha": "c5960da7"
+      },
+      {
+        "message": "test: cleanup obsolete tests and update documentation",
+        "sha": "84972f09"
+      },
+      {
+        "message": "test: espansione copertura CORE e bugfixing critico sincronizzazione",
+        "sha": "89821f5e"
+      },
+      {
+        "message": "test: fix test suite post-refactoring e risoluzione dipendenze circolari",
+        "sha": "24554e90"
+      },
+      {
+        "message": "refactor(core,gui): disaccoppiamento completo, DIP e ottimizzazione memoria",
+        "sha": "9381a28f"
+      },
+      {
+        "message": "chore: release v1.40.0 [auto]",
+        "sha": "0c94321c"
+      },
+      {
+        "message": "style: formattazione globale e correzioni ruff su tutto il progetto",
+        "sha": "3c95744e"
+      },
+      {
+        "message": "chore: miglioramento qualità codice e risoluzione segnalazioni linter",
+        "sha": "a9fd120f"
+      },
+      {
+        "message": "fix: risoluzione bug critici e miglioramento integrità sistema",
+        "sha": "e62fc339"
+      },
+      {
+        "message": "test: aggiornamento report e fix test di notifica e prenotazione",
+        "sha": "7017b5ab"
+      },
+      {
+        "message": "feat(contabilita): aggiunta opzione per esportare PDF certificati senza storico e fix robustezza",
+        "sha": "978bf0f4"
+      },
+      {
+        "message": "chore: release v1.39.0 [auto]",
+        "sha": "d1ac89bb"
+      },
+      {
+        "message": "chore: release v1.38.0 [auto]",
+        "sha": "a7e2ec9c"
+      },
+      {
+        "message": "chore: release v1.37.0 [auto]",
+        "sha": "78472846"
+      },
+      {
+        "message": "fix: risolto bug perdita dati in Certificati e migliorata qualità codice",
+        "sha": "702fcf37"
+      },
+      {
+        "message": "chore: release v1.36.0 [auto]",
+        "sha": "acfa6aeb"
+      },
+      {
+        "message": "fix: risolto problema avvio installer e riavvio post-aggiornamento",
+        "sha": "7987c405"
+      },
+      {
+        "message": "chore: release v1.35.0 [auto]",
+        "sha": "d9d2fe51"
+      },
+      {
+        "message": "chore: release v1.34.0 [auto]",
+        "sha": "17af2d3c"
+      },
+      {
+        "message": "chore(quality): risolte segnalazioni ruff, mypy e refurb nello splash screen",
+        "sha": "e05c79d6"
+      },
+      {
+        "message": "feat(splash): implementazione animazioni high-tech avanzate",
+        "sha": "b6afeece"
+      },
+      {
+        "message": "fix(splash): eliminati artefatti grafici negli angoli e rifinitura finale",
+        "sha": "b10ee36a"
+      },
+      {
+        "message": "feat(splash): implementazione Zero-Stutter e look Enterprise finale",
+        "sha": "63b5fb18"
+      },
+      {
+        "message": "feat(splash): potenziamento log tecnici reali e fix import",
+        "sha": "38c0901b"
+      },
+      {
+        "message": "perf(splash): implementazione Zero-Stutter via processo standalone",
+        "sha": "a164bf91"
+      },
+      {
+        "message": "feat(setup): permette all'utente di scegliere se avviare l'app dopo l'aggiornamento",
+        "sha": "16f19377"
+      },
+      {
+        "message": "chore: release v1.33.1 [auto]",
+        "sha": "547cd7b7"
+      },
+      {
+        "message": "refactor(sidebar): pulizia codice e risoluzione segnalazioni linter",
+        "sha": "2e5c0cdf"
+      },
+      {
+        "message": "fix(sidebar): risolte sovrapposizioni e artefatti grafici",
+        "sha": "52eeb56e"
+      },
+      {
+        "message": "fix(sidebar): ripristinato sfondo e ottimizzata fluidità animazione",
+        "sha": "eb2e2ef0"
+      },
+      {
+        "message": "perf(sidebar): ottimizzazione grafica aggressiva e rimozione ombre",
+        "sha": "56073851"
+      },
+      {
+        "message": "perf(sidebar): eliminazione lag e ottimizzazione rendering",
+        "sha": "8439c3ec"
+      },
+      {
+        "message": "perf(sidebar): ottimizzazione reattività e fluidità animazioni",
+        "sha": "f8188db3"
+      },
+      {
+        "message": "chore: raggiunta copertura 100% docstring e risolte segnalazioni bandit/codespell",
+        "sha": "5cc37542"
+      },
+      {
+        "message": "chore: release v1.33.0 [auto]",
+        "sha": "ea1a40eb"
+      },
+      {
+        "message": "security(contabilita): risolto falso positivo SQL injection (B608)",
+        "sha": "9e04ee61"
+      },
+      {
+        "message": "ADD",
+        "sha": "99269e8f"
+      },
+      {
+        "message": "fix(certificati): ordinamento globale ID-COEMI e fix troncamento PDF",
+        "sha": "5a9567ae"
+      },
+      {
+        "message": "fix(certificati): implementata dashboard riassuntiva e ordinamento naturale PDF",
+        "sha": "157f7b44"
+      },
+      {
+        "message": "fix(certificati): forza larghezza colonne PDF con attributi HTML",
+        "sha": "e4ffc4cd"
+      },
+      {
+        "message": "fix(certificati): risolto wrap anomalo su colonne PDF",
+        "sha": "79336e18"
+      },
+      {
+        "message": "fix(certificati): migliora UI, export PDF e ordinamento colonne",
+        "sha": "2e5d4b58"
+      },
+      {
+        "message": "Improve certificati UI, PDF export, and formatting",
+        "sha": "1f5485cc"
+      },
+      {
+        "message": "feat(contabilita): advanced certificate management with inline editing and professional PDF export",
+        "sha": "51258b87"
+      },
+      {
+        "message": "fix(core/gui): persistent filters and duplicate removal for Certificati Campione",
+        "sha": "98fd0226"
+      },
+      {
+        "message": "refactor(core/gui): code hardening via Ruff, Mypy and Refurb optimization",
+        "sha": "3333612b"
+      },
+      {
+        "message": "fix(gui): initialize footer_btns in SidebarWidget to resolve AttributeError",
+        "sha": "d670460a"
+      },
+      {
+        "message": "fix(gui): risolto AttributeError e ripristinata visibilità contenuti sidebar",
+        "sha": "a4ef3c67"
+      },
+      {
+        "message": "fix(gui): ripristinata visibilità sidebar e ottimizzata fluidità animazione",
+        "sha": "5a9da071"
+      },
+      {
+        "message": "fix(gui): corretto ordine chiamate animazione sidebar per evitare warning Qt",
+        "sha": "10a3e261"
+      },
+      {
+        "message": "fix(startup): risolto freeze splash screen tramite caricamento differito e asincrono dei pannelli pesanti",
+        "sha": "6af1424b"
+      },
+      {
+        "message": "fix: risolti errori critici di inizializzazione, NameError AuditManager e ImportError utils. Implementato sistema di cleanup processi stale per Selenium e riscrittura di sicurezza per conformita' Regola #1.",
+        "sha": "e2de0cf9"
+      },
+      {
+        "message": "fix(bot): offload dell'importazione massiva storico OdA su ProcessPoolExecutor per evitare GIL freeze della GUI",
+        "sha": "929a7b49"
+      },
+      {
+        "message": "fix(gui): rimozione type hint e migrazione completa asincrona pannelli per evitare freeze",
+        "sha": "bc3006ed"
+      },
+      {
+        "message": "Pre-warm chromedriver and async bot workers",
+        "sha": "fc47d88f"
+      }
     ]
   },
   {
     "version": "1.49.0",
     "date": "2026-05-22",
     "notes": [
-      "fix(security): risolte vulnerabilità Bandit e allineati controlli Ruff",
-      "feat(splash): implementata Laser-Track Progress Bar con percentuale olografica dinamica",
-      "feat(splash): raffinamento totale macro-status per eliminare fallback generici",
-      "fix(splash): risolto bug visibilità notifica LICENZA VALIDATA e sincronizzato effetto typewriter",
-      "feat(splash): riorganizzazione header con info stack laterale (versione sopra, rilascio sotto)",
-      "feat(splash): upgrade animazione LICENZA VALIDATA con effetto typewriter e breathing fluido",
-      "feat(splash): aggiunto feedback olografico LICENZA VALIDATA con animazione breathing",
-      "style(splash): ottimizzato contrasto e leggibilità data di rilascio nell'header",
-      "feat(splash): espansione verticale e riorganizzazione finale layout header/footer",
-      "feat(splash): riorganizzazione layout con data sotto il titolo e credits centrati a piè di pagina",
-      "style(splash): uniformato colore data rilascio al blu della versione",
-      "feat(splash): spostata e rinominata data rilascio accanto alla versione nell'header",
-      "feat(splash): aggiunta Build Date dinamica dal changelog nel box metadati",
-      "feat(splash): perfezionata animazione breathing crediti con ciclo fluido e fix indentazione",
-      "feat(splash): animazione typewriter e breathing pulse per i crediti developer",
-      "feat(splash): aggiunto system credit olografico e risolti errori import Ruff",
-      "feat(splash): raffinamento mappatura macro-status per eliminare fallback AVVIO IN CORSO",
-      "feat(splash): raggruppamento macro-fasi e conformità totale QA",
-      "feat(splash): unificato header brand-versione con scaling dinamico",
-      "feat(splash): aggiunto orologio live e DNA tech-trace nel changelog",
-      "feat(splash): sostituita animazione caricamento testuale con PulseIndicator grafico",
-      "style(splash): armonizzazione cromatica blu, effetto glow header e pulizia titoli console",
-      "style(splash): restyling header changelog con effetto glow e rimozione parentesi",
-      "style(splash): aggiornato titolo header changelog ticker per rimuovere ridondanza versione",
-      "feat(splash): aggiunto titolo dinamico della versione e refactoring per standard Ruff",
-      "fix(splash): risolto bug sovrapposizione righe changelog ticker tramite ancoraggio posizioni statiche",
-      "style(splash): riduzione intervallo changelog ticker a 3.5 secondi",
-      "feat(splash): animazione Slide-Up & Fade con easing OutBack per il changelog ticker",
-      "style(splash): standardizzazione etichette changelog in NEW, FIX e UPDATE",
-      "style(splash): rimozione bordi sottili dalle righe del changelog ticker",
-      "style(splash): espansione orizzontale changelog ticker a 750px per evitare troncamenti",
-      "style(splash): upscale proporzionale dello splash screen a 850x560",
-      "style(splash): restyling premium con effetti neon, bagliori dinamici e contenitori olografici",
-      "feat(splash): implementazione Ticker multi-riga per il changelog",
-      "style(gui): uniformati tooltip per ModernButton in Light Mode",
-      "feat(splash): implementazione ChangelogTicker nello splashscreen",
-      "feat(gui): persistenza dello stato dettagli della card meteo al riavvio",
-      "style(gui): uniformati tutti i tooltip in Light Mode e corretti errori linter",
-      "feat(gui): aggiunti pulsanti dettaglio/ritorno in WeatherWidget con animazione spin di Don Ciro",
-      "feat(ui): implement dynamic version badge with sparkles in sidebar changelog",
-      "fix(updater): resolve 'Install Now' failure on Windows",
-      "docs(quality): achieve 100% docstring coverage globally"
+      {
+        "message": "fix(security): risolte vulnerabilità Bandit e allineati controlli Ruff",
+        "sha": "1d2fd16c"
+      },
+      {
+        "message": "feat(splash): implementata Laser-Track Progress Bar con percentuale olografica dinamica",
+        "sha": "1267ef53"
+      },
+      {
+        "message": "feat(splash): raffinamento totale macro-status per eliminare fallback generici",
+        "sha": "1b3f5eb0"
+      },
+      {
+        "message": "fix(splash): risolto bug visibilità notifica LICENZA VALIDATA e sincronizzato effetto typewriter",
+        "sha": "8b245d9c"
+      },
+      {
+        "message": "feat(splash): riorganizzazione header con info stack laterale (versione sopra, rilascio sotto)",
+        "sha": "50f5ed1e"
+      },
+      {
+        "message": "feat(splash): upgrade animazione LICENZA VALIDATA con effetto typewriter e breathing fluido",
+        "sha": "e45553ce"
+      },
+      {
+        "message": "feat(splash): aggiunto feedback olografico LICENZA VALIDATA con animazione breathing",
+        "sha": "04e18480"
+      },
+      {
+        "message": "style(splash): ottimizzato contrasto e leggibilità data di rilascio nell'header",
+        "sha": "bc524da0"
+      },
+      {
+        "message": "feat(splash): espansione verticale e riorganizzazione finale layout header/footer",
+        "sha": "3daaf83a"
+      },
+      {
+        "message": "feat(splash): riorganizzazione layout con data sotto il titolo e credits centrati a piè di pagina",
+        "sha": "e1a11611"
+      },
+      {
+        "message": "style(splash): uniformato colore data rilascio al blu della versione",
+        "sha": "ddd92661"
+      },
+      {
+        "message": "feat(splash): spostata e rinominata data rilascio accanto alla versione nell'header",
+        "sha": "df98eefc"
+      },
+      {
+        "message": "feat(splash): aggiunta Build Date dinamica dal changelog nel box metadati",
+        "sha": "c4bc462f"
+      },
+      {
+        "message": "feat(splash): perfezionata animazione breathing crediti con ciclo fluido e fix indentazione",
+        "sha": "163f3dfd"
+      },
+      {
+        "message": "feat(splash): animazione typewriter e breathing pulse per i crediti developer",
+        "sha": "2f6086f4"
+      },
+      {
+        "message": "feat(splash): aggiunto system credit olografico e risolti errori import Ruff",
+        "sha": "8fcdf933"
+      },
+      {
+        "message": "feat(splash): raffinamento mappatura macro-status per eliminare fallback AVVIO IN CORSO",
+        "sha": "4f46b84f"
+      },
+      {
+        "message": "feat(splash): raggruppamento macro-fasi e conformità totale QA",
+        "sha": "fcaefb5d"
+      },
+      {
+        "message": "feat(splash): unificato header brand-versione con scaling dinamico",
+        "sha": "6fd154d9"
+      },
+      {
+        "message": "feat(splash): aggiunto orologio live e DNA tech-trace nel changelog",
+        "sha": "07d818e3"
+      },
+      {
+        "message": "feat(splash): sostituita animazione caricamento testuale con PulseIndicator grafico",
+        "sha": "33047d90"
+      },
+      {
+        "message": "style(splash): armonizzazione cromatica blu, effetto glow header e pulizia titoli console",
+        "sha": "43b9c57e"
+      },
+      {
+        "message": "style(splash): restyling header changelog con effetto glow e rimozione parentesi",
+        "sha": "e50c6d2f"
+      },
+      {
+        "message": "style(splash): aggiornato titolo header changelog ticker per rimuovere ridondanza versione",
+        "sha": "84797d11"
+      },
+      {
+        "message": "feat(splash): aggiunto titolo dinamico della versione e refactoring per standard Ruff",
+        "sha": "baefb27e"
+      },
+      {
+        "message": "fix(splash): risolto bug sovrapposizione righe changelog ticker tramite ancoraggio posizioni statiche",
+        "sha": "ddc79b1d"
+      },
+      {
+        "message": "style(splash): riduzione intervallo changelog ticker a 3.5 secondi",
+        "sha": "c7753788"
+      },
+      {
+        "message": "feat(splash): animazione Slide-Up & Fade con easing OutBack per il changelog ticker",
+        "sha": "de548cae"
+      },
+      {
+        "message": "style(splash): standardizzazione etichette changelog in NEW, FIX e UPDATE",
+        "sha": "e74c68b1"
+      },
+      {
+        "message": "style(splash): rimozione bordi sottili dalle righe del changelog ticker",
+        "sha": "e8a7ab1b"
+      },
+      {
+        "message": "style(splash): espansione orizzontale changelog ticker a 750px per evitare troncamenti",
+        "sha": "8039b360"
+      },
+      {
+        "message": "style(splash): upscale proporzionale dello splash screen a 850x560",
+        "sha": "f725998a"
+      },
+      {
+        "message": "style(splash): restyling premium con effetti neon, bagliori dinamici e contenitori olografici",
+        "sha": "db1364b5"
+      },
+      {
+        "message": "feat(splash): implementazione Ticker multi-riga per il changelog",
+        "sha": "2aebec25"
+      },
+      {
+        "message": "style(gui): uniformati tooltip per ModernButton in Light Mode",
+        "sha": "5d33ae28"
+      },
+      {
+        "message": "feat(splash): implementazione ChangelogTicker nello splashscreen",
+        "sha": "611900bc"
+      },
+      {
+        "message": "feat(gui): persistenza dello stato dettagli della card meteo al riavvio",
+        "sha": "3f220afc"
+      },
+      {
+        "message": "style(gui): uniformati tutti i tooltip in Light Mode e corretti errori linter",
+        "sha": "67724da9"
+      },
+      {
+        "message": "feat(gui): aggiunti pulsanti dettaglio/ritorno in WeatherWidget con animazione spin di Don Ciro",
+        "sha": "f726487a"
+      },
+      {
+        "message": "feat(ui): implement dynamic version badge with sparkles in sidebar changelog",
+        "sha": "e0ac3d0f"
+      },
+      {
+        "message": "fix(updater): resolve 'Install Now' failure on Windows",
+        "sha": "a76c84da"
+      },
+      {
+        "message": "docs(quality): achieve 100% docstring coverage globally",
+        "sha": "e1ebb709"
+      }
     ]
   },
   {
     "version": "1.48.0",
     "date": "2026-05-21",
     "notes": [
-      "chore(quality): global code quality cleanup and documentation enhancement",
-      "refactor(bots): enhance interaction robustness and migrate to structural locators",
-      "feat(timbrature): implement massive import and real-time access monitoring",
-      "fix(bot): resolve Excel download ambiguity in Timbrature bot using FontAwesome unicode",
-      "fix(browser): remove --no-sandbox, --disable-gpu to resolve STATUS_BREAKPOINT crashes",
-      "fix(splash): pipe license details dynamically to standalone splash screen via binary unbuffered stdin",
-      "fix(bot): prevent TypeError on unexpected societa parameter in Playwright base and Timbrature bot",
-      "perf(gui): optimize splash screen and startup dialog with async license and HWID IPC",
-      "feat(ui): implement dynamic changelog and sidebar breathing warning pulse",
-      "feat(gui): improve changelog UI with light-mode tooltips, clear filters and dynamic next release handling",
-      "feat(report): aggiunta postilla audit per strumenti senza scadenza nel PDF",
-      "fix(updater): improve installer launch robustness on Windows with delay and detached process"
+      {
+        "message": "chore(quality): global code quality cleanup and documentation enhancement",
+        "sha": "fb5f43c1"
+      },
+      {
+        "message": "refactor(bots): enhance interaction robustness and migrate to structural locators",
+        "sha": "92e7ea9f"
+      },
+      {
+        "message": "feat(timbrature): implement massive import and real-time access monitoring",
+        "sha": "4a36bfa7"
+      },
+      {
+        "message": "fix(bot): resolve Excel download ambiguity in Timbrature bot using FontAwesome unicode",
+        "sha": "0b96e466"
+      },
+      {
+        "message": "fix(browser): remove --no-sandbox, --disable-gpu to resolve STATUS_BREAKPOINT crashes",
+        "sha": "2baf75b1"
+      },
+      {
+        "message": "fix(splash): pipe license details dynamically to standalone splash screen via binary unbuffered stdin",
+        "sha": "dbaa0a3b"
+      },
+      {
+        "message": "fix(bot): prevent TypeError on unexpected societa parameter in Playwright base and Timbrature bot",
+        "sha": "453303cc"
+      },
+      {
+        "message": "perf(gui): optimize splash screen and startup dialog with async license and HWID IPC",
+        "sha": "5b3ddc09"
+      },
+      {
+        "message": "feat(ui): implement dynamic changelog and sidebar breathing warning pulse",
+        "sha": "98cbac43"
+      },
+      {
+        "message": "feat(gui): improve changelog UI with light-mode tooltips, clear filters and dynamic next release handling",
+        "sha": "6be8b7d2"
+      },
+      {
+        "message": "feat(report): aggiunta postilla audit per strumenti senza scadenza nel PDF",
+        "sha": "c7868a76"
+      },
+      {
+        "message": "fix(updater): improve installer launch robustness on Windows with delay and detached process",
+        "sha": "e7916371"
+      }
     ]
   },
   {
     "version": "1.47.0",
     "date": "2026-05-20",
     "notes": [
-      "Feat: implement button elevation effect",
-      "Feat: apply Modern Card restyling to all bot panels",
-      "Feat: apply Modern Card style to Storico OdA panel",
-      "Feat: apply Modern Card style and animations to KPI Panel",
-      "Feat: implement modern UI effects and card styles",
-      "Feat: implement centralized design system typography constants",
-      "Feat: implement self-cleaning logic in maintenance worker",
-      "Feat: implement database maintenance worker and background optimization",
-      "Fix: **core**: remove blocking run_update() from BotWorker to prevent getaddrinfo GIL freeze",
-      "Fix: **bots/db**: corretti errori di sintassi XPath in locators e query SQL nel repository PDL",
-      "Fix: **bots**: corretto errore sintassi XPath nei locators del portale fornitori",
-      "Fix: **gui**: risolto ripristino parametri all'avvio e prevenuto salvataggio spurio allo spegnimento",
-      "Fix: risoluzione errori linter pre-commit e stabilità finale",
-      "Fix: risoluzione finale bug database, mock test e importazione certificati",
-      "Fix: ripristino icone certificati, sincronizzazione ubicazione e pulizia QA totale",
-      "Refactor: **core**: allineamento suite di test alla nuova architettura SRP e fix MyPy",
-      "Refactor: **bots**: hardening pass dati, gestione sessione attiva, timesheet vuoti, race condition e click nativo cerca",
-      "Refactor: reach zero Ruff/MyPy reports and fix bot logic type safety",
-      "Refactor: complete SRP decomposition & industrial-grade standardization (final stability batch)",
-      "Refactor: code quality cleanup (zero MyPy errors & Ruff optimization)",
-      "Perf: **core**: aggiunge riscaldamento WMI/psutil nello splashscreen per eliminare il blocco GIL causato dall'iterazione dei processi al primo avvio",
-      "Perf: **core**: pre-carica i moduli pesanti (Playwright, PDF, Excel) nello splashscreen per eliminare lag al primo avvio",
-      "Perf: **gui**: elimina freeze GIL al primo avvio centralizzando i log con QApplication.processEvents",
-      "Perf: **bots**: elimina timeout chiusura Playwright tramite rimozione page.close ridondanti e cleanup forzato dei processi",
-      "Perf: **gui**: elimina freeze GUI al termine del bot tramite QThread asincroni"
+      {
+        "message": "Feat: implement button elevation effect",
+        "sha": "a439628"
+      },
+      {
+        "message": "Feat: apply Modern Card restyling to all bot panels",
+        "sha": "9fe99ea"
+      },
+      {
+        "message": "Feat: apply Modern Card style to Storico OdA panel",
+        "sha": "8aa4c17"
+      },
+      {
+        "message": "Feat: apply Modern Card style and animations to KPI Panel",
+        "sha": "1682169"
+      },
+      {
+        "message": "Feat: implement modern UI effects and card styles",
+        "sha": "c694a56"
+      },
+      {
+        "message": "Feat: implement centralized design system typography constants",
+        "sha": "6f3b02f"
+      },
+      {
+        "message": "Feat: implement self-cleaning logic in maintenance worker",
+        "sha": "b8b8776"
+      },
+      {
+        "message": "Feat: implement database maintenance worker and background optimization",
+        "sha": "938d8bb"
+      },
+      {
+        "message": "Fix: **core**: remove blocking run_update() from BotWorker to prevent getaddrinfo GIL freeze",
+        "sha": "9ed1c7d"
+      },
+      {
+        "message": "Fix: **bots/db**: corretti errori di sintassi XPath in locators e query SQL nel repository PDL",
+        "sha": "d1aa5f4"
+      },
+      {
+        "message": "Fix: **bots**: corretto errore sintassi XPath nei locators del portale fornitori",
+        "sha": "9dd5025"
+      },
+      {
+        "message": "Fix: **gui**: risolto ripristino parametri all'avvio e prevenuto salvataggio spurio allo spegnimento",
+        "sha": "057f239"
+      },
+      {
+        "message": "Fix: risoluzione errori linter pre-commit e stabilità finale",
+        "sha": "28bb7f9"
+      },
+      {
+        "message": "Fix: risoluzione finale bug database, mock test e importazione certificati",
+        "sha": "4ac35ef"
+      },
+      {
+        "message": "Fix: ripristino icone certificati, sincronizzazione ubicazione e pulizia QA totale",
+        "sha": "0a9c316"
+      },
+      {
+        "message": "Refactor: **core**: allineamento suite di test alla nuova architettura SRP e fix MyPy",
+        "sha": "cd23a43"
+      },
+      {
+        "message": "Refactor: **bots**: hardening pass dati, gestione sessione attiva, timesheet vuoti, race condition e click nativo cerca",
+        "sha": "f048177"
+      },
+      {
+        "message": "Refactor: reach zero Ruff/MyPy reports and fix bot logic type safety",
+        "sha": "6df8fec"
+      },
+      {
+        "message": "Refactor: complete SRP decomposition & industrial-grade standardization (final stability batch)",
+        "sha": "38784bf"
+      },
+      {
+        "message": "Refactor: code quality cleanup (zero MyPy errors & Ruff optimization)",
+        "sha": "a87f2e2"
+      },
+      {
+        "message": "Perf: **core**: aggiunge riscaldamento WMI/psutil nello splashscreen per eliminare il blocco GIL causato dall'iterazione dei processi al primo avvio",
+        "sha": "75aa19a"
+      },
+      {
+        "message": "Perf: **core**: pre-carica i moduli pesanti (Playwright, PDF, Excel) nello splashscreen per eliminare lag al primo avvio",
+        "sha": "e6c9522"
+      },
+      {
+        "message": "Perf: **gui**: elimina freeze GIL al primo avvio centralizzando i log con QApplication.processEvents",
+        "sha": "b0ff519"
+      },
+      {
+        "message": "Perf: **bots**: elimina timeout chiusura Playwright tramite rimozione page.close ridondanti e cleanup forzato dei processi",
+        "sha": "137fd4f"
+      },
+      {
+        "message": "Perf: **gui**: elimina freeze GUI al termine del bot tramite QThread asincroni",
+        "sha": "649fd46"
+      }
     ]
   },
   {
     "version": "1.46.3",
     "date": "2026-05-13",
     "notes": [
-      "Fix: risoluzione violazioni Ruff e 80 segnalazioni Mypy"
+      {
+        "message": "Fix: risoluzione violazioni Ruff e 80 segnalazioni Mypy",
+        "sha": "df94e76"
+      }
     ]
   },
   {
     "version": "1.46.0",
     "date": "2026-05-12",
     "notes": [
-      "Feat: **autopilot**: automazione certificati campione e unificazione logica Outlook",
-      "Fix: **certificati**: bugfix autopilot e ottimizzazione workflow email audit",
-      "Fix: **gui**: correct type hints for resizeEvent and paintEvent in ActivityTimeline",
-      "Fix: resolve startup hang due to QObject access violation in background threads",
-      "Fix: **core**: resolve syntax error and ruff warnings in bug_reporter.py",
-      "Fix: **license**: resolve circular import and satisfy ruff",
-      "Fix: **core**: resolve critical circular dependency",
-      "Fix: **deps**: resolve circular import in DettagliOdABot and stabilize bot initialization",
-      "Fix: **startup**: final repairs and structural hardening",
-      "Refactor: risolte violazioni MyPy e Ruff (standardizzazione tipi DB, logging e UI) e applicati fix automatici Ruff",
-      "Refactor: global synchronization, structural hardening, and UI standardization -- [NO-HOOKS]",
-      "Refactor: massive structural hardening and UI standardization",
-      "Refactor: **quality**: 100% Ruff/MyPy compliance and UI hardening",
-      "Refactor: **quality**: project-wide Rank B compliance and final hardening V9.2",
-      "Refactor: **quality**: achieve 100% PASS on all quality tools (Ruff, MyPy, Xenon, Bandit) V9.0 Final Compliance",
-      "Refactor: **quality**: resolve Ruff/MyPy issues and synchronize codebase standards V9.0",
-      "Refactor: **quality**: project-wide hardening and PlaywrightBaseBot decomposition",
-      "Perf: implement industrial-grade PySide6 optimizations"
+      {
+        "message": "Feat: **autopilot**: automazione certificati campione e unificazione logica Outlook",
+        "sha": "9cd8a06"
+      },
+      {
+        "message": "Fix: **certificati**: bugfix autopilot e ottimizzazione workflow email audit",
+        "sha": "e91875b"
+      },
+      {
+        "message": "Fix: **gui**: correct type hints for resizeEvent and paintEvent in ActivityTimeline",
+        "sha": "b362f6b"
+      },
+      {
+        "message": "Fix: resolve startup hang due to QObject access violation in background threads",
+        "sha": "ccf4e64"
+      },
+      {
+        "message": "Fix: **core**: resolve syntax error and ruff warnings in bug_reporter.py",
+        "sha": "18da889"
+      },
+      {
+        "message": "Fix: **license**: resolve circular import and satisfy ruff",
+        "sha": "fee1f15"
+      },
+      {
+        "message": "Fix: **core**: resolve critical circular dependency",
+        "sha": "30ac840"
+      },
+      {
+        "message": "Fix: **deps**: resolve circular import in DettagliOdABot and stabilize bot initialization",
+        "sha": "4e4c705"
+      },
+      {
+        "message": "Fix: **startup**: final repairs and structural hardening",
+        "sha": "6d70a00"
+      },
+      {
+        "message": "Refactor: risolte violazioni MyPy e Ruff (standardizzazione tipi DB, logging e UI) e applicati fix automatici Ruff",
+        "sha": "2791aa0"
+      },
+      {
+        "message": "Refactor: global synchronization, structural hardening, and UI standardization -- [NO-HOOKS]",
+        "sha": "6fc1099"
+      },
+      {
+        "message": "Refactor: massive structural hardening and UI standardization",
+        "sha": "558b814"
+      },
+      {
+        "message": "Refactor: **quality**: 100% Ruff/MyPy compliance and UI hardening",
+        "sha": "e073676"
+      },
+      {
+        "message": "Refactor: **quality**: project-wide Rank B compliance and final hardening V9.2",
+        "sha": "cd89ed8"
+      },
+      {
+        "message": "Refactor: **quality**: achieve 100% PASS on all quality tools (Ruff, MyPy, Xenon, Bandit) V9.0 Final Compliance",
+        "sha": "8a962fa"
+      },
+      {
+        "message": "Refactor: **quality**: resolve Ruff/MyPy issues and synchronize codebase standards V9.0",
+        "sha": "425f530"
+      },
+      {
+        "message": "Refactor: **quality**: project-wide hardening and PlaywrightBaseBot decomposition",
+        "sha": "61752fb"
+      },
+      {
+        "message": "Perf: implement industrial-grade PySide6 optimizations",
+        "sha": "1aa7ce2"
+      }
     ]
   },
   {
     "version": "1.45.1",
     "date": "2026-05-06",
     "notes": [
-      "Fix: automate downloads and suppress 'Save As' dialog",
-      "Fix: suppress 'change password' security alerts in Playwright"
+      {
+        "message": "Fix: automate downloads and suppress 'Save As' dialog",
+        "sha": "107914e"
+      },
+      {
+        "message": "Fix: suppress 'change password' security alerts in Playwright",
+        "sha": "f98f703"
+      }
     ]
   },
   {
     "version": "1.45.0",
     "date": "2026-05-05",
     "notes": [
-      "Feat: **admin**: add HWID detection script and automated batch tool",
-      "Fix: **test**: align unit tests to BaseBot refactor and sync logic",
-      "Fix: **admin**: make HWID detection standalone and generic",
-      "Fix: **gui**: implement trigger_pdl_print in MainWindow",
-      "Fix: **test**: align test suite to V9.0 architecture and fix import_config bug",
-      "Refactor: finalize SRP and complexity improvements across bots and GUI",
-      "Refactor: **bot**: reduce complexity in ScaricaTSBot",
-      "Refactor: **core**: reduce complexity in ContabilitaImporter",
-      "Refactor: **core**: reduce complexity in AuditManager",
-      "Refactor: reduce complexity in TreeWidget helpers and Log Humanizer",
-      "Refactor: **bot**: reduce complexity in SafeWorkPDLBot",
-      "Refactor: **gui**: finalize BaseBotPanel SRP decomposition",
-      "Refactor: **core**: reduce complexity in DataSynchronizer and ContabilitaSyncEngine",
-      "Refactor: **gui**: apply SRP to DonCiroWidget and integrate real weather",
-      "Refactor: **gui**: apply SRP to WeatherWidget and NavigationController"
+      {
+        "message": "Feat: **admin**: add HWID detection script and automated batch tool",
+        "sha": "cc72da5"
+      },
+      {
+        "message": "Fix: **test**: align unit tests to BaseBot refactor and sync logic",
+        "sha": "88659dc"
+      },
+      {
+        "message": "Fix: **admin**: make HWID detection standalone and generic",
+        "sha": "90aa40a"
+      },
+      {
+        "message": "Fix: **gui**: implement trigger_pdl_print in MainWindow",
+        "sha": "7f04d4a"
+      },
+      {
+        "message": "Fix: **test**: align test suite to V9.0 architecture and fix import_config bug",
+        "sha": "b37e22c"
+      },
+      {
+        "message": "Refactor: finalize SRP and complexity improvements across bots and GUI",
+        "sha": "e98ad3a"
+      },
+      {
+        "message": "Refactor: **bot**: reduce complexity in ScaricaTSBot",
+        "sha": "33d1d09"
+      },
+      {
+        "message": "Refactor: **core**: reduce complexity in ContabilitaImporter",
+        "sha": "be4bc33"
+      },
+      {
+        "message": "Refactor: **core**: reduce complexity in AuditManager",
+        "sha": "3d5358b"
+      },
+      {
+        "message": "Refactor: reduce complexity in TreeWidget helpers and Log Humanizer",
+        "sha": "270bbba"
+      },
+      {
+        "message": "Refactor: **bot**: reduce complexity in SafeWorkPDLBot",
+        "sha": "5b69604"
+      },
+      {
+        "message": "Refactor: **gui**: finalize BaseBotPanel SRP decomposition",
+        "sha": "cf3ea00"
+      },
+      {
+        "message": "Refactor: **core**: reduce complexity in DataSynchronizer and ContabilitaSyncEngine",
+        "sha": "674e577"
+      },
+      {
+        "message": "Refactor: **gui**: apply SRP to DonCiroWidget and integrate real weather",
+        "sha": "d62dbbc"
+      },
+      {
+        "message": "Refactor: **gui**: apply SRP to WeatherWidget and NavigationController",
+        "sha": "d465c04"
+      }
     ]
   },
   {
     "version": "1.44.0",
     "date": "2026-04-30",
     "notes": [
-      "Feat: **certificati**: implement professional toolbar and layout optimization",
-      "Feat: **pdf**: aggiunta categoria strumenti Assenti e perfezionamento layout padri",
-      "Feat: **certificati**: ripristino logica scadenze e ottimizzazione report PDF",
-      "Feat: **certificati**: aggiornamento elenco ubicazioni e migrazione dati",
-      "Feat: **certificati**: implementazione full mirroring 1:1, ripristino metadati da PDF e ricerca avanzata per ID-COEMI",
-      "Fix: **certificati**: ottimizzazione layout PDF e risoluzione crash in analisi scadenze",
-      "Refactor: scomposizione logica statistiche e fix qualità core",
-      "Refactor: **certificati**: centralizzazione costanti e separazione logica statistiche"
+      {
+        "message": "Feat: **certificati**: implement professional toolbar and layout optimization",
+        "sha": "6b455f4"
+      },
+      {
+        "message": "Feat: **pdf**: aggiunta categoria strumenti Assenti e perfezionamento layout padri",
+        "sha": "9d70d82"
+      },
+      {
+        "message": "Feat: **certificati**: ripristino logica scadenze e ottimizzazione report PDF",
+        "sha": "da5668c"
+      },
+      {
+        "message": "Feat: **certificati**: aggiornamento elenco ubicazioni e migrazione dati",
+        "sha": "0acf502"
+      },
+      {
+        "message": "Feat: **certificati**: implementazione full mirroring 1:1, ripristino metadati da PDF e ricerca avanzata per ID-COEMI",
+        "sha": "70d4a97"
+      },
+      {
+        "message": "Fix: **certificati**: ottimizzazione layout PDF e risoluzione crash in analisi scadenze",
+        "sha": "cf0ead4"
+      },
+      {
+        "message": "Refactor: scomposizione logica statistiche e fix qualità core",
+        "sha": "55209cc"
+      },
+      {
+        "message": "Refactor: **certificati**: centralizzazione costanti e separazione logica statistiche",
+        "sha": "8795271"
+      }
     ]
   },
   {
     "version": "1.43.0",
     "date": "2026-04-21",
     "notes": [
-      "Feat: align project and improve browser security (removed large binaries)",
-      "Fix: **pw**: change password input type to text before submit to completely bypass chromium password compromised alert",
-      "Fix: **pw**: ultra-aggressive alert handling and hardened password suppression",
-      "Fix: **portale-fornitori**: implement ultra-robust PW interaction pattern and accelerate login"
+      {
+        "message": "Feat: align project and improve browser security (removed large binaries)",
+        "sha": "ab6de45"
+      },
+      {
+        "message": "Fix: **pw**: change password input type to text before submit to completely bypass chromium password compromised alert",
+        "sha": "047cee3"
+      },
+      {
+        "message": "Fix: **pw**: ultra-aggressive alert handling and hardened password suppression",
+        "sha": "8936c7e"
+      },
+      {
+        "message": "Fix: **portale-fornitori**: implement ultra-robust PW interaction pattern and accelerate login",
+        "sha": "b5854b3"
+      }
     ]
   },
   {
     "version": "1.42.1",
     "date": "2026-04-20",
     "notes": [
-      "Fix: **portale-fornitori**: implement robust interaction pattern for PW bots and fix scarico_ts timeout",
-      "Refactor: rimozione globale emoji per risolvere l'errore di encoding charmap / cp1252"
+      {
+        "message": "Fix: **portale-fornitori**: implement robust interaction pattern for PW bots and fix scarico_ts timeout",
+        "sha": "96be80e"
+      },
+      {
+        "message": "Refactor: rimozione globale emoji per risolvere l'errore di encoding charmap / cp1252",
+        "sha": "a5ac8cd"
+      }
     ]
   },
   {
     "version": "1.42.0",
     "date": "2026-04-20",
     "notes": [
-      "Feat: automate CHANGELOG.md generation in release process via Commitizen",
-      "Feat: aggiunto selettore SOCIETA' (ISAB/PSER) per login portale fornitori e aggiornata logica bot (Selenium/Playwright)",
-      "Feat: consolidamento architettura Playwright, fix locatori SafeWork e controlli dinamici nel footer",
-      "Feat: migrazione strutturale a Playwright con supporto dual-engine e migrazione di tutti i bot principali",
-      "Fix: **runner**: V5.3.1 - Fail-Fast aggressivo, isolamento coverage e bonifica suite test",
-      "Fix: **runner**: V5.1 - Fix 6 bug + 2 miglioramenti architetturali\\n\\nBUG-1: Fix doppio conteggio passed/failed nella fase isolamento SHOTGUN\\nBUG-2: _parse_pytest_summary ora cattura sia 'failed' che 'error' con findall\\nBUG-3: Commento correttivo su AssertionError match\\nBUG-4: SNIPER retry usa --last-failed invece di rieseguire tutti i target\\nBUG-5: Pattern E-prefix non piu' limitato a 'not failures'\\nBUG-6: _extract_traceback_block matching preciso con delimitatori pytest\\nARCH-2: sys.exit() centralizzato in __main__, metodi usano _exit_code\\nARCH-4: Report IA troncato a MAX_OUTPUT_CHARS, -80% dimensione\\n\\nAggiunto test suite: tests/unit/test_runner_internals.py (34 test)\"",
-      "Fix: implementato metodo show_settings in MainWindow per attivare l'ingranaggio dei parametri bot",
-      "Fix: corretto locatore Società in 'Company' e migliorata robustezza login Playwright/Selenium",
-      "Fix: Correzione nome attributo locatore ScaricoTSLocators",
-      "Fix: Risoluzione errore 'Unknown engine name' e centralizzazione selettori Playwright",
-      "Fix: risolto errore importazione PrenotaBP e implementato caricamento granulare bot Playwright",
-      "Fix: risolto problema switch motore automazione invalidando la cache config",
-      "Refactor: allineamento suite di test, fix linting ruff/mypy e aggiornamento componenti GUI",
-      "Refactor: stabilizzazione Playwright, soppressione popup Chromium, bugfix switch account e 100% qualità (Ruff/MyPy/Interrogate)"
+      {
+        "message": "Feat: automate CHANGELOG.md generation in release process via Commitizen",
+        "sha": "5e40313"
+      },
+      {
+        "message": "Feat: aggiunto selettore SOCIETA' (ISAB/PSER) per login portale fornitori e aggiornata logica bot (Selenium/Playwright)",
+        "sha": "bcdfe64"
+      },
+      {
+        "message": "Feat: consolidamento architettura Playwright, fix locatori SafeWork e controlli dinamici nel footer",
+        "sha": "01172e2"
+      },
+      {
+        "message": "Feat: migrazione strutturale a Playwright con supporto dual-engine e migrazione di tutti i bot principali",
+        "sha": "9798eb9"
+      },
+      {
+        "message": "Fix: **runner**: V5.3.1 - Fail-Fast aggressivo, isolamento coverage e bonifica suite test",
+        "sha": "1ccfe4b"
+      },
+      {
+        "message": "Fix: **runner**: V5.1 - Fix 6 bug + 2 miglioramenti architetturali\\n\\nBUG-1: Fix doppio conteggio passed/failed nella fase isolamento SHOTGUN\\nBUG-2: _parse_pytest_summary ora cattura sia 'failed' che 'error' con findall\\nBUG-3: Commento correttivo su AssertionError match\\nBUG-4: SNIPER retry usa --last-failed invece di rieseguire tutti i target\\nBUG-5: Pattern E-prefix non piu' limitato a 'not failures'\\nBUG-6: _extract_traceback_block matching preciso con delimitatori pytest\\nARCH-2: sys.exit() centralizzato in __main__, metodi usano _exit_code\\nARCH-4: Report IA troncato a MAX_OUTPUT_CHARS, -80% dimensione\\n\\nAggiunto test suite: tests/unit/test_runner_internals.py (34 test)\"",
+        "sha": "b727321"
+      },
+      {
+        "message": "Fix: implementato metodo show_settings in MainWindow per attivare l'ingranaggio dei parametri bot",
+        "sha": "d8060e3"
+      },
+      {
+        "message": "Fix: corretto locatore Società in 'Company' e migliorata robustezza login Playwright/Selenium",
+        "sha": "8f75036"
+      },
+      {
+        "message": "Fix: Correzione nome attributo locatore ScaricoTSLocators",
+        "sha": "a5d0c90"
+      },
+      {
+        "message": "Fix: Risoluzione errore 'Unknown engine name' e centralizzazione selettori Playwright",
+        "sha": "051539e"
+      },
+      {
+        "message": "Fix: risolto errore importazione PrenotaBP e implementato caricamento granulare bot Playwright",
+        "sha": "abf4873"
+      },
+      {
+        "message": "Fix: risolto problema switch motore automazione invalidando la cache config",
+        "sha": "7f38dd5"
+      },
+      {
+        "message": "Refactor: allineamento suite di test, fix linting ruff/mypy e aggiornamento componenti GUI",
+        "sha": "dcf1ac0"
+      },
+      {
+        "message": "Refactor: stabilizzazione Playwright, soppressione popup Chromium, bugfix switch account e 100% qualità (Ruff/MyPy/Interrogate)",
+        "sha": "e7a492c"
+      }
     ]
   },
   {
     "version": "1.41.0",
     "date": "2026-03-31",
     "notes": [
-      "Feat: update engine optimization and premium wave animation integration"
+      {
+        "message": "Feat: update engine optimization and premium wave animation integration",
+        "sha": "91d549f"
+      }
     ]
   },
   {
     "version": "1.40.3",
     "date": "2026-03-30",
     "notes": [
-      "Fix: resolve updater crash by removing duplicate signal connections and adding error handling",
-      "Fix: update banner labels, progress formatting and completion handler",
-      "Fix: resolve update banner version display and initialization hang; reset version to 1.40.1"
+      {
+        "message": "Fix: resolve updater crash by removing duplicate signal connections and adding error handling",
+        "sha": "ca5b7f0"
+      },
+      {
+        "message": "Fix: update banner labels, progress formatting and completion handler",
+        "sha": "7171dbe"
+      },
+      {
+        "message": "Fix: resolve update banner version display and initialization hang; reset version to 1.40.1",
+        "sha": "97ac0d1"
+      }
     ]
   },
   {
     "version": "1.40.2",
     "date": "2026-03-30",
     "notes": [
-      "Fix: resolve command palette opening issue and F1 shortcut conflict",
-      "Fix: add ESITO to Scarico TS, dynamic PDL filters and bot path fix",
-      "Refactor: QA cleanup main.py, splash_standalone and quality tools enforcement (ruff, mypy, refurb)",
-      "Refactor: optimize startup path, bot logic and GUI components"
+      {
+        "message": "Fix: resolve command palette opening issue and F1 shortcut conflict",
+        "sha": "f4ced84"
+      },
+      {
+        "message": "Fix: add ESITO to Scarico TS, dynamic PDL filters and bot path fix",
+        "sha": "8f8651e"
+      },
+      {
+        "message": "Refactor: QA cleanup main.py, splash_standalone and quality tools enforcement (ruff, mypy, refurb)",
+        "sha": "a79aca3"
+      },
+      {
+        "message": "Refactor: optimize startup path, bot logic and GUI components",
+        "sha": "bcb8119"
+      }
     ]
   },
   {
     "version": "1.40.1",
     "date": "2026-03-27",
     "notes": [
-      "Fix: **gui**: restore main branch sizing and fix all static analysis issues (ruff, mypy, refurb)",
-      "Fix: **gui**: responsive startup sizing and tray icon type crash",
-      "Fix: layout sidebar, startup sequence, menu routing and KPI charts crash",
-      "Fix: resolve E402 and final startup tweaks",
-      "Refactor: **core,gui**: disaccoppiamento completo, DIP e ottimizzazione memoria"
+      {
+        "message": "Fix: **gui**: restore main branch sizing and fix all static analysis issues (ruff, mypy, refurb)",
+        "sha": "4682184"
+      },
+      {
+        "message": "Fix: **gui**: responsive startup sizing and tray icon type crash",
+        "sha": "cc4ded4"
+      },
+      {
+        "message": "Fix: layout sidebar, startup sequence, menu routing and KPI charts crash",
+        "sha": "0816872"
+      },
+      {
+        "message": "Fix: resolve E402 and final startup tweaks",
+        "sha": "84436ba"
+      },
+      {
+        "message": "Refactor: **core,gui**: disaccoppiamento completo, DIP e ottimizzazione memoria",
+        "sha": "1b3ba2c"
+      }
     ]
   },
   {
     "version": "1.40.0",
     "date": "2026-03-20",
     "notes": [
-      "Feat: **contabilita**: aggiunta opzione per esportare PDF certificati senza storico e fix robustezza",
-      "Fix: risoluzione bug critici e miglioramento integrità sistema"
+      {
+        "message": "Feat: **contabilita**: aggiunta opzione per esportare PDF certificati senza storico e fix robustezza",
+        "sha": "eece58a"
+      },
+      {
+        "message": "Fix: risoluzione bug critici e miglioramento integrità sistema",
+        "sha": "dfb0533"
+      }
     ]
   },
   {
     "version": "1.37.0",
     "date": "2026-03-19",
     "notes": [
-      "Fix: risolto bug perdita dati in Certificati e migliorata qualità codice"
+      {
+        "message": "Fix: risolto bug perdita dati in Certificati e migliorata qualità codice",
+        "sha": "aed7bff"
+      }
     ]
   },
   {
     "version": "1.36.0",
     "date": "2026-03-18",
     "notes": [
-      "Fix: risolto problema avvio installer e riavvio post-aggiornamento"
+      {
+        "message": "Fix: risolto problema avvio installer e riavvio post-aggiornamento",
+        "sha": "2031c2a"
+      }
     ]
   },
   {
     "version": "1.34.0",
     "date": "2026-03-18",
     "notes": [
-      "Feat: **splash**: implementazione animazioni high-tech avanzate",
-      "Feat: **splash**: implementazione Zero-Stutter e look Enterprise finale",
-      "Feat: **splash**: potenziamento log tecnici reali e fix import",
-      "Feat: **setup**: permette all'utente di scegliere se avviare l'app dopo l'aggiornamento",
-      "Fix: **splash**: eliminati artefatti grafici negli angoli e rifinitura finale",
-      "Perf: **splash**: implementazione Zero-Stutter via processo standalone"
+      {
+        "message": "Feat: **splash**: implementazione animazioni high-tech avanzate",
+        "sha": "39c9b04"
+      },
+      {
+        "message": "Feat: **splash**: implementazione Zero-Stutter e look Enterprise finale",
+        "sha": "66b504a"
+      },
+      {
+        "message": "Feat: **splash**: potenziamento log tecnici reali e fix import",
+        "sha": "ffe0641"
+      },
+      {
+        "message": "Feat: **setup**: permette all'utente di scegliere se avviare l'app dopo l'aggiornamento",
+        "sha": "cb2f9ed"
+      },
+      {
+        "message": "Fix: **splash**: eliminati artefatti grafici negli angoli e rifinitura finale",
+        "sha": "3a631a0"
+      },
+      {
+        "message": "Perf: **splash**: implementazione Zero-Stutter via processo standalone",
+        "sha": "0054afd"
+      }
     ]
   },
   {
     "version": "1.33.1",
     "date": "2026-03-17",
     "notes": [
-      "Fix: **sidebar**: risolte sovrapposizioni e artefatti grafici",
-      "Fix: **sidebar**: ripristinato sfondo e ottimizzata fluidità animazione",
-      "Refactor: **sidebar**: pulizia codice e risoluzione segnalazioni linter",
-      "Perf: **sidebar**: ottimizzazione grafica aggressiva e rimozione ombre",
-      "Perf: **sidebar**: eliminazione lag e ottimizzazione rendering",
-      "Perf: **sidebar**: ottimizzazione reattività e fluidità animazioni"
+      {
+        "message": "Fix: **sidebar**: risolte sovrapposizioni e artefatti grafici",
+        "sha": "df61a7c"
+      },
+      {
+        "message": "Fix: **sidebar**: ripristinato sfondo e ottimizzata fluidità animazione",
+        "sha": "47e3aa9"
+      },
+      {
+        "message": "Refactor: **sidebar**: pulizia codice e risoluzione segnalazioni linter",
+        "sha": "f302cd3"
+      },
+      {
+        "message": "Perf: **sidebar**: ottimizzazione grafica aggressiva e rimozione ombre",
+        "sha": "021045b"
+      },
+      {
+        "message": "Perf: **sidebar**: eliminazione lag e ottimizzazione rendering",
+        "sha": "a3b0974"
+      },
+      {
+        "message": "Perf: **sidebar**: ottimizzazione reattività e fluidità animazioni",
+        "sha": "1138f15"
+      }
     ]
   },
   {
     "version": "1.33.0",
     "date": "2026-03-17",
     "notes": [
-      "Feat: **contabilita**: advanced certificate management with inline editing and professional PDF export",
-      "Fix: **certificati**: ordinamento globale ID-COEMI e fix troncamento PDF",
-      "Fix: **certificati**: implementata dashboard riassuntiva e ordinamento naturale PDF",
-      "Fix: **certificati**: forza larghezza colonne PDF con attributi HTML",
-      "Fix: **certificati**: risolto wrap anomalo su colonne PDF",
-      "Fix: **certificati**: migliora UI, export PDF e ordinamento colonne",
-      "Fix: **core/gui**: persistent filters and duplicate removal for Certificati Campione",
-      "Fix: **gui**: initialize footer_btns in SidebarWidget to resolve AttributeError",
-      "Fix: **gui**: risolto AttributeError e ripristinata visibilità contenuti sidebar",
-      "Fix: **gui**: ripristinata visibilità sidebar e ottimizzata fluidità animazione",
-      "Fix: **gui**: corretto ordine chiamate animazione sidebar per evitare warning Qt",
-      "Fix: **startup**: risolto freeze splash screen tramite caricamento differito e asincrono dei pannelli pesanti",
-      "Fix: risolti errori critici di inizializzazione, NameError AuditManager e ImportError utils. Implementato sistema di cleanup processi stale per Selenium e riscrittura di sicurezza per conformita' Regola #1.",
-      "Fix: **bot**: offload dell'importazione massiva storico OdA su ProcessPoolExecutor per evitare GIL freeze della GUI",
-      "Fix: **gui**: rimozione type hint e migrazione completa asincrona pannelli per evitare freeze",
-      "Refactor: **core/gui**: code hardening via Ruff, Mypy and Refurb optimization"
+      {
+        "message": "Feat: **contabilita**: advanced certificate management with inline editing and professional PDF export",
+        "sha": "3860b17"
+      },
+      {
+        "message": "Fix: **certificati**: ordinamento globale ID-COEMI e fix troncamento PDF",
+        "sha": "05c785e"
+      },
+      {
+        "message": "Fix: **certificati**: implementata dashboard riassuntiva e ordinamento naturale PDF",
+        "sha": "fd8cb04"
+      },
+      {
+        "message": "Fix: **certificati**: forza larghezza colonne PDF con attributi HTML",
+        "sha": "6845f5c"
+      },
+      {
+        "message": "Fix: **certificati**: risolto wrap anomalo su colonne PDF",
+        "sha": "6ec8966"
+      },
+      {
+        "message": "Fix: **certificati**: migliora UI, export PDF e ordinamento colonne",
+        "sha": "1dda038"
+      },
+      {
+        "message": "Fix: **core/gui**: persistent filters and duplicate removal for Certificati Campione",
+        "sha": "6d9c5f2"
+      },
+      {
+        "message": "Fix: **gui**: initialize footer_btns in SidebarWidget to resolve AttributeError",
+        "sha": "4a8c0ca"
+      },
+      {
+        "message": "Fix: **gui**: risolto AttributeError e ripristinata visibilità contenuti sidebar",
+        "sha": "47e06b9"
+      },
+      {
+        "message": "Fix: **gui**: ripristinata visibilità sidebar e ottimizzata fluidità animazione",
+        "sha": "7b65dfa"
+      },
+      {
+        "message": "Fix: **gui**: corretto ordine chiamate animazione sidebar per evitare warning Qt",
+        "sha": "c35e392"
+      },
+      {
+        "message": "Fix: **startup**: risolto freeze splash screen tramite caricamento differito e asincrono dei pannelli pesanti",
+        "sha": "edba754"
+      },
+      {
+        "message": "Fix: risolti errori critici di inizializzazione, NameError AuditManager e ImportError utils. Implementato sistema di cleanup processi stale per Selenium e riscrittura di sicurezza per conformita' Regola #1.",
+        "sha": "077ab00"
+      },
+      {
+        "message": "Fix: **bot**: offload dell'importazione massiva storico OdA su ProcessPoolExecutor per evitare GIL freeze della GUI",
+        "sha": "b7f3cde"
+      },
+      {
+        "message": "Fix: **gui**: rimozione type hint e migrazione completa asincrona pannelli per evitare freeze",
+        "sha": "21eca22"
+      },
+      {
+        "message": "Refactor: **core/gui**: code hardening via Ruff, Mypy and Refurb optimization",
+        "sha": "7d12052"
+      }
     ]
   },
   {
     "version": "1.32.1",
     "date": "2026-03-14",
     "notes": [
-      "Refactor: global timezone alignment (DTZ005) and general code quality cleanup"
+      {
+        "message": "Refactor: global timezone alignment (DTZ005) and general code quality cleanup",
+        "sha": "31d82e6"
+      }
     ]
   },
   {
     "version": "1.32.0",
     "date": "2026-03-14",
     "notes": [
-      "Feat: migrazione del sistema di build da PyInstaller a Nuitka",
-      "Fix: sincronizzazione grafica status list con la pulizia tabella",
-      "Fix: pulizia tabella asincrona per apertura browser immediata",
-      "Fix: risolto crash QLocalSocket all'avvio e silenziati falsi positivi Vulture",
-      "Fix: risoluzione bug runtime, ripristino moduli disconnessi e pulizia dead code",
-      "Refactor: rimozione integrale del sistema di intelligenza artificiale (Lyra)",
-      "Perf: rimosso il caricamento globale di pandas e matplotlib nei pannelli GUI per rendere istantaneo lo splash screen"
+      {
+        "message": "Feat: migrazione del sistema di build da PyInstaller a Nuitka",
+        "sha": "bfd3935"
+      },
+      {
+        "message": "Fix: sincronizzazione grafica status list con la pulizia tabella",
+        "sha": "1bb1eed"
+      },
+      {
+        "message": "Fix: pulizia tabella asincrona per apertura browser immediata",
+        "sha": "44860d1"
+      },
+      {
+        "message": "Fix: risolto crash QLocalSocket all'avvio e silenziati falsi positivi Vulture",
+        "sha": "6a088c4"
+      },
+      {
+        "message": "Fix: risoluzione bug runtime, ripristino moduli disconnessi e pulizia dead code",
+        "sha": "3819145"
+      },
+      {
+        "message": "Refactor: rimozione integrale del sistema di intelligenza artificiale (Lyra)",
+        "sha": "7933125"
+      },
+      {
+        "message": "Perf: rimosso il caricamento globale di pandas e matplotlib nei pannelli GUI per rendere istantaneo lo splash screen",
+        "sha": "e643248"
+      }
     ]
   },
   {
     "version": "1.31.0",
     "date": "2026-03-12",
     "notes": [
-      "Feat: **setup**: add EULA, UI flat design, Mica effect, and custom health check page"
+      {
+        "message": "Feat: **setup**: add EULA, UI flat design, Mica effect, and custom health check page",
+        "sha": "30ac8f3"
+      }
     ]
   },
   {
     "version": "1.30.0",
     "date": "2026-03-11",
     "notes": [
-      "Feat: implement resilient background auto-updater with inline UI progress",
-      "Fix: implement dynamic git binary detection in license generator",
-      "Fix: smooth ETA calculation and format using EMA",
-      "Fix: resolve QA warnings and refine UI styling"
+      {
+        "message": "Feat: implement resilient background auto-updater with inline UI progress",
+        "sha": "81e4def"
+      },
+      {
+        "message": "Fix: implement dynamic git binary detection in license generator",
+        "sha": "a885b5b"
+      },
+      {
+        "message": "Fix: smooth ETA calculation and format using EMA",
+        "sha": "aa06f93"
+      },
+      {
+        "message": "Fix: resolve QA warnings and refine UI styling",
+        "sha": "ad6f46c"
+      }
     ]
   },
   {
     "version": "1.29.1",
     "date": "2026-03-10",
     "notes": [
-      "Fix: align HWID normalization and license key derivation between client and admin tool",
-      "Fix: resolve startup crashes and standardize cryptographic key handling",
-      "Fix: resolve duplicate Hot Reload notifications and implement toast spam filter",
-      "Fix: resolve Chrome crash and implement mandatory cloud license enforcement",
-      "Fix: restore automation tables, update ODA child view and background sync workflow",
-      "Fix: architectural alignment V9.0, headless stability and core logic bugfixes"
+      {
+        "message": "Fix: align HWID normalization and license key derivation between client and admin tool",
+        "sha": "2e1d606"
+      },
+      {
+        "message": "Fix: resolve startup crashes and standardize cryptographic key handling",
+        "sha": "e339c48"
+      },
+      {
+        "message": "Fix: resolve duplicate Hot Reload notifications and implement toast spam filter",
+        "sha": "f34bf55"
+      },
+      {
+        "message": "Fix: resolve Chrome crash and implement mandatory cloud license enforcement",
+        "sha": "61ef816"
+      },
+      {
+        "message": "Fix: restore automation tables, update ODA child view and background sync workflow",
+        "sha": "5ee7037"
+      },
+      {
+        "message": "Fix: architectural alignment V9.0, headless stability and core logic bugfixes",
+        "sha": "9afe4a0"
+      }
     ]
   },
   {
     "version": "1.29.0",
     "date": "2026-03-05",
     "notes": [
-      "Feat: **dashboard**: upgrade Don Ciro to v8.2 with anatomical fixes and spectacular UI",
-      "Feat: **dashboard**: upgrade Don Ciro to v8.0 with AI State Machine and physics",
-      "Feat: **dashboard**: implement hyper-realistic 3D procedural animation for Don Ciro"
+      {
+        "message": "Feat: **dashboard**: upgrade Don Ciro to v8.2 with anatomical fixes and spectacular UI",
+        "sha": "3ed610e"
+      },
+      {
+        "message": "Feat: **dashboard**: upgrade Don Ciro to v8.0 with AI State Machine and physics",
+        "sha": "293fd29"
+      },
+      {
+        "message": "Feat: **dashboard**: implement hyper-realistic 3D procedural animation for Don Ciro",
+        "sha": "6a7d6be"
+      }
     ]
   },
   {
     "version": "1.28.0",
     "date": "2026-03-04",
     "notes": [
-      "Feat: **pdl**: integrate PDL database with automated printing bot",
-      "Fix: **config**: ensure account type persistence and global hot reload",
-      "Fix: **config**: ensure account type persistence and extend global hot reload"
+      {
+        "message": "Feat: **pdl**: integrate PDL database with automated printing bot",
+        "sha": "73cd374"
+      },
+      {
+        "message": "Fix: **config**: ensure account type persistence and global hot reload",
+        "sha": "1ed8c10"
+      },
+      {
+        "message": "Fix: **config**: ensure account type persistence and extend global hot reload",
+        "sha": "828435d"
+      }
     ]
   },
   {
     "version": "1.27.0",
     "date": "2026-03-04",
     "notes": [
-      "Feat: **gui**: add folder open functionality and force light mode in dialogs",
-      "Feat: standardizzazione QToolTip (Light Mode) e logica freschezza dati specifica per Timbrature",
-      "Feat: evoluzione Autopilot con stato database (SyncTracker) e trigger manuali da Dashboard",
-      "Feat: input tempo ROI granulare (min/sec) e restyling layout WeatherWidget",
-      "Feat: evoluzione ROI dinamico, nuovo tab impostazioni efficienza e compattazione layout dashboard",
-      "Feat: evoluzione dashboard PDL con trend MTD/WoW e aree interattive",
-      "Feat: standardizzazione UI light, ripristino PDL e classifica Top 3 bots",
-      "Fix: **gui**: correctly retrieve ComboBox values from table containers",
-      "Fix: **gui**: clear default contracts on startup and improve general search",
-      "Fix: **bot**: refine contract and oda field selectors for Dettagli OdA bot",
-      "Fix: **gui**: global hot reload, enterprise light mode and contract persistence",
-      "Fix: risoluzione errori static-analysis (ruff/mypy) e bug datetime-aware"
+      {
+        "message": "Feat: **gui**: add folder open functionality and force light mode in dialogs",
+        "sha": "3010813"
+      },
+      {
+        "message": "Feat: standardizzazione QToolTip (Light Mode) e logica freschezza dati specifica per Timbrature",
+        "sha": "836fcf5"
+      },
+      {
+        "message": "Feat: evoluzione Autopilot con stato database (SyncTracker) e trigger manuali da Dashboard",
+        "sha": "46d2659"
+      },
+      {
+        "message": "Feat: input tempo ROI granulare (min/sec) e restyling layout WeatherWidget",
+        "sha": "0149360"
+      },
+      {
+        "message": "Feat: evoluzione ROI dinamico, nuovo tab impostazioni efficienza e compattazione layout dashboard",
+        "sha": "6c1b7bd"
+      },
+      {
+        "message": "Feat: evoluzione dashboard PDL con trend MTD/WoW e aree interattive",
+        "sha": "ab34ff8"
+      },
+      {
+        "message": "Feat: standardizzazione UI light, ripristino PDL e classifica Top 3 bots",
+        "sha": "36dc3a0"
+      },
+      {
+        "message": "Fix: **gui**: correctly retrieve ComboBox values from table containers",
+        "sha": "2631927"
+      },
+      {
+        "message": "Fix: **gui**: clear default contracts on startup and improve general search",
+        "sha": "1272f4c"
+      },
+      {
+        "message": "Fix: **bot**: refine contract and oda field selectors for Dettagli OdA bot",
+        "sha": "b0816a1"
+      },
+      {
+        "message": "Fix: **gui**: global hot reload, enterprise light mode and contract persistence",
+        "sha": "e137746"
+      },
+      {
+        "message": "Fix: risoluzione errori static-analysis (ruff/mypy) e bug datetime-aware",
+        "sha": "60df985"
+      }
     ]
   },
   {
     "version": "1.26.0",
     "date": "2026-03-02",
     "notes": [
-      "Feat: **pdl**: rifattorizzazione Scarico PDL (layout, esito read-only, fix avvio) e potenziamento card Efficienza"
+      {
+        "message": "Feat: **pdl**: rifattorizzazione Scarico PDL (layout, esito read-only, fix avvio) e potenziamento card Efficienza",
+        "sha": "edbeb38"
+      }
     ]
   },
   {
     "version": "1.25.0",
     "date": "2026-03-02",
     "notes": [
-      "Feat: **ui**: implementazione avanzata multi-window con custom title bar, pin-to-top, memory state e drag&drop",
-      "Feat: **ui**: implementazione contestuale dello split button e dashboard card moduli esterni",
-      "Feat: **ui**: restyling radicale placeholder popout con logo animato ad alta risoluzione e copywriting migliorato per codespell",
-      "Fix: **ui**: rimosso drag&drop da sidebar e ripristinato popout_manager nativo per risolvere crash C++ (Access Violation)",
-      "Fix: **ui**: risolto AttributeError durante l'inizializzazione del componente toolbar e page_stack"
+      {
+        "message": "Feat: **ui**: implementazione avanzata multi-window con custom title bar, pin-to-top, memory state e drag&drop",
+        "sha": "c29beb5"
+      },
+      {
+        "message": "Feat: **ui**: implementazione contestuale dello split button e dashboard card moduli esterni",
+        "sha": "bfd9852"
+      },
+      {
+        "message": "Feat: **ui**: restyling radicale placeholder popout con logo animato ad alta risoluzione e copywriting migliorato per codespell",
+        "sha": "0ce62b4"
+      },
+      {
+        "message": "Fix: **ui**: rimosso drag&drop da sidebar e ripristinato popout_manager nativo per risolvere crash C++ (Access Violation)",
+        "sha": "ef36364"
+      },
+      {
+        "message": "Fix: **ui**: risolto AttributeError durante l'inizializzazione del componente toolbar e page_stack",
+        "sha": "4a559d0"
+      }
     ]
   },
   {
     "version": "1.24.0",
     "date": "2026-03-01",
     "notes": [
-      "Feat: **ui**: centralizzazione split window nella TopBar e restyling professionale placeholder con logo SyncroJob. Uniformati tooltip globali in light mode alta visibilità. Fix crash importazioni e tipizzazione.",
-      "Feat: **dashboard**: implementazione widget Meteo Cantiere e Bot ROI con fix stabilità e qualità",
-      "Feat: **refactor**: scomposizione modulare core e UI con conformità V9.5",
-      "Feat: **refactor**: modularizzazione ConfigManager e MainWindow con fix Storico OdA",
-      "Feat: **refactor**: modularizzazione avanzata UI e risoluzione type warnings",
-      "Feat: **gui**: implementazione navigazione a 3 livelli, ottimizzazione avvio e standardizzazione Consuntivo",
-      "Feat: **contabilita**: implementazione Generatore Consuntivi con UI a card e automazione Macro VBA",
-      "Refactor: **contabilita**: modularizzazione suite consuntivi premium e ottimizzazione enterprise",
-      "Refactor: **contabilita**: separazione UI/Logica e implementazione Mappa Interattiva VBA con due Tab"
+      {
+        "message": "Feat: **ui**: centralizzazione split window nella TopBar e restyling professionale placeholder con logo SyncroJob. Uniformati tooltip globali in light mode alta visibilità. Fix crash importazioni e tipizzazione.",
+        "sha": "cdfc420"
+      },
+      {
+        "message": "Feat: **dashboard**: implementazione widget Meteo Cantiere e Bot ROI con fix stabilità e qualità",
+        "sha": "056811a"
+      },
+      {
+        "message": "Feat: **refactor**: scomposizione modulare core e UI con conformità V9.5",
+        "sha": "55b31a5"
+      },
+      {
+        "message": "Feat: **refactor**: modularizzazione ConfigManager e MainWindow con fix Storico OdA",
+        "sha": "a70ddbf"
+      },
+      {
+        "message": "Feat: **refactor**: modularizzazione avanzata UI e risoluzione type warnings",
+        "sha": "7b5bf08"
+      },
+      {
+        "message": "Feat: **gui**: implementazione navigazione a 3 livelli, ottimizzazione avvio e standardizzazione Consuntivo",
+        "sha": "a4eeadd"
+      },
+      {
+        "message": "Feat: **contabilita**: implementazione Generatore Consuntivi con UI a card e automazione Macro VBA",
+        "sha": "92e1a64"
+      },
+      {
+        "message": "Refactor: **contabilita**: modularizzazione suite consuntivi premium e ottimizzazione enterprise",
+        "sha": "090ab46"
+      },
+      {
+        "message": "Refactor: **contabilita**: separazione UI/Logica e implementazione Mappa Interattiva VBA con due Tab",
+        "sha": "bce6b8a"
+      }
     ]
   },
   {
     "version": "1.22.2",
     "date": "2026-02-27",
     "notes": [
-      "Refactor: code quality fixes (ruff, mypy, refurb)"
+      {
+        "message": "Refactor: code quality fixes (ruff, mypy, refurb)",
+        "sha": "b7085a2"
+      }
     ]
   },
   {
     "version": "1.22.0",
     "date": "2026-02-27",
     "notes": [
-      "Feat: **settings/quality**: implement Card Hub search, fix QPainter errors, and reach 99.7% docstring coverage",
-      "Fix: **gui**: ripristinato sfondo opaco originale della sidebar espansa",
-      "Fix: **gui**: perfezionata sidebar fluttuante e allineamento logo",
-      "Fix: **gui**: implementato sidebar come vero overlay fluttuante",
-      "Fix: **gui**: risolto problema di rendering iniziale e layout pulsanti",
-      "Refactor: centralizzazione design system e rimozione totale stili hardcoded"
+      {
+        "message": "Feat: **settings/quality**: implement Card Hub search, fix QPainter errors, and reach 99.7% docstring coverage",
+        "sha": "86ce72e"
+      },
+      {
+        "message": "Fix: **gui**: ripristinato sfondo opaco originale della sidebar espansa",
+        "sha": "b70833f"
+      },
+      {
+        "message": "Fix: **gui**: perfezionata sidebar fluttuante e allineamento logo",
+        "sha": "700f4c1"
+      },
+      {
+        "message": "Fix: **gui**: implementato sidebar come vero overlay fluttuante",
+        "sha": "90d7486"
+      },
+      {
+        "message": "Fix: **gui**: risolto problema di rendering iniziale e layout pulsanti",
+        "sha": "b034a69"
+      },
+      {
+        "message": "Refactor: centralizzazione design system e rimozione totale stili hardcoded",
+        "sha": "3466bd5"
+      }
     ]
   },
   {
     "version": "1.21.0",
     "date": "2026-02-26",
     "notes": [
-      "Feat: **ui**: implement premium snapshot animations and finalize project reorganization",
-      "Feat: **gui**: refactor Mission Log Stream with multi-selection, improved copy, and Braille animations",
-      "Feat: estensione standard Cyber-Stepper a tutti i bot",
-      "Feat: implementazione standard Cyber-Stepper V2 e Terminal Log",
-      "Fix: **safework**: restore wait helpers and fix interactability on PDL search field",
-      "Fix: risolto crash allo startup causato da regressioni nella sidebar e nel toast manager",
-      "Fix: risolto problema timeline Scarico TS e rimosso bot duplicato",
-      "Refactor: **root**: reorganize project structure and cleanup dead code (Vulture audit)",
-      "Refactor: standardizzazione UI bot panels, widgets e componenti timeline",
-      "Refactor: risoluzione segnalazioni Ruff, Mypy e potenziamento documentazione (100% core/gui)",
-      "Refactor: consolidamento codebase e miglioramento documentazione componenti GUI e utility",
-      "Refactor: hardening del codice e miglioramenti all'analizzatore di dipendenze"
+      {
+        "message": "Feat: **ui**: implement premium snapshot animations and finalize project reorganization",
+        "sha": "a64c4e4"
+      },
+      {
+        "message": "Feat: **gui**: refactor Mission Log Stream with multi-selection, improved copy, and Braille animations",
+        "sha": "f0156c2"
+      },
+      {
+        "message": "Feat: estensione standard Cyber-Stepper a tutti i bot",
+        "sha": "5b5dcd5"
+      },
+      {
+        "message": "Feat: implementazione standard Cyber-Stepper V2 e Terminal Log",
+        "sha": "0f8fa20"
+      },
+      {
+        "message": "Fix: **safework**: restore wait helpers and fix interactability on PDL search field",
+        "sha": "b05c5d1"
+      },
+      {
+        "message": "Fix: risolto crash allo startup causato da regressioni nella sidebar e nel toast manager",
+        "sha": "562f2ef"
+      },
+      {
+        "message": "Fix: risolto problema timeline Scarico TS e rimosso bot duplicato",
+        "sha": "6c6eb50"
+      },
+      {
+        "message": "Refactor: **root**: reorganize project structure and cleanup dead code (Vulture audit)",
+        "sha": "fa5e73b"
+      },
+      {
+        "message": "Refactor: standardizzazione UI bot panels, widgets e componenti timeline",
+        "sha": "69b1c6f"
+      },
+      {
+        "message": "Refactor: risoluzione segnalazioni Ruff, Mypy e potenziamento documentazione (100% core/gui)",
+        "sha": "20d4a9a"
+      },
+      {
+        "message": "Refactor: consolidamento codebase e miglioramento documentazione componenti GUI e utility",
+        "sha": "b1b5428"
+      },
+      {
+        "message": "Refactor: hardening del codice e miglioramenti all'analizzatore di dipendenze",
+        "sha": "0044f1c"
+      }
     ]
   },
   {
     "version": "1.16.0",
     "date": "2026-02-19",
     "notes": [
-      "Fix: **core**: potenziamento migrazione dati e schema database da versioni legacy"
+      {
+        "message": "Fix: **core**: potenziamento migrazione dati e schema database da versioni legacy",
+        "sha": "2aa7396"
+      }
     ]
   },
   {
     "version": "1.15.1",
     "date": "2026-02-18",
     "notes": [
-      "Feat: **tests**: blindatura suite bot e consolidamento unit test",
-      "Feat: **core/safework**: blindatura totale automazione PDL e utility di parsing",
-      "Feat: **pdl**: implement expandable rows and read-only tables",
-      "Fix: **safework**: stabilize PDL automation with proactive popup handling and silent browser logs",
-      "Fix: remove selection borders, add focus highlight, exclusive cross-table selection",
-      "Refactor: rename Schedario database references to Report Attività in settings and UI"
+      {
+        "message": "Feat: **tests**: blindatura suite bot e consolidamento unit test",
+        "sha": "53072f3"
+      },
+      {
+        "message": "Feat: **core/safework**: blindatura totale automazione PDL e utility di parsing",
+        "sha": "c9824e2"
+      },
+      {
+        "message": "Feat: **pdl**: implement expandable rows and read-only tables",
+        "sha": "88a9292"
+      },
+      {
+        "message": "Fix: **safework**: stabilize PDL automation with proactive popup handling and silent browser logs",
+        "sha": "5b84d0e"
+      },
+      {
+        "message": "Fix: remove selection borders, add focus highlight, exclusive cross-table selection",
+        "sha": "24ddccf"
+      },
+      {
+        "message": "Refactor: rename Schedario database references to Report Attività in settings and UI",
+        "sha": "4cf605f"
+      }
     ]
   },
   {
     "version": "1.14.0",
     "date": "2026-02-16",
     "notes": [
-      "Feat: expand unit test suite and enhance Lyra panel with Ollama support",
-      "Feat: redesign SafeWork programming tab with grouped tables and status bars",
-      "Feat: implementation of massive SafeWork programming export and technical debt cleanup",
-      "Feat: refactor SafeWork bot with account-specific login and improved Page Objects",
-      "Feat: Add week selection (Current/Next) and modern header highlight to Programmazione",
-      "Feat: Aggiunto widget MultiSelectFilter e aggiornato tab Programmazione PDL con fix pre-commit",
-      "Feat: **safework**: integration of complex excel aggregation logic into ProgrammingSyncManager",
-      "Feat: implementazione bot programmazione PDL e restyling UI",
-      "Feat: **certificati**: add exclusion management and professional analysis dialog",
-      "Feat: **apex**: enhance audit engine with modular targets and resilient toolbox",
-      "Fix: resolve all remaining mypy type errors in src",
-      "Fix: resolve mypy type errors across the codebase",
-      "Fix: ripristino file core e gui svuotati accidentalmente",
-      "Fix: Resolve remaining asserts and type errors in bots/manager",
-      "Fix: resolve linter and spelling issues (codespell)",
-      "Fix: resolve critical test failures and boost coverage to 60%",
-      "Fix: test discovery and pre-commit deptry hook",
-      "Refactor: **safework**: implementazione monitoraggio programmazione e architettura POM",
-      "Refactor: standardizzazione globale dei componenti GUI e della logica manager",
-      "Refactor: massive codebase cleanup and enterprise quality hardening",
-      "Refactor: use contextlib.suppress and improve code quality across codebase"
+      {
+        "message": "Feat: expand unit test suite and enhance Lyra panel with Ollama support",
+        "sha": "387505d"
+      },
+      {
+        "message": "Feat: redesign SafeWork programming tab with grouped tables and status bars",
+        "sha": "9fa3670"
+      },
+      {
+        "message": "Feat: implementation of massive SafeWork programming export and technical debt cleanup",
+        "sha": "878b9f0"
+      },
+      {
+        "message": "Feat: refactor SafeWork bot with account-specific login and improved Page Objects",
+        "sha": "a57f244"
+      },
+      {
+        "message": "Feat: Add week selection (Current/Next) and modern header highlight to Programmazione",
+        "sha": "004cc8a"
+      },
+      {
+        "message": "Feat: Aggiunto widget MultiSelectFilter e aggiornato tab Programmazione PDL con fix pre-commit",
+        "sha": "a55636e"
+      },
+      {
+        "message": "Feat: **safework**: integration of complex excel aggregation logic into ProgrammingSyncManager",
+        "sha": "b8a48b4"
+      },
+      {
+        "message": "Feat: implementazione bot programmazione PDL e restyling UI",
+        "sha": "d24ea3b"
+      },
+      {
+        "message": "Feat: **certificati**: add exclusion management and professional analysis dialog",
+        "sha": "d88f6f5"
+      },
+      {
+        "message": "Feat: **apex**: enhance audit engine with modular targets and resilient toolbox",
+        "sha": "dec8f37"
+      },
+      {
+        "message": "Fix: resolve all remaining mypy type errors in src",
+        "sha": "67d1401"
+      },
+      {
+        "message": "Fix: resolve mypy type errors across the codebase",
+        "sha": "38062ec"
+      },
+      {
+        "message": "Fix: ripristino file core e gui svuotati accidentalmente",
+        "sha": "19255d2"
+      },
+      {
+        "message": "Fix: Resolve remaining asserts and type errors in bots/manager",
+        "sha": "245e653"
+      },
+      {
+        "message": "Fix: resolve linter and spelling issues (codespell)",
+        "sha": "191ba59"
+      },
+      {
+        "message": "Fix: resolve critical test failures and boost coverage to 60%",
+        "sha": "51e8568"
+      },
+      {
+        "message": "Fix: test discovery and pre-commit deptry hook",
+        "sha": "b89b57e"
+      },
+      {
+        "message": "Refactor: **safework**: implementazione monitoraggio programmazione e architettura POM",
+        "sha": "5a2ec4e"
+      },
+      {
+        "message": "Refactor: standardizzazione globale dei componenti GUI e della logica manager",
+        "sha": "a538d33"
+      },
+      {
+        "message": "Refactor: massive codebase cleanup and enterprise quality hardening",
+        "sha": "4c94127"
+      },
+      {
+        "message": "Refactor: use contextlib.suppress and improve code quality across codebase",
+        "sha": "3b8da3b"
+      }
     ]
   },
   {
     "version": "1.13.0",
     "date": "2026-02-05",
     "notes": [
-      "Feat: **apex**: upgrade audit engine to Apex Edition and modernize toolbox",
-      "Feat: **oda**: enhance search to all columns and fix download path"
+      {
+        "message": "Feat: **apex**: upgrade audit engine to Apex Edition and modernize toolbox",
+        "sha": "5decfd7"
+      },
+      {
+        "message": "Feat: **oda**: enhance search to all columns and fix download path",
+        "sha": "be9895b"
+      }
     ]
   },
   {
     "version": "1.12.3",
     "date": "2026-02-02",
     "notes": [
-      "Fix: **report**: improve Outlook integration and HTML fallback robustness",
-      "Fix: **timbrature**: replace CTRL+A with robust backspace loop for date inputs"
+      {
+        "message": "Fix: **report**: improve Outlook integration and HTML fallback robustness",
+        "sha": "6d4765c"
+      },
+      {
+        "message": "Fix: **timbrature**: replace CTRL+A with robust backspace loop for date inputs",
+        "sha": "ea251ec"
+      }
     ]
   },
   {
     "version": "1.12.0",
     "date": "2026-02-02",
     "notes": [
-      "Feat: **sync**: use smart upsert for PDL and Certificati + extensive unit test suite update",
-      "Feat: **ui**: add Command Palette button + redesign Health panel",
-      "Feat: **bug-reporter**: enterprise logging integration",
-      "Feat: **logging**: Phase 4 Analytics + AlertManager + Health Panel",
-      "Feat: **ui**: add highlighting for OdA status and stability fixes",
-      "Feat: centralize bot automation in Monitoraggio and add sync tracking",
-      "Feat: standardized update buttons for Dipendenti and PDL panels using specialized bots",
-      "Feat: persistent sync tracking, Storico OdA bot integration, and intelligent diff logic",
-      "Feat: Real-time status indicators for PDL bot, Storico OdA UI refactor, auto-refresh integration",
-      "Fix: **tests**: resolve robust test failures and optimize app initialization",
-      "Fix: **types**: resolve final mypy errors in logger and health_panel",
-      "Fix: **types**: resolve all remaining mypy errors in logging core",
-      "Fix: **types**: resolve duplicates and import errors detected by mypy",
-      "Fix: optimize vertical spacing in PDL and Storico OdA panels",
-      "Fix: implement missing get_all_oda method in OdaManager",
-      "Fix: correct credential retrieval in StoricoOdaPanel",
-      "Fix: use SafeWork credentials and headless setting for Ricerca PDL bot",
-      "Refactor: deep modularization of core and gui monoblocks",
-      "Refactor: decompose AnagraficaPage into smaller components",
-      "Refactor: decompose AutopilotWidget into sub-components"
+      {
+        "message": "Feat: **sync**: use smart upsert for PDL and Certificati + extensive unit test suite update",
+        "sha": "ccc549d"
+      },
+      {
+        "message": "Feat: **ui**: add Command Palette button + redesign Health panel",
+        "sha": "7a1ad54"
+      },
+      {
+        "message": "Feat: **bug-reporter**: enterprise logging integration",
+        "sha": "46172b1"
+      },
+      {
+        "message": "Feat: **logging**: Phase 4 Analytics + AlertManager + Health Panel",
+        "sha": "c46953c"
+      },
+      {
+        "message": "Feat: **ui**: add highlighting for OdA status and stability fixes",
+        "sha": "2b9a548"
+      },
+      {
+        "message": "Feat: centralize bot automation in Monitoraggio and add sync tracking",
+        "sha": "80877be"
+      },
+      {
+        "message": "Feat: standardized update buttons for Dipendenti and PDL panels using specialized bots",
+        "sha": "4ad5f4a"
+      },
+      {
+        "message": "Feat: persistent sync tracking, Storico OdA bot integration, and intelligent diff logic",
+        "sha": "347d63d"
+      },
+      {
+        "message": "Feat: Real-time status indicators for PDL bot, Storico OdA UI refactor, auto-refresh integration",
+        "sha": "7ed1a6c"
+      },
+      {
+        "message": "Fix: **tests**: resolve robust test failures and optimize app initialization",
+        "sha": "2b94033"
+      },
+      {
+        "message": "Fix: **types**: resolve final mypy errors in logger and health_panel",
+        "sha": "ce6bd03"
+      },
+      {
+        "message": "Fix: **types**: resolve all remaining mypy errors in logging core",
+        "sha": "372aa13"
+      },
+      {
+        "message": "Fix: **types**: resolve duplicates and import errors detected by mypy",
+        "sha": "f921d29"
+      },
+      {
+        "message": "Fix: optimize vertical spacing in PDL and Storico OdA panels",
+        "sha": "ccd34ba"
+      },
+      {
+        "message": "Fix: implement missing get_all_oda method in OdaManager",
+        "sha": "1165c9b"
+      },
+      {
+        "message": "Fix: correct credential retrieval in StoricoOdaPanel",
+        "sha": "284038c"
+      },
+      {
+        "message": "Fix: use SafeWork credentials and headless setting for Ricerca PDL bot",
+        "sha": "8e6d92a"
+      },
+      {
+        "message": "Refactor: deep modularization of core and gui monoblocks",
+        "sha": "de300d3"
+      },
+      {
+        "message": "Refactor: decompose AnagraficaPage into smaller components",
+        "sha": "1d8266d"
+      },
+      {
+        "message": "Refactor: decompose AutopilotWidget into sub-components",
+        "sha": "b488cbc"
+      }
     ]
   },
   {
     "version": "1.11.0",
     "date": "2026-01-30",
     "notes": [
-      "Feat: **pdl**: add global search and area/unit filters",
-      "Fix: **splash**: reduce log font size and margins to prevent truncation",
-      "Fix: **splash**: remove ram/cpu resource monitor and fix log text wrapping",
-      "Fix: **gui**: risolto crash all'avvio e refactoring modulo styles",
-      "Refactor: **gui**: scomposizione startup_dialog e separazione stili QSS"
+      {
+        "message": "Feat: **pdl**: add global search and area/unit filters",
+        "sha": "85c03fb"
+      },
+      {
+        "message": "Fix: **splash**: reduce log font size and margins to prevent truncation",
+        "sha": "2e081e8"
+      },
+      {
+        "message": "Fix: **splash**: remove ram/cpu resource monitor and fix log text wrapping",
+        "sha": "115ea31"
+      },
+      {
+        "message": "Fix: **gui**: risolto crash all'avvio e refactoring modulo styles",
+        "sha": "ea3d984"
+      },
+      {
+        "message": "Refactor: **gui**: scomposizione startup_dialog e separazione stili QSS",
+        "sha": "c799792"
+      }
     ]
   },
   {
     "version": "1.10.0",
     "date": "2026-01-29",
     "notes": [
-      "Feat: **gui**: implementazione refresh automatico e istantaneo dello stato Autopilot nel footer",
-      "Feat: **gui**: implementazione switch account dal footer e fix aggiornamento status card",
-      "Feat: **splash**: add real CPU monitor via GetProcessTimes",
-      "Feat: **splash**: add live resource monitor and parallax drag effect",
-      "Fix: **gui**: optimize animations and resolve QPainter warnings",
-      "Fix: **splash**: harden RAM monitor against ctypes crashes",
-      "Fix: **splash**: use ctypes.c_size_t instead of wintypes.BASE_TSD_SIZE_T",
-      "Perf: **startup**: ultra-smooth startup with generator architecture and sprite rendering"
+      {
+        "message": "Feat: **gui**: implementazione refresh automatico e istantaneo dello stato Autopilot nel footer",
+        "sha": "100409a"
+      },
+      {
+        "message": "Feat: **gui**: implementazione switch account dal footer e fix aggiornamento status card",
+        "sha": "89ae637"
+      },
+      {
+        "message": "Feat: **splash**: add real CPU monitor via GetProcessTimes",
+        "sha": "de3531b"
+      },
+      {
+        "message": "Feat: **splash**: add live resource monitor and parallax drag effect",
+        "sha": "649750f"
+      },
+      {
+        "message": "Fix: **gui**: optimize animations and resolve QPainter warnings",
+        "sha": "01ead3e"
+      },
+      {
+        "message": "Fix: **splash**: harden RAM monitor against ctypes crashes",
+        "sha": "960a99f"
+      },
+      {
+        "message": "Fix: **splash**: use ctypes.c_size_t instead of wintypes.BASE_TSD_SIZE_T",
+        "sha": "282ad57"
+      },
+      {
+        "message": "Perf: **startup**: ultra-smooth startup with generator architecture and sprite rendering",
+        "sha": "1c9c4ce"
+      }
     ]
   },
   {
     "version": "1.9.0",
     "date": "2026-01-28",
     "notes": [
-      "Feat: enhance splash screen with smooth 60fps animations and glowing borders",
-      "Feat: stabilize spectacular splash screen architecture with synchronous UI yielding",
-      "Feat: implement spectacular splash screen with particle background and glowing effects",
-      "Feat: implement unified Zero-Lag startup with detailed splash screen logs and GUI preloading",
-      "Feat: implement professional startup dialog and enhanced single-instance activation"
+      {
+        "message": "Feat: enhance splash screen with smooth 60fps animations and glowing borders",
+        "sha": "59f4e25"
+      },
+      {
+        "message": "Feat: stabilize spectacular splash screen architecture with synchronous UI yielding",
+        "sha": "50fac8b"
+      },
+      {
+        "message": "Feat: implement spectacular splash screen with particle background and glowing effects",
+        "sha": "f8ba08c"
+      },
+      {
+        "message": "Feat: implement unified Zero-Lag startup with detailed splash screen logs and GUI preloading",
+        "sha": "1acdf10"
+      },
+      {
+        "message": "Feat: implement professional startup dialog and enhanced single-instance activation",
+        "sha": "87b3dbd"
+      }
     ]
   },
   {
     "version": "1.8.9",
     "date": "2026-01-28",
     "notes": [
-      "Fix: force include logging.handlers in build bundle"
+      {
+        "message": "Fix: force include logging.handlers in build bundle",
+        "sha": "d8d2fbc"
+      }
     ]
   },
   {
     "version": "1.8.7",
     "date": "2026-01-28",
     "notes": [
-      "Fix: decouple netlify cloud build from local deploy cli"
+      {
+        "message": "Fix: decouple netlify cloud build from local deploy cli",
+        "sha": "215b228"
+      }
     ]
   },
   {
     "version": "1.8.6",
     "date": "2026-01-28",
     "notes": [
-      "Fix: improve netlify deploy command in build script"
+      {
+        "message": "Fix: improve netlify deploy command in build script",
+        "sha": "e09bd3e"
+      }
     ]
   },
   {
     "version": "1.8.0",
     "date": "2026-01-28",
     "notes": [
-      "Feat: **hr**: implement database-backed employee management and UI enhancements",
-      "Feat: **report**: add advanced email report with Excel, trends and Autopilot scheduling",
-      "Feat: **core**: enforce single instance and update dipendenti schema v3",
-      "Feat: add bug reporting system and menu bar updates",
-      "Fix: **bots**: correct download path logic for Portale Fornitori bots",
-      "Fix: **gui**: restore bug reporter, fix shortcuts and crash",
-      "Fix: **bots**: resolve mypy type errors in wait_helpers.py",
-      "Fix: **pdl**: ripristinato polling inline da main",
-      "Fix: **tests**: handle both old and new unittest.mock call_args API for CI compatibility",
-      "Fix: **tests**: deep debug CI failures - refactor test_init_driver to verify behavior not implementation",
-      "Fix: **tests**: resolve all CI test failures - fix test_init_driver assertions and add TimelineWidget mocks",
-      "Fix: restore missing scan_workload functionality in ExcelImporter",
-      "Fix: restore visual validation for file paths in settings",
-      "Fix: PyInstaller fitz import and license key fallback for frozen app",
-      "Refactor: **gui**: modularize Anagrafica page and enhance reporting logic",
-      "Refactor: **gui**: enhance Anagrafica dashboard and email reporting",
-      "Refactor: **quality**: fix linting and type errors",
-      "Refactor: **settings**: remove unused 'Cartella Export Consuntivi' path setting",
-      "Refactor: apply final quality fixes and code style improvements across the project",
-      "Refactor: fix linting and type checking errors in wait helpers and tests",
-      "Refactor: optimize scarico_ts bot timing and update test suites",
-      "Refactor: update main entry point and security utilities",
-      "Refactor: optimize core managers and improve bot logic",
-      "Refactor: cleanup temporary logs and update bot logic/tests",
-      "Refactor: broad update of GUI components, admin scripts and unit tests",
-      "Refactor: modularize MainWindow and TimbratureDBPanel components",
-      "Refactor: modularize TelegramService logic into handlers and UI components",
-      "Refactor: decompose ScaricoOreComponents into modular components",
-      "Refactor: decompose DipendentiPanel into modular package structure",
-      "Refactor: modularize excel importer logic into separate modules",
-      "Refactor: split SettingsPanel god file into modular components",
-      "Refactor: modularize gui panels and fix security vulnerabilities",
-      "Refactor: implement command palette and fix ruff linting issues"
+      {
+        "message": "Feat: **hr**: implement database-backed employee management and UI enhancements",
+        "sha": "c7c855c"
+      },
+      {
+        "message": "Feat: **report**: add advanced email report with Excel, trends and Autopilot scheduling",
+        "sha": "2ae4f0d"
+      },
+      {
+        "message": "Feat: **core**: enforce single instance and update dipendenti schema v3",
+        "sha": "dffdb79"
+      },
+      {
+        "message": "Feat: add bug reporting system and menu bar updates",
+        "sha": "e67b4d4"
+      },
+      {
+        "message": "Fix: **bots**: correct download path logic for Portale Fornitori bots",
+        "sha": "e4cce0f"
+      },
+      {
+        "message": "Fix: **gui**: restore bug reporter, fix shortcuts and crash",
+        "sha": "c029d3e"
+      },
+      {
+        "message": "Fix: **bots**: resolve mypy type errors in wait_helpers.py",
+        "sha": "a59960d"
+      },
+      {
+        "message": "Fix: **pdl**: ripristinato polling inline da main",
+        "sha": "94d44bd"
+      },
+      {
+        "message": "Fix: **tests**: handle both old and new unittest.mock call_args API for CI compatibility",
+        "sha": "1ba40ef"
+      },
+      {
+        "message": "Fix: **tests**: deep debug CI failures - refactor test_init_driver to verify behavior not implementation",
+        "sha": "e1820d0"
+      },
+      {
+        "message": "Fix: **tests**: resolve all CI test failures - fix test_init_driver assertions and add TimelineWidget mocks",
+        "sha": "051acc5"
+      },
+      {
+        "message": "Fix: restore missing scan_workload functionality in ExcelImporter",
+        "sha": "971e2de"
+      },
+      {
+        "message": "Fix: restore visual validation for file paths in settings",
+        "sha": "a640096"
+      },
+      {
+        "message": "Fix: PyInstaller fitz import and license key fallback for frozen app",
+        "sha": "142cd8e"
+      },
+      {
+        "message": "Refactor: **gui**: modularize Anagrafica page and enhance reporting logic",
+        "sha": "d848814"
+      },
+      {
+        "message": "Refactor: **gui**: enhance Anagrafica dashboard and email reporting",
+        "sha": "2df520b"
+      },
+      {
+        "message": "Refactor: **quality**: fix linting and type errors",
+        "sha": "ef1d693"
+      },
+      {
+        "message": "Refactor: **settings**: remove unused 'Cartella Export Consuntivi' path setting",
+        "sha": "8dc8920"
+      },
+      {
+        "message": "Refactor: apply final quality fixes and code style improvements across the project",
+        "sha": "0dd25ce"
+      },
+      {
+        "message": "Refactor: fix linting and type checking errors in wait helpers and tests",
+        "sha": "1bde85c"
+      },
+      {
+        "message": "Refactor: optimize scarico_ts bot timing and update test suites",
+        "sha": "632f704"
+      },
+      {
+        "message": "Refactor: update main entry point and security utilities",
+        "sha": "9929b02"
+      },
+      {
+        "message": "Refactor: optimize core managers and improve bot logic",
+        "sha": "07b5217"
+      },
+      {
+        "message": "Refactor: cleanup temporary logs and update bot logic/tests",
+        "sha": "ace06b6"
+      },
+      {
+        "message": "Refactor: broad update of GUI components, admin scripts and unit tests",
+        "sha": "1326c8c"
+      },
+      {
+        "message": "Refactor: modularize MainWindow and TimbratureDBPanel components",
+        "sha": "a832f03"
+      },
+      {
+        "message": "Refactor: modularize TelegramService logic into handlers and UI components",
+        "sha": "dc27697"
+      },
+      {
+        "message": "Refactor: decompose ScaricoOreComponents into modular components",
+        "sha": "b6e1c94"
+      },
+      {
+        "message": "Refactor: decompose DipendentiPanel into modular package structure",
+        "sha": "ecf67ad"
+      },
+      {
+        "message": "Refactor: modularize excel importer logic into separate modules",
+        "sha": "3bee3ee"
+      },
+      {
+        "message": "Refactor: split SettingsPanel god file into modular components",
+        "sha": "f8dbb9e"
+      },
+      {
+        "message": "Refactor: modularize gui panels and fix security vulnerabilities",
+        "sha": "1f4195f"
+      },
+      {
+        "message": "Refactor: implement command palette and fix ruff linting issues",
+        "sha": "2aef943"
+      }
     ]
   },
   {
     "version": "1.7.0",
     "date": "2026-01-23",
     "notes": [
-      "Feat: **Settings/OdA**: add config Import/Export, Settings search and improve OdA history layout",
-      "Feat: optimize dashboard layout, enhance PDL management, and proactive employee monitoring",
-      "Feat: finalize toolbox with security audit, refurb, and project stats",
-      "Feat: add engineering libraries (pydantic, tenacity, loguru, faker)",
-      "Feat: enhance toolbox with db maintenance, radon metrics, and eradicate",
-      "Feat: **ui**: implement rapid account switching and fix global tooltip rendering",
-      "Feat: **data**: integrate Pandera validation for Excel and CSV imports",
-      "Feat: **dx**: upgrade developer ecosystem with enterprise tools",
-      "Feat: **gui**: implementazione audit model e miglioramento ordinamento/filtri tabelle",
-      "Feat: **gui**: pannello dipendenti con monitoraggio scadenze abilitazioni ISAB",
-      "Feat: **gui**: visualizzazione parallela task imminenti per sito nel footer",
-      "Feat: **gui**: timer autopilot a 2 secondi e verifica associazioni portali",
-      "Feat: ristrutturazione completa pagina Certificati Campione con logica intelligente",
-      "Feat: add event-driven activity feed and autopilot widget",
-      "Feat: add pulsing animation to the final startup toast",
-      "Feat: add Storico OdA to Quick Actions configuration",
-      "Feat: enhance search in Storico OdA to cover all fields",
-      "Feat: toggle bold font on group expansion in StoricoOdaPanel",
-      "Feat: enhance Storico OdA panel with numeric sorting, bold groups and extended description",
-      "Feat: add Storico OdA GUI panel",
-      "Feat: implement Storico OdA database and importer",
-      "Feat: **ui**: fix calendar truncation, upgrade app icons to HQ design, and refactor icon generator location",
-      "Feat: **ui**: overhaul dashboard with strict light theme, 3-level quick actions, and polished widgets",
-      "Fix: resolve pandas import error and complete employee/timbrature integration",
-      "Fix: resolve startup crashes and apply refurb optimizations",
-      "Fix: resolve pre-flight errors (security, linting, types)",
-      "Fix: **bot**: fix start logic and database import for Ricerca PDL",
-      "Fix: **dx**: resolve quality checks and update vulnerable dependencies",
-      "Fix: **gui**: risolti errori ruff e migliorata logica countdown autopilot",
-      "Fix: risolti errori QPainter e proprietà CSS non riconosciute, aggiunta icona check e migliorata resilienza importazione Excel",
-      "Fix: center pulse animation in Toast",
-      "Fix: import QVBoxLayout in toast.py",
-      "Fix: ensure tree expand/collapse works on all columns",
-      "Fix: resolve IndentationError in StoricoOdaPanel",
-      "Fix: seamless text spanning and double-click toggle in StoricoOdaPanel",
-      "Fix: resolve AttributeError for QStyle.StateFlag in StoricoOdaPanel",
-      "Fix: prevent integer overflow and parsing errors in Storico OdA",
-      "Fix: resolve IndentationError in StoricoOdaPanel",
-      "Fix: enforce exact Excel match for Storico OdA import",
-      "Refactor: apply code quality fixes (lint, types, xenon)",
-      "Refactor: apply ruff/refurb modernization fixes",
-      "Refactor: modernize project structure, fix tests, and improve devops (Phase 4-5)",
-      "Refactor: **ui**: update notification manager, schemas, and main window widgets",
-      "Refactor: **gui**: spostamento countdown autopilot su status card imminente",
-      "Refactor: ottimizzazione UI, gestione servizi e aggiornamento report test (linting fix)",
-      "Refactor: upgrade StoricoOdaPanel to TreeView with Grouping",
-      "Perf: **data**: ultra-optimize Dataease import for maximum speed (5x faster)",
-      "Perf: **gui**: ottimizzato timer footer a 5 secondi"
+      {
+        "message": "Feat: **Settings/OdA**: add config Import/Export, Settings search and improve OdA history layout",
+        "sha": "cc43b31"
+      },
+      {
+        "message": "Feat: optimize dashboard layout, enhance PDL management, and proactive employee monitoring",
+        "sha": "837a87a"
+      },
+      {
+        "message": "Feat: finalize toolbox with security audit, refurb, and project stats",
+        "sha": "eb0cbed"
+      },
+      {
+        "message": "Feat: add engineering libraries (pydantic, tenacity, loguru, faker)",
+        "sha": "1de7534"
+      },
+      {
+        "message": "Feat: enhance toolbox with db maintenance, radon metrics, and eradicate",
+        "sha": "00612df"
+      },
+      {
+        "message": "Feat: **ui**: implement rapid account switching and fix global tooltip rendering",
+        "sha": "327ca17"
+      },
+      {
+        "message": "Feat: **data**: integrate Pandera validation for Excel and CSV imports",
+        "sha": "ea1bb3c"
+      },
+      {
+        "message": "Feat: **dx**: upgrade developer ecosystem with enterprise tools",
+        "sha": "f2d691b"
+      },
+      {
+        "message": "Feat: **gui**: implementazione audit model e miglioramento ordinamento/filtri tabelle",
+        "sha": "d292e5d"
+      },
+      {
+        "message": "Feat: **gui**: pannello dipendenti con monitoraggio scadenze abilitazioni ISAB",
+        "sha": "c1c6bf4"
+      },
+      {
+        "message": "Feat: **gui**: visualizzazione parallela task imminenti per sito nel footer",
+        "sha": "a38ede5"
+      },
+      {
+        "message": "Feat: **gui**: timer autopilot a 2 secondi e verifica associazioni portali",
+        "sha": "382ba5e"
+      },
+      {
+        "message": "Feat: ristrutturazione completa pagina Certificati Campione con logica intelligente",
+        "sha": "2cb54b7"
+      },
+      {
+        "message": "Feat: add event-driven activity feed and autopilot widget",
+        "sha": "c1ff075"
+      },
+      {
+        "message": "Feat: add pulsing animation to the final startup toast",
+        "sha": "4dd7c76"
+      },
+      {
+        "message": "Feat: add Storico OdA to Quick Actions configuration",
+        "sha": "315e4f0"
+      },
+      {
+        "message": "Feat: enhance search in Storico OdA to cover all fields",
+        "sha": "379792b"
+      },
+      {
+        "message": "Feat: toggle bold font on group expansion in StoricoOdaPanel",
+        "sha": "5f73f7a"
+      },
+      {
+        "message": "Feat: enhance Storico OdA panel with numeric sorting, bold groups and extended description",
+        "sha": "757d867"
+      },
+      {
+        "message": "Feat: add Storico OdA GUI panel",
+        "sha": "1ef884d"
+      },
+      {
+        "message": "Feat: implement Storico OdA database and importer",
+        "sha": "e56154a"
+      },
+      {
+        "message": "Feat: **ui**: fix calendar truncation, upgrade app icons to HQ design, and refactor icon generator location",
+        "sha": "7960816"
+      },
+      {
+        "message": "Feat: **ui**: overhaul dashboard with strict light theme, 3-level quick actions, and polished widgets",
+        "sha": "85b8982"
+      },
+      {
+        "message": "Fix: resolve pandas import error and complete employee/timbrature integration",
+        "sha": "b477a74"
+      },
+      {
+        "message": "Fix: resolve startup crashes and apply refurb optimizations",
+        "sha": "bcb0485"
+      },
+      {
+        "message": "Fix: resolve pre-flight errors (security, linting, types)",
+        "sha": "480b672"
+      },
+      {
+        "message": "Fix: **bot**: fix start logic and database import for Ricerca PDL",
+        "sha": "b45b598"
+      },
+      {
+        "message": "Fix: **dx**: resolve quality checks and update vulnerable dependencies",
+        "sha": "2c526fe"
+      },
+      {
+        "message": "Fix: **gui**: risolti errori ruff e migliorata logica countdown autopilot",
+        "sha": "1cda7b9"
+      },
+      {
+        "message": "Fix: risolti errori QPainter e proprietà CSS non riconosciute, aggiunta icona check e migliorata resilienza importazione Excel",
+        "sha": "059c3ad"
+      },
+      {
+        "message": "Fix: center pulse animation in Toast",
+        "sha": "98b27fc"
+      },
+      {
+        "message": "Fix: import QVBoxLayout in toast.py",
+        "sha": "553c48d"
+      },
+      {
+        "message": "Fix: ensure tree expand/collapse works on all columns",
+        "sha": "0e306e2"
+      },
+      {
+        "message": "Fix: resolve IndentationError in StoricoOdaPanel",
+        "sha": "5e9480a"
+      },
+      {
+        "message": "Fix: seamless text spanning and double-click toggle in StoricoOdaPanel",
+        "sha": "bb3cab2"
+      },
+      {
+        "message": "Fix: resolve AttributeError for QStyle.StateFlag in StoricoOdaPanel",
+        "sha": "ccdabab"
+      },
+      {
+        "message": "Fix: prevent integer overflow and parsing errors in Storico OdA",
+        "sha": "ddebcec"
+      },
+      {
+        "message": "Fix: resolve IndentationError in StoricoOdaPanel",
+        "sha": "5e9480a"
+      },
+      {
+        "message": "Fix: enforce exact Excel match for Storico OdA import",
+        "sha": "0d5b855"
+      },
+      {
+        "message": "Refactor: apply code quality fixes (lint, types, xenon)",
+        "sha": "f599c8f"
+      },
+      {
+        "message": "Refactor: apply ruff/refurb modernization fixes",
+        "sha": "01c646b"
+      },
+      {
+        "message": "Refactor: modernize project structure, fix tests, and improve devops (Phase 4-5)",
+        "sha": "73584f3"
+      },
+      {
+        "message": "Refactor: **ui**: update notification manager, schemas, and main window widgets",
+        "sha": "21090a8"
+      },
+      {
+        "message": "Refactor: **gui**: spostamento countdown autopilot su status card imminente",
+        "sha": "93039d2"
+      },
+      {
+        "message": "Refactor: ottimizzazione UI, gestione servizi e aggiornamento report test (linting fix)",
+        "sha": "b76649b"
+      },
+      {
+        "message": "Refactor: upgrade StoricoOdaPanel to TreeView with Grouping",
+        "sha": "34a2ca1"
+      },
+      {
+        "message": "Perf: **data**: ultra-optimize Dataease import for maximum speed (5x faster)",
+        "sha": "22a5ca5"
+      },
+      {
+        "message": "Perf: **gui**: ottimizzato timer footer a 5 secondi",
+        "sha": "784b160"
+      }
     ]
   },
   {
     "version": "1.5.0",
     "date": "2026-01-18",
     "notes": [
-      "Feat: **bot**: add debug analysis for details window in Prenota BP",
-      "Feat: **bot**: add material availability check in Prenota BP bot"
+      {
+        "message": "Feat: **bot**: add debug analysis for details window in Prenota BP",
+        "sha": "d156cf8"
+      },
+      {
+        "message": "Feat: **bot**: add material availability check in Prenota BP bot",
+        "sha": "76c6a2f"
+      }
     ]
   },
   {
     "version": "1.0.38",
     "date": "2026-01-10",
     "notes": [
-      "Feat: **backup**: add UI and logic for restoring backups from cloud settings",
-      "Feat: implement SafeWork PDL bot, settings and tests",
-      "Feat: centralize statistics in config.json and remove obsolete files",
-      "Feat: centralize all settings in config.json and SettingsPanel",
-      "Feat: fix timbrature filters, improve DataEase UI, fix import ETA and consolidate config persistence",
-      "Feat: implement ODC extraction from description, exclude 'Totale' rows from Giornaliere import, and fix year filtering logic",
-      "Feat: **timbrature**: add Cantiere column, dynamic lists and empty data filter",
-      "Feat: Implement Phase 3 UI/UX Design System",
-      "Feat: Add GitHub Action to run tests",
-      "Feat: decouple download paths and implement Elabora TS logic",
-      "Feat: enhance contabilita selection summary and refactor elabora-ts logic",
-      "Feat: enhance contabilita selection summary and refactor elabora-ts logic",
-      "Feat: independent download paths and TS processing logic",
-      "Feat: Optimize global ETA for multi-phase imports",
-      "Feat: Add ETA tracking for Contabilità and Giornaliere imports",
-      "Feat: Add ETA and progress tracking for Scarico Ore import",
-      "Feat: Add global crash logging and native error popup",
-      "Feat: **ai**: implement model fallback strategy for Lyra (2.0 -> 1.5)",
-      "Feat: **ai**: add Lyra Sentinel and Contextual Analysis",
-      "Feat: **ai**: enhance Lyra with deep context from Contabilita and Timbrature",
-      "Feat: **core**: add Mission Control Dashboard and Lyra AI assistant",
-      "Feat: **ui**: add toasts, shortcuts and date input improvements",
-      "Feat: **ui**: add clear button to search inputs for better UX",
-      "Feat: Setup, UI, Multi-Account, and Bot Logic Enhancements",
-      "Feat: Setup, UI, Multi-Account, and Bot Logic Enhancements",
-      "Feat: Setup, UI, Multi-Account, and Bot Logic Enhancements",
-      "Feat: Setup, UI, Multi-Account, and Bot Logic Enhancements",
-      "Feat: Setup, UI, Multi-Account, and Bot Logic Enhancements",
-      "Feat: Setup, UI, Multi-Account, and Bot Logic Enhancements",
-      "Feat: Setup, UI, Multi-Account, and Bot Logic Enhancements",
-      "Feat: Enable sequential row processing in Dettagli OdA bot",
-      "Feat: Enable sequential row processing in Dettagli OdA bot",
-      "Feat: Enable sequential row processing in Dettagli OdA bot",
-      "Feat: Enable sequential row processing in Dettagli OdA bot",
-      "Feat: Enable sequential row processing in Dettagli OdA bot",
-      "Feat: Enable sequential row processing in Dettagli OdA bot",
-      "Feat: Enable sequential row processing in Dettagli OdA bot",
-      "Feat: Enable sequential row processing in Dettagli OdA bot",
-      "Feat: Enable sequential row processing in Dettagli OdA bot",
-      "Feat: Enable sequential row processing in Dettagli OdA bot",
-      "Feat: Enable sequential row processing in Dettagli OdA bot",
-      "Feat: Enable sequential row processing in Dettagli OdA bot",
-      "Feat: Enable sequential row processing in Dettagli OdA bot",
-      "Fix: resolve all remaining test failures and enhance release scripts with progress feedback",
-      "Fix: resolve remaining test failures and bot import bugs",
-      "Fix: add missing time import in SafeworkBaseBot",
-      "Fix: improve SafeWork loading synchronization",
-      "Fix: robust print button click in SafeWork bot",
-      "Fix: correct key for PDL number extraction in UI panel",
-      "Fix: robust PDL key search logic",
-      "Fix: resolve key mismatch for PDL number in SafeWork bot",
-      "Fix: final path alignment in installer for absolute data safety",
-      "Fix: ensure data persistence across upgrades by unifying app naming and securing AppData",
-      "Fix: restore and migrate employee mappings to config.json",
-      "Fix: exclude last row from Giornaliere import, remove 2026 ghost data, and update UI with light celeste headers and smaller row numbers",
-      "Fix: **gui**: use valid variant for ModernButton in Timbrature panel",
-      "Fix: **core**: remove missing 'calamine' engine dependency and improve error logging",
-      "Fix: **core**: improve certificati campione import robustness",
-      "Fix: Contabilità import resilience and Preventivi sheet detection",
-      "Fix: Table UI visibility and Strumentale import logic",
-      "Fix: Resolve SettingsPanel NameError, SecretsManager AttributeError, and License Path",
-      "Fix: Resolve license path, text visibility in tables, and table height",
-      "Fix: Resolve ModuleNotFoundError and complete Phase 3 UI/UX",
-      "Fix: **ci**: Stabilizza la suite di test e corregge i fallimenti",
-      "Fix: **ci**: Isola i test di TimbratureStorage e aggiorna .gitignore",
-      "Fix: Ensure Setup filename uses correct version",
-      "Fix: Silence noisy debug logs from 3rd party libs",
-      "Fix: Redirect DB paths to user config dir and add crash logging",
-      "Fix: **ai**: update Lyra fallback models to available versions",
-      "Refactor: final bot directory structure cleanup",
-      "Refactor: reorganize bots into portale_fornitori folder and fix imports"
+      {
+        "message": "Feat: **backup**: add UI and logic for restoring backups from cloud settings",
+        "sha": "d44e997"
+      },
+      {
+        "message": "Feat: implement SafeWork PDL bot, settings and tests",
+        "sha": "ac48484"
+      },
+      {
+        "message": "Feat: centralize statistics in config.json and remove obsolete files",
+        "sha": "677b2e4"
+      },
+      {
+        "message": "Feat: centralize all settings in config.json and SettingsPanel",
+        "sha": "fb1eb22"
+      },
+      {
+        "message": "Feat: fix timbrature filters, improve DataEase UI, fix import ETA and consolidate config persistence",
+        "sha": "d56a5c0"
+      },
+      {
+        "message": "Feat: implement ODC extraction from description, exclude 'Totale' rows from Giornaliere import, and fix year filtering logic",
+        "sha": "b669ff7"
+      },
+      {
+        "message": "Feat: **timbrature**: add Cantiere column, dynamic lists and empty data filter",
+        "sha": "acfa94b"
+      },
+      {
+        "message": "Feat: Implement Phase 3 UI/UX Design System",
+        "sha": "61cd152"
+      },
+      {
+        "message": "Feat: Add GitHub Action to run tests",
+        "sha": "8367a69"
+      },
+      {
+        "message": "Feat: decouple download paths and implement Elabora TS logic",
+        "sha": "d3389a5"
+      },
+      {
+        "message": "Feat: enhance contabilita selection summary and refactor elabora-ts logic",
+        "sha": "2f3b63e"
+      },
+      {
+        "message": "Feat: enhance contabilita selection summary and refactor elabora-ts logic",
+        "sha": "2f3b63e"
+      },
+      {
+        "message": "Feat: independent download paths and TS processing logic",
+        "sha": "89e0794"
+      },
+      {
+        "message": "Feat: Optimize global ETA for multi-phase imports",
+        "sha": "2018129"
+      },
+      {
+        "message": "Feat: Add ETA tracking for Contabilità and Giornaliere imports",
+        "sha": "326162d"
+      },
+      {
+        "message": "Feat: Add ETA and progress tracking for Scarico Ore import",
+        "sha": "7ad766c"
+      },
+      {
+        "message": "Feat: Add global crash logging and native error popup",
+        "sha": "b1ae2ab"
+      },
+      {
+        "message": "Feat: **ai**: implement model fallback strategy for Lyra (2.0 -> 1.5)",
+        "sha": "d906746"
+      },
+      {
+        "message": "Feat: **ai**: add Lyra Sentinel and Contextual Analysis",
+        "sha": "4c8e092"
+      },
+      {
+        "message": "Feat: **ai**: enhance Lyra with deep context from Contabilita and Timbrature",
+        "sha": "17c07f6"
+      },
+      {
+        "message": "Feat: **core**: add Mission Control Dashboard and Lyra AI assistant",
+        "sha": "f9222ca"
+      },
+      {
+        "message": "Feat: **ui**: add toasts, shortcuts and date input improvements",
+        "sha": "eb227b5"
+      },
+      {
+        "message": "Feat: **ui**: add clear button to search inputs for better UX",
+        "sha": "dbf474c"
+      },
+      {
+        "message": "Feat: Setup, UI, Multi-Account, and Bot Logic Enhancements",
+        "sha": "00624e2"
+      },
+      {
+        "message": "Feat: Setup, UI, Multi-Account, and Bot Logic Enhancements",
+        "sha": "00624e2"
+      },
+      {
+        "message": "Feat: Setup, UI, Multi-Account, and Bot Logic Enhancements",
+        "sha": "00624e2"
+      },
+      {
+        "message": "Feat: Setup, UI, Multi-Account, and Bot Logic Enhancements",
+        "sha": "00624e2"
+      },
+      {
+        "message": "Feat: Setup, UI, Multi-Account, and Bot Logic Enhancements",
+        "sha": "00624e2"
+      },
+      {
+        "message": "Feat: Setup, UI, Multi-Account, and Bot Logic Enhancements",
+        "sha": "00624e2"
+      },
+      {
+        "message": "Feat: Setup, UI, Multi-Account, and Bot Logic Enhancements",
+        "sha": "00624e2"
+      },
+      {
+        "message": "Feat: Enable sequential row processing in Dettagli OdA bot",
+        "sha": "b7bbe7b"
+      },
+      {
+        "message": "Feat: Enable sequential row processing in Dettagli OdA bot",
+        "sha": "b7bbe7b"
+      },
+      {
+        "message": "Feat: Enable sequential row processing in Dettagli OdA bot",
+        "sha": "b7bbe7b"
+      },
+      {
+        "message": "Feat: Enable sequential row processing in Dettagli OdA bot",
+        "sha": "b7bbe7b"
+      },
+      {
+        "message": "Feat: Enable sequential row processing in Dettagli OdA bot",
+        "sha": "b7bbe7b"
+      },
+      {
+        "message": "Feat: Enable sequential row processing in Dettagli OdA bot",
+        "sha": "b7bbe7b"
+      },
+      {
+        "message": "Feat: Enable sequential row processing in Dettagli OdA bot",
+        "sha": "b7bbe7b"
+      },
+      {
+        "message": "Feat: Enable sequential row processing in Dettagli OdA bot",
+        "sha": "b7bbe7b"
+      },
+      {
+        "message": "Feat: Enable sequential row processing in Dettagli OdA bot",
+        "sha": "b7bbe7b"
+      },
+      {
+        "message": "Feat: Enable sequential row processing in Dettagli OdA bot",
+        "sha": "b7bbe7b"
+      },
+      {
+        "message": "Feat: Enable sequential row processing in Dettagli OdA bot",
+        "sha": "b7bbe7b"
+      },
+      {
+        "message": "Feat: Enable sequential row processing in Dettagli OdA bot",
+        "sha": "b7bbe7b"
+      },
+      {
+        "message": "Feat: Enable sequential row processing in Dettagli OdA bot",
+        "sha": "b7bbe7b"
+      },
+      {
+        "message": "Fix: resolve all remaining test failures and enhance release scripts with progress feedback",
+        "sha": "b07fbaa"
+      },
+      {
+        "message": "Fix: resolve remaining test failures and bot import bugs",
+        "sha": "06bd574"
+      },
+      {
+        "message": "Fix: add missing time import in SafeworkBaseBot",
+        "sha": "d558ba4"
+      },
+      {
+        "message": "Fix: improve SafeWork loading synchronization",
+        "sha": "5ff5a47"
+      },
+      {
+        "message": "Fix: robust print button click in SafeWork bot",
+        "sha": "cd07795"
+      },
+      {
+        "message": "Fix: correct key for PDL number extraction in UI panel",
+        "sha": "f88b943"
+      },
+      {
+        "message": "Fix: robust PDL key search logic",
+        "sha": "53d9541"
+      },
+      {
+        "message": "Fix: resolve key mismatch for PDL number in SafeWork bot",
+        "sha": "8e8b77c"
+      },
+      {
+        "message": "Fix: final path alignment in installer for absolute data safety",
+        "sha": "74756af"
+      },
+      {
+        "message": "Fix: ensure data persistence across upgrades by unifying app naming and securing AppData",
+        "sha": "7c2bedf"
+      },
+      {
+        "message": "Fix: restore and migrate employee mappings to config.json",
+        "sha": "4a83876"
+      },
+      {
+        "message": "Fix: exclude last row from Giornaliere import, remove 2026 ghost data, and update UI with light celeste headers and smaller row numbers",
+        "sha": "c1c8829"
+      },
+      {
+        "message": "Fix: **gui**: use valid variant for ModernButton in Timbrature panel",
+        "sha": "538985b"
+      },
+      {
+        "message": "Fix: **core**: remove missing 'calamine' engine dependency and improve error logging",
+        "sha": "408b5f4"
+      },
+      {
+        "message": "Fix: **core**: improve certificati campione import robustness",
+        "sha": "4a313a1"
+      },
+      {
+        "message": "Fix: Contabilità import resilience and Preventivi sheet detection",
+        "sha": "d19840e"
+      },
+      {
+        "message": "Fix: Table UI visibility and Strumentale import logic",
+        "sha": "3d8c7e8"
+      },
+      {
+        "message": "Fix: Resolve SettingsPanel NameError, SecretsManager AttributeError, and License Path",
+        "sha": "f894e44"
+      },
+      {
+        "message": "Fix: Resolve license path, text visibility in tables, and table height",
+        "sha": "1f3bce1"
+      },
+      {
+        "message": "Fix: Resolve ModuleNotFoundError and complete Phase 3 UI/UX",
+        "sha": "52b272f"
+      },
+      {
+        "message": "Fix: **ci**: Stabilizza la suite di test e corregge i fallimenti",
+        "sha": "a215a8a"
+      },
+      {
+        "message": "Fix: **ci**: Isola i test di TimbratureStorage e aggiorna .gitignore",
+        "sha": "a835b0e"
+      },
+      {
+        "message": "Fix: Ensure Setup filename uses correct version",
+        "sha": "884bcbf"
+      },
+      {
+        "message": "Fix: Silence noisy debug logs from 3rd party libs",
+        "sha": "e0cf436"
+      },
+      {
+        "message": "Fix: Redirect DB paths to user config dir and add crash logging",
+        "sha": "cf601f8"
+      },
+      {
+        "message": "Fix: **ai**: update Lyra fallback models to available versions",
+        "sha": "84bfaf6"
+      },
+      {
+        "message": "Refactor: final bot directory structure cleanup",
+        "sha": "3f2db04"
+      },
+      {
+        "message": "Refactor: reorganize bots into portale_fornitori folder and fix imports",
+        "sha": "a608446"
+      }
     ]
   }
 ]

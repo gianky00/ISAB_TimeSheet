@@ -213,14 +213,14 @@ class ModernButton(QPushButton):
             style += f"QPushButton {{ border: 1px solid {self._palette.primary}; }}"
 
         # Aggiunge lo stile per QToolTip per evitare che i tooltip ereditati siano in dark mode
-        style += f"""
-      QToolTip {{
+        style += """
+      QToolTip {
         background-color: #FFFFFF;
         color: #212121;
         border: 1px solid #CCCCCC;
         border-radius: 6px;
         padding: 8px 12px;
-      }}
+      }
     """
 
         self.setStyleSheet(style)

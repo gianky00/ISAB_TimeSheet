@@ -21,7 +21,7 @@ class TestAnagraficaPage:
         def mock_start(instance):
             instance.run()
 
-        mocker.patch("src.gui.workers.anagrafica_worker.AnagraficaWorker.start", mock_start)
+        mocker.patch("src.gui.workers.employee_worker.EmployeeWorker.start", mock_start)
 
     @pytest.fixture
     def controller(self):
@@ -53,11 +53,12 @@ class TestAnagraficaPage:
         row_data = [
             "10",
             "ID1",
-            "Rossi",
+            "Rossi Display",
             "Mario",
             "RSSMRA",
             "B01",
             "2020-01-01",
+            "2023-05-23",
             "1990-01-01",
             "2023-01-01",
             "Rossi",

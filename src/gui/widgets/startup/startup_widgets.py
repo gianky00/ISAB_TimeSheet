@@ -6,6 +6,7 @@ Collezione di widget animati utilizzati nella Splash Screen.
 import hashlib
 import math
 import random
+from typing import Any
 
 from PySide6.QtCore import (
     Property,
@@ -558,7 +559,7 @@ class ChangelogTicker(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.notes: list[str] = []
+        self.notes: list[dict[str, str]] = []
         self.current_idx = 0
         self.num_rows = 3
         self.target_positions: list[QPoint] = []
@@ -660,20 +661,28 @@ class ChangelogTicker(QWidget):
         self.positions_initialized = True
         self._show_batch()
 
-    def set_notes(self, notes: list[str]) -> None:
+    def set_notes(self, notes: list[Any]) -> None:
         """Configura le note. L'avvio effettivo avviene in showEvent."""
-        self.notes = [n for n in notes if n.strip()]
+        self.notes = []
+        for n in notes:
+            if isinstance(n, dict) and n.get("message", "").strip():
+                self.notes.append(n)
+            elif isinstance(n, str) and n.strip():
+                self.notes.append({"message": n.strip(), "sha": ""})
+
         if not self.notes:
-            self.notes = ["VERSIONE OTTIMIZZATA - PRONTA ALL'USO"]
+            self.notes = [{"message": "VERSIONE OTTIMIZZATA - PRONTA ALL'USO", "sha": ""}]
         self.current_idx = 0
 
-    def _format_note(self, note: str) -> str:
+    def _format_note(self, note_data: dict[str, str]) -> str:
         """Formatta la nota con tag neon, commit SHA (DNA) e stile premium."""
-        clean = note.strip()
+        clean = note_data.get("message", "").strip()
         lower = clean.lower()
 
-        # Generazione DNA deterministico basato sulla nota (Cyber-Trace)
-        dna = hashlib.sha256(clean.encode()).hexdigest()[:7]
+        # Usa il vero SHA o genera fallback deterministico
+        dna = note_data.get("sha", "")
+        if not dna:
+            dna = hashlib.sha256(clean.encode()).hexdigest()[:7]
 
         c_feat = self.COLORS.get("success_green", "#2ecc71")
         c_fix = self.COLORS.get("error_red", "#e74c3c")

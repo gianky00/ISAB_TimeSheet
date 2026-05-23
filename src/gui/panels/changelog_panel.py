@@ -3,6 +3,8 @@
 Pannello Premium per la visualizzazione dinamica e strutturata delle note di rilascio e novità.
 """
 
+import contextlib
+import hashlib
 import json
 import logging
 import platform
@@ -11,8 +13,17 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Qt, QThread, QTimer, Signal
-from PySide6.QtGui import QColor, QGuiApplication
+from PySide6.QtCore import QEasingCurve, QEvent, QPoint, QPropertyAnimation, Qt, QThread, QTimer, Signal
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QEnterEvent,
+    QGuiApplication,
+    QMouseEvent,
+    QPainter,
+    QPaintEvent,
+    QPen,
+)
 from PySide6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
@@ -28,7 +39,8 @@ from PySide6.QtWidgets import (
 from src.core.config_manager import set_config_value
 from src.core.constants import Icons
 from src.core.version import __version__
-from src.gui.styles import COLORS, SCROLL_AREA_TRANSPARENT, card_style
+from src.gui.styles import COLORS, SCROLL_AREA_TRANSPARENT
+from src.gui.styles.widget_styles import CARD_STYLE
 from src.gui.workers.changelog_worker import ChangelogWorker
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -73,87 +85,220 @@ class DiagnosticsWorker(QThread):
         self.finished.emit(sha, plat)
 
 
-class ReleaseCard(QFrame):
-    """Card grafica associata ad un singolo rilascio di versione.
-
-    Supporta micro-interazioni di sollevamento 3D/bagliore al passaggio del mouse e copia negli appunti.
-
-    Inizializza la classe.
-    """
+class TimelineNode(QWidget):
+    """Nodo della timeline verticale per le card dei rilasci."""
 
     def __init__(
+        self,
+        color: str,
+        is_latest: bool,
+        is_first: bool = False,
+        is_last: bool = False,
+        parent: QWidget | None = None,
+    ) -> None:
+        super().__init__(parent)
+        self.setFixedWidth(40)
+        self.color = QColor(color)
+        self.is_latest = is_latest
+        self.is_first = is_first
+        self.is_last = is_last
+        self.is_hovered = False
+
+    def set_hovered(self, state: bool) -> None:
+        """Imposta lo stato di hover."""
+        self.is_hovered = state
+        self.update()
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        """Disegna il nodo e la timeline."""
+        painter = QPainter(self)
+        try:
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            w = self.width()
+            h = self.height()
+            cx = w / 2.0
+
+            # Disegno del nodo (allineato all'header della card calcolando il padding esterno)
+            node_y = 44
+
+            # Linea verticale (Timeline)
+            pen_line = QPen(QColor(COLORS["border_light"]), 2)
+            painter.setPen(pen_line)
+            start_y = 0 if not self.is_first else node_y
+            end_y = h if not self.is_last else node_y
+            painter.drawLine(int(cx), start_y, int(cx), end_y)
+
+            if self.is_latest or self.is_hovered:
+                glow_radius = 12 if self.is_hovered else 8
+                glow_color = QColor(self.color)
+                glow_color.setAlpha(100 if self.is_hovered else 60)
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.setBrush(QBrush(glow_color))
+                painter.drawEllipse(QPoint(int(cx), node_y), glow_radius, glow_radius)
+
+            node_radius = 5 if (self.is_latest or self.is_hovered) else 4
+            painter.setPen(QPen(self.color, 2))
+            painter.setBrush(QBrush(QColor(COLORS["bg_white"])))
+            painter.drawEllipse(QPoint(int(cx), node_y), node_radius, node_radius)
+        finally:
+            painter.end()
+
+
+class ReleaseCard(QWidget):
+    """Card grafica associata ad un singolo rilascio di versione.
+
+    Supporta layout a timeline, micro-interazioni, e statistiche dinamiche.
+    """
+
+    def __init__(  # noqa: PLR0913
         self,
         release: dict[str, Any],
         is_latest: bool,
         is_next: bool = False,
+        is_first: bool = False,
+        is_last: bool = False,
         parent: QWidget | None = None,
     ) -> None:
+        super().__init__(parent)
         self.release = release
         self.is_latest = is_latest
         self.is_next = is_next
+        self.is_first = is_first
+        self.is_last = is_last
         self.border_color = (
             COLORS["warning_orange"]
             if is_next
             else (COLORS["teal_accent"] if is_latest else COLORS["primary_blue"])
         )
-        self.notes_rows: list[tuple[QWidget, str]] = []  # Memorizza tuple (widget_riga, categoria_stile)
-        super().__init__(parent)
+        self.notes_rows: list[tuple[QWidget, str]] = []
+        self._anim: QPropertyAnimation | None = None
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        """Configura il layout e gli elementi grafici interni della card."""
-        self.setStyleSheet(card_style(self.border_color))
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
 
-        card_layout = QVBoxLayout(self)
+        main_layout = QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        # 1. Timeline Node
+        self.timeline_node = TimelineNode(self.border_color, self.is_latest, self.is_first, self.is_last)
+        main_layout.addWidget(self.timeline_node)
+
+        # 2. Card Content Wrapper per spaziatura
+        card_wrapper = QWidget()
+        wrapper_layout = QVBoxLayout(card_wrapper)
+        wrapper_layout.setContentsMargins(15, 12, 0, 12)
+
+        self.card_frame = QFrame()
+        self.card_frame.setStyleSheet(CARD_STYLE)
+
+        # Effetto Glassmorphism/Hover iniziale
+        self.shadow = QGraphicsDropShadowEffect()
+        self.shadow.setBlurRadius(10)
+        self.shadow.setColor(QColor(0, 0, 0, 20))
+        self.shadow.setOffset(0, 4)
+        self.card_frame.setGraphicsEffect(self.shadow)
+
+        card_layout = QVBoxLayout(self.card_frame)
         card_layout.setContentsMargins(25, 20, 25, 20)
         card_layout.setSpacing(12)
 
         self._setup_header(card_layout)
 
-        # Separatore sottile
-        separator = QFrame()
-        separator.setFixedHeight(1)
-        separator.setStyleSheet(f"background-color: {COLORS['border_light']};")
-        card_layout.addWidget(separator)
+        self.separator = QFrame()
+        self.separator.setFixedHeight(1)
+        self.separator.setStyleSheet(f"background-color: {COLORS['border_light']};")
+        card_layout.addWidget(self.separator)
 
         self._setup_notes(card_layout)
 
+        wrapper_layout.addWidget(self.card_frame)
+        main_layout.addWidget(card_wrapper)
+
+        self.is_expanded = False
+        self.notes_container.setMaximumHeight(0)
+        self.notes_container.hide()
+        self.separator.hide()
+
+    def _count_stats(self) -> dict[str, int]:
+        stats = {"NEW": 0, "FIX": 0, "UPDATE": 0}
+        for note_data in self.release.get("notes", []):
+            note = note_data.get("message", "").lower() if isinstance(note_data, dict) else note_data.lower()
+
+            if note.startswith("feat"):
+                stats["NEW"] += 1
+            elif note.startswith("fix"):
+                stats["FIX"] += 1
+            else:
+                stats["UPDATE"] += 1
+        return stats
+
     def _setup_header(self, card_layout: QVBoxLayout) -> None:
-        """Configura l'header della card con versione, data e pulsante copia."""
         card_header_layout = QHBoxLayout()
         card_header_layout.setSpacing(10)
-
-        # Badge Versione
+        # Badge Versione - Rimossa la stroke per un look più moderno e flat
         version = self.release.get("version", "N/D")
-        version_text = f" Versione v{version} " if not self.is_next else f" In Arrivo v{version} [NEXT] "
+        version_text = f"  v{version}  " if not self.is_next else f"  In Arrivo v{version} [NEXT]  "
         version_badge = QLabel(version_text)
-        version_badge.setStyleSheet(f"""
-            background-color: {self.border_color};
-            color: {COLORS["bg_white"]};
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 800;
-            padding: 4px 8px;
-        """)
 
+        if self.is_latest or self.is_next:
+            bg_css = f"background-color: {self.border_color}; color: {COLORS['bg_white']}; border: none;"
+        else:
+            bg_css = f"background-color: {COLORS['bg_white']}; color: {self.border_color}; border: none; font-size: 15px;"
+
+        version_badge.setStyleSheet(f"""
+            {bg_css}
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 900;
+            padding: 4px 6px;
+        """)
         card_header_layout.addWidget(version_badge)
 
-        # Data Rilascio
+        # Smart Header: Statistiche
+        stats = self._count_stats()
+        stats_layout = QHBoxLayout()
+        stats_layout.setSpacing(6)
+
+        if stats["NEW"] > 0:
+            lbl = QLabel(f"🚀 {stats['NEW']} Feature")
+            lbl.setStyleSheet(
+                f"color: {COLORS['success_dark']}; font-size: 11px; font-weight: 800; background: {COLORS['bg_success_pastel']}; padding: 4px 8px; border-radius: 6px;"
+            )
+            stats_layout.addWidget(lbl)
+        if stats["FIX"] > 0:
+            lbl = QLabel(f"🐛 {stats['FIX']} Fix")
+            lbl.setStyleSheet(
+                f"color: {COLORS['error_red']}; font-size: 11px; font-weight: 800; background: {COLORS['bg_error_pastel']}; padding: 4px 8px; border-radius: 6px;"
+            )
+            stats_layout.addWidget(lbl)
+        if stats["UPDATE"] > 0:
+            lbl = QLabel(f"🔄 {stats['UPDATE']} Update")
+            lbl.setStyleSheet(
+                f"color: {COLORS['primary_blue']}; font-size: 11px; font-weight: 800; background: {COLORS['bg_info_pastel']}; padding: 4px 8px; border-radius: 6px;"
+            )
+            stats_layout.addWidget(lbl)
+
+        card_header_layout.addLayout(stats_layout)
+
+        card_header_layout.addStretch()
+
+        # Data Rilascio spostata a destra
         if not self.is_next:
             date_raw = self.release.get("date", "N/D")
-            # Conversione data formato da YYYY-MM-DD a GG/MM/AAAA
             if len(date_raw) == 10 and date_raw[4] == "-" and date_raw[7] == "-":
                 parts = date_raw.split("-")
                 date = f"{parts[2]}/{parts[1]}/{parts[0]}"
             else:
                 date = date_raw
-            date_lbl = QLabel(f"Rilasciato il:  {date}")
-            date_lbl.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 13px; font-weight: 500;")
+            date_lbl = QLabel(f"{date}")
+            date_lbl.setStyleSheet(
+                f"color: {COLORS['text_secondary']}; font-size: 12px; font-weight: 600; letter-spacing: 1px;"
+            )
             card_header_layout.addWidget(date_lbl)
 
-        card_header_layout.addStretch()
-
-        # Pulsante Copia (Clipboard Integration)
+        # Pulsante Copia
         if not self.is_next:
             self.copy_btn = QPushButton()
             self.copy_btn.setFixedSize(28, 28)
@@ -169,7 +314,6 @@ class ReleaseCard(QFrame):
                     border-color: {self.border_color};
                 }}
             """)
-
             self.copy_btn.setIcon(get_colored_icon(get_asset_path(Icons.COPY), COLORS["text_secondary"]))
             self.copy_btn.setToolTip("Copia note negli appunti")
             self.copy_btn.clicked.connect(self._copy_to_clipboard)
@@ -178,23 +322,46 @@ class ReleaseCard(QFrame):
         card_layout.addLayout(card_header_layout)
 
     def _setup_notes(self, card_layout: QVBoxLayout) -> None:
-        """Configura l'elenco delle note e le aggiunge al layout."""
-        notes_container = QWidget()
-        notes_container.setStyleSheet("background: transparent; border: none;")
-        notes_layout = QVBoxLayout(notes_container)
+        self.notes_container = QWidget()
+        self.notes_container.setStyleSheet("background: transparent; border: none;")
+        notes_layout = QVBoxLayout(self.notes_container)
         notes_layout.setContentsMargins(5, 5, 5, 5)
-        notes_layout.setSpacing(10)
+        notes_layout.setSpacing(12)
 
         notes = self.release.get("notes", [])
-        for note in notes:
+        for note_data in notes:
+            if isinstance(note_data, dict):
+                note = note_data.get("message", "")
+                sha = note_data.get("sha", "")
+                if not sha:
+                    sha = hashlib.sha256(note.encode("utf-8")).hexdigest()[:7]
+            else:
+                note = note_data
+                sha = hashlib.sha256(note.encode("utf-8")).hexdigest()[:7]
+
             note_row = QWidget()
             note_row.setStyleSheet("background: transparent; border: none;")
             note_row_layout = QHBoxLayout(note_row)
             note_row_layout.setContentsMargins(0, 0, 0, 0)
-            note_row_layout.setSpacing(8)
+            note_row_layout.setSpacing(10)
 
             category_label, category_style_type = self._parse_note_category(note)
             clean_text = self._clean_note_text(note)
+
+            # Design del Commit SHA migliorato
+            sha_lbl = QLabel(f" 🔀 {sha} ")
+            sha_lbl.setStyleSheet(f"""
+                color: {COLORS["text_secondary"]};
+                background-color: {COLORS["bg_light"]};
+                font-family: Consolas, monospace;
+                font-size: 11px;
+                font-weight: bold;
+                padding: 3px 6px;
+                border-radius: 10px;
+                border: 1px solid {COLORS["border_light"]};
+            """)
+            sha_lbl.setFixedHeight(22)
+            note_row_layout.addWidget(sha_lbl)
 
             # Pillola Categoria
             pill = self._create_pill(category_label, category_style_type)
@@ -203,13 +370,73 @@ class ReleaseCard(QFrame):
             # Testo
             note_text_lbl = QLabel(clean_text)
             note_text_lbl.setWordWrap(True)
-            note_text_lbl.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 13px; line-height: 1.4;")
+            note_text_lbl.setStyleSheet(
+                f"color: {COLORS['text_dark']}; font-size: 13px; line-height: 1.5; font-weight: 500;"
+            )
             note_row_layout.addWidget(note_text_lbl, 1)
 
             notes_layout.addWidget(note_row)
             self.notes_rows.append((note_row, category_style_type))
 
-        card_layout.addWidget(notes_container)
+        card_layout.addWidget(self.notes_container)
+
+    def enterEvent(self, event: QEnterEvent) -> None:
+        """Gestisce l'evento di entrata del mouse."""
+        self.timeline_node.set_hovered(True)
+        self.shadow.setBlurRadius(20)
+        self.shadow.setOffset(0, 6)
+        self.shadow.setColor(QColor(self.border_color).darker(150))
+        super().enterEvent(event)
+
+    def leaveEvent(self, event: QEvent) -> None:
+        """Gestisce l'evento di uscita del mouse."""
+        self.timeline_node.set_hovered(False)
+        self.shadow.setBlurRadius(10)
+        self.shadow.setOffset(0, 4)
+        self.shadow.setColor(QColor(0, 0, 0, 20))
+        self.card_frame.setStyleSheet(CARD_STYLE)
+        super().leaveEvent(event)
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        """Gestisce il click del mouse per espandere."""
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._toggle_expansion()
+        super().mousePressEvent(event)
+
+    def _toggle_expansion(self) -> None:
+        self.is_expanded = not self.is_expanded
+
+        if self._anim:
+            self._anim.stop()
+
+        self._anim = QPropertyAnimation(self.notes_container, b"maximumHeight")
+        self._anim.setDuration(300)
+        self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        if self.is_expanded:
+            self.notes_container.show()
+            self.separator.show()
+            # Calcola l'altezza necessaria
+            self.notes_container.adjustSize()
+            target_h = self.notes_container.sizeHint().height()
+
+            self._anim.setStartValue(0)
+            self._anim.setEndValue(target_h + 20)  # Un po' di margine
+        else:
+            current_h = self.notes_container.height()
+            self._anim.setStartValue(current_h)
+            self._anim.setEndValue(0)
+            self._anim.finished.connect(self._on_collapse_finished)
+            self.separator.hide()
+
+        self._anim.start()
+
+    def _on_collapse_finished(self) -> None:
+        if not self.is_expanded:
+            self.notes_container.hide()
+            with contextlib.suppress(Exception):
+                if self._anim:
+                    self._anim.finished.disconnect(self._on_collapse_finished)
 
     def _parse_note_category(self, note: str) -> tuple[str, str]:
         """Esegue il parsing della nota e restituisce l'etichetta e lo stile della categoria."""
@@ -310,20 +537,6 @@ class ReleaseCard(QFrame):
 
         self.hide()
         return False
-
-    def enterEvent(self, event: Any) -> None:
-        """Applica l'effetto 3D di sollevamento e bagliore neon al passaggio del mouse."""
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(15)
-        shadow.setColor(QColor(self.border_color))
-        shadow.setOffset(0, 4)
-        self.setGraphicsEffect(shadow)
-        super().enterEvent(event)
-
-    def leaveEvent(self, event: Any) -> None:
-        """Rimuove l'effetto di sollevamento e bagliore neon all'uscita del mouse."""
-        self.setGraphicsEffect(None)  # type: ignore[arg-type]
-        super().leaveEvent(event)
 
 
 class ChangelogPanel(QWidget):
@@ -467,7 +680,7 @@ class ChangelogPanel(QWidget):
         self.scroll_content.setStyleSheet("background-color: transparent;")
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_layout.setContentsMargins(40, 15, 40, 30)
-        self.scroll_layout.setSpacing(25)
+        self.scroll_layout.setSpacing(0)
 
         self.scroll_area.setWidget(self.scroll_content)
         layout.addWidget(self.scroll_area)
@@ -676,56 +889,11 @@ class ChangelogPanel(QWidget):
         row_widget.setStyleSheet("background: transparent; border: none;")
         row_layout = QHBoxLayout(row_widget)
         row_layout.setContentsMargins(0, 0, 0, 0)
-        row_layout.setSpacing(20)
+        row_layout.setSpacing(0)
 
-        # 1. Indicatore Timeline (Linea + LED)
-        timeline_widget = QWidget()
-        timeline_widget.setFixedWidth(40)
-        timeline_widget.setStyleSheet("background: transparent; border: none;")
-        timeline_layout = QVBoxLayout(timeline_widget)
-        timeline_layout.setContentsMargins(0, 0, 0, 0)
-        timeline_layout.setSpacing(0)
-        timeline_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-        # Linea Superiore
-        top_line = QFrame()
-        top_line.setFixedWidth(2)
-        if is_first:
-            top_line.setStyleSheet("background: transparent;")
-        else:
-            top_line.setStyleSheet(f"background-color: {COLORS['border_light']};")
-        timeline_layout.addWidget(top_line, 1)
-
-        # LED circolare
-        led = QFrame()
-        led.setFixedSize(14, 14)
-        led_color = (
-            COLORS["warning_orange"]
-            if is_next
-            else (COLORS["teal_accent"] if is_latest else COLORS["primary_blue"])
-        )
-        led.setStyleSheet(f"""
-            background-color: {led_color};
-            border: 2px solid {COLORS["bg_white"]};
-            border-radius: 7px;
-        """)
-
-        timeline_layout.addWidget(led, 0, Qt.AlignmentFlag.AlignCenter)
-
-        # Linea Inferiore
-        bottom_line = QFrame()
-        bottom_line.setFixedWidth(2)
-        if is_last:
-            bottom_line.setStyleSheet("background: transparent;")
-        else:
-            bottom_line.setStyleSheet(f"background-color: {COLORS['border_light']};")
-        timeline_layout.addWidget(bottom_line, 1)
-
-        row_layout.addWidget(timeline_widget)
-
-        # 2. Card di rilascio
-        card = ReleaseCard(release, is_latest, is_next)
-        row_layout.addWidget(card, 1)
+        # 2. Card di rilascio (Contiene già il nodo della timeline integrato)
+        card = ReleaseCard(release, is_latest, is_next, is_first, is_last)
+        row_layout.addWidget(card)
 
         self.scroll_layout.addWidget(row_widget)
         self.release_rows.append((row_widget, card))

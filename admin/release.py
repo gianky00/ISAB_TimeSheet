@@ -336,17 +336,23 @@ def update_json_changelog(version: str, git_bin: str) -> None:
     if last_tag:
         with contextlib.suppress(Exception):
             logs_res = subprocess.run(
-                [git_bin, "log", f"{last_tag}..HEAD", "--pretty=format:%s"],
+                [git_bin, "log", f"{last_tag}..HEAD", "--pretty=format:%h|%s"],
                 cwd=ROOT_DIR,
                 capture_output=True,
                 text=True,
                 check=False,
             )
             logs = logs_res.stdout.splitlines()
-            notes = [line.strip() for line in logs if line.strip()]
+            for line in logs:
+                if line.strip():
+                    if "|" in line:
+                        sha, msg = line.split("|", 1)
+                        notes.append({"sha": sha.strip(), "message": msg.strip()})
+                    else:
+                        notes.append({"message": line.strip(), "sha": ""})
 
     if not notes:
-        notes = [f"Aggiornamenti e ottimizzazioni di stabilità per la versione v{version}"]
+        notes = [{"message": f"Aggiornamenti e ottimizzazioni di stabilità per la versione v{version}", "sha": ""}]
 
     # Carica il file JSON esistente
     changelog_data = []
