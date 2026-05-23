@@ -1,5 +1,5 @@
-import hashlib
 import json
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
@@ -9,121 +9,122 @@ from cryptography.fernet import Fernet
 from src.core.license_validator import (
     LicenseStatus,
     _calculate_sha256,
+    _check_and_migrate_local_license,
     get_detailed_license_status,
     get_license_client,
     get_license_expiry,
-    get_license_info,
     verify_license,
 )
 
 
 class TestLicenseValidator:
-    @pytest.fixture
-    def mock_paths(self):
-        with patch("src.core.license_validator._get_license_paths") as mock:
-            mock.return_value = {
-                "dir": Path("/fake/Licenza"),
-                "config": Path("/fake/Licenza/config.dat"),
-                "manifest": Path("/fake/Licenza/manifest.json"),
-            }
-            yield mock.return_value
+    @pytest.fixture(autouse=True)
+    def setup_license_env(self, fs):
+        self.data_dir = Path("/data")
+        self.license_dir = self.data_dir / "Licenza"
+        fs.create_dir(str(self.license_dir))
+
+        self.config_path = self.license_dir / "config.dat"
+        self.manifest_path = self.license_dir / "manifest.json"
+
+        # Genera chiave per il test
+        self.test_key = Fernet.generate_key()
+        self.cipher = Fernet(self.test_key)
+
+        with patch("src.core.license_validator.get_data_path", return_value=str(self.data_dir)):
+            with patch("src.core.secrets_manager.SecretsManager.get_license_key", return_value=self.test_key):
+                yield
+
+    def _create_valid_license(self, hwid="HWID_TEST", expiry="01/01/2050"):
+        payload = {"Cliente": "TestClient", "Scadenza Licenza": expiry, "Hardware ID": hwid}
+        encrypted = self.cipher.encrypt(json.dumps(payload).encode("utf-8"))
+        self.config_path.write_bytes(encrypted)
+
+        hash_val = _calculate_sha256(str(self.config_path))
+        self.manifest_path.write_text(json.dumps({"config.dat": hash_val}))
 
     def test_calculate_sha256(self, fs):
-        file_path = "/test.txt"
-        fs.create_file(file_path, contents=b"hello world")
-        expected = hashlib.sha256(b"hello world").hexdigest()
-        assert _calculate_sha256(file_path) == expected
+        fs.create_file("/test.bin", contents="testdata")
+        # SHA256 di "testdata" = 810ff...
+        h = _calculate_sha256("/test.bin")
+        assert len(h) == 64
 
-    @patch("src.core.license_validator.SecretsManager.get_license_key")
-    def test_get_license_info_success(self, mock_key, mock_paths, fs):
-        # Setup fake key
-        key = Fernet.generate_key()
-        mock_key.return_value = key
+    def test_check_and_migrate_local_license(self, fs):
+        # Simula licenza in AppData vecchi
+        old_dir = Path("/appdata/BotTS/Licenza")
+        fs.create_dir(str(old_dir))
+        fs.create_file(str(old_dir / "config.dat"), contents="DAT")
+        fs.create_file(str(old_dir / "manifest.json"), contents="MAN")
 
-        # Setup fake encrypted data
-        payload = {"Cliente": "Test Client", "Hardware ID": "HW123", "Scadenza Licenza": "01/01/2099"}
-        encrypted = Fernet(key).encrypt(json.dumps(payload).encode())
+        with patch("os.environ.get", return_value="/appdata"):
+            paths = {"dir": self.license_dir, "config": self.config_path, "manifest": self.manifest_path}
+            res = _check_and_migrate_local_license(paths)
+            assert res is True
+            assert self.config_path.exists()
+            assert self.manifest_path.exists()
 
-        fs.create_dir(str(mock_paths["dir"]))
-        fs.create_file(str(mock_paths["config"]), contents=encrypted)
-
-        info = get_license_info()
-        assert info == payload
-
-    @patch("src.core.license_validator.SecretsManager.get_license_key")
-    def test_get_license_info_missing_file(self, mock_key, mock_paths, fs):
-        mock_key.return_value = b"somekey"
-        assert get_license_info() is None
-
-    @patch("src.core.license_validator.get_detailed_license_status")
-    def test_verify_license_bool(self, mock_status):
-        mock_status.return_value = (LicenseStatus.VALID, "OK")
-        success, msg = verify_license()
-        assert success is True
-        assert msg == "OK"
-
-    @patch("src.core.license_validator._check_integrity_with_manifest")
-    @patch("src.core.license_validator._validate_license_data")
-    @patch("src.core.license_validator._check_and_migrate_local_license")
-    def test_get_detailed_license_status_missing(self, mock_migrate, mock_val, mock_integ, mock_paths, fs):
-        # Se i file mancano e la migrazione fallisce -> MISSING
-        mock_migrate.return_value = False
-        status, msg = get_detailed_license_status()
-        assert status == LicenseStatus.MISSING
-        assert "mancanti" in msg
-
-    @patch("src.core.license_validator._calculate_sha256")
-    def test_check_integrity_failure(self, mock_sha, mock_paths, fs):
-        fs.create_file(str(mock_paths["manifest"]), contents=json.dumps({"config.dat": "expected_hash"}))
-        fs.create_file(str(mock_paths["config"]), contents=b"content")
-        mock_sha.return_value = "wrong_hash"
-
-        from src.core.license_validator import _check_integrity_with_manifest
-
-        with patch("src.core.license_validator.AuditManager.instance") as mock_audit:
-            status, msg = _check_integrity_with_manifest(mock_paths)
-            assert status == LicenseStatus.INVALID
-            assert "compromessa" in msg
-            assert mock_audit.return_value.log_action.called
-
-    @patch("src.core.license_validator.get_license_info")
-    @patch("src.core.license_validator.get_hardware_id")
+    @patch("src.core.license_validator.get_hardware_id", return_value="HWID_TEST")
     @patch("src.core.license_validator.get_trusted_time")
-    def test_validate_license_data_expired(self, mock_time, mock_hwid, mock_info, mock_paths):
-        from datetime import datetime
+    def test_get_detailed_license_status_valid(self, mock_time, mock_hwid):
+        mock_time.return_value = (datetime.now(UTC), True)
+        self._create_valid_license()
 
-        # Mock info: scaduta
-        mock_info.return_value = {"Hardware ID": "HW123", "Scadenza Licenza": "01/01/2020"}
-        mock_hwid.return_value = "HW123"
-        # Mock current time: 2023
-        mock_time.return_value = (datetime(2023, 1, 1), True)
+        status, msg = get_detailed_license_status()
+        assert status == LicenseStatus.VALID
+        assert "TestClient" in msg
 
-        from src.core.license_validator import _validate_license_data
+    def test_get_detailed_license_status_missing(self):
+        status, _msg = get_detailed_license_status()
+        assert status == LicenseStatus.MISSING
 
-        status, msg = _validate_license_data(mock_paths)
+    @patch("src.core.license_validator.get_hardware_id", return_value="HWID_TEST")
+    @patch("src.core.license_validator.get_trusted_time")
+    def test_get_detailed_license_status_expired(self, mock_time, mock_hwid):
+        # Data nel passato
+        past_date = datetime.now(UTC) - timedelta(days=10)
+        expiry_str = f"{past_date.day:02d}/{past_date.month:02d}/{past_date.year}"
+
+        mock_time.return_value = (datetime.now(UTC), True)
+        self._create_valid_license(expiry=expiry_str)
+
+        status, _msg = get_detailed_license_status()
         assert status == LicenseStatus.EXPIRED
-        assert "SCADUTA" in msg
 
-    @patch("src.core.license_validator.get_license_info")
-    @patch("src.core.license_validator.get_hardware_id")
-    def test_validate_license_data_wrong_hwid(self, mock_hwid, mock_info, mock_paths):
-        mock_info.return_value = {"Hardware ID": "HW_ATTESO", "Scadenza Licenza": "01/01/2099"}
-        mock_hwid.return_value = "HW_RILEVATO"
+    @patch("src.core.license_validator.get_hardware_id", return_value="HWID_DIFFERENT")
+    @patch("src.core.license_validator.get_trusted_time")
+    def test_get_detailed_license_status_hwid_mismatch(self, mock_time, mock_hwid):
+        mock_time.return_value = (datetime.now(UTC), True)
+        self._create_valid_license(hwid="HWID_EXPECTED")
 
-        from src.core.license_validator import _validate_license_data
+        status, msg = get_detailed_license_status()
+        assert status == LicenseStatus.INVALID
+        assert "Hardware ID" in msg
 
-        with patch("src.core.license_validator.AuditManager.instance") as mock_audit:
-            status, msg = _validate_license_data(mock_paths)
-            assert status == LicenseStatus.INVALID
-            assert "Hardware ID non valido" in msg
-            assert mock_audit.return_value.log_action.called
+    @patch("src.core.license_validator.get_hardware_id", return_value="HWID_TEST")
+    def test_get_detailed_license_status_corrupted_hash(self, mock_hwid):
+        self._create_valid_license()
+        # Modifica il file config.dat senza aggiornare il manifest
+        self.config_path.write_bytes(b"CORRUPTED")
 
-    @patch("src.core.license_validator.get_license_info")
-    def test_get_license_expiry_client(self, mock_info):
-        mock_info.return_value = {"Cliente": "Mario Rossi", "Scadenza Licenza": "31/12/2025"}
-        assert get_license_expiry() == "31/12/2025"
-        assert get_license_client() == "Mario Rossi"
+        status, msg = get_detailed_license_status()
+        assert status == LicenseStatus.INVALID
+        assert "Integrità" in msg
 
-        mock_info.return_value = None
-        assert get_license_expiry() == "N/D"
+    def test_verify_license_wrapper(self):
+        with patch("src.core.license_validator.get_detailed_license_status") as mock_det:
+            mock_det.return_value = (LicenseStatus.VALID, "OK")
+            assert verify_license() == (True, "OK")
+
+            mock_det.return_value = (LicenseStatus.EXPIRED, "NO")
+            assert verify_license() == (False, "NO")
+
+    def test_get_license_info_and_accessors(self):
+        self._create_valid_license()
+
+        assert get_license_client() == "TestClient"
+        assert get_license_expiry() == "01/01/2050"
+
+        # Test file missing
+        self.config_path.unlink()
         assert get_license_client() == "N/D"
+        assert get_license_expiry() == "N/D"

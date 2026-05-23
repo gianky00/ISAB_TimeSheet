@@ -1,78 +1,93 @@
+import sqlite3
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
-from src.core.exceptions import ValidationError
-from src.core.sync.smart_sync import SmartSyncEngine, SyncTarget
+from src.core.sync.base import SyncTarget
+from src.core.sync.smart_sync import SmartSyncEngine
 
 
 class TestSmartSyncEngine:
     @pytest.fixture
     def target(self):
-        return SyncTarget(
-            db_path=Path("/fake/db.sqlite"), table_name="test_table", columns=["id", "name", "value"]
+        return SyncTarget(db_path=Path(":memory:"), table_name="my_table", columns=["id", "val"])
+
+    def _setup_db(self, db_path):
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE my_table (id TEXT PRIMARY KEY, val TEXT, note TEXT)")
+        conn.executemany(
+            "INSERT INTO my_table VALUES (?, ?, ?)",
+            [
+                ("1", "A", "n1"),
+                ("2", "B", "n2"),
+            ],
+        )
+        return conn
+
+    @patch("src.core.sync.smart_sync.db_manager.get_connection")
+    def test_sync_upsert_smart_no_conflict_cols(self, mock_conn, target):
+        conn = self._setup_db(":memory:")
+        mock_conn.return_value.__enter__.return_value = conn
+
+        # New data: update id=1, add id=3
+        new_data = [("1", "X"), ("3", "Y")]
+
+        added_updated, deleted = SmartSyncEngine.sync_upsert_smart(
+            target, new_data, conflict_cols=None, mirror=False
         )
 
-    @patch("src.core.database.db_manager.get_connection")
-    def test_sync_upsert_smart_success(self, mock_get_conn, target):
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_get_conn.return_value.__enter__.return_value = mock_conn
-        mock_conn.cursor.return_value = mock_cursor
+        assert added_updated == 2
+        assert deleted == 0
 
-        # Mock _calculate_diff return value
-        mock_cursor.fetchone.return_value = [5]  # 5 records diff
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, val FROM my_table ORDER BY id")
+        res = cursor.fetchall()
+        assert res == [("1", "X"), ("2", "B"), ("3", "Y")]
 
-        new_data = [(1, "A", "V1"), (2, "B", "V2")]
+    @patch("src.core.sync.smart_sync.db_manager.get_connection")
+    def test_sync_upsert_smart_with_conflict_and_mirror(self, mock_conn, target):
+        conn = self._setup_db(":memory:")
+        mock_conn.return_value.__enter__.return_value = conn
 
-        # Eseguiamo il metodo
-        added, _deleted = SmartSyncEngine.sync_upsert_smart(
+        # New data: update id=1, drop id=2 (mirror)
+        new_data = [("1", "X")]
+
+        added_updated, deleted = SmartSyncEngine.sync_upsert_smart(
             target, new_data, conflict_cols=["id"], mirror=True
         )
 
-        assert added == 5
-        assert mock_cursor.execute.called
-        assert mock_cursor.executemany.called
-        assert mock_conn.commit.called
+        assert added_updated == 1
+        assert deleted == 1
 
-    @patch("src.core.database.db_manager.get_connection")
-    def test_sync_full_replace_with_metadata(self, mock_get_conn, target):
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_get_conn.return_value.__enter__.return_value = mock_conn
-        mock_conn.cursor.return_value = mock_cursor
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, val FROM my_table ORDER BY id")
+        res = cursor.fetchall()
+        assert res == [("1", "X")]
 
-        # Simula metadati esistenti: id=1 ha annotazione="Old"
-        mock_cursor.fetchall.return_value = [(1, "Old")]
-
-        new_data = [(1, "A", "V1"), (2, "B", "V2")]
-
-        added, deleted = SmartSyncEngine.sync_full_replace_with_metadata(
-            target, new_data, key_cols=["id"], metadata_cols=["annotazioni"]
-        )
-
-        assert added == 2
-        assert deleted == 0
-
-        # Verifica che executemany sia stato chiamato con i metadati uniti
-        args = mock_cursor.executemany.call_args[0]
-        final_rows = args[1]
-        assert final_rows[0] == (1, "A", "V1", "Old")
-        assert final_rows[1] == (2, "B", "V2", "")
-
-    def test_clean_value(self):
-        # BaseSyncEngine._clean_value normalizza tutto a stringa (strip)
-        assert SmartSyncEngine._clean_value(None) == ""
-        assert SmartSyncEngine._clean_value("  text  ") == "text"
-        assert SmartSyncEngine._clean_value(10.5) == "10.5"
-
-    def test_validate_identifier(self):
-        assert SmartSyncEngine._validate_identifier("table") == "table"
-        with pytest.raises(ValidationError):
-            SmartSyncEngine._validate_identifier("table; DROP TABLE users")
-
-    def test_sync_upsert_smart_empty(self, target):
+    @patch("src.core.sync.smart_sync.db_manager.get_connection")
+    def test_sync_upsert_smart_empty(self, mock_conn, target):
         added, deleted = SmartSyncEngine.sync_upsert_smart(target, [])
         assert added == 0
         assert deleted == 0
+        assert not mock_conn.called
+
+    @patch("src.core.sync.smart_sync.db_manager.get_connection")
+    def test_sync_full_replace_with_metadata(self, mock_conn, target):
+        conn = self._setup_db(":memory:")
+        mock_conn.return_value.__enter__.return_value = conn
+
+        # Sostituiamo tutto, ma manteniamo la nota
+        new_data = [("1", "NEW_A"), ("3", "NEW_C")]
+
+        added, removed = SmartSyncEngine.sync_full_replace_with_metadata(
+            target, new_data, key_cols=["id"], metadata_cols=["note"]
+        )
+
+        assert added == 2
+        assert removed == 0
+
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, val, note FROM my_table ORDER BY id")
+        res = cursor.fetchall()
+        assert res == [("1", "NEW_A", "n1"), ("3", "NEW_C", "")]

@@ -181,7 +181,7 @@ class DonCiroEngine(QObject):
 
         self.physics_updated.emit()
 
-    def trigger_turn(self, target_angle: float) -> None:
+    def trigger_turn(self, _target_angle: float) -> None:
         """Segnala la necessit  di ruotare."""
         self._state = DonState.TURNING
         self.state_changed.emit(self._state)

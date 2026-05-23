@@ -1,34 +1,46 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from src.core.oda_manager import OdaManager
 
 
 class TestOdaManager:
-    @patch("src.core.database.repositories.OdaRepository.get_all")
-    def test_get_all_oda_search_date_conversion(self, mock_get_all):
-        """Verifica la delega al repository per la ricerca OdA."""
-        mock_get_all.return_value = []
+    @patch("src.core.oda_manager.OdaRepository.get_all")
+    def test_get_all_oda(self, mock_get):
+        mock_get.return_value = [("1", "2023-01-01")]
+        res = OdaManager.get_all_oda(search_text="test")
+        assert len(res) == 1
+        mock_get.assert_called_with("test", as_objects=False)
 
-        # Caso 1: Ricerca testuale semplice
-        OdaManager.get_all_oda("12345")
-        mock_get_all.assert_called_with("12345", as_objects=False)
-
-        # Caso 2: Ricerca per data
-        OdaManager.get_all_oda("21/03/2026")
-        mock_get_all.assert_called_with("21/03/2026", as_objects=False)
-
-    @patch("src.core.oda_manager.Pipeline.run")
-    def test_import_oda_from_excel_failure(self, mock_pipeline_run):
-        """Verifica gestione errore se l'importer Excel fallisce."""
-        mock_pipeline_run.return_value = {
-            "success": False,
-            "message": "File Corrotto",
-            "total_added": 0,
-            "total_removed": 0,
+    @patch("src.core.oda_manager.Pipeline")
+    @patch("src.core.oda_manager.SyncTracker.update_status")
+    def test_import_oda_from_excel_success(self, mock_sync, mock_pipeline):
+        mock_p = MagicMock()
+        mock_p.run.return_value = {
+            "success": True,
+            "total_added": 10,
+            "total_removed": 2,
+            "message": "Import OK",
         }
+        mock_pipeline.return_value = mock_p
 
-        success, msg, added, _removed = OdaManager.import_oda_from_excel("fake.xlsx")
+        success, _msg, added, removed = OdaManager.import_oda_from_excel("oda.xlsx")
 
+        assert success is True
+        assert added == 10
+        assert removed == 2
+        assert mock_sync.called
+
+    @patch("src.core.oda_manager.Pipeline")
+    def test_import_oda_from_excel_failure(self, mock_pipeline):
+        mock_p = MagicMock()
+        mock_p.run.return_value = {"success": False, "message": "File error"}
+        mock_pipeline.return_value = mock_p
+
+        success, msg, _added, _removed = OdaManager.import_oda_from_excel("oda.xlsx")
         assert success is False
-        assert msg == "File Corrotto"
-        assert added == 0
+        assert msg == "File error"
+
+    @patch("src.core.oda_manager.db_manager.init_db")
+    def test_init_db(self, mock_init):
+        OdaManager.init_db()
+        assert mock_init.called

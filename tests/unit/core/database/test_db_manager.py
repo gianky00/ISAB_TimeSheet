@@ -1,59 +1,89 @@
 import sqlite3
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from src.core.database.manager import DatabaseManager
 
 
-@pytest.fixture
-def temp_db(tmp_path):
-    return tmp_path / "test.db"
+class TestDatabaseManager:
+    @pytest.fixture(autouse=True)
+    def setup_db(self, tmp_path):
+        DatabaseManager._instance = None
+        self.db_path = tmp_path / "test.db"
+        self.manager = DatabaseManager()
 
+    def test_get_connection_wal_mode(self):
+        with self.manager.get_connection(self.db_path) as conn:
+            # Verifica WAL mode
+            res = conn.execute("PRAGMA journal_mode").fetchone()
+            assert res[0].lower() == "wal"
+            # Verifica FK
+            res = conn.execute("PRAGMA foreign_keys").fetchone()
+            assert res[0] == 1
 
-def test_database_manager_singleton():
-    db1 = DatabaseManager()
-    db2 = DatabaseManager()
-    assert db1 is db2
+    def test_get_connection_read_only(self):
+        # Crea il DB prima
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute("CREATE TABLE t (id INT)")
 
+        with self.manager.get_connection(self.db_path, read_only=True) as conn:
+            with pytest.raises(sqlite3.OperationalError):
+                conn.execute("INSERT INTO t VALUES (1)")
 
-def test_get_connection(temp_db):
-    db = DatabaseManager()
-    with db.get_connection(temp_db) as conn:
-        assert isinstance(conn, sqlite3.Connection)
-        conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY)")
-        conn.commit()
+    def test_get_write_connection_lock(self):
+        with self.manager.get_write_connection(self.db_path) as conn:
+            assert DatabaseManager._write_lock.locked()
+            conn.execute("CREATE TABLE t (id INT)")
+        assert not DatabaseManager._write_lock.locked()
 
-    with db.get_connection(temp_db, read_only=True) as conn:
-        assert isinstance(conn, sqlite3.Connection)
-        res = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='test'").fetchone()
-        assert res is not None
+    def test_execute_query_success(self):
+        with self.manager.get_connection(self.db_path) as conn:
+            conn.execute("CREATE TABLE t (id INT, val TEXT)")
+            conn.execute("INSERT INTO t VALUES (1, 'A'), (2, 'B')")
 
+        rows = self.manager.execute_query(self.db_path, "SELECT * FROM t WHERE id = ?", (1,))
+        assert len(rows) == 1
+        assert rows[0]["val"] == "A"
 
-def test_execute_query(temp_db):
-    db = DatabaseManager()
-    with db.get_connection(temp_db) as conn:
-        conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY, val TEXT)")
-        conn.execute("INSERT INTO test (val) VALUES (?)", ("test_val",))
+    def test_execute_query_retry_on_locked(self):
+        # Simula blocco DB
+        with patch("src.core.database.manager.sqlite3.connect") as mock_conn:
+            mock_conn.side_effect = [
+                sqlite3.OperationalError("database is locked"),
+                sqlite3.OperationalError("database is locked"),
+                MagicMock(),  # Terzo tentativo ok
+            ]
 
-    results = db.execute_query(temp_db, "SELECT * FROM test")
-    assert len(results) == 1
-    assert results[0]["val"] == "test_val"
+            # Setup mock cursor for the 3rd attempt
+            mock_cursor = mock_conn.return_value.execute.return_value
+            mock_cursor.fetchall.return_value = []
 
+            # Ridurre sleep per velocità test
+            with patch("src.core.database.manager.time.sleep"):
+                self.manager.execute_query(self.db_path, "SELECT 1")
 
-def test_migrations_logic(tmp_path):
-    db = DatabaseManager()
-    db_path = tmp_path / "migration.db"
+            assert mock_conn.call_count == 3
 
-    # Mock migration
-    def mig_v1(conn):
-        conn.execute("CREATE TABLE users (id INTEGER)")
+    def test_migrations_logic(self):
+        # Setup finto dizionario migrazioni
+        mock_mig = MagicMock()
+        migrations = {1: mock_mig}
 
-    migrations = {1: mig_v1}
+        # Esegui migrazione
+        self.manager._run_migrations(self.db_path, migrations, "TestDB")
 
-    db._run_migrations(db_path, migrations, "TestDB")
+        assert mock_mig.called
+        # Verifica versione salvata
+        with self.manager.get_connection(self.db_path) as conn:
+            assert self.manager._get_db_version(conn) == 1
 
-    with db.get_connection(db_path) as conn:
-        ver = db._get_db_version(conn)
-        assert ver == 1
-        res = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'").fetchone()
-        assert res is not None
+        # Seconda esecuzione non deve chiamare migrazioni già fatte
+        mock_mig.reset_mock()
+        self.manager._run_migrations(self.db_path, migrations, "TestDB")
+        assert not mock_mig.called
+
+    def test_db_version_helpers(self):
+        with self.manager.get_connection(self.db_path) as conn:
+            self.manager._set_db_version(conn, 5)
+            assert self.manager._get_db_version(conn) == 5

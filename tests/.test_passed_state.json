@@ -1,5 +1,0 @@
-{
-  "passed": [
-    "tests/unit/core/test_excel_importer_facade.py"
-  ]
-}

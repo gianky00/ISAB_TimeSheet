@@ -479,6 +479,12 @@ def run_git_operations(
         if not ok:
             print("\n[ERROR] Comando fallito: Pushing to remote")
             rollback_versioned_files(snapshot)
+            # Rollback Git: Rimuove tag appena creato e resetta commit
+            git_bin = find_git_executable()
+            subprocess.run([git_bin, "tag", "-d", f"v{new_version}"], cwd=ROOT_DIR, check=False)
+            subprocess.run([git_bin, "reset", "--soft", "HEAD~1"], cwd=ROOT_DIR, check=False)
+            subprocess.run([git_bin, "reset", "HEAD", "."], cwd=ROOT_DIR, check=False)
+            print(f"[ROLLBACK] Tag v{new_version} rimosso e commit annullato.")
             return False
 
     return True
@@ -552,6 +558,17 @@ def main() -> None:
         verify_clean_git_status(git_bin)
 
     start_time = time.time()
+
+    # 0. Sincronizzazione contesti e dipendenze
+    ai_context_script = ROOT_DIR / "tools" / "generate_ai_context.py"
+    if ai_context_script.exists():
+        run_command(
+            [str(VENV_PYTHON), str(ai_context_script)],
+            "Aggiornamento .ai-context.json",
+        )
+
+    # Verifica sincronia lock file (fondamentale per EXE stabile)
+    run_command(["poetry", "lock", "--check"], "Verifica integrità Poetry Lock")
 
     # 1. Pre-Flight Check Interno
     pre_flight_cmd = [str(VENV_PYTHON), "admin/pre_flight_check.py"]

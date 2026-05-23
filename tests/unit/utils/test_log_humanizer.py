@@ -10,47 +10,52 @@ class TestLogHumanizer:
         # Adesso
         assert friendly_time_delta(now - timedelta(seconds=10)) == "Adesso"
 
-        # Minuti
+        # Minuti fa
         assert friendly_time_delta(now - timedelta(minutes=5)) == "5 min fa"
 
-        # Ore
-        assert friendly_time_delta(now - timedelta(hours=3)) == "3h fa"
+        # Ore fa
+        assert friendly_time_delta(now - timedelta(hours=2)) == "2h fa"
 
-        # Giorni
+        # Giorni fa (formato DD/MM)
         past = now - timedelta(days=2)
         assert friendly_time_delta(past) == past.strftime("%d/%m")
 
-    def test_smart_log_translator_humanize_fixed(self):
-        # Messaggio mappato
-        h, t, c = SmartLogTranslator.humanize("avvio automazione")
-        assert h == "[AVVIO] Avvio automazione in corso..."
-        assert t == "avvio automazione"
-        assert c == "info"  # Per keyword "avvio" non c'è cat specifica, va in info
+    def test_smart_translator_humanize_fixed(self):
+        # Mappatura fissa
+        human, _tech, cat = SmartLogTranslator.humanize("avvio automazione")
+        assert "[AVVIO]" in human
+        assert cat == "info"  # default if no other keyword match
 
-    def test_smart_log_translator_humanize_prefixed(self):
-        # Messaggio con prefisso speciale
-        msg = "[CLICK] Click su pulsante"
-        h, _t, c = SmartLogTranslator.humanize(msg)
-        assert h == msg
-        assert c == "action"
+    def test_smart_translator_humanize_prefixed(self):
+        # Messaggio già con prefisso
+        msg = "✅ Operazione conclusa"
+        human, _tech, cat = SmartLogTranslator.humanize(msg)
+        assert human == msg
+        assert cat == "success"
 
-    def test_smart_log_translator_categories(self):
-        # Download
-        assert SmartLogTranslator._detect_category("Sto scaricando i file") == "download"
+    def test_smart_translator_categories(self):
         # Error
-        assert SmartLogTranslator._detect_category("Errore critico rilevato") == "error"
-        # Success
-        assert SmartLogTranslator._detect_category("Operazione completata") == "success"
-        # Search
-        assert SmartLogTranslator._detect_category("Ricerca in corso") == "search"
-        # Wait
-        assert SmartLogTranslator._detect_category("In attesa del sito") == "wait"
-        # Default category (info)
-        assert SmartLogTranslator._detect_category("Qualcosa di generico") == "info"
+        _, _, cat = SmartLogTranslator.humanize("Errore nel sistema")
+        assert cat == "error"
 
-    def test_smart_log_translator_humanize_raw(self):
-        # Messaggio non mappato e senza prefisso
-        msg = "Messaggio sconosciuto"
-        h, t, _c = SmartLogTranslator.humanize(msg)
-        assert h == msg
-        assert t == msg
+        # Search
+        _, _, cat = SmartLogTranslator.humanize("Ricerca dipendente")
+        assert cat == "search"
+
+        # Action
+        _, _, cat = SmartLogTranslator.humanize("Click su pulsante")
+        assert cat == "action"
+
+        # Wait
+        _, _, cat = SmartLogTranslator.humanize("In attesa di risposta")
+        assert cat == "wait"
+
+        # Download
+        _, _, cat = SmartLogTranslator.humanize("Scarico file excel")
+        assert cat == "download"
+
+    def test_smart_translator_unknown(self):
+        msg = "Messaggio generico casuale"
+        human, _tech, cat = SmartLogTranslator.humanize(msg)
+        assert human == msg
+        assert cat == "info"

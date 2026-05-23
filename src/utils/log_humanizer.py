@@ -105,7 +105,7 @@ class SmartLogTranslator:
                 "critico",
                 "[errore]",
             ),
-            "success": ("successo", "completat", "compiut", "fatto", "[ok]", "[info]"),
+            "success": ("successo", "completat", "compiut", "fatto", "conclus", "✅", "[ok]", "[info]"),
             "action": ("click", "premuto", "selezion", "[click]"),
             "search": ("ricerca", "cerca", "[cerca]"),
             "wait": ("attesa", "attendi", "aspetto", "polling", "caricamento", "[attesa]"),

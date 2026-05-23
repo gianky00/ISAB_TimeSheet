@@ -655,9 +655,9 @@ class ApexAudit:
         elif self.test_only:
             selected_checks = [c for c in all_checks if c[2] == "pytest"]
         else:  # Default (Full Audit)
-            excluded = ["radon_mi", "radon_cc", "pygount", "vulture"]
+            excluded = ["pygount", "vulture"]
             if self.fast:
-                excluded.append("pytest")
+                excluded.extend(["pytest", "refurb"])
 
             selected_checks = [c for c in all_checks if c[2] not in excluded]
 
