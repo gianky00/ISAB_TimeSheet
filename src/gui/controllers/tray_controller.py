@@ -31,9 +31,19 @@ class TrayController:
         tray_menu = QMenu()
         show_action = QAction("Mostra SyncroJob", self.mw)
         show_action.setIcon(get_colored_icon(get_asset_path(Icons.HOME), COLORS["text_dark"]))
-        show_action.triggered.connect(self.mw.showMaximized)
-        show_action.triggered.connect(self.mw.activateWindow)
+        show_action.triggered.connect(self._restore_window)
         tray_menu.addAction(show_action)
+
+        news_action = QAction("Scopri le Novità", self.mw)
+        news_action.setIcon(get_colored_icon(get_asset_path(Icons.SPARKLES), COLORS["text_dark"]))
+
+        def show_changelog() -> None:
+            self._restore_window()
+            if hasattr(self.mw, "navigation_controller"):
+                self.mw.navigation_controller.navigate_to(13)
+
+        news_action.triggered.connect(show_changelog)
+        tray_menu.addAction(news_action)
 
         tray_menu.addSeparator()
 
@@ -54,11 +64,19 @@ class TrayController:
 
     def _handle_tray_activation(self, reason: QSystemTrayIcon.ActivationReason) -> None:
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
-            if self.mw.isVisible():
+            if self.mw.isVisible() and not self.mw.isMinimized():
                 self.mw.hide()
             else:
-                self.mw.showMaximized()
-                self.mw.activateWindow()
+                self._restore_window()
+        elif reason == QSystemTrayIcon.ActivationReason.DoubleClick:
+            self._restore_window()
+
+    def _restore_window(self) -> None:
+        """Ripristina la finestra prevenendo glitch di layout su Windows."""
+        self.mw.showNormal()
+        self.mw.showMaximized()
+        self.mw.activateWindow()
+        self.mw.raise_()
 
     def show_message(
         self,
