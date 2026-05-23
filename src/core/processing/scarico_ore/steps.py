@@ -160,7 +160,7 @@ class ProcessScaricoOreRowsStep(ProcessingStep):
         """Estrae i valori testuali dalle celle della riga."""
         c_data, c_p1, c_p2, c_odc, c_pos, c_dalle, c_alle, c_tot, c_desc, c_fin, c_comm = row[0:11]
 
-        if c_odc.value is None and c_pos.value is None:
+        if c_odc.value is c_pos.value is None:
             return None
 
         s_data = self._fmt_excel_date(c_data.value)

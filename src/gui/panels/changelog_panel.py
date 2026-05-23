@@ -287,12 +287,12 @@ class ReleaseCard(QWidget):
         # Data Rilascio spostata a destra
         if not self.is_next:
             date_raw = self.release.get("date", "N/D")
-            if len(date_raw) == 10 and date_raw[4] == "-" and date_raw[7] == "-":
+            if len(date_raw) == 10 and date_raw[4] == date_raw[7] == "-":
                 parts = date_raw.split("-")
                 date = f"{parts[2]}/{parts[1]}/{parts[0]}"
             else:
                 date = date_raw
-            date_lbl = QLabel(f"{date}")
+            date_lbl = QLabel(date)
             date_lbl.setStyleSheet(
                 f"color: {COLORS['text_secondary']}; font-size: 12px; font-weight: 600; letter-spacing: 1px;"
             )
@@ -786,7 +786,7 @@ class ChangelogPanel(QWidget):
 
     def _format_date(self, date_str: str) -> str:
         """Converte una data da YYYY-MM-DD a GG/MM/AAAA."""
-        if len(date_str) == 10 and date_str[4] == "-" and date_str[7] == "-":
+        if len(date_str) == 10 and date_str[4] == date_str[7] == "-":
             parts = date_str.split("-")
             return f"{parts[2]}/{parts[1]}/{parts[0]}"
         return date_str

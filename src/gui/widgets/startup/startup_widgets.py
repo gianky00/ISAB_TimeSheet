@@ -215,7 +215,7 @@ class GlowingProgressBar(QWidget):
 
     def _update_existing_particles(self, diff: float) -> None:
         """Aggiorna la fisica delle particelle attive."""
-        for p in self._particles[:]:
+        for p in self._particles.copy():
             p["x"] += p["vx"]
             p["y"] += p["vy"]
             p["life"] -= 0.04 if diff < 0.1 else 0.06
@@ -311,7 +311,7 @@ class GlowingProgressBar(QWidget):
         painter.save()
         painter.setBrush(QBrush(glow_grad))
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.drawEllipse(QPoint(int(pw), int(bar_y + bar_h / 2)), 80, 25)
+        painter.drawEllipse(QPoint(pw, int(bar_y + bar_h / 2)), 80, 25)
         painter.restore()
 
         grad = QLinearGradient(0.0, float(bar_y), float(pw), float(bar_y))

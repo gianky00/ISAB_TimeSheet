@@ -67,7 +67,7 @@ class TimbratureDataWorker(QThread):
             filter_cantiere=self.kwargs.get("filter_cantiere", "Tutti"),
             filter_year=self.kwargs.get("filter_year", "Tutti"),
         )
-        self.data_ready.emit(list(rows))
+        self.data_ready.emit(rows.copy())
 
     def _fetch_filters(self) -> None:
         """Recupera le liste uniche per i filtri UI."""

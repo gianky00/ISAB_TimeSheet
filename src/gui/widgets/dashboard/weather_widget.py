@@ -188,7 +188,7 @@ class WindCompass(QWidget):
         font_val.setBold(True)
         painter.setFont(font_val)
         painter.setPen(QColor(COLORS["text_dark"]))
-        painter.drawText(QRectF(cx - 25, cy - 12, 50, 12), Qt.AlignmentFlag.AlignCenter, f"{int(self.speed)}")
+        painter.drawText(QRectF(cx - 25, cy - 12, 50, 12), Qt.AlignmentFlag.AlignCenter, str(int(self.speed)))
 
         font_unit = QFont()
         font_unit.setPointSize(5)
