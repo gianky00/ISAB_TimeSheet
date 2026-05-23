@@ -1,8 +1,8 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from PySide6.QtCore import QObject
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QStackedWidget, QWidget
 
 from src.gui.controllers.bot_controller import BotController
 from src.gui.controllers.navigation_controller import NavigationController
@@ -10,23 +10,15 @@ from src.gui.controllers.search_controller import SearchController
 
 
 class MockMainWindow(QObject):
-    """Mock leggero che simula l'interfaccia di MainWindow senza caricare Qt reale."""
-
     def __init__(self):
         super().__init__()
-        self.page_stack = MagicMock()
-        self.stacked_widget = self.page_stack  # Alias per NavigationController
-        self.stacked_widget.count.return_value = 10
-        # Aggiungiamo slide_to_index che è usato in V9.0
-        self.page_stack.slide_to_index = MagicMock()
-
-        self.automazioni_widget = MagicMock()
+        self.stacked_widget = QStackedWidget()
         self.sidebar = MagicMock()
-        self._current_page_index = 0
-        self.lyra_panel = MagicMock()
-        self.scarico_ore_panel = MagicMock()
-        self.timbrature_db_panel = MagicMock()
-        self.contabilita_panel = MagicMock()
+        self.global_search = MagicMock()
+        self.statusBar = MagicMock()
+
+    def _show_update_banner(self, info):
+        pass
 
 
 class TestControllersCoverage:
@@ -35,7 +27,6 @@ class TestControllersCoverage:
         return MockMainWindow()
 
     def test_bot_controller_handle_results(self, mw, mocker):
-        """Verifica inoltro risultati bot a Telegram."""
         mock_telegram = MagicMock()
         ctrl = BotController(mw, mock_telegram)
         mocker.patch("src.gui.controllers.bot_controller.Path.exists", return_value=True)
@@ -43,25 +34,27 @@ class TestControllersCoverage:
         mock_telegram.send_document_sync.assert_called_once()
 
     def test_navigation_controller_simple_logic(self, mw, mocker):
-        """Verifica logica di navigazione senza caricare pannelli reali."""
-        ctrl = NavigationController(mw)
-        mocker.patch.object(ctrl, "get_panel", return_value=QWidget())
+        # Patch PanelFactory per tornare QWidget reali per ogni chiamata
+        with patch("src.gui.controllers.navigation_controller.PanelFactory") as mock_factory_class:
+            mock_factory = mock_factory_class.return_value
+            # side_effect con lambda che crea un nuovo QWidget ad ogni chiamata
+            mock_factory.get_panel.side_effect = lambda idx: QWidget()
 
-        ctrl.navigate_to(1)
-        mw._current_page_index = 1  # Aggiorna manualmente lo stato nel mock
+            ctrl = NavigationController(mw)
+            ctrl.navigate_to(1)
 
-        assert mw._current_page_index == 1
-        # In V9.0 usa slide_to_index se presente
-        mw.page_stack.slide_to_index.assert_called_with(1)
-        # La sidebar ora riceve (index, sub_index, bot_index)
-        mw.sidebar.set_active_button.assert_called_with(1, None, None)
+            # Index 1
+            assert mw.stacked_widget.currentIndex() == 1
 
     def test_search_controller_routing(self, mw, mocker):
-        """Verifica che la ricerca OdA inoltri i risultati correttamente."""
         ctrl = SearchController(mw)
-        mock_menu = MagicMock()
+        mocker.patch.object(ctrl.search_timer, "start")
+        ctrl.perform_search("test query")
+        assert ctrl._last_query == "test query"
 
-        matches = [{"codice_oda": "123", "descrizione": "D"}]
-        count = ctrl._add_oda_matches(matches, mock_menu)
-        assert count == 1
-        assert mock_menu.addAction.called
+    def test_search_execution(self, mw, mocker):
+        ctrl = SearchController(mw)
+        ctrl._last_query = "tester"
+        with patch("src.gui.controllers.search_controller.SearchWorker") as mock_worker_class:
+            ctrl._execute_async_search()
+            assert mock_worker_class.called

@@ -32,7 +32,7 @@ class TestConfigManager:
     def test_save_and_load_config(self):
         config = load_config()
         config["browser_headless"] = True
-        save_config(config)
+        save_config(config, async_save=False)
 
         # Reset cache to force reload from disk
         _reset_configuration_for_testing()
@@ -41,7 +41,7 @@ class TestConfigManager:
         assert new_config["browser_headless"] is True
 
     def test_get_set_value(self):
-        set_config_value("custom_key", "custom_value")
+        set_config_value("custom_key", "custom_value", async_save=False)
         assert get_config_value("custom_key") == "custom_value"
 
     def test_add_remove_account(self, mocker):
@@ -57,16 +57,16 @@ class TestConfigManager:
         )
 
         # Nuova firma: add_account(bot_type, account_data)
-        add_account("isab", {"username": "user1", "password": "pass1", "is_default": True})
+        add_account("isab", {"username": "user1", "password": "pass1", "is_default": True}, async_save=False)
         accounts = get_config_value("accounts")
         assert len(accounts) == 1
         assert accounts[0]["username"] == "user1"
         assert accounts[0]["default"] is True
 
-        add_account("isab", {"username": "user2", "password": "pass2", "is_default": False})
+        add_account("isab", {"username": "user2", "password": "pass2", "is_default": False}, async_save=False)
         assert len(get_config_value("accounts")) == 2
 
-        remove_account("isab", "user1")
+        remove_account("isab", "user1", async_save=False)
         accounts = get_config_value("accounts")
         assert len(accounts) == 1
         assert accounts[0]["username"] == "user2"
@@ -100,4 +100,7 @@ class TestConfigManager:
             assert res is False
 
         assert not target.exists()
-        assert not (tmp_path / "fail.tmp").exists()
+        # Il file temporaneo usa thread ID nel nome in V9.0
+        # Quindi cerchiamo qualsiasi .tmp
+        temps = list(tmp_path.glob("*.tmp"))
+        assert len(temps) == 0

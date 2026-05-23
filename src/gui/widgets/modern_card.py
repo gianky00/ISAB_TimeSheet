@@ -49,16 +49,6 @@ class ModernCard(QFrame):
 
     def _setup_shadow(self) -> None:
         """Applica l'effetto ombra e prepara le animazioni."""
-        import os
-        import sys
-
-        if "pytest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST"):
-            from unittest.mock import MagicMock
-
-            self.shadow = MagicMock()
-            self.shadow_anim = MagicMock()
-            return
-
         self.shadow = QGraphicsDropShadowEffect(self)
         self.shadow.setBlurRadius(self.elevation)
         self.shadow.setXOffset(0)

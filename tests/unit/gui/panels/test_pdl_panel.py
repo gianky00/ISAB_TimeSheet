@@ -8,6 +8,15 @@ from src.gui.panels.pdl.pdl_panel import PDLDBPanel
 
 
 class TestPDLDBPanel:
+    @pytest.fixture(autouse=True)
+    def mock_sync_worker(self, mocker):
+        """Forza il worker PDL ad essere sincrono."""
+
+        def mock_start(instance):
+            instance.run()
+
+        mocker.patch("src.gui.workers.pdl_data_worker.PDLDataWorker.start", mock_start)
+
     @pytest.fixture
     def controller(self):
         c = MagicMock(spec=PDLController)
@@ -61,15 +70,16 @@ class TestPDLDBPanel:
         # Detail view starts hidden
         assert not panel.detail_view.isVisible()
         panel._toggle_detail_view()
-        qtbot.wait_until(lambda: panel.detail_view.isVisible())
+        assert panel.detail_view.isVisible()
         panel._toggle_detail_view()
-        qtbot.wait_until(lambda: not panel.detail_view.isVisible())
+        assert not panel.detail_view.isVisible()
 
     @patch("src.core.database.db_manager.execute_query")
     def test_update_areas(self, mock_query, panel):
         mock_query.return_value = [("Area 1",), ("Area 2",)]
-        panel.filters.site_filter.setCurrentText("ISAB Sud")
 
+        # Simula selezione sito per triggerare worker
+        panel.filters.site_filter.setCurrentText("ISAB Sud")
         panel._update_areas()
 
         assert mock_query.called
@@ -89,5 +99,5 @@ class TestPDLDBPanel:
         # 3. Verify detail view update
         with patch("src.core.pdl.pdl_service.PDLService.get_pdl_interventions", return_value=[]):
             panel._on_selection_changed()
-            # Detail view labels are updated. "ID" is first header, "N PDL" is second.
+            # Detail view labels are updated. "ID" is first header
             assert panel.detail_view.detail_labels["ID"].text() == "Detail"

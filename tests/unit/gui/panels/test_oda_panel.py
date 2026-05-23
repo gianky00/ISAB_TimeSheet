@@ -9,6 +9,15 @@ from src.gui.panels.storico_oda.oda_panel import StoricoOdaPanel
 
 
 class TestStoricoOdaPanel:
+    @pytest.fixture(autouse=True)
+    def mock_sync_worker(self, mocker):
+        """Forza il worker ODA ad essere sincrono."""
+
+        def mock_start(instance):
+            instance.run()
+
+        mocker.patch("src.gui.workers.oda_data_worker.ODADataWorker.start", mock_start)
+
     @pytest.fixture
     def controller(self):
         c = MagicMock(spec=ODAController)
@@ -41,8 +50,6 @@ class TestStoricoOdaPanel:
         qtbot.wait_until(lambda: panel.empty_state.isVisible())
 
     def test_refresh_data_with_items(self, panel, controller, qtbot):
-        # We don't mock ODAAdapter here to get better coverage on it too,
-        # but we must provide all required keys in the dict.
         controller.get_grouped_data.return_value = [
             {
                 "oda": "123",
@@ -52,7 +59,7 @@ class TestStoricoOdaPanel:
                 "valore_totale": 100.0,
                 "stato": "S",
                 "rilascio": "R",
-                "raw_first": ("raw",),
+                "raw_first": ["val" for _ in range(32)],
                 "positions": [
                     (
                         "v",
@@ -103,7 +110,6 @@ class TestStoricoOdaPanel:
         panel.model.appendRow([item, QStandardItem("Data")])
 
         # Select row
-        # Use QItemSelectionModel.SelectionFlag
         panel.tree.selectionModel().select(
             panel.model.index(0, 0),
             QItemSelectionModel.SelectionFlag.Select | QItemSelectionModel.SelectionFlag.Rows,

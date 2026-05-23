@@ -28,9 +28,6 @@ class TestAnagraficaController:
         """Verifica che un errore nel repository ritorni False."""
         controller.repository.toggle_monitoring.side_effect = Exception("DB Error")
 
-        # Mock della gestione errore interna al controller se necessaria,
-        # qui il test falliva perché l'eccezione non veniva catturata dal controller stesso.
-        # Il controller dovrebbe avere un try-except.
         success = controller.toggle_monitoring("R001", True)
         assert success is False
 
@@ -38,8 +35,9 @@ class TestAnagraficaController:
     @patch("src.core.dipendenti.anagrafica_controller.db_manager")
     def test_process_rows_full_cycle(self, mock_db, mock_compute, controller):
         """Testa l'intero ciclo di trasformazione in DTO e conteggio."""
-        # Mocking compute_employee_status: (diff_days, cf_warning)
-        mock_compute.return_value = (5, False)
+        # V9.4: compute_employee_status returns 6 elements:
+        # diff_days, cf_warning, last_date, cog_val, nom_val, cf_val
+        mock_compute.return_value = (5, False, "01/01/2024", "ROSSI", "MARIO", "RSSMRA")
         mock_db.execute_query.return_value = []  # Timbrature
 
         record = EmployeeRecord(
@@ -59,6 +57,7 @@ class TestAnagraficaController:
 
         assert len(dtos) == 1
         assert isinstance(dtos[0], EmployeeDTO)
-        assert dtos[0].id_risorsa == "1"
+        # Verify id_risorsa as string (DTO normalization)
+        assert str(dtos[0].id_risorsa) == "1"
         assert counts["ok"] == 1
         assert counts["warning"] == 0

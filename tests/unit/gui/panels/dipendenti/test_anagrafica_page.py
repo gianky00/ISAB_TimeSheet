@@ -14,6 +14,15 @@ class MockAnagraficaController:
 
 
 class TestAnagraficaPage:
+    @pytest.fixture(autouse=True)
+    def mock_sync_worker(self, mocker):
+        """Forza il worker anagrafica ad essere sincrono."""
+
+        def mock_start(instance):
+            instance.run()
+
+        mocker.patch("src.gui.workers.anagrafica_worker.AnagraficaWorker.start", mock_start)
+
     @pytest.fixture
     def controller(self):
         return MockAnagraficaController()
@@ -58,7 +67,6 @@ class TestAnagraficaPage:
         with patch.object(page.detail_view, "update_data") as mock_update:
             page._on_selection_changed(0)
             assert mock_update.called
-            # Verifica che le chiavi attese siano presenti nei dettagli
             details = mock_update.call_args[0][0]
             assert "Cognome" in details
             assert details["Cognome"] == "Rossi"

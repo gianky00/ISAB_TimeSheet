@@ -11,6 +11,7 @@ from src.core.config_manager import (
     get_default_account,
     import_config_from_file,
     load_config,
+    remove_account,
     set_config_value,
 )
 
@@ -55,7 +56,7 @@ class TestConfigManagerRobust:
 
     def test_save_and_reload(self):
         """Test persistenza configurazione."""
-        set_config_value("browser_timeout", 60)
+        set_config_value("browser_timeout", 60, async_save=False)
 
         # Reload pulito
         _reset_configuration_for_testing()
@@ -81,14 +82,14 @@ class TestConfigManagerRobust:
     def test_account_management(self):
         """Test aggiunta, default e rimozione account."""
         # Add first (default)
-        add_account("isab", {"username": "user1", "password": "pass1", "is_default": True})
+        add_account("isab", {"username": "user1", "password": "pass1", "is_default": True}, async_save=False)
         config = load_config()
         assert len(config["accounts"]) == 1
         assert config["accounts"][0]["username"] == "user1"
         assert config["accounts"][0]["default"] is True
 
         # Add second
-        add_account("isab", {"username": "user2", "password": "pass2", "is_default": False})
+        add_account("isab", {"username": "user2", "password": "pass2", "is_default": False}, async_save=False)
         config = load_config()
         assert len(config["accounts"]) == 2
         assert config["accounts"][1]["username"] == "user2"
@@ -100,9 +101,7 @@ class TestConfigManagerRobust:
         assert acc["username"] == "user1"
 
         # Remove user1
-        from src.core.config_manager import remove_account
-
-        remove_account("isab", "user1")
+        remove_account("isab", "user1", async_save=False)
         config = load_config()
         assert len(config["accounts"]) == 1
         assert config["accounts"][0]["username"] == "user2"
@@ -132,7 +131,7 @@ class TestConfigManagerRobust:
         import_file.write_text(json.dumps({"browser_timeout": 999, "accounts": []}), encoding="utf-8")
 
         # Passa l'oggetto Path, non la stringa (firma V9.0)
-        success, msg = import_config_from_file(import_file)
+        success, msg = import_config_from_file(import_file, async_save=False)
 
         assert success is True
         assert "successo" in msg
@@ -186,7 +185,7 @@ class TestConfigManagerRobust:
                 side_effect=lambda x: x.replace("ENC:v2:", ""),
             ),
         ):
-            add_account("isab", {"username": "user_enc", "password": "secret"})
+            add_account("isab", {"username": "user_enc", "password": "secret"}, async_save=False)
 
             # Verifica su disco che sia criptata
             disk_data = json.loads(self.mock_config_file.read_text(encoding="utf-8"))

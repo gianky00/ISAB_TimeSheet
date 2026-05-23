@@ -43,6 +43,7 @@ MAX_WORKERS: Final[int] = max(1, multiprocessing.cpu_count() - 1)
 SNIPER_THRESHOLD: Final[int] = 5
 AI_REPORT_FILE: Final[Path] = Path(__file__).parent / ".test_results.json"
 MAX_OUTPUT_CHARS: Final[int] = 2000  # Limite output per file nel report IA
+STATE_FILE: Final[Path] = Path(__file__).parent / ".test_passed_state.json"
 
 
 # ─── Console ──────────────────────────────────────────────────────────────────
@@ -449,6 +450,28 @@ class UltraRunner:
         self.ai_mode = False
         self.strategy = "SHOTGUN"
         self._exit_code = 0  # ARCH-2: Exit code centralizzato
+        self.passed_targets: set[str] = set()
+
+    def _load_state(self, resume: bool) -> None:
+        """Carica lo stato dei test passati se richiesto."""
+        if resume and STATE_FILE.exists():
+            try:
+                data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+                self.passed_targets = set(data.get("passed", []))
+                Console.dim(f"  [RESUME] Caricati {len(self.passed_targets)} test passati in precedenza.")
+            except Exception:
+                self.passed_targets = set()
+        else:
+            self.passed_targets = set()
+            with contextlib.suppress(FileNotFoundError):
+                STATE_FILE.unlink()
+
+    def _save_state(self) -> None:
+        """Salva lo stato corrente dei test passati."""
+        if self.passed_targets:
+            STATE_FILE.write_text(
+                json.dumps({"passed": list(self.passed_targets)}, indent=2), encoding="utf-8"
+            )
 
     # ── Dashboard ANSI ──
 
@@ -485,6 +508,15 @@ class UltraRunner:
         """Esecuzione diretta e live, ottimizzata per il debugging."""
         self.strategy = "SNIPER"
         Console.header(f"SNIPER MODE: Esecuzione mirata di {len(targets)} target")
+
+        if self.passed_targets:
+            targets = [t for t in targets if t not in self.passed_targets]
+            if not targets:
+                Console.success("Nessun test rimanente (tutti passati nel run precedente).")
+                self._exit_code = 0
+                if self.ai_mode:
+                    self._finish_ai(0)
+                return
 
         env = _build_env()
         tb_style = "long" if self.ai_mode else "short"
@@ -528,6 +560,10 @@ class UltraRunner:
                 )
             )
 
+            if res.returncode == 0:
+                self.passed_targets.update(targets)
+                self._save_state()
+
             if res.returncode != 0:
                 # Estrai dettagli dei fallimenti
                 for target in targets:
@@ -550,6 +586,8 @@ class UltraRunner:
                         p, _ = _parse_pytest_summary(res_retry.stdout + res_retry.stderr)
                         self.total_passed = p
                         self.total_failed = 0
+                        self.passed_targets.update(targets)
+                        self._save_state()
                         break
 
             self._finish_ai(len(targets))
@@ -561,6 +599,8 @@ class UltraRunner:
             if res_human.returncode == 0:
                 Console.success(f"\nSNIPER SHOT: Successo in {dur:.2f}s")
                 self._exit_code = 0
+                self.passed_targets.update(targets)
+                self._save_state()
             else:
                 # BUG-4 FIX: Retry con --last-failed
                 retry_cmd = [*cmd, "--last-failed", "--no-header"]
@@ -575,6 +615,8 @@ class UltraRunner:
                                 f"\nSNIPER SHOT: Successo al tentativo {attempt + 1} in {dur_total:.2f}s"
                             )
                             self._exit_code = 0
+                            self.passed_targets.update(targets)
+                            self._save_state()
                             return
                 Console.error(f"\nSNIPER SHOT: Fallito in {dur:.2f}s")
                 self._exit_code = 1
@@ -606,6 +648,16 @@ class UltraRunner:
             files_map[nid.split("::")[0]].append(nid)
 
         queue = sorted(files_map.keys(), key=lambda x: len(files_map[x]), reverse=True)
+
+        if self.passed_targets:
+            queue = [f for f in queue if f not in self.passed_targets]
+            if not queue:
+                Console.success("Nessun test rimanente (tutti passati nel run precedente).")
+                self._exit_code = 0
+                if self.ai_mode:
+                    self._finish_ai(0)
+                return
+
         total_files = len(queue)
 
         if args.cov:
@@ -653,6 +705,8 @@ class UltraRunner:
                                     self.failure_details.extend(_extract_failures(res.full_output, target))
                             else:
                                 # Conta solo i file che hanno avuto successo definitivo
+                                self.passed_targets.add(target)
+                                self._save_state()
                                 self.total_passed += res.passed
                                 self.total_failed += res.failed
 
@@ -695,6 +749,7 @@ class UltraRunner:
                     break
 
                 Console.print(f"  Analisi: {target}", Console.BOLD)
+                target_failed = False
                 for node in files_map.get(target, [target]):
                     if args.exitfirst and self.total_failed > 0:
                         break
@@ -749,6 +804,11 @@ class UltraRunner:
                         else:
                             self.total_failed += 1
                             self.failed_list.append({"id": node, "error": "No result captured"})
+                        target_failed = True
+
+                if not target_failed:
+                    self.passed_targets.add(target)
+                    self._save_state()
 
         if self.ai_mode:
             self._finish_ai(total_files)
@@ -792,6 +852,10 @@ class UltraRunner:
         )
 
         report_dict = asdict(report)
+
+        if report.success:
+            with contextlib.suppress(FileNotFoundError):
+                STATE_FILE.unlink()
 
         # Scrivi il report su file persistente (leggibile dall'IA dopo il run)
         AI_REPORT_FILE.write_text(
@@ -847,6 +911,8 @@ class UltraRunner:
         else:
             Console.success("\n  Suite completata con successo!")
             self._exit_code = 0
+            with contextlib.suppress(FileNotFoundError):
+                STATE_FILE.unlink()
 
     # ── Entry Point ──
 
@@ -860,6 +926,9 @@ class UltraRunner:
         parser.add_argument("--cov", action="store_true", help="Abilita il calcolo della copertura.")
         parser.add_argument("--retry", type=int, default=0, help="Num. retry per test falliti (flaky).")
         parser.add_argument("--ai", action="store_true", help="Output JSON strutturato per agenti IA.")
+        parser.add_argument(
+            "--resume", action="store_true", help="Riprende l'esecuzione saltando i test gia' passati."
+        )
         parser.add_argument(
             "-x", "--exitfirst", action="store_true", help="Ferma l'esecuzione al primo fallimento."
         )
@@ -884,6 +953,10 @@ class UltraRunner:
         if args.reset:
             with contextlib.suppress(Exception):
                 subprocess.run([sys.executable, "-m", "coverage", "erase"], check=False, cwd=ROOT_DIR)
+            with contextlib.suppress(FileNotFoundError):
+                STATE_FILE.unlink()
+
+        self._load_state(args.resume)
 
         # Strategia: <= SNIPER_THRESHOLD target specifici -> SNIPER, altrimenti -> SHOTGUN
         if args.targets and len(args.targets) <= SNIPER_THRESHOLD:

@@ -1,116 +1,69 @@
-import shutil
-import tempfile
-import unittest
-from pathlib import Path
+import sqlite3
 from unittest.mock import MagicMock, patch
 
+import pandas as pd
+
 from src.bots.portale_fornitori.timbrature.bot import TimbratureBot
-from src.bots.portale_fornitori.timbrature.pages.timbrature_page import TimbraturePage
-from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
 
-class TestTimbratureBotComprehensive(unittest.TestCase):
-    def setUp(self):
-        self.mock_driver = MagicMock()
-        with patch("src.bots.base.base_bot.BaseBot.__init__", return_value=None):
-            with patch("src.bots.portale_fornitori.timbrature.bot.TimbratureStorage") as mock_storage_class:
-                self.bot = TimbratureBot(
-                    username="user",
-                    password="pass",
-                    data_da="01/01/2026",
-                    data_a="31/01/2026",
-                    fornitore="VENDOR",
-                )
-                self.bot.signals = MagicMock()  # FIX: Inizializza signals manualmente
-
-                # Inizializza mock per step_manager (necessario dopo refactoring SRP)
-                self.bot.step_manager = MagicMock()
-                self.bot.step_manager.update_step.return_value = (0, "test-step")
-                self.bot.step_manager.current_step_name = "test-step"
-                self.bot.step_manager.current_index = 0
-
-                self.bot.driver = self.mock_driver
-                self.bot._log_callback = None
-                self.bot._input_callback = None
-                self.bot._progress_callback = None
-                self.bot._logger = MagicMock()
-                self.bot._trace_id = "test-trace"
-                self.bot._status = MagicMock()
-                self.bot._status.name = "RUNNING"
-                self.bot._telegram_service = None
-                self.bot._stop_requested = False
-                self.bot.download_path = "C:/fake/downloads"
-                self.mock_storage = self.bot.storage = mock_storage_class.return_value
-
+class TestTimbratureBotComprehensive:
     def test_init_and_properties(self):
-        self.assertEqual(self.bot.name, "Timbrature")
+        bot = TimbratureBot("u", "p")
+        assert bot.username == "u"
+        assert bot.name == "timbrature"
 
     @patch("src.bots.portale_fornitori.timbrature.bot.TimbraturePage")
-    def test_run_success(self, mock_page_class):
+    @patch("src.bots.portale_fornitori.timbrature.bot.TimbratureStorage")
+    def test_run_success(self, mock_storage_class, mock_page_class):
+        bot = TimbratureBot("u", "p")
+        bot.driver = MagicMock()
         mock_page = mock_page_class.return_value
         mock_page.navigate_to_timbrature.return_value = True
-        mock_page.set_filters.return_value = True
-        mock_page.download_excel.return_value = "fake_path.xlsx"
+        mock_page.download_timbrature.return_value = "file.xlsx"
+        mock_storage = mock_storage_class.return_value
+        mock_storage.import_excel.return_value = True
 
-        with patch("src.bots.portale_fornitori.timbrature.bot.Path.exists", return_value=True):
-            with patch("src.bots.portale_fornitori.timbrature.bot.Path.unlink"):
-                result = self.bot.run([{"data_da": "01/01/2026", "fornitore": "V"}])
-                self.assertTrue(result)
-
-
-class TestTimbraturePageComprehensive(unittest.TestCase):
-    def setUp(self):
-        self.mock_driver = MagicMock()
-        self.mock_log = MagicMock()
-        self.test_dir = Path(tempfile.mkdtemp())
-        self.download_dir = self.test_dir / "downloads"
-        self.download_dir.mkdir()
-
-        # Patching WebDriverWait
-        with patch(
-            "src.bots.portale_fornitori.timbrature.pages.timbrature_page.WebDriverWait"
-        ) as mock_wait_class:
-            self.mock_wait = MagicMock()
-            self.mock_long_wait = MagicMock()
-            mock_wait_class.side_effect = [self.mock_wait, self.mock_long_wait]
-            self.page = TimbraturePage(self.mock_driver, self.mock_log, str(self.download_dir))
-
-    def tearDown(self):
-        shutil.rmtree(self.test_dir)
-
-    def test_placeholder(self):
-        self.assertTrue(True)
+        with patch("src.bots.portale_fornitori.timbrature.bot.Path") as mock_path:
+            mock_path.return_value.name = "file.xlsx"
+            res = bot.run([])
+            assert res is True
 
 
-class TestTimbratureStorageComprehensive(unittest.TestCase):
-    def setUp(self):
-        self.temp_db = Path("test_timbrature_storage.db")
-        with patch("src.core.database.db_manager.get_connection"):
-            self.storage = TimbratureStorage(self.temp_db)
+class TestTimbratureStorageComprehensive:
+    def test_import_excel_data_flow(self, tmp_path, mocker):
+        from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
-    @patch("pandas.read_excel")
-    @patch("src.core.database.db_manager.get_connection")
-    @patch("src.core.sync_tracker.SyncTracker.update_status")
-    def test_import_excel_data_flow(self, mock_sync, mock_get_conn, mock_read_excel):
-        import pandas as pd
+        db = tmp_path / "test_import_final_round20.db"
 
-        mock_read_excel.return_value = pd.DataFrame(
-            {
-                "Id Dipendente": ["1"],
-                "Data Timbratura": ["2026-01-01"],
-                "Ora Ingresso": ["08:00"],
-                "Ora Uscita": ["17:00"],
-                "Nome Risorsa": ["M"],
-                "Cognome Risorsa": ["R"],
-                "Fornitore": ["V"],
-                "Codice Fiscale": ["CF"],
-            }
+        # 1. Creazione fisica dello schema COMPLETO
+        with sqlite3.connect(db) as conn:
+            conn.execute("""
+                CREATE TABLE timbrature (
+                    id_dipendente TEXT, data TEXT, ingresso TEXT, uscita TEXT,
+                    fornitore TEXT, codice_rilpres TEXT, numero_badge TEXT,
+                    nome TEXT, cognome TEXT, codice_fiscale TEXT,
+                    codice_qualifica TEXT, specializzazione TEXT,
+                    societa_ospitante TEXT, data_ins TEXT, presenza_ts TEXT,
+                    sito_timbratura TEXT
+                )
+            """)
+            conn.commit()
+
+        storage = TimbratureStorage(db)
+
+        # 2. Mocking pandas per evitare I/O reale
+        mock_df = pd.DataFrame([{"Data Timbratura": "2024-01-01", "Cognome Risorsa": "Rossi"}])
+        mocker.patch("src.bots.portale_fornitori.timbrature.storage.pd.read_excel", return_value=mock_df)
+
+        # Mocking db_manager per la connessione
+        mocker.patch(
+            "src.bots.portale_fornitori.timbrature.storage.db_manager.get_connection",
+            side_effect=lambda p, **kw: sqlite3.connect(p),
         )
-        mock_conn = MagicMock()
-        mock_get_conn.return_value.__enter__.return_value = mock_conn
-        result = self.storage.import_excel("path.xlsx")
-        self.assertTrue(result)
 
+        # Mocking l'importatore di basso livello (non usato se process_excel_row è reale)
+        # Ma storage.import_excel chiama ScaricoOreImporter.import_scarico_ore? No, lo fa il BOT.
+        # Storage.import_excel legge direttamente via pandas in V9.4
 
-if __name__ == "__main__":
-    unittest.main()
+        res = storage.import_excel("any.xlsx")
+        assert res is True

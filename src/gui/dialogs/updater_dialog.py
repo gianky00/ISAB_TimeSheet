@@ -210,7 +210,7 @@ def check_for_updates(
 
     _active_check_worker = UpdateCheckWorker(silent=silent)
 
-    _active_check_worker.finished_signal.connect(lambda res: _handle_update_result(res, parent, callback))
+    _active_check_worker.finished_signal.connect(lambda res: handle_update_result(res, parent, callback))
     _active_check_worker.no_update_signal.connect(
         lambda: not silent
         and QMessageBox.information(
@@ -234,7 +234,7 @@ def _on_update_error(msg: str, silent: bool, parent: QWidget | None) -> None:
     logger.debug(f"Update check failed: {msg}")
 
 
-def _handle_update_result(
+def handle_update_result(
     latest_update: dict[str, Any],
     parent: QWidget | None = None,
     callback: Callable[[dict[str, Any]], None] | None = None,

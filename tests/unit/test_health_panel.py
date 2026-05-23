@@ -121,8 +121,7 @@ class TestHealthPanel:
 
     @patch("src.gui.panels.health_panel.QTimer")
     @patch("src.gui.panels.health_panel.generate_analytics_report")
-    @patch("src.gui.panels.health_panel.LogViewer")
-    def test_panel_refresh(self, mock_viewer, mock_report, mock_timer, qtbot):
+    def test_panel_refresh(self, mock_report, mock_timer, qtbot):
         from dataclasses import dataclass
 
         from src.gui.panels.health_panel import HealthPanel
@@ -131,18 +130,29 @@ class TestHealthPanel:
         class MockReport:
             health_score: int = 85
             anomalies: list = None
+            bot_runs_ok: int = 10
+            bot_runs_fail: int = 2
+            error_rate: float = 5.0
+            timestamp: str = "2024-01-01 10:00"
 
             def __post_init__(self):
                 if self.anomalies is None:
                     self.anomalies = []
 
         mock_report.return_value = MockReport()
-        mock_viewer().generate_health_report.return_value = {
-            "bot_runs": {"successful": 10, "failed": 2},
-            "error_rate_percent": 5.0,
-        }
 
         panel = HealthPanel()
-        panel.refresh()
+        # Mocking the worker to avoid real thread execution in this unit test
+        panel._on_health_data_ready(
+            {
+                "health_score": 85,
+                "bot_runs_ok": 10,
+                "bot_runs_fail": 2,
+                "error_rate": 5.0,
+                "anomalies": [],
+                "timestamp": "2024-01-01 10:00",
+            }
+        )
+
         assert panel._score_badge.score == 85
         assert panel._stat_runs_ok.val_lbl.text() == "10"

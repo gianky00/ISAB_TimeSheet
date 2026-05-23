@@ -134,7 +134,7 @@ def test_save_config_with_keyring(clean_config_env):
         patch("src.core.secrets_manager.SecretsManager.is_available", return_value=True),
         patch("src.core.secrets_manager.SecretsManager.store_credential") as mock_store,
     ):
-        save_config(config)
+        save_config(config, async_save=False)
 
         # Verify stored in keyring
         mock_store.assert_any_call("isab_portal", "user1", "plain_password")
@@ -155,7 +155,7 @@ def test_save_config_fallback_encryption(clean_config_env):
         patch("src.core.secrets_manager.SecretsManager.is_available", return_value=False),
         patch("src.utils.security.password_manager.encrypt", return_value="encrypted_val"),
     ):
-        save_config(config)
+        save_config(config, async_save=False)
 
         saved_data = json.loads(mock_file.read_text(encoding="utf-8"))
         assert saved_data["accounts"][0]["password"] == "encrypted_val"
@@ -165,14 +165,14 @@ def test_save_config_io_error(clean_config_env):
     """Test handling of IO errors during save."""
     config = {"test": "data"}
     with patch("os.replace", side_effect=OSError("Permission denied")):
-        save_config(config)
+        save_config(config, async_save=False)
 
 
 def test_save_config_critical_exception(clean_config_env):
     """Test handling of unexpected exceptions during save."""
     config = {"test": "data"}
     with patch("src.core.config_manager.json.dump", side_effect=Exception("Critical Failure")):
-        save_config(config)
+        save_config(config, async_save=False)
 
 
 def test_cache_logic(clean_config_env):

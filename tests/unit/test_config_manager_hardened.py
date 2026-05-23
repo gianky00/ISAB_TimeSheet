@@ -53,7 +53,7 @@ class TestConfigManagerHardened:
 
         config = load_config()
         config["test_key"] = "test_val"
-        save_config(config)
+        save_config(config, async_save=False)
 
         # Ora m_replace DEVE essere chiamato perché il file esisteva
         assert m_replace.called
@@ -120,7 +120,7 @@ class TestConfigManagerHardened:
         config = load_config()
         config["accounts"] = [{"username": "boss", "password": "top_secret"}]
 
-        save_config(config)
+        save_config(config, async_save=False)
 
         # Deve aver salvato nel keyring e rimosso la pass dal file
         m_store.assert_called_with("isab_portal", "boss", "top_secret")

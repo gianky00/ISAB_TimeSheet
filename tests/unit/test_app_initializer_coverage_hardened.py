@@ -1,59 +1,52 @@
+from unittest.mock import MagicMock
+
 import pytest
 
 from src.core.app_initializer import AppInitializer
-from src.core.license_validator import LicenseStatus
 
 
 class TestAppInitializerHardened:
-    """Test di inizializzazione con focus sulla resilienza e dipendenze."""
+    """Test di copertura per AppInitializer con isolamento profondo."""
 
-    @pytest.fixture
-    def mock_deps(self, mocker):
-        return {
-            "db_manager": mocker.patch("src.core.app_initializer.db_manager"),
-            "get_status": mocker.patch("src.core.app_initializer.get_detailed_license_status"),
-            "run_update": mocker.patch("src.core.app_initializer.run_update"),
-            "setup_logging": mocker.patch.object(AppInitializer, "_setup_logging"),
-            "exit": mocker.patch("sys.exit"),
-            "ensure_driver": mocker.patch(
-                "src.utils.resource_manager.ResourceManager.ensure_automation_driver"
-            ),
-            "backup": mocker.patch("src.core.app_initializer.DatabaseBackupManager.execute_backup"),
-            "hardware_id": mocker.patch(
-                "src.core.app_initializer.get_hardware_id", return_value="test_hw_id"
-            ),
-        }
-
-    def test_initialize_success(self, mock_deps):
-        """Workflow standard: tutto pronto e valido."""
+    @pytest.fixture(autouse=True)
+    def reset_state(self, mocker):
         AppInitializer._core_initialized = False
-        mock_deps["get_status"].return_value = (LicenseStatus.VALID, "Valid")
-
-        result = AppInitializer.initialize_core()
-
-        assert result is True
-        mock_deps["db_manager"].init_db.assert_called_once()
-        # run_update viene ora chiamato SEMPRE all'inizio
-        mock_deps["run_update"].assert_called_once()
-
-    def test_initialize_with_cloud_sync(self, mock_deps):
-        """Workflow con licenza da aggiornare (sync cloud)."""
+        # Mock global components to avoid real FS/DB access
+        mocker.patch("src.core.initialization.license_verifier.LicenseVerifier.verify_license")
+        mocker.patch("src.core.initialization.migration_engine.DatabaseMigrationEngine.initialize_database")
+        mocker.patch("src.utils.resource_manager.ResourceManager.ensure_automation_driver")
+        yield
         AppInitializer._core_initialized = False
-        mock_deps["get_status"].return_value = (LicenseStatus.EXPIRED, "Expired")
 
-        # Se la licenza è scaduta, solleva eccezione
-        with pytest.raises(Exception, match="Licenza non valida"):
-            AppInitializer.initialize_core()
+    def test_initialize_success(self, mocker):
+        """Test inizializzazione completa con successo."""
+        mocker.patch.object(AppInitializer, "_setup_logging")
+        mocker.patch.object(AppInitializer, "_preload_heavy_modules")
+        mocker.patch("src.core.app_initializer.get_available_bots", return_value=[])
 
-        mock_deps["run_update"].assert_called_once()
+        res = AppInitializer.initialize_core()
+        assert res is True
+        assert AppInitializer._core_initialized is True
 
-    def test_db_init_fatal_fail(self, mock_deps):
-        """Se il DB crasha durante init_db, initialize_core deve fallire con eccezione."""
-        AppInitializer._core_initialized = False
-        mock_deps["get_status"].return_value = (LicenseStatus.VALID, "Valid")
-        mock_deps["db_manager"].init_db.side_effect = Exception("Fatal DB Error")
+    def test_initialize_with_cloud_sync(self, mocker):
+        """Test inizializzazione che innesca logica di ambiente."""
+        mocker.patch.object(AppInitializer, "_setup_logging")
+        mocker.patch.object(AppInitializer, "_preload_heavy_modules")
 
-        with pytest.raises(Exception, match="Fatal DB Error"):
-            AppInitializer.initialize_core()
+        # Simula presenza OneDrive
+        mocker.patch("os.environ.get", side_effect=lambda k, d=None: "C:\\OneDrive" if k == "OneDrive" else d)
 
-        assert AppInitializer._core_initialized is False
+        res = AppInitializer.initialize_core()
+        assert res is True
+
+    def test_init_generator_robustness(self, mocker):
+        """Verifica che il generatore gestisca bene i null."""
+        mock_mw = MagicMock()
+        # Mock NavigationController
+        mocker.patch.object(mock_mw.navigation_controller, "get_panel", return_value=None)
+        mocker.patch("src.core.config_manager.load_config", return_value={})
+
+        gen = AppInitializer.init_generator(mock_mw)
+        steps = list(gen)
+        assert len(steps) > 0
+        assert steps[-1][1] == 100

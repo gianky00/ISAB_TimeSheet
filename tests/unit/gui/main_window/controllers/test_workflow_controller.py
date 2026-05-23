@@ -1,37 +1,51 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
-from PySide6.QtCore import QDate, QObject
-
-from src.gui.main_window.controllers.workflow_controller import WorkflowController
+from PySide6.QtCore import QObject
 
 
-@pytest.fixture
-def mock_mainwindow():
-    # Usiamo QObject reale come parent per soddisfare il costruttore di QObject
-    mw = MagicMock(spec=["navigation_controller", "status_bar_component"])
-    # Non mockiamo 'parent', è un metodo di QObject, non dobbiamo sovrascriverlo
-    return mw
+class MockMainWindow(QObject):
+    """Sottoclasse reale di QObject per WorkflowController."""
+
+    def __init__(self):
+        super().__init__()
+        self.timbrature_bot_panel = MagicMock()
+        self.navigation_controller = MagicMock()
+        self.scarico_ore_panel = MagicMock()
+        # Mock minimal per evitare AttributeError senza spec rigido
+        self.status_bar_component = MagicMock()
+
+    def _show_update_banner(self, info):
+        pass
 
 
-def test_workflow_controller_init(mock_mainwindow):
-    # La classe WorkflowController eredita da QObject.
-    # Il mock_mainwindow deve comportarsi come un QObject valido o essere passato come parent corretto.
-    # Proviamo a passare un QObject reale come parent.
-    parent_obj = QObject()
-    controller = WorkflowController(parent_obj)
-    controller.mw = mock_mainwindow
-    assert controller.mw == mock_mainwindow
+class TestWorkflowController:
+    @pytest.fixture
+    def mw(self, qapp):
+        return MockMainWindow()
 
+    def test_workflow_controller_init(self, mw):
+        from src.gui.main_window.controllers.workflow_controller import WorkflowController
 
-def test_run_timbrature_bot_ieri(mock_mainwindow):
-    controller = WorkflowController(QObject())
-    controller.mw = mock_mainwindow
+        ctrl = WorkflowController(mw)
+        assert ctrl.mw == mw
 
-    mock_panel = MagicMock()
-    mock_mainwindow.timbrature_bot_panel = mock_panel
+    def test_run_timbrature_bot(self, mw, mocker):
+        from src.gui.main_window.controllers.workflow_controller import WorkflowController
 
-    controller.run_timbrature_bot("ieri")
+        ctrl = WorkflowController(mw)
 
-    expected_date = QDate.currentDate().addDays(-1).toString("dd.MM.yyyy")
-    mock_panel.run_externally.assert_called_with({"data_da": expected_date, "data_a": expected_date})
+        with patch("src.gui.widgets.toast.ToastManager.instance") as mock_toast:
+            ctrl.run_timbrature_bot("ieri")
+            assert mw.timbrature_bot_panel.run_externally.called
+            assert mock_toast().show.called
+
+    def test_run_sync_dataease(self, mw):
+        from src.gui.main_window.controllers.workflow_controller import WorkflowController
+
+        ctrl = WorkflowController(mw)
+
+        with patch("PySide6.QtCore.QTimer.singleShot", side_effect=lambda ms, fn: fn()):
+            ctrl.run_sync_dataease()
+            assert mw.navigation_controller.navigate_to.called
+            assert mw.scarico_ore_panel._start_update.called

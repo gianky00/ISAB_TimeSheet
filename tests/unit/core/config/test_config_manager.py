@@ -1,44 +1,25 @@
-import json
-from unittest.mock import patch
-
-import pytest
-
 from src.core.config_manager import _reset_configuration_for_testing, load_config, save_config
 
 
-@pytest.fixture(autouse=True)
-def reset_config():
+def test_load_config_defaults(tmp_path, mocker):
     _reset_configuration_for_testing()
-    yield
-    _reset_configuration_for_testing()
+    mocker.patch("src.core.config_manager.CONFIG_FILE", tmp_path / "config.json")
+    config = load_config()
+    assert isinstance(config, dict)
+    assert "browser_timeout" in config
 
 
-@patch("src.core.config_manager.CONFIG_FILE")
-def test_load_config_defaults(mock_config_file):
-    mock_config_file.exists.return_value = False
+def test_save_and_load_config(tmp_path, mocker):
+    _reset_configuration_for_testing()
+    config_file = tmp_path / "config_save.json"
+    mocker.patch("src.core.config_manager.CONFIG_FILE", config_file)
+    mocker.patch("src.core.config_manager.CONFIG_DIR", tmp_path)
 
     config = load_config()
-    assert config is not None
-    assert "accounts" in config
+    config["test_val"] = 123
+    # Forza salvataggio sincrono per evitare race condition
+    save_config(config, async_save=False)
 
-
-@patch("src.core.config_manager.CONFIG_FILE")
-def test_save_and_load_config(mock_config_file, tmp_path):
-    # Setup temp path for config
-    test_config_path = tmp_path / "config.json"
-    mock_config_file.exists.return_value = True
-    mock_config_file.read_text.return_value = json.dumps({"test_key": "test_value"})
-    mock_config_file.with_suffix.return_value = tmp_path / "config.tmp"
-    mock_config_file.parent = tmp_path
-
-    # Mock for atomic write
-    with patch("src.core.config_manager.CONFIG_FILE", test_config_path):
-        config = load_config()
-        config["new_key"] = "new_value"
-        save_config(config)
-
-        # Invalidate cache to force reload
-        _reset_configuration_for_testing()
-
-        reloaded_config = load_config()
-        assert reloaded_config["new_key"] == "new_value"
+    _reset_configuration_for_testing()
+    new_config = load_config()
+    assert new_config["test_val"] == 123
