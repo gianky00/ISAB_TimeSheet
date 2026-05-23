@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.bots.safework.pdl_bot import SafeWorkPDLBot
+from src.bots.safework.pdl.bot import SafeWorkPDLBot
 
 
 class TestSafeWorkPDLIntegration:
