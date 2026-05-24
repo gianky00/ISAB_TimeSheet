@@ -27,7 +27,7 @@ Prima di ogni commit o conclusione di task, devono essere superati i seguenti co
 
 ### 5. Testing & Validazione
 - **Regressione:** Ogni fix richiede un nuovo test in `tests/`.
-- **Robustezza:** Usa `tests/run_robust_test` per validare l'intera suite prima del rilascio.
+- **Validazione Unica:** L'esecuzione dei test deve avvenire esclusivamente tramite `python -m tests.run_robust_test`. È vietato l'uso diretto di `pytest` per evitare conflitti con il singleton QApplication.
 
 ### 6. Versionamento Dinamico
 - La versione è gestita via `commitizen` e `pyproject.toml`. Non modificarla manualmente se non richiesto esplicitamente.

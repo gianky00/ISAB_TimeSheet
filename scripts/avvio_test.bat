@@ -34,7 +34,7 @@ echo.
 echo [TEST] Avvio Robust Test Runner...
 echo.
 
-"!VENV_PYTHON!" tests/run_robust_tests.py %*
+"!VENV_PYTHON!" -m tests.run_robust_test %*
 
 if errorlevel 1 (
     echo.

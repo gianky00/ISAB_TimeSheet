@@ -583,7 +583,7 @@ class DeveloperToolboxGUI(QMainWindow):
     def _coverage(self) -> None:
         """Opzione 8: Coverage"""
         self._run_command(
-            [str(VENV_BIN / "pytest"), "--cov=src", "--cov-report=html"],
+            [str(VENV_PYTHON), "-m", "tests.run_robust_test", "--cov=src", "--cov-report=html"],
             "Code Coverage",
         )
 

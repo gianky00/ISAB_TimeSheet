@@ -128,11 +128,11 @@ class TestScaricaTSPanel:
         """Verifica la validazione dell'input."""
         # Tabella vuota (solo righe padding con stringhe vuote)
         panel.data_table.clear()
-        ready, _msg = panel.validate_ready()
+        ready, msg = panel.validate_ready()
         assert ready is False
         assert "Nessun dato" in msg
 
         # Con dati
         panel.data_table.set_data([{"numero_oda": "123"}])
-        ready, _msg = panel.validate_ready()
+        ready, msg = panel.validate_ready()
         assert ready is True

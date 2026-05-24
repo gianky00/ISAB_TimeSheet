@@ -1,41 +1,45 @@
-"""Unit tests for WaveProgressBar."""
-
 from src.gui.widgets.wave_progress import WaveProgressBar
 
 
-class TestWaveProgressBar:
-    """Test suite per WaveProgressBar."""
+def test_wave_progress_init(qtbot):
+    bar = WaveProgressBar()
+    qtbot.addWidget(bar)
 
-    def test_initialization(self, qtbot):
-        widget = WaveProgressBar()
-        qtbot.addWidget(widget)
+    assert bar.minimum() == 0
+    assert bar.maximum() == 100
+    assert bar.value() == 0
+    assert bar.timer.isActive()
 
-        assert widget.value() == 0
-        assert widget.maximum() == 100
-        assert widget.timer.isActive()
 
-    def test_wave_update(self, qtbot):
-        widget = WaveProgressBar()
-        qtbot.addWidget(widget)
+def test_wave_progress_animation(qtbot):
+    bar = WaveProgressBar()
+    qtbot.addWidget(bar)
 
-        initial_phase = widget._phase
-        # Attendiamo il timer dell'animazione
-        qtbot.wait(32)  # ~2 frames
+    initial_phase = bar._phase
+    # Wait for a few frames
+    qtbot.wait(50)
 
-        assert widget._phase > initial_phase
+    assert bar._phase > initial_phase
+    assert bar.timer.isActive()
 
-    def test_timer_stops_at_max(self, qtbot):
-        widget = WaveProgressBar()
-        qtbot.addWidget(widget)
 
-        widget.setValue(100)
-        widget._update_wave()
+def test_wave_progress_completion(qtbot):
+    bar = WaveProgressBar()
+    qtbot.addWidget(bar)
 
-        assert not widget.timer.isActive()
+    bar.setValue(100)
+    # The timer should stop when reaching maximum
+    # (Checking the logic in _update_wave)
+    bar._update_wave()
 
-    def test_paint_event_no_crash(self, qtbot):
-        widget = WaveProgressBar()
-        qtbot.addWidget(widget)
-        widget.setValue(50)
-        widget.update()
-        # Test di rendering 2D senza crash
+    assert not bar.timer.isActive()
+
+
+def test_wave_progress_paint(qtbot):
+    bar = WaveProgressBar()
+    qtbot.addWidget(bar)
+    bar.resize(200, 34)
+
+    # Force a paint event to ensure no crashes in the math/painter logic
+    bar.update()
+    qtbot.wait(20)

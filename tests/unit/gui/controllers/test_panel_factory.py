@@ -24,35 +24,40 @@ def test_panel_factory_init():
     assert factory.mw == nav.mw
 
 
-def test_create_panel_reserved_ai():
+def test_create_panel_reserved_ai(qtbot):
     nav = MockNav()
     factory = PanelFactory(nav)
     panel = factory.create_panel(PageIndex.RESERVED_AI)
+    qtbot.addWidget(panel)
     assert isinstance(panel, QWidget)
     assert type(panel) is QWidget  # Should be a base QWidget
 
 
 @patch("src.gui.panels.dashboard_panel.DashboardPanel")
-def test_create_dashboard(mock_dash):
+def test_create_dashboard(mock_dash, qtbot):
     nav = MockNav()
     factory = PanelFactory(nav)
-    mock_dash.return_value = QWidget()
+    widget = QWidget()
+    qtbot.addWidget(widget)
+    mock_dash.return_value = widget
     panel = factory.create_panel(PageIndex.DASHBOARD)
     assert panel is not None
     mock_dash.assert_called_once()
 
 
 @patch("src.gui.widgets.automazioni_widget.AutomazioniWidget")
-def test_create_automazioni(mock_auto):
+def test_create_automazioni(mock_auto, qtbot):
     nav = MockNav()
     factory = PanelFactory(nav)
-    mock_auto.return_value = QWidget()
+    widget = QWidget()
+    qtbot.addWidget(widget)
+    mock_auto.return_value = widget
     panel = factory.create_panel(PageIndex.AUTOMAZIONI)
     assert panel is not None
     mock_auto.assert_called_once_with(main_window=nav.mw)
 
 
-def test_create_panel_error():
+def test_create_panel_error(qtbot):
     nav = MockNav()
     factory = PanelFactory(nav)
 
@@ -73,11 +78,13 @@ def test_create_panel_error():
         (PageIndex.CHANGELOG, "_create_changelog"),
     ],
 )
-def test_creators_simple(index, creator_method):
+def test_creators_simple(index, creator_method, qtbot):
     nav = MockNav()
     factory = PanelFactory(nav)
 
     with patch.object(factory, creator_method) as mock_creator:
-        mock_creator.return_value = QWidget()
+        widget = QWidget()
+        qtbot.addWidget(widget)
+        mock_creator.return_value = widget
         factory.create_panel(index)
         mock_creator.assert_called_once()

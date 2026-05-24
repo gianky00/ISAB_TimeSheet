@@ -186,7 +186,7 @@ def _run_tests_ai(reset: bool = True) -> tuple[bool, str, float]:
         duration = time.time() - start_t
 
         # Salva log grezzo
-        (LOG_DIR / "pytest.log").write_text(
+        (LOG_DIR / "robust_tests.log").write_text(
             f"CMD: {' '.join(cmd)}\nEXIT: {result.returncode}\n{'=' * 40}\n{result.stdout}\n{result.stderr}",
             encoding="utf-8",
         )
@@ -612,7 +612,7 @@ class ApexAudit:
             (
                 "Robust Tests",
                 _run_tests_ai,
-                "pytest",
+                "robust_tests",
                 False,
             ),
         ]
@@ -653,11 +653,11 @@ class ApexAudit:
         elif self.target:
             selected_checks = [c for c in all_checks if self.target in c[2] or self.target in c[0].lower()]
         elif self.test_only:
-            selected_checks = [c for c in all_checks if c[2] == "pytest"]
+            selected_checks = [c for c in all_checks if c[2] == "robust_tests"]
         else:  # Default (Full Audit)
             excluded = ["pygount", "vulture"]
             if self.fast:
-                excluded.extend(["pytest", "refurb"])
+                excluded.extend(["robust_tests", "refurb"])
 
             selected_checks = [c for c in all_checks if c[2] not in excluded]
 
@@ -724,7 +724,7 @@ class ApexAudit:
             "bandit": 15,
             "mypy": 10,
             "xenon": 5,
-            "pytest": 25,
+            "robust_tests": 25,
         }
         for r in self.results:
             if not r.success:

@@ -109,14 +109,14 @@ class TestTimbratureBotPanel:
         # Per testare il fallimento, forziamo il testo del combo a vuoto
         panel.params_widget.fornitore_combo.clear()
 
-        ready, _msg = panel.validate_ready()
+        ready, msg = panel.validate_ready()
         assert ready is False
         assert "fornitore" in msg.lower()
 
         # Ripristiniamo e testiamo successo
         panel.params_widget.fornitore_combo.addItems(["COEMI"])
         panel.params_widget.set_fornitore("COEMI")
-        ready, _msg = panel.validate_ready()
+        ready, msg = panel.validate_ready()
         assert ready is True
 
     def test_on_worker_finished_custom(self, qtbot, panel, mocker):

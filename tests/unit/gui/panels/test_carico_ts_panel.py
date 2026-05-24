@@ -86,19 +86,19 @@ class TestCaricoTSPanel:
         """Verifica la validazione dell'input."""
         # Caso: No credenziali
         mocker.patch.object(panel, "get_credentials", return_value=("", ""))
-        ready, _msg = panel.validate_ready()
+        ready, msg = panel.validate_ready()
         assert ready is False
         assert "Credenziali" in msg
 
         # Caso: No dati
         mocker.patch.object(panel, "get_credentials", return_value=("u", "p"))
         panel.data_table.set_data([])
-        ready, _msg = panel.validate_ready()
+        ready, msg = panel.validate_ready()
         assert ready is False
         assert "Nessun dato" in msg
 
         panel.data_table.set_data([{"numero_oda": "1"}])
-        ready, _msg = panel.validate_ready()
+        ready, msg = panel.validate_ready()
         assert ready is True
 
     def test_save_data_on_change(self, qtbot, panel, mocker):

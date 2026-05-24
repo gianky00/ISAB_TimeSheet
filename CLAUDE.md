@@ -23,14 +23,14 @@ poetry shell
 ### Testing
 
 ```bash
-# Suite completa (sempre preferita)
+# Suite completa e unica via per i test
 python -m tests.run_robust_test
 
-# Test rapidi per dev loop
-poetry run pytest -m "unit and not slow"
+# Esempio per test mirati (il robust runner supporta i marker di pytest)
+python -m tests.run_robust_test -m "unit and not slow"
 
-# Test singolo file
-poetry run pytest -v tests/unit/test_audit_manager_coverage.py
+# Per un singolo file
+python -m tests.run_robust_test tests/unit/test_audit_manager_coverage.py
 ```
 
 ### Code Quality (tutti automatizzati nel pre-commit)
