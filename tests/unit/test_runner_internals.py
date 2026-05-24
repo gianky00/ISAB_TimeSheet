@@ -246,7 +246,7 @@ class TestUltraRunnerCounting:
         assert runner.total_passed == 0
         assert runner.total_failed == 0
         assert runner._exit_code == 0
-        assert runner.strategy == "SHOTGUN"
+        assert runner.strategy == "PARALLELO"
 
     def test_exit_code_attribute_exists(self) -> None:
         """ARCH-2 regression: il runner deve avere _exit_code, non chiamare sys.exit."""

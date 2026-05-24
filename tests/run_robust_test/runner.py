@@ -58,6 +58,7 @@ class UltraRunner:
         self.start_time = 0.0
         self.strategy = "PARALLELO"
         self.passed_targets: set[str] = set()
+        self._exit_code = 0
 
     def load_state(self, resume: bool) -> None:
         """Carica lo stato dei test passati dal file persistente.
