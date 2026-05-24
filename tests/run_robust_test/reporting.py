@@ -71,6 +71,7 @@ def finish_ai(
     report_dict = asdict(report)
     ai_report_file.write_text(json.dumps(report_dict, indent=2, ensure_ascii=False), encoding="utf-8")
     sys.stdout.write(json.dumps(report_dict, indent=2, ensure_ascii=False) + "\n")
+    sys.stdout.flush()
     os_exit_code = 0 if report.success else 1
     os._exit(os_exit_code)
 
