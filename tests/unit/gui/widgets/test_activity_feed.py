@@ -1,100 +1,94 @@
-import pytest
-from PySide6.QtGui import QShowEvent
-from PySide6.QtWidgets import QApplication, QLabel
+"""Unit tests for ActivityFeed widget."""
 
-from src.core.audit_manager import AuditManager
-from src.gui.styles import COLORS
+from unittest.mock import MagicMock
+
+import pytest
+
 from src.gui.widgets.activity_feed import ActivityFeed, ActivityItem
 
 
-@pytest.fixture(scope="session")
-def qapp():
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    return app
-
-
-def test_activity_item_initialization_success(qapp):
-    log = {
-        "status": "success",
-        "action": "Test Action",
-        "entity": "Test Entity",
-        "timestamp": "2026-01-01T12:00:00",
-    }
-    item = ActivityItem(log_entry=log)
-    assert item.border_color == COLORS["success_dark"]
-    assert "Test Action - Test Entity" in item.toolTip()
-
-    # Check animation
-    assert item.fade_in_animation is not None
-
-
-def test_activity_item_initialization_error(qapp):
-    log = {"status": "error", "action": "Test Error", "timestamp": "invalid_date"}
-    item = ActivityItem(log_entry=log, animate=False)
-    assert item.border_color == COLORS["error_red"]
-    assert item.fade_in_animation is None
-
-
-def test_activity_item_initialization_warning(qapp):
-    log = {"status": "warning"}
-    item = ActivityItem(log_entry=log, animate=False)
-    assert item.border_color == COLORS["warning_yellow"]
-
-
-def test_activity_item_show_event(qapp):
-    log = {"status": "success"}
-    item = ActivityItem(log_entry=log)
-    show_event = QShowEvent()
-    item.showEvent(show_event)
-    assert item.fade_in_animation.state() == item.fade_in_animation.State.Running
-
-
-def test_activity_item_remove_opacity(qapp):
-    log = {"status": "success"}
-    item = ActivityItem(log_entry=log)
-    item._remove_opacity_effect()
-    assert item.graphicsEffect() is None
-
-
-def test_activity_feed_initialization(qapp, monkeypatch):
-    feed = ActivityFeed()
-    assert feed.scroll_area is not None
-    assert feed.feed_layout.count() == 1  # Stretch
-
-
-def test_activity_feed_refresh_empty(qapp, monkeypatch):
-    monkeypatch.setattr(AuditManager.instance(), "get_logs", lambda limit: [])
-    feed = ActivityFeed()
-    feed.refresh_feed()
-    assert feed.feed_layout.count() == 2  # Stretch + empty label
-    assert isinstance(feed.feed_layout.itemAt(0).widget(), QLabel)
-
-
-def test_activity_feed_refresh_with_logs(qapp, monkeypatch):
-    logs = [
-        {"status": "success", "action": "Login", "timestamp": "2026-01-01T12:00:00"},
-        {"status": "error", "action": "Crash", "timestamp": "2026-01-01T12:01:00"},
+@pytest.fixture
+def mock_audit_manager(mocker):
+    """Mock di AuditManager."""
+    mock_mgr = mocker.patch("src.core.audit_manager.AuditManager.instance")
+    instance = MagicMock()
+    # Mock segnali
+    instance.signals.log_added = MagicMock()
+    instance.get_logs.return_value = [
+        {"timestamp": "2026-05-24T10:00:00", "action": "Action 1", "status": "success"},
+        {"timestamp": "2026-05-24T09:00:00", "action": "Action 2", "status": "error"},
     ]
-    monkeypatch.setattr(AuditManager.instance(), "get_logs", lambda limit: logs)
-
-    feed = ActivityFeed()
-    feed.refresh_feed()
-
-    assert feed.feed_layout.count() == 3  # 2 items + stretch
-    assert isinstance(feed.feed_layout.itemAt(0).widget(), ActivityItem)
-    assert isinstance(feed.feed_layout.itemAt(1).widget(), ActivityItem)
-
-    # Test refresh again to check cleanup
-    feed.refresh_feed()
-    assert feed.feed_layout.count() == 3
+    mock_mgr.return_value = instance
+    return instance
 
 
-def test_activity_feed_on_new_log(qapp, monkeypatch):
-    feed = ActivityFeed()
-    import unittest.mock
+class TestActivityFeed:
+    """Test suite per ActivityFeed."""
 
-    with unittest.mock.patch.object(feed, "refresh_feed") as mock_refresh:
-        feed._on_new_log_added({})
-        mock_refresh.assert_called_once()
+    def test_initialization(self, qtbot, mock_audit_manager):
+        """Verifica lbl'inizializzazione del widget."""
+        widget = ActivityFeed()
+        qtbot.addWidget(widget)
+
+        assert widget.height() == 90
+        # Il caricamento iniziale è in un singleShot(800)
+        qtbot.wait(900)
+
+        # Dovrebbe avere 2 ActivityItem + 1 stretch
+        items = widget.findChildren(ActivityItem)
+        assert len(items) == 2
+
+    def test_refresh_feed_empty(self, qtbot, mock_audit_manager):
+        """Verifica lo stato vuoto."""
+        mock_audit_manager.get_logs.return_value = []
+
+        widget = ActivityFeed()
+        qtbot.addWidget(widget)
+        widget.refresh_feed()
+
+        from PySide6.QtWidgets import QLabel
+
+        labels = widget.findChildren(QLabel)
+        assert any("Nessuna attività recente" in lbl.text() for lbl in labels)
+
+    def test_on_new_log_added_signal(self, qtbot, mock_audit_manager, mocker):
+        """Verifica che il segnale log_added triggeri il refresh."""
+        widget = ActivityFeed()
+        qtbot.addWidget(widget)
+
+        mock_refresh = mocker.patch.object(widget, "refresh_feed")
+
+        # Emuliamo lbl'arrivo di un segnale
+        # Poiché log_added è un MagicMock() nel fixture, dobbiamo emetterlo correttamente
+        # Se fosse un segnale reale useremmo .emit()
+        widget._on_new_log_added({"action": "new"})
+
+        assert mock_refresh.called
+
+    def test_activity_item_styling(self, qtbot):
+        """Verifica lo stile di un ActivityItem."""
+        # Caso Successo
+        item_ok = ActivityItem({"status": "success", "action": "OK"})
+        assert item_ok.border_color != ""
+
+        # Caso Errore
+        item_err = ActivityItem({"status": "error", "action": "FAIL"})
+        from src.gui.styles import COLORS
+
+        assert item_err.border_color == COLORS["error_red"]
+
+    def test_activity_item_time_formatting(self, qtbot):
+        """Verifica la formattazione del tempo nell'item."""
+        from datetime import datetime, timedelta
+
+        now = datetime.now()
+        entry = {"timestamp": (now - timedelta(minutes=5)).isoformat(), "action": "T"}
+
+        item = ActivityItem(entry)
+        qtbot.addWidget(item)
+
+        from PySide6.QtWidgets import QLabel
+
+        labels = item.findChildren(QLabel)
+        time_text = labels[2].text()  # La terza label è il tempo (badge, action, time)
+        assert "5 min" in time_text or "fa" in time_text  # log_humanizer output

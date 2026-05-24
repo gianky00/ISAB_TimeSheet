@@ -120,7 +120,7 @@ class CertificatiPdfExporter:
                 year = f"20{year_part}" if len(year_part) == short_year_len else year_part
 
         # Lista di possibili percorsi relativi (prioritari)
-        possible_rel_paths = []
+        possible_rel_paths: list[str] = []
         if year:
             possible_rel_paths.extend(
                 (

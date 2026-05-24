@@ -54,10 +54,13 @@ class TestExcelImporterComprehensive:
         df = pd.DataFrame(data, columns=cols)
 
         with patch("src.core.processing.giornaliere.steps.pd.read_excel", return_value=df):
-            # Using dict() to avoid tool interpolation issues with {}
-            _year, rows, err = GiornaliereImporter._process_single_giornaliera((2024, Path(file1), {}))
+            with patch(
+                "src.core.processing.giornaliere.steps.SyncGiornaliereStep.execute", return_value=None
+            ):
+                # Using dict() to avoid tool interpolation issues with {}
+                _year, rows, err = GiornaliereImporter._process_single_giornaliera((2024, Path(file1), {}))
 
-            assert err is None
+                assert err is None
             # Code does iloc[:-1], so "Totale" row is dropped. 2 rows remain.
             assert len(rows) == 2
             assert rows[0][2] == "Mario Rossi"

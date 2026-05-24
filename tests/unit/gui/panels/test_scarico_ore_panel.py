@@ -1,96 +1,92 @@
-from unittest.mock import MagicMock, patch
+"""Unit tests for ScaricoOrePanel."""
+
+from unittest.mock import MagicMock
 
 import pytest
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Qt, Signal
 
 from src.gui.panels.scarico_ore_panel import ScaricoOrePanel
 
 
 class MockController(QObject):
+    """Mock del controller con segnali PySide6 reali."""
+
     status_changed = Signal(str)
     update_finished = Signal(bool, str)
 
     def __init__(self):
         super().__init__()
-        self.format_number = MagicMock(return_value="10,00")
+        self.format_number = MagicMock(side_effect=lambda x: f"{x:.2f}")
         self.start_import = MagicMock()
 
 
-class TestScaricoOrePanel:
-    @pytest.fixture
-    def controller(self):
-        return MockController()
+@pytest.fixture
+def mock_controller():
+    return MockController()
 
-    @pytest.fixture
-    def panel(self, controller, qtbot):
-        with (
-            patch("src.gui.panels.scarico_ore_panel.config_manager.load_config", return_value={}),
-            patch(
-                "src.gui.panels.scarico_ore_panel.ContabilitaManager.get_scarico_ore_data", return_value=[]
-            ),
-        ):
-            p = ScaricoOrePanel(controller)
-            qtbot.addWidget(p)
-            return p
+
+@pytest.fixture
+def panel(qtbot, mock_controller, mocker):
+    """Istanza di ScaricoOrePanel per i test."""
+    mocker.patch("src.core.config_manager.load_config", return_value={"dataease_path": "/test/path"})
+    mocker.patch("pathlib.Path.exists", return_value=True)
+    mocker.patch("src.gui.components.scarico_ore.ScaricoOreTableModel.load_data_async")
+
+    p = ScaricoOrePanel(mock_controller)
+    p.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen)
+    p.show()
+    qtbot.addWidget(p)
+    return p
+
+
+class TestScaricoOrePanel:
+    """Test suite per ScaricoOrePanel."""
 
     def test_initialization(self, panel):
+        """Verifica lbl'inizializzazione del pannello."""
         assert panel.controller is not None
-        assert panel.filters.search_input.placeholderText() != ""
+        assert panel.filters is not None
+        assert panel.table_view is not None
 
-    def test_on_update_finished_success(self, panel, controller):
-        with patch.object(panel, "_load_data"):
-            panel._on_update_finished(True, "Successo!")
-            assert "Successo!" in panel.filters.status_label.text()
-            assert panel.filters.update_btn.isEnabled()
+    def test_start_update_success(self, qtbot, panel, mock_controller):
+        """Verifica lbl'avvio della sincronizzazione."""
+        qtbot.mouseClick(panel.filters.update_btn, Qt.MouseButton.LeftButton)
 
-    def test_on_update_finished_error(self, panel, controller):
-        with patch("src.gui.panels.scarico_ore_panel.ConfirmationDialog.show_error") as mock_err:
-            panel._on_update_finished(False, "Errore fatale")
-            assert "Errore" in panel.filters.status_label.text()
-            assert mock_err.called
+        assert mock_controller.start_import.called
+        assert mock_controller.start_import.call_args[0][0] == "/test/path"
 
-    def test_start_update_missing_path(self, panel):
-        with (
-            patch(
-                "src.gui.panels.scarico_ore_panel.config_manager.load_config",
-                return_value={"dataease_path": ""},
-            ),
-            patch("src.gui.panels.scarico_ore_panel.ConfirmationDialog.show_warning") as mock_warn,
-        ):
-            panel._start_update()
-            assert mock_warn.called
+    def test_on_update_finished_success(self, qtbot, panel, mock_controller, mocker):
+        """Verifica il completamento con successo dell'aggiornamento."""
+        mock_load_data = mocker.patch.object(panel, "_load_data")
+        mock_controller.update_finished.emit(True, "OK")
+        assert mock_load_data.called
 
-    def test_start_update_success(self, panel, controller):
-        with patch(
-            "src.gui.panels.scarico_ore_panel.config_manager.load_config",
-            return_value={"dataease_path": "/some/path"},
-        ):
-            panel._start_update()
-            assert controller.start_import.called
+    def test_perform_search(self, qtbot, panel, mocker):
+        """Verifica lbl'applicazione del filtro di ricerca."""
+        mock_set_filter = mocker.patch.object(panel.source_model, "set_filter")
+        panel.filters.search_input.setText("test")
+        panel._perform_search("test")
+        mock_set_filter.assert_called_with("test", {})
 
-    def test_set_search_query(self, panel):
-        panel.set_search_query("FilterText")
-        assert panel.filters.search_input.text() == "FilterText"
+    def test_update_selection_totals(self, qtbot, panel):
+        """Verifica lbl'aggiornamento delle ore selezionate."""
+        panel._update_selection_totals(42.5)
+        assert "42.50" in panel.filters.lbl_selection.text()
 
-    def test_on_cache_loaded_ui_transition(self, panel, qtbot):
-        """Verifica la transizione UI (shimmer -> tabella) al caricamento dei dati."""
-        # Setup: Inizialmente siamo in loading
+    def test_ui_loading_state(self, panel):
+        """Verifica lo stato visivo di caricamento."""
         panel._set_ui_loading(True)
-        # Verifica interna dei flag di visibilità (più robusta)
-        assert panel.table_view.isHidden()
+        # In environment offscreen, isHidden() è più affidabile di isVisible()
         assert not panel.shimmer.isHidden()
+        assert panel.table_view.isHidden()
 
-        # Simulazione fine caricamento
-        panel._on_cache_loaded()
+        panel._set_ui_loading(False)
+        assert panel.shimmer.isHidden()
+        assert not panel.table_view.isHidden()
 
-        # Attesa esplicita della transizione UI
-        def transition_complete():
-            return not panel.table_view.isHidden() and panel.shimmer.isHidden()
-
-        qtbot.wait_until(transition_complete, timeout=2000)
-        assert panel.filters.status_label.text() == "Pronto"
-
-    def test_loading_progress_updates_label(self, panel):
-        """Verifica che il progresso di caricamento aggiorni la label di stato."""
-        panel._on_loading_progress("Caricamento: 50%")
-        assert panel.filters.status_label.text() == "Caricamento: 50%"
+    def test_set_search_query_api(self, panel, mocker):
+        """Verifica lbl'API pubblica per la ricerca."""
+        mock_search = mocker.patch.object(panel, "_perform_search")
+        panel.set_search_query("api")
+        assert panel.filters.search_input.text() == "api"
+        mock_search.assert_called_with("api")

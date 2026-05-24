@@ -275,8 +275,8 @@ class ScaricoPDLPanel(BaseBotPanel):
                 self.combo_stampanti.setCurrentText(cfg["stampante"])
             self.edit_dest.setText(cfg["dest_path"])
 
-            # Ripristina i dati in tabella solo se questa è attualmente vuota
-            if self.data_table.table.rowCount() == 0:
+            # Ripristina i dati in tabella solo se questa è attualmente vuota (logicamente)
+            if not self.data_table.get_data():
                 if cfg["data"]:
                     self.data_table.set_data(cfg["data"])
             else:

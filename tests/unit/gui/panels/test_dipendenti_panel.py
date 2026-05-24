@@ -14,11 +14,12 @@ class TestDipendentiPanel:
                 "src.gui.panels.dipendenti_manager_panel.employee_manager.get_all_employees", return_value=[]
             ),
             patch("src.core.sync_tracker.SyncTracker.get_formatted_status", return_value="N/D"),
+            patch("src.gui.panels.dipendenti_manager_panel.AuditManager.instance"),
         ):
             p = DipendentiManagerPanel()
             qtbot.addWidget(p)
             p.show()
-            return p
+            yield p
 
     def test_initialization(self, panel):
         assert panel.lbl_count.text() == "0 Dipendenti"

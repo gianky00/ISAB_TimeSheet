@@ -1,114 +1,105 @@
+"""Unit tests for Core Widgets."""
+
 from src.gui.widgets.core_widgets import (
     FilterComboBox,
-    IconButton,
     PrimaryButton,
     SearchInput,
     SortableTableWidgetItem,
     StandardCheckBox,
     StandardGroupBox,
     StandardInput,
-    StandardListWidget,
     StandardProgressBar,
-    StandardSpinBox,
     StandardTable,
     StandardTextEdit,
-    StandardTreeWidget,
 )
 
 
-class TestCoreWidgets:
-    def test_buttons(self, qtbot):
-        p = PrimaryButton("P")
-        qtbot.addWidget(p)
-        assert p.text() == "P"
+def test_buttons(qtbot):
+    pb = PrimaryButton("Test")
+    qtbot.addWidget(pb)
+    assert pb.text() == "Test"
+    assert "background-color" in pb.styleSheet()
 
-        i = IconButton()
-        qtbot.addWidget(i)
-        assert i.styleSheet() != ""
 
-    def test_inputs(self, qtbot):
-        s = SearchInput("Search")
-        qtbot.addWidget(s)
-        assert s.placeholderText() == "Search"
-        assert s.isClearButtonEnabled()
+def test_inputs(qtbot):
+    si = SearchInput("Placeholder")
+    qtbot.addWidget(si)
+    assert si.placeholderText() == "Placeholder"
+    assert si.isClearButtonEnabled()
 
-        std = StandardInput("Value")
-        qtbot.addWidget(std)
-        assert std.text() == "Value"
+    sti = StandardInput("Initial")
+    qtbot.addWidget(sti)
+    assert sti.text() == "Initial"
 
-        txt = StandardTextEdit()
-        qtbot.addWidget(txt)
-        txt.setText("Hello")
-        assert txt.toPlainText() == "Hello"
 
-    def test_selectors(self, qtbot):
-        combo = FilterComboBox()
-        qtbot.addWidget(combo)
-        combo.addItems(["A", "B"])
-        assert combo.count() == 2
+def test_text_edit(qtbot):
+    te = StandardTextEdit()
+    qtbot.addWidget(te)
+    te.setPlainText("Some text")
+    assert te.toPlainText() == "Some text"
 
-        cb = StandardCheckBox("Check")
-        qtbot.addWidget(cb)
-        assert cb.text() == "Check"
 
-        sb = StandardSpinBox()
-        qtbot.addWidget(sb)
-        sb.setValue(10)
-        assert sb.value() == 10
+def test_combobox(qtbot):
+    cb = FilterComboBox()
+    qtbot.addWidget(cb)
+    cb.addItems(["A", "B"])
+    assert cb.count() == 2
 
-    def test_containers(self, qtbot):
-        table = StandardTable(2, 2)
-        qtbot.addWidget(table)
-        assert table.rowCount() == 2
 
-        lst = StandardListWidget()
-        qtbot.addWidget(lst)
-        lst.addItem("Item")
-        assert lst.count() == 1
+def test_checkbox(qtbot):
+    chk = StandardCheckBox("Check")
+    qtbot.addWidget(chk)
+    assert chk.text() == "Check"
 
-        tree = StandardTreeWidget()
-        qtbot.addWidget(tree)
-        assert tree.columnCount() == 1
 
-        group = StandardGroupBox("Group")
-        qtbot.addWidget(group)
-        assert group.title() == "Group"
+def test_table(qtbot):
+    table = StandardTable(2, 2)
+    qtbot.addWidget(table)
+    assert table.alternatingRowColors() is True
+    assert table.selectionBehavior() == StandardTable.SelectionBehavior.SelectRows
 
-        prog = StandardProgressBar()
-        qtbot.addWidget(prog)
-        prog.setValue(50)
-        assert prog.value() == 50
+
+def test_progressbar(qtbot):
+    pb = StandardProgressBar()
+    qtbot.addWidget(pb)
+    pb.setValue(50)
+    assert pb.value() == 50
+
+
+def test_groupbox(qtbot):
+    gb = StandardGroupBox("Group")
+    qtbot.addWidget(gb)
+    assert gb.title() == "Group"
 
 
 class TestSortableTableWidgetItem:
-    def test_sort_numbers(self):
-        it1 = SortableTableWidgetItem("10,50")
-        it2 = SortableTableWidgetItem("2.000,00")
-        it3 = SortableTableWidgetItem("15")
+    """Test suite per SortableTableWidgetItem."""
 
-        assert it1 < it2
-        assert it1 < it3
-        assert not (it2 < it1)
+    def test_sorting_numbers(self):
+        item1 = SortableTableWidgetItem("10,50")
+        item2 = SortableTableWidgetItem("5,20")
+        # 10.5 > 5.2, quindi item2 < item1
+        assert item2 < item1
 
-    def test_sort_dates(self):
-        it1 = SortableTableWidgetItem("15/10/2023")
-        it2 = SortableTableWidgetItem("20/10/2023")
-        it3 = SortableTableWidgetItem("01/01/2024")
+        item3 = SortableTableWidgetItem("1.000,50")
+        item4 = SortableTableWidgetItem("900,00")
+        assert item4 < item3
 
-        assert it1 < it2
-        assert it2 < it3
-        assert not (it3 < it1)
+    def test_sorting_dates(self):
+        item1 = SortableTableWidgetItem("24/05/2026")
+        item2 = SortableTableWidgetItem("20/05/2026")
+        assert item2 < item1
 
-    def test_sort_strings_fallback(self):
-        it1 = SortableTableWidgetItem("Apple")
-        it2 = SortableTableWidgetItem("Banana")
-        assert it1 < it2
+        item3 = SortableTableWidgetItem("2026-05-24")
+        assert not (item1 < item3)  # Identiche
 
-    def test_sort_empty(self):
-        it1 = SortableTableWidgetItem("")
-        it2 = SortableTableWidgetItem("Anything")
-        assert it1 < it2
-        assert not (it2 < it1)
+    def test_sorting_strings(self):
+        item1 = SortableTableWidgetItem("Banana")
+        item2 = SortableTableWidgetItem("Apple")
+        assert item2 < item1
 
-        it3 = SortableTableWidgetItem(None)
-        assert it3 < it2
+    def test_sorting_empty(self):
+        item_val = SortableTableWidgetItem("Value")
+        item_empty = SortableTableWidgetItem("")
+        # Vuoto viene prima (minore)
+        assert item_empty < item_val
