@@ -133,6 +133,8 @@ def _classify_error(error_text: str, full_output: str, node_id: str) -> tuple[st
         "AttributeError": "runtime",
     }.items():
         if err in error_text:
+            if err == "TIMEOUT":
+                return "TimeoutError", error_text, cat
             return err.replace("Error", "") + "Error", error_text, cat
 
     # 3. Fallback Regex
