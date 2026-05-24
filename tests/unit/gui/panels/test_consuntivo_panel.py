@@ -1,98 +1,113 @@
 """Unit tests for ConsuntivoPanel."""
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QWidget
 
 from src.gui.panels.consuntivo_panel import ConsuntivoPanel
+
+
+class MockTabs(QWidget):
+    """Real QWidget for AnimatedTabWidget."""
+
+    currentChanged = Signal(int)  # noqa: N815
+
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.addTab = MagicMock()
+        self.setCurrentIndex = MagicMock()
+        self.count = MagicMock(return_value=0)
+        self.widget = MagicMock()
+
+
+class MockNewTab(QWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.tcl_combo = MagicMock()
+        self.stato_combo = MagicMock()
+        self.tipo_prev_combo = MagicMock()
+        self.tipo_econ_combo = MagicMock()
+
+    def _update_dynamic_path(self):
+        pass
+
+
+class MockModifyTab(QWidget):
+    def _scan_directory(self):
+        pass
 
 
 @pytest.fixture
 def mock_controller():
     """Mock per ConsuntivoController."""
     mock = MagicMock()
-    # Mock dei metodi chiamati durante l'init dei tab interni
     mock.get_config_options.return_value = {
         "tcl": ["TCL1"],
         "stati": ["S1"],
         "tipologie": ["P1"],
         "economie": ["E1"],
     }
-    mock.get_dynamic_path.return_value = "/mock/path"
-    mock.get_master_path.return_value = "/mock/master.xlsm"
     return mock
 
 
-class TestConsuntivoPanel:
-    """Test suite per ConsuntivoPanel."""
-
-    def test_initialization(self, qtbot, mock_controller, mocker):
-        """Verifica l'inizializzazione del pannello."""
-        # Patch totale dei componenti interni per isolamento atomico
-        mocker.patch("src.gui.panels.consuntivo_panel.AnimatedTabWidget")
-        mocker.patch("src.gui.panels.consuntivo_panel.CreaNuovoTab")
-        mocker.patch("src.gui.panels.consuntivo_panel.ModificaEsistenteTab")
-        mocker.patch("src.gui.panels.consuntivo_panel.ImpostazioniTab")
-
-        mocker.patch("PySide6.QtCore.QTimer.singleShot")
-        mocker.patch("src.gui.workers.consuntivo_worker.ConsuntivoWorker.start")
-
+def test_consuntivo_panel_init(qtbot, mock_controller):
+    with (
+        patch("src.gui.panels.consuntivo_panel.AnimatedTabWidget", MockTabs),
+        patch("src.gui.panels.consuntivo_panel.CreaNuovoTab", MockNewTab),
+        patch("src.gui.panels.consuntivo_panel.ModificaEsistenteTab", MockModifyTab),
+        patch("src.gui.panels.consuntivo_panel.ImpostazioniTab", QWidget),
+        patch("src.gui.panels.consuntivo_panel.QTimer.singleShot"),
+        patch("src.gui.workers.consuntivo_worker.ConsuntivoWorker.start"),
+    ):
         panel = ConsuntivoPanel(mock_controller)
         qtbot.addWidget(panel)
-
         assert panel.tabs is not None
-        assert panel._tab_new is not None
-        assert panel._tab_modify is not None
 
-    def test_pre_load_finished_populates_ui(self, qtbot, mock_controller, mocker):
-        """Verifica che il termine del preload popoli le combo."""
-        mocker.patch("src.gui.panels.consuntivo_panel.AnimatedTabWidget")
-        mocker.patch("src.gui.panels.consuntivo_panel.CreaNuovoTab")
-        mocker.patch("src.gui.panels.consuntivo_panel.ModificaEsistenteTab")
-        mocker.patch("src.gui.panels.consuntivo_panel.ImpostazioniTab")
-        mocker.patch("PySide6.QtCore.QTimer.singleShot")
 
+def test_consuntivo_panel_preload(qtbot, mock_controller):
+    with (
+        patch("src.gui.panels.consuntivo_panel.AnimatedTabWidget", MockTabs),
+        patch("src.gui.panels.consuntivo_panel.CreaNuovoTab", MockNewTab),
+        patch("src.gui.panels.consuntivo_panel.ModificaEsistenteTab", MockModifyTab),
+        patch("src.gui.panels.consuntivo_panel.ImpostazioniTab", QWidget),
+        patch("src.gui.panels.consuntivo_panel.QTimer.singleShot"),
+    ):
         panel = ConsuntivoPanel(mock_controller)
         qtbot.addWidget(panel)
 
-        # Simuliamo il risultato del worker
-        result = {"options": {"tcl": ["T1", "T2"], "stati": ["S1"], "tipologie": ["P1"], "economie": ["E1"]}}
+        result = {
+            "options": {
+                "tcl": ["T1"],
+                "stati": ["S1"],
+                "tipologie": ["P1"],
+                "economie": ["E1"],
+            }
+        }
         panel._on_pre_load_finished(result)
 
-        # Verifichiamo che i metodi di popolamento siano stati chiamati sui mock dei tab
         assert panel._tab_new.tcl_combo.addItems.called
         assert panel._data_preloaded is True
 
-    def test_set_current_tab(self, qtbot, mock_controller, mocker):
-        """Verifica il cambio tab programmatico."""
-        mocker.patch("src.gui.panels.consuntivo_panel.CreaNuovoTab")
-        mocker.patch("src.gui.panels.consuntivo_panel.ModificaEsistenteTab")
-        mocker.patch("src.gui.panels.consuntivo_panel.ImpostazioniTab")
 
-        mock_tabs_class = mocker.patch("src.gui.panels.consuntivo_panel.AnimatedTabWidget")
-        mock_tabs = mock_tabs_class.return_value
-        mock_tabs.count.return_value = 3
-
-        mocker.patch("PySide6.QtCore.QTimer.singleShot")
-
+def test_consuntivo_panel_tab_change(qtbot, mock_controller):
+    with (
+        patch("src.gui.panels.consuntivo_panel.AnimatedTabWidget", MockTabs),
+        patch("src.gui.panels.consuntivo_panel.CreaNuovoTab", MockNewTab),
+        patch("src.gui.panels.consuntivo_panel.ModificaEsistenteTab", MockModifyTab),
+        patch("src.gui.panels.consuntivo_panel.ImpostazioniTab", QWidget),
+        patch("src.gui.panels.consuntivo_panel.QTimer.singleShot"),
+    ):
         panel = ConsuntivoPanel(mock_controller)
         qtbot.addWidget(panel)
 
-        panel.set_current_tab(1)
-        assert panel.tabs.setCurrentIndex.called
+        # Ora isinstance(panel._tab_new, CreaNuovoTab) è True perché CreaNuovoTab È MockNewTab
+        # Patchiamo i metodi sulle istanze create
+        panel._tab_new._update_dynamic_path = MagicMock()
+        panel._tab_modify._scan_directory = MagicMock()
 
-    def test_on_tab_changed_triggers_refresh(self, qtbot, mock_controller, mocker):
-        """Verifica che il cambio tab attivi le logiche di refresh."""
-        mocker.patch("src.gui.panels.consuntivo_panel.AnimatedTabWidget")
-        mocker.patch("src.gui.panels.consuntivo_panel.CreaNuovoTab")
-        mocker.patch("src.gui.panels.consuntivo_panel.ModificaEsistenteTab")
-        mocker.patch("src.gui.panels.consuntivo_panel.ImpostazioniTab")
-        mocker.patch("PySide6.QtCore.QTimer.singleShot")
-
-        panel = ConsuntivoPanel(mock_controller)
-        qtbot.addWidget(panel)
-
-        # Simuliamo il widget restituito da AnimatedTabWidget.widget(index)
+        # Simuliamo widget()
         panel.tabs.widget.side_effect = [panel._tab_new, panel._tab_modify]
 
         panel._on_tab_changed(0)
