@@ -159,7 +159,7 @@ def _run_tests_ai(reset: bool = True) -> tuple[bool, str, float]:
     """
     cmd = [
         sys.executable,
-        str(PROJECT_ROOT / "tests" / "run_robust_tests.py"),
+        str(PROJECT_ROOT / "tests" / "run_robust_test"),
         "--ai",
     ]
     if reset:

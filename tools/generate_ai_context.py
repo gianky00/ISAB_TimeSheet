@@ -187,7 +187,7 @@ def _build_context(version: str) -> dict:  # type: ignore[type-arg]
             "generate_architecture": "poetry run python tools/generate_architecture.py",
             "tests": "poetry run pytest",
             "tests_fast": "poetry run pytest -m 'unit and not slow'",
-            "tests_robust": "python tests/run_robust_tests.py",
+            "tests_robust": "python -m tests.run_robust_test",
             "bump_version": "poetry run cz bump",
         },
         # ── Regole Anti-Breakage (MANDATORIE) ────────────────────────────────

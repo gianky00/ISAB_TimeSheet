@@ -1,4 +1,4 @@
-"""Unit test per le funzioni interne di run_robust_tests.py.
+"""Unit test per le funzioni interne di tests.run_robust_test.
 
 Verifica correttezza di parsing, classificazione errori,
 estrazione traceback e conteggio dei risultati.

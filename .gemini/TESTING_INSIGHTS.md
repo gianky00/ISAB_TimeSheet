@@ -5,7 +5,7 @@ Questo diario tiene traccia delle scoperte critiche e delle regole mandatorie pe
 ## 🛡️ REGOLA MANDATORIA (MANDATORY)
 **OGNI OPERAZIONE DI TEST DEVE UTILIZZARE IL RUNNER ROBUSTO.**
 - **Comando**: `scripts/avvio_test.bat`
-- **Engine**: `python tests/run_robust_tests.py`
+- **Engine**: `python -m tests.run_robust_test`
 - **DIVIETO**: Non usare `pytest` direttamente. Il runner robusto gestisce l'isolamento dei processi Qt, i timeout e previene i crash della GDI su Windows.
 
 ---

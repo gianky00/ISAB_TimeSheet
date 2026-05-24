@@ -74,7 +74,7 @@ poetry shell
 poetry run syncrojob
 
 # Suite di test completa
-python tests/run_robust_tests.py
+python -m tests.run_robust_test
 
 # Linting + fix automatico
 poetry run ruff check --fix

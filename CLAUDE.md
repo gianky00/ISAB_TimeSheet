@@ -24,7 +24,7 @@ poetry shell
 
 ```bash
 # Suite completa (sempre preferita)
-python tests/run_robust_tests.py
+python -m tests.run_robust_test
 
 # Test rapidi per dev loop
 poetry run pytest -m "unit and not slow"

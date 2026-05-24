@@ -27,7 +27,7 @@ Prima di ogni commit o conclusione di task, devono essere superati i seguenti co
 
 ### 5. Testing & Validazione
 - **Regressione:** Ogni fix richiede un nuovo test in `tests/`.
-- **Robustezza:** Usa `tests/run_robust_tests.py` per validare l'intera suite prima del rilascio.
+- **Robustezza:** Usa `tests/run_robust_test` per validare l'intera suite prima del rilascio.
 
 ### 6. Versionamento Dinamico
 - La versione è gestita via `commitizen` e `pyproject.toml`. Non modificarla manualmente se non richiesto esplicitamente.

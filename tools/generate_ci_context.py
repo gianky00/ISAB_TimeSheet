@@ -98,7 +98,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
         os.environ["TEST_REPORT_PATH"] = str(TEMP_REPORT)
 
         # Eseguiamo il runner robusto con --reset forzato
-        test_cmd = [sys.executable, "tests/run_robust_tests.py", "--reset"]
+        test_cmd = [sys.executable, "-m", "tests.run_robust_test", "--reset"]
         if len(sys.argv) > 1:
             test_cmd.extend(sys.argv[1:])
 

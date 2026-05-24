@@ -33,7 +33,7 @@ Il progetto adotta una politica **Zero Regressions**.
 
 - **Suite Completa (Robust Runner)**:
   ```bash
-  python tests/run_robust_tests.py
+  python -m tests.run_robust_test
   ```
 - **Test Rapidi (solo unit)**:
   ```bash
