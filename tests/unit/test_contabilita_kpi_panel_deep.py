@@ -9,7 +9,7 @@ class TestContabilitaKPIPanelDeep:
         # Mocking complex dependencies to avoid Qt crashes in headless
         mocker.patch("src.core.sync_tracker.SyncTracker.get_formatted_status", return_value="OK")
         mocker.patch(
-            "src.gui.panels.contabilita_kpi.main_panel.ContabilitaStats.get_year_stats",
+            "src.core.contabilita.stats_service.ContabilitaStats.get_year_stats",
             return_value={
                 "total_prev": 1000.0,
                 "total_ore": 100.0,
@@ -36,6 +36,9 @@ class TestContabilitaKPIPanelDeep:
         # Italian locale: '1.200,50' or similar
         assert "1.200" in res
 
-    def test_refresh_data_logic(self, panel):
-        panel.refresh_data()
-        assert panel.total_prev_card.val_lbl.text() != "-"
+    def test_refresh_data_logic(self, panel, qtbot, mocker):
+        mocker.patch.object(panel, "_animate_entry")
+        panel.refresh_years()
+        assert panel.card_totale.lbl_value.text() != "-"
+        if hasattr(panel, "worker") and panel.worker:
+            qtbot.waitUntil(lambda: panel.worker.isFinished(), timeout=2000)

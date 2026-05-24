@@ -64,20 +64,21 @@ class TestSafeWorkPDLBot:
         bot.driver = MagicMock()
         bot.wait = MagicMock()
 
-        # Caso 1: Già visibile
-        mock_el = MagicMock()
-        mock_el.is_displayed.return_value = True
-        # find_elements deve tornare una lista con l'elemento
-        bot.driver.find_elements.return_value = [mock_el]
-        assert bot._espandi_parte_seconda() is True
+        with patch.object(bot, "_attendi_scomparsa_overlay"):
+            # Caso 1: Già visibile
+            mock_el = MagicMock()
+            mock_el.is_displayed.return_value = True
+            # find_elements deve tornare una lista con l'elemento
+            bot.driver.find_elements.return_value = [mock_el]
+            assert bot._espandi_parte_seconda() is True
 
-        # Caso 2: Da cliccare
-        mock_el.is_displayed.return_value = False
-        # Mock find_element per il click
-        mock_btn = MagicMock()
-        bot.driver.find_element.return_value = mock_btn
-        assert bot._espandi_parte_seconda() is True
-        assert mock_btn.click.called
+            # Caso 2: Da cliccare
+            mock_el.is_displayed.return_value = False
+            # Mock find_element per il click
+            mock_btn = MagicMock()
+            bot.driver.find_element.return_value = mock_btn
+            assert bot._espandi_parte_seconda() is True
+            assert mock_btn.click.called
 
     @patch("src.utils.document_processor.DocumentProcessor.merge_pdfs")
     @patch("src.bots.safework.pdl.bot.print_pdf")
