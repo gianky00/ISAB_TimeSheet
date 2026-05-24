@@ -62,7 +62,16 @@ def _parse_args() -> argparse.Namespace:
         "-x", "--exitfirst", action="store_true", help="Arresta l'intero runner al primo fallimento."
     )
     parser.add_argument("--max-fail", type=int, default=0, help="Stop dopo N fallimenti.")
-    return parser.parse_args()
+    parser.add_argument(
+        "-t", "--test", action="store_true", help="Scorciatoia IA: equivale a --ai --resume --max-fail 1."
+    )
+    args = parser.parse_args()
+    if args.test:
+        args.ai = True
+        args.resume = True
+        if args.max_fail == 0:
+            args.max_fail = 1
+    return args
 
 
 def _enable_windows_ansi() -> None:
