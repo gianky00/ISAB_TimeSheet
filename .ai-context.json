@@ -3,7 +3,7 @@
   "$generated_by": "tools/generate_ai_context.py",
   "$note": "File generato automaticamente. NON modificare manualmente.",
   "project": "SyncroJob Enterprise (ISAB_TimeSheet)",
-  "version": "1.50.0",
+  "version": "1.51.0",
   "entry_point": "main.py",
   "python_version": ">=3.12,<3.13",
   "architectural_style": "Controller-Service-Repository (SRP)",

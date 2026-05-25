@@ -1,5 +1,207 @@
 [
   {
+    "version": "1.51.0",
+    "date": "2026-05-25",
+    "notes": [
+      {
+        "sha": "3668cbd7",
+        "message": "fix(release): sostituisce poetry lock --check con poetry check --lock per compatibilità Poetry 2.x"
+      },
+      {
+        "sha": "05050e41",
+        "message": "Remove pydantic_settings from pyproject modules"
+      },
+      {
+        "sha": "8530b5b3",
+        "message": "test(gui): expand coverage for low-coverage modules"
+      },
+      {
+        "sha": "068b50c6",
+        "message": "fix(tests): resolve regressions and lint issues in gui tests"
+      },
+      {
+        "sha": "5899f70c",
+        "message": "feat(tests): migrate to robust test runner and modernize gui test suite"
+      },
+      {
+        "sha": "50e591a7",
+        "message": "feat(gui): standardize dialogs and expand test coverage"
+      },
+      {
+        "sha": "237f65bd",
+        "message": "fix(tests): prevent ai json truncation on exit"
+      },
+      {
+        "sha": "a76f359b",
+        "message": "fix(tests): resolve remaining failures in runner internals tests"
+      },
+      {
+        "sha": "62e85da2",
+        "message": "fix(tests): adapt runner internals unit tests to SRP signatures"
+      },
+      {
+        "sha": "a0c26186",
+        "message": "feat(runner): add --test shortcut for AI diagnostic mode"
+      },
+      {
+        "sha": "c547c5ca",
+        "message": "fix(runner): restore worker isolation and granular --last-failed retry"
+      },
+      {
+        "sha": "7ce21390",
+        "message": "test: fix timeout and Qt native crashes in unit tests"
+      },
+      {
+        "sha": "1552bdeb",
+        "message": "refactor: apply refurb code style improvements (FURB113-183)"
+      },
+      {
+        "sha": "1a7e4b7f",
+        "message": "test: fix remaining import paths for tests"
+      },
+      {
+        "sha": "5c3c59ea",
+        "message": "test: resolve test file name conflicts and remove duplicates"
+      },
+      {
+        "sha": "1c432403",
+        "message": "test: comprehensive refactoring and stabilization"
+      },
+      {
+        "sha": "129310d9",
+        "message": "fix: resolve MyPy 'unreachable' error and complete test suite expansion"
+      },
+      {
+        "sha": "90988caf",
+        "message": "test: massive expansion of unit test suite and core stability fixes"
+      },
+      {
+        "sha": "e67e140c",
+        "message": "style(gui): complete redesign of changelog panel with animated timeline and unified layout"
+      },
+      {
+        "sha": "7559fc0b",
+        "message": "chore(docs): remove completed PYSIDE6_OPTIMIZATION.md roadmap"
+      },
+      {
+        "sha": "0e64008c",
+        "message": "test: stabilize full suite and align with V9.4 SRP architecture"
+      },
+      {
+        "sha": "a1b91343",
+        "message": "feat(ui): refine Storico OdA layout, animation and resizing"
+      },
+      {
+        "sha": "d12c2c44",
+        "message": "add"
+      },
+      {
+        "sha": "09572c61",
+        "message": "chore(docs): clean up obsolete documentation and include new structural docs"
+      },
+      {
+        "sha": "40ca5ab5",
+        "message": "refactor(core): scomposizione SRP completa di AppInitializer e BackupManager"
+      },
+      {
+        "sha": "64d3bee5",
+        "message": "docs: integra l'analisi completa della coesione LCOM in implementation_plan.md"
+      },
+      {
+        "sha": "9707812b",
+        "message": "docs(refactor): update implementation plan with completed status"
+      },
+      {
+        "sha": "a6333fc2",
+        "message": "refactor(core): decouple autopilot scheduling and system diagnostics for SRP compliance"
+      },
+      {
+        "sha": "29718994",
+        "message": "refactor(gui): decompose search_controller into search_results_menu for SRP"
+      },
+      {
+        "sha": "49960a86",
+        "message": "feat: integrate cohesion library for SRP and LCOM metrics mapping and update documents"
+      },
+      {
+        "sha": "cb2dc684",
+        "message": "feat: integrate pydantic-settings and libcst libraries with typed SyncroJobSettings model and context documentation"
+      },
+      {
+        "sha": "7373ef54",
+        "message": "chore: exclude utility scripts from mypy in pyproject.toml"
+      },
+      {
+        "sha": "764336e5",
+        "message": "docs: add AI context files (llm.txt, llm-full.txt) and semantic typing guidelines"
+      },
+      {
+        "sha": "e34647bc",
+        "message": "docs: risoluzione massiva delle segnalazioni pydoclint (DOC301, DOC601, DOC603) e Ruff"
+      },
+      {
+        "sha": "a69398de",
+        "message": "fix(quality): resolve ruff and mypy strict violations in gui and core"
+      },
+      {
+        "sha": "66cb43f3",
+        "message": "chore: remove accidental byproduct file"
+      },
+      {
+        "sha": "bcd139b8",
+        "message": "fix(quality): final type cleanup in safework base"
+      },
+      {
+        "sha": "0ebaa327",
+        "message": "docs(quality): 100% docstring coverage for optimized modules and ruff fixes"
+      },
+      {
+        "sha": "e3b4c878",
+        "message": "fix(quality): full mypy strict compliance across all modules"
+      },
+      {
+        "sha": "b77b086e",
+        "message": "fix(quality): final ruff formatting and type fixes"
+      },
+      {
+        "sha": "c3d67bdd",
+        "message": "refactor: radical gui optimization for extreme fluidity (Zero-I/O UI)"
+      },
+      {
+        "sha": "68f22470",
+        "message": "chore: apply automated linting and formatting fixes (Ruff/pre-commit)"
+      },
+      {
+        "sha": "4cd17260",
+        "message": "Merge branch 'feature/dynamic-changelog-safety-checks'"
+      },
+      {
+        "sha": "3984a35a",
+        "message": "Merge branch 'feature/dynamic-changelog-safety-checks'"
+      },
+      {
+        "sha": "4564acc2",
+        "message": "fix: ripristinati cast espliciti per conformità MyPy Strict"
+      },
+      {
+        "sha": "88f5c14f",
+        "message": "fix(contabilita): risolto bug aggiornamento certificati e unificati percorsi DB"
+      },
+      {
+        "sha": "3fb019b3",
+        "message": "refactor: ottimizzazione codice via refurb e personalizzazioni GUI"
+      },
+      {
+        "sha": "b5584fa2",
+        "message": "add"
+      },
+      {
+        "sha": "92a8a858",
+        "message": "Merge pull request #152 from gianky00/feature/refactor-contabilita-srp"
+      }
+    ]
+  },
+  {
     "version": "1.50.0",
     "date": "2026-05-23",
     "notes": [
