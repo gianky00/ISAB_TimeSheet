@@ -308,7 +308,6 @@ module = [
     "playwright.*",
     "coverage",
     "coverage.*",
-    "pydantic_settings.*",
     "libcst.*",
 ]
 ignore_missing_imports = true
