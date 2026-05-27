@@ -79,6 +79,7 @@ def run_command(
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            encoding="utf-8",
             env=env,
             bufsize=1,
             universal_newlines=True,
@@ -129,6 +130,7 @@ def run_command_safe(
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            encoding="utf-8",
             env=env,
             bufsize=1,
             universal_newlines=True,
@@ -546,6 +548,12 @@ def main() -> None:
     args = parser.parse_args()
 
     git_bin = find_git_executable()
+
+    # Aggiunge la directory di git al PATH per i subprocessi (es. commitizen)
+    if git_bin and git_bin != "git":
+        git_dir = Path(git_bin).parent
+        if git_dir.exists():
+            os.environ["PATH"] = str(git_dir) + os.pathsep + os.environ["PATH"]
 
     # Rileva se lo script è in esecuzione in un terminale interattivo senza argomenti
     is_interactive = len(sys.argv) == 1 and sys.stdin.isatty()
