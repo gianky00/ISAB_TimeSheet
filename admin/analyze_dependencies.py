@@ -3,8 +3,18 @@ Scansiona il progetto in modo aggressive per trovare TUTTE le dipendenze possibi
 """
 
 import ast
+import contextlib
+import io
 import sys
 from pathlib import Path
+
+# Fix encoding for Windows console to support emoji
+if sys.platform == "win32":
+    with contextlib.suppress(Exception):
+        if hasattr(sys.stdout, "buffer"):
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+        if hasattr(sys.stderr, "buffer"):
+            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 
 def get_all_imports(script_path: str, src_path: str) -> list[str]:  # noqa: C901, PLR0912
