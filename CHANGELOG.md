@@ -1,5 +1,12 @@
 ## Unreleased
 
+### Fix
+
+- **release**: fix git PATH resolving and quality tools false positives
+- **changelog**: risolto caricamento changelog e build date in produzione
+
+## v1.51.0 (2026-05-25)
+
 ### Feat
 
 - **tests**: migrate to robust test runner and modernize gui test suite

@@ -1,5 +1,19 @@
 [
   {
+    "version": "1.52.0",
+    "date": "2026-05-27",
+    "notes": [
+      {
+        "sha": "b681abdc",
+        "message": "fix(release): fix git PATH resolving and quality tools false positives"
+      },
+      {
+        "sha": "e9575039",
+        "message": "fix(changelog): risolto caricamento changelog e build date in produzione"
+      }
+    ]
+  },
+  {
     "version": "1.51.0",
     "date": "2026-05-25",
     "notes": [
