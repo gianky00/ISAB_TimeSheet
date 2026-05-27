@@ -184,15 +184,8 @@ class GlowingProgressBar(QWidget):
         self.update()
 
     def _update_progress(self, diff: float) -> None:
-        """Applica lo smoothing asintotico al valore di visualizzazione."""
-        if diff > 0.001:
-            increment = diff * self._smooth_factor
-            min_step = 0.01
-            self._display_value += max(increment, min_step)
-        elif diff < 0:
-            pass
-        else:
-            self._display_value = float(self._value)
+        """Applica il progresso in modo lineare e immediato, eliminando l'effetto asintotico."""
+        self._display_value = float(self._value)
 
     def _spawn_particles(self, diff: float, pw: int, bar_y: int) -> None:
         """Genera nuove particelle (scintille) basandosi sul movimento della barra."""
