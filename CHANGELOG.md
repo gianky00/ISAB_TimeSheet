@@ -1,5 +1,11 @@
 ## Unreleased
 
+### Refactor
+
+- **poetry**: migrate config to standard PEP 621 metadata (Poetry 2.0)
+
+## v1.52.0 (2026-05-27)
+
 ### Fix
 
 - **release**: fix git PATH resolving and quality tools false positives

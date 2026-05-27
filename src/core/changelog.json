@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.53.0",
+    "date": "2026-05-27",
+    "notes": [
+      {
+        "sha": "23169af7",
+        "message": "refactor(poetry): migrate config to standard PEP 621 metadata (Poetry 2.0)"
+      }
+    ]
+  },
+  {
     "version": "1.52.0",
     "date": "2026-05-27",
     "notes": [
