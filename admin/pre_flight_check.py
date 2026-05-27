@@ -513,6 +513,8 @@ class ApexAudit:
                         "CVE-2025-69872",  # diskcache: no fix version yet
                         "--ignore-vuln",
                         "PYSEC-2022-42969",  # py: legacy dev dependency
+                        "--ignore-vuln",
+                        "PYSEC-2024-270",  # diagrams: no fix version yet
                         # --- Dipendenze transitive da tool di sviluppo ---
                         # aiohttp (portato da litellm/Gemini CLI)
                         "--ignore-vuln",
