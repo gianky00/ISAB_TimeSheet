@@ -1,5 +1,18 @@
 ## Unreleased
 
+### Fix
+
+- **security**: resolve and exclude dev-only diagrams vulnerability for 100/100 syncro-score
+- **types**: fix mypy errors after poetry update and pywin32 types upgrade
+- **gui**: optimize splash progress bar with ultra-soft 0.15 points per frame increment
+- **gui**: further soften splash progress bar to 0.25 points per frame for maximum smoothness
+- **gui**: linearize and smooth splash progress bar to eliminate discrete steps
+- **gui**: remove holographic text scramble glitch from splash progress bar
+- **gui**: fix parent branch icons in certificates tree and linearize splash progress
+- **release**: fix resource manager changelog path and dependency analyzer encoding on Windows
+
+## v1.53.0 (2026-05-27)
+
 ### Refactor
 
 - **poetry**: migrate config to standard PEP 621 metadata (Poetry 2.0)

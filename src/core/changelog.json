@@ -1,5 +1,43 @@
 [
   {
+    "version": "1.54.0",
+    "date": "2026-05-27",
+    "notes": [
+      {
+        "sha": "5255182d",
+        "message": "fix(security): resolve and exclude dev-only diagrams vulnerability for 100/100 syncro-score"
+      },
+      {
+        "sha": "38bf8a9b",
+        "message": "fix(types): fix mypy errors after poetry update and pywin32 types upgrade"
+      },
+      {
+        "sha": "7ed4b850",
+        "message": "fix(gui): optimize splash progress bar with ultra-soft 0.15 points per frame increment"
+      },
+      {
+        "sha": "8824c234",
+        "message": "fix(gui): further soften splash progress bar to 0.25 points per frame for maximum smoothness"
+      },
+      {
+        "sha": "98497cb2",
+        "message": "fix(gui): linearize and smooth splash progress bar to eliminate discrete steps"
+      },
+      {
+        "sha": "37f3e0bf",
+        "message": "fix(gui): remove holographic text scramble glitch from splash progress bar"
+      },
+      {
+        "sha": "e520d32d",
+        "message": "fix(gui): fix parent branch icons in certificates tree and linearize splash progress"
+      },
+      {
+        "sha": "f6b21ee4",
+        "message": "fix(release): fix resource manager changelog path and dependency analyzer encoding on Windows"
+      }
+    ]
+  },
+  {
     "version": "1.53.0",
     "date": "2026-05-27",
     "notes": [
