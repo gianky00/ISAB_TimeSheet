@@ -330,12 +330,8 @@ class GlowingProgressBar(QWidget):
         # Colore base Cyber-Blue sempre attivo per evitare lampeggi
         neon_color = QColor(100, 200, 255, 220)
 
-        # Gestione Scramble (Glitch dei caratteri) senza spegnere la luce
-        if self._glitch_ticks > 0:
-            chars = "0123456789%@#&X$!?"
-            perc_text = "".join(random.choice(chars) for _ in range(3)) + "%"  # noqa: S311
-        else:
-            perc_text = f"{int(self._display_value)}%"
+        # Mostra sempre la percentuale reale lineare senza effetto scramble glitch fittizio
+        perc_text = f"{int(self._display_value)}%"
 
         text_x = max(0, min(pw - 15, w - 40))
 
