@@ -186,11 +186,11 @@ class GlowingProgressBar(QWidget):
     def _update_progress(self, diff: float) -> None:
         """Applica un incremento lineare limitato per frame per garantire una progressione fluida, lenta e senza scatti."""
         if diff > 0:
-            # Aumenta al massimo di 0.25 punti per frame (circa 15% al secondo) per una salita estremamente morbida e vellutata
-            max_increment = 0.25
+            # Aumenta al massimo di 0.15 punti per frame (circa 9% al secondo) per una salita ultra-morbida e cinematografica
+            max_increment = 0.15
             # Se siamo al 100% acceleriamo leggermente la transizione finale per reattività alla chiusura
             if self._value == 100:
-                max_increment = 1.2
+                max_increment = 1.0
             self._display_value += min(diff, max_increment)
         elif diff < 0:
             self._display_value = float(self._value)
