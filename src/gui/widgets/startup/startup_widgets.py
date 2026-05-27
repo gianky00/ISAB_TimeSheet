@@ -184,8 +184,16 @@ class GlowingProgressBar(QWidget):
         self.update()
 
     def _update_progress(self, diff: float) -> None:
-        """Applica il progresso in modo lineare e immediato, eliminando l'effetto asintotico."""
-        self._display_value = float(self._value)
+        """Applica un incremento lineare limitato per frame per garantire una progressione fluida, lenta e senza scatti."""
+        if diff > 0:
+            # Aumenta al massimo di 0.4 punti per frame (circa 25% al secondo), garantendo una salita dolce e continua
+            max_increment = 0.4
+            # Se siamo al 100% acceleriamo leggermente la transizione finale per reattività alla chiusura
+            if self._value == 100:
+                max_increment = 1.5
+            self._display_value += min(diff, max_increment)
+        elif diff < 0:
+            self._display_value = float(self._value)
 
     def _spawn_particles(self, diff: float, pw: int, bar_y: int) -> None:
         """Genera nuove particelle (scintille) basandosi sul movimento della barra."""
