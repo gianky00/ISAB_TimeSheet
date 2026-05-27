@@ -312,9 +312,6 @@ module = [
     "email_validator.*",
     "jaraco.*",
     "playwright.*",
-    "coverage",
-    "coverage.*",
-    "libcst.*",
 ]
 ignore_missing_imports = true
 
