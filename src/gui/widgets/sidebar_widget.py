@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import json
 import logging
-from pathlib import Path
 
 from PySide6.QtCore import Property, QEvent, Qt, QTimer, Signal
 from PySide6.QtGui import QEnterEvent, QIcon
@@ -595,7 +594,9 @@ class SidebarWidget(QFrame):
             last_viewed = get_config_value("changelog_last_viewed_version", "")
 
             # Leggiamo l'ultima versione disponibile nel changelog.json
-            changelog_path = Path(__file__).resolve().parent.parent.parent / "core" / "changelog.json"
+            from src.utils.resource_manager import ResourceManager
+
+            changelog_path = ResourceManager.get_changelog_path()
             if changelog_path.exists():
                 changelog_data = json.loads(changelog_path.read_text(encoding="utf-8"))
                 if changelog_data and isinstance(changelog_data, list):

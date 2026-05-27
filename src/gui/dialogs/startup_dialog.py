@@ -365,7 +365,9 @@ class StartupDialog(QDialog):
         try:
             import json
 
-            changelog_path = Path(__file__).resolve().parent.parent.parent / "core" / "changelog.json"
+            from src.utils.resource_manager import ResourceManager
+
+            changelog_path = ResourceManager.get_changelog_path()
             if changelog_path.exists():
                 with changelog_path.open(encoding="utf-8") as f:
                     data = json.load(f)
@@ -511,7 +513,9 @@ class StartupDialog(QDialog):
         try:
             import json
 
-            changelog_path = Path(__file__).resolve().parent.parent.parent / "core" / "changelog.json"
+            from src.utils.resource_manager import ResourceManager
+
+            changelog_path = ResourceManager.get_changelog_path()
             if changelog_path.exists():
                 with changelog_path.open(encoding="utf-8") as f:
                     data = json.load(f)

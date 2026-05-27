@@ -10,7 +10,6 @@ import logging
 import platform
 import subprocess  # nosec B404
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import QEasingCurve, QEvent, QPoint, QPropertyAnimation, Qt, QThread, QTimer, Signal
@@ -795,7 +794,9 @@ class ChangelogPanel(QWidget):
         """Restituisce la data dell'ultimo aggiornamento disponibile in formato GG/MM/AAAA."""
         import contextlib
 
-        changelog_path = Path(__file__).resolve().parent.parent.parent / "core" / "changelog.json"
+        from src.utils.resource_manager import ResourceManager
+
+        changelog_path = ResourceManager.get_changelog_path()
 
         if changelog_path.exists():
             with contextlib.suppress(Exception):
@@ -900,7 +901,9 @@ class ChangelogPanel(QWidget):
 
     def _read_changelog_from_disk(self) -> list[dict[str, Any]]:
         """Legge il file changelog.json da disco e applica un fallback in caso di errori."""
-        changelog_path = Path(__file__).resolve().parent.parent.parent / "core" / "changelog.json"
+        from src.utils.resource_manager import ResourceManager
+
+        changelog_path = ResourceManager.get_changelog_path()
         changelog_data: list[dict[str, Any]] = []
         if changelog_path.exists():
             try:

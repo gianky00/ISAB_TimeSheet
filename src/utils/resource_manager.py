@@ -190,6 +190,15 @@ class ResourceManager:
         return cls.TEMP_DIR / filename
 
     @classmethod
+    def get_changelog_path(cls) -> Path:
+        """Restituisce il percorso assoluto del file changelog.json.
+
+        Returns:
+          Path: Percorso al file changelog.json.
+        """
+        return cls.PROJECT_ROOT / "src" / "core" / "changelog.json"
+
+    @classmethod
     def ensure_structure(cls) -> None:
         """Assicura che tutte le cartelle vitali per l'applicazione esistano sul filesystem."""
         config_dir = cls._get_config_dir()
