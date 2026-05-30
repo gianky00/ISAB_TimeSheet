@@ -48,7 +48,10 @@ class ContabilitaRepository:
     def get_data_by_year(
         self, year: int, as_objects: bool = True
     ) -> list[ContabilitaRecord] | list[tuple[Any, ...]]:
-        """Restituisce i record di contabilità per un anno specifico."""
+        """Restituisce i record di contabilità per un anno specifico.
+
+        Supporta il ritorno di oggetti Pydantic o tuple legacy.
+        """
         db_path = self.db.DB_CONTABILITA
         if not db_path.exists():
             return []
@@ -88,7 +91,10 @@ class ContabilitaRepository:
     def get_giornaliere_by_year(
         self, year: int, as_objects: bool = True
     ) -> list[GiornalieraRecord] | list[tuple[Any, ...]]:
-        """Restituisce i record di giornaliera per un anno specifico."""
+        """Restituisce i record di giornaliera per un anno specifico.
+
+        Supporta il ritorno di oggetti Pydantic o tuple legacy.
+        """
         db_path = self.db.DB_CONTABILITA
         if not db_path.exists():
             return []
@@ -140,7 +146,10 @@ class ContabilitaRepository:
     def get_attivita_programmate(
         self, as_objects: bool = True
     ) -> list[AttivitaProgrammataRecord] | list[tuple[Any, ...]]:
-        """Restituisce le attività programmate."""
+        """Restituisce le attività programmate.
+
+        Supporta il ritorno di oggetti Pydantic o tuple legacy.
+        """
         db_path = self.db.DB_CONTABILITA
         if not db_path.exists():
             return []
@@ -173,7 +182,10 @@ class ContabilitaRepository:
     def get_certificati_campione(
         self, as_objects: bool = True
     ) -> list[CertificatoCampioneRecord] | list[tuple[Any, ...]]:
-        """Restituisce i certificati campione."""
+        """Restituisce i certificati campione.
+
+        Supporta il ritorno di oggetti Pydantic o tuple legacy.
+        """
         db_path = self.db.DB_CONTABILITA
         if not db_path.exists():
             return []

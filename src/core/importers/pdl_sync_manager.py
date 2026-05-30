@@ -45,7 +45,7 @@ class ProgrammingSyncManager:
 
         file_name = os.path.basename(self.master_path)
         try:
-            self.excel_app = win32com.client.GetActiveObject("Excel.Application")
+            self.excel_app = win32com.client.GetActiveObject("Excel.Application")  # type: ignore[no-untyped-call]
 
             for wb in self.excel_app.Workbooks:
                 if wb.Name.lower() == file_name.lower():
@@ -56,7 +56,7 @@ class ProgrammingSyncManager:
             logger.debug("Nessuna istanza Excel attiva trovata.")
 
         try:
-            self.excel_app = win32com.client.DispatchEx("Excel.Application")  # type: ignore[no-untyped-call]
+            self.excel_app = win32com.client.DispatchEx("Excel.Application")
             self.excel_app.Visible = False
             self.excel_app.DisplayAlerts = False
             self.wb_master = self.excel_app.Workbooks.Open(self.master_path, UpdateLinks=0)

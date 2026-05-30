@@ -31,8 +31,6 @@ def measure_time(
     threshold_ms: float | None = None,
     logger_name: str | None = None,
 ) -> Callable[[F], F]: ...
-
-
 def measure_time[F: Callable[..., Any]](
     func: F | None = None,
     *,
