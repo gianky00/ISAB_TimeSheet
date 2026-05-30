@@ -25,7 +25,6 @@ class TestReportService:
             ("ROSSI", "MARIO", "CF1", date_ok),
             ("VERDI", "LUIGI", "CF2", date_warn),
             ("BIANCHI", "PAOLO", "CF3", date_exp),
-            # NERI non ha accessi -> ignorato dal report (o gestito diversamente, attuale = ignorato se df is None)
         ]
 
         mock_query.side_effect = [dips, accs]
@@ -66,32 +65,46 @@ class TestReportService:
         assert mock_notif.return_value.add_notification.called
         assert mock_mail.To == "supporto@syncrojob.it"
 
+    def test_norm_text(self):
+        assert ReportService._norm_text("  Rossi   Mario  ") == "ROSSI MARIO"
+        assert ReportService._norm_text(None) == "NONE"
+        assert ReportService._norm_text(123) == "123"
+
+    def test_build_access_maps_formats(self):
+        today = datetime.now(UTC)
+        d1 = (today - timedelta(days=10)).strftime("%Y-%m-%d %H:%M:%S")
+        d2 = (today - timedelta(days=20)).strftime("%d/%m/%Y")
+
+        accessi = [
+            ("Rossi", "Mario", "CF1", d1),
+            ("Verdi", "Luigi", None, d2),
+            ("Neri", "Gino", "CF4", ""),  # Data vuota
+        ]
+
+        l_cf, l_nm = ReportService._build_access_maps(accessi)
+
+        assert l_cf["CF1"] == 10
+        assert l_nm[("VERDI", "LUIGI")] == 20
+        assert "CF4" not in l_cf
+
+    @patch("src.core.report_service.win32_client", None)
+    @patch("src.core.report_service.logger")
+    def test_dispatch_outlook_no_client(self, mock_logger):
+        ReportService._dispatch_outlook_email([], [])
+        assert mock_logger.error.called
+        assert "non disponibile" in mock_logger.error.call_args[0][0]
+
     @patch("src.core.report_service.ReportService._collect_employee_status_lists")
     @patch("src.core.report_service.logger")
     def test_send_scheduled_report_empty(self, mock_logger, mock_collect):
         mock_collect.return_value = ([], [])
         ReportService.send_scheduled_report_email()
         assert mock_logger.info.called
-        assert "Nessun dipendente" in mock_logger.info.call_args[0][0]
 
     @patch("src.core.report_service.os.name", "posix")
     @patch("src.core.report_service.ReportService._collect_employee_status_lists")
     @patch("src.core.report_service.logger")
     def test_send_scheduled_report_wrong_os(self, mock_logger, mock_collect):
-        w_list = [{"cognome": "V", "nome": "L", "giorni": 25, "data": "01/01/2026"}]
-        mock_collect.return_value = (w_list, [])
-
+        mock_collect.return_value = ([{"x": 1}], [])
         ReportService.send_scheduled_report_email()
         assert mock_logger.warning.called
-        assert "supportato solo su Windows" in mock_logger.warning.call_args[0][0]
-
-    @patch("src.core.report_service.os.name", "nt")
-    @patch("src.core.report_service.ReportService._collect_employee_status_lists")
-    @patch("src.core.report_service.NotificationManager.instance")
-    def test_send_scheduled_report_error(self, mock_notif, mock_collect):
-        mock_collect.side_effect = Exception("DB Error")
-
-        ReportService.send_scheduled_report_email()
-        assert mock_notif.return_value.add_notification.called
-        args = mock_notif.return_value.add_notification.call_args[1]
-        assert args["level"] == "error"

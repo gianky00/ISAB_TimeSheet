@@ -1,61 +1,83 @@
+from pathlib import Path
 from unittest.mock import MagicMock
+
+import pytest
 
 from src.core.bots.services.scarico_pdl_service import ScaricoPDLService
 
 
 class TestScaricoPDLService:
-    def test_load_config(self, mocker):
+    @pytest.fixture
+    def service(self):
+        return ScaricoPDLService()
+
+    def test_load_config(self, service, mocker):
         mocker.patch(
             "src.core.config_manager.load_config",
             return_value={
-                "last_pdl_params": {"stampa": True, "destinazione": "/fake"},
+                "last_pdl_params": {"stampa": True, "stampante": "HP-Laser", "destinazione": "/tmp/pdl"},
                 "last_pdl_data": [{"numero_pdl": "123"}],
             },
         )
-        mocker.patch("pathlib.Path.exists", return_value=True)
+        # Mock Path.exists for the destination
+        mocker.patch("src.core.bots.services.scarico_pdl_service.Path.exists", return_value=True)
 
-        service = ScaricoPDLService()
         cfg = service.load_config()
-
         assert cfg["stampa"] is True
-        assert cfg["dest_path"] == "/fake"
+        assert cfg["stampante"] == "HP-Laser"
+        assert cfg["dest_path"] == "/tmp/pdl"
         assert len(cfg["data"]) == 1
 
-    def test_save_config(self, mocker):
-        mock_set = mocker.patch("src.core.config_manager.set_config_value")
-        service = ScaricoPDLService()
+    def test_load_config_fallback_path(self, service, mocker):
+        mocker.patch("src.core.config_manager.load_config", return_value={})
+        mocker.patch("src.core.bots.services.scarico_pdl_service.Path.home", return_value=Path("/home/user"))
 
-        params = {"stampa": False, "dest_path": "/new"}
-        data = [{"pdl": "1"}]
+        cfg = service.load_config()
+        assert "Downloads" in cfg["dest_path"]
+
+    def test_save_config(self, service, mocker):
+        mock_set = mocker.patch("src.core.config_manager.set_config_value")
+        params = {"stampa": False, "stampante": "None", "dest_path": "/out"}
+        data = [{"id": 1}]
+
         service.save_config(params, data)
 
         assert mock_set.call_count == 2
-        mock_set.assert_any_call("last_pdl_data", data)
+        # Check params structure
+        args = mock_set.call_args_list[1][0]
+        assert args[0] == "last_pdl_params"
+        assert args[1]["destinazione"] == "/out"
 
-    def test_prepare_payload(self, mocker):
-        mocker.patch("src.core.config_manager.load_config", return_value={"browser_headless": True})
-        service = ScaricoPDLService()
+    def test_prepare_payload(self, service, mocker):
+        creds = ("u", "p", "safework")
+        params = {"dest_path": "/custom", "stampa": True, "stampante": "PRN"}
+        data = [{"numero_pdl": "PDL-001"}]
 
-        creds = ("user", "pass", "type")
-        params = {"stampa": True, "stampante": "HP", "dest_path": "/tmp"}
-        data = [{"numero_pdl": "PDL1"}]
+        mocker.patch("src.core.config_manager.load_config", return_value={"browser_headless": False})
 
         bot_params, bot_data = service.prepare_payload(creds, params, data)
 
-        assert bot_params["username"] == "user"
-        assert bot_params["headless"] is True
-        assert bot_data[0]["numero_pdl"] == "PDL1"
+        assert bot_params["username"] == "u"
+        assert bot_params["download_path"] == "/custom"
+        assert len(bot_data) == 1
+        assert bot_data[0]["numero_pdl"] == "PDL-001"
         assert bot_data[0]["print_enabled"] is True
 
-    def test_handle_post_execution_telegram(self, mocker):
-        service = ScaricoPDLService()
+    def test_handle_post_execution_telegram(self, service, mocker):
+        mock_tg = MagicMock()
         mock_bot = MagicMock()
-        mock_bot.downloaded_files = ["/path/to/file.pdf"]
-        mock_telegram = MagicMock()
+        mock_bot.downloaded_files = ["/tmp/report.pdf"]
 
-        service.handle_post_execution(True, mock_bot, mock_telegram)
+        service.handle_post_execution(True, mock_bot, mock_tg)
 
-        assert mock_telegram.send_document_sync.called
-        args, kwargs = mock_telegram.send_document_sync.call_args
-        assert args[0] == "/path/to/file.pdf"
-        assert "Scarico PDL" in kwargs["caption"]
+        mock_tg.send_document_sync.assert_called_once_with(
+            "/tmp/report.pdf", caption="✅ Scarico PDL completato (1 file)"
+        )
+
+    def test_handle_post_execution_no_files(self, service):
+        mock_tg = MagicMock()
+        mock_bot = MagicMock()
+        mock_bot.downloaded_files = []
+
+        service.handle_post_execution(True, mock_bot, mock_tg)
+        mock_tg.send_document_sync.assert_not_called()

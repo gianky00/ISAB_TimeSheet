@@ -116,8 +116,17 @@ class TestWeatherWidget:
         assert widget.content_stack.currentIndex() == 1
         assert widget._showing_details is True
 
-    def test_weather_style_determination(self, qtbot, mock_weather_service):
+    def test_weather_style_determination(self, qtbot, mock_weather_service, mocker):
         """Verifica la logica di determinazione dello stile atmosferico."""
+        from datetime import UTC, datetime
+
+        # Mocking datetime.now to be at 12:00 UTC (daytime)
+        mock_now = datetime(2026, 5, 24, 12, 0, tzinfo=UTC)
+        mocker.patch("src.gui.widgets.dashboard.weather_widget.datetime", mocker.Mock(wraps=datetime))
+        import src.gui.widgets.dashboard.weather_widget as ww
+
+        ww.datetime.now.return_value = mock_now
+
         widget = WeatherWidget()
         qtbot.addWidget(widget)
 

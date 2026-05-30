@@ -74,6 +74,15 @@ lbl = QLabel()
         os.unlink(f_path)
 
 
+def test_remove_orphan_imports_multiline():
+    # QPushButton is unused orphan, QCheckBox is used orphan, QLabel is not orphan
+    content = "from PySide6.QtWidgets import (\n    QPushButton,\n    QLabel,\n    QCheckBox\n)\n\nlbl = QLabel()\ncb = QCheckBox()\n"
+    result = remove_orphan_imports(content)
+    assert "QPushButton" not in result
+    assert "QLabel" in result
+    assert "QCheckBox" in result
+
+
 def test_main(mocker):
     mocker.patch("os.walk", return_value=[("/mock/dir", [], ["test1.py", "core_widgets.py"])])
     mock_process = mocker.patch("src.gui.cleanup_final.process_file")

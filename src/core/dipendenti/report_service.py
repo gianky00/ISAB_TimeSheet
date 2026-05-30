@@ -86,7 +86,7 @@ class ReportService:
         current_date = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
         font_family = "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif"
         header_color = COLORS["primary_dark"]
-        border_color = COLORS["border_light"]
+        border_color = COLORS.get("border_gray", "#dee2e6")
 
         urgenti = len([d for d in data["expired_list"] if d["giorni"] > 60])  # noqa: PLR2004
         tot_attenzione = len(data["warning_list"]) + len(data["expired_list"])
@@ -116,25 +116,25 @@ class ReportService:
 
         html = f"""
     <html><head><style>
-      body {{ font-family: {font_family}; margin: 0; padding: 0; color: {COLORS["text_dark"]}; background-color: {COLORS["bg_light"]}; }}
-      .container {{ width: auto; max-width: 1500px; margin: 0 auto; background-color: {COLORS["bg_white"]}; }}
+      body {{ font-family: {font_family}; margin: 0; padding: 0; color: #333333; background-color: {COLORS["bg_light"]}; }}
+      .container {{ width: auto; max-width: 1500px; margin: 0 auto; background-color: #ffffff; }}
       .summary-table {{ width: auto; min-width: 480px; border-collapse: separate; border-spacing: 8px; margin: 16px auto; }}
-      .card {{ background-color: {COLORS["bg_white"]}; padding: 14px 20px; border: 1px solid {border_color}; border-radius: 6px; text-align: center; width: 160px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }}
+      .card {{ background-color: #ffffff; padding: 14px 20px; border: 1px solid {border_color}; border-radius: 6px; text-align: center; width: 160px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }}
       .card-number {{ font-size: 24px; font-weight: 700; display: block; margin-bottom: 4px; letter-spacing: -0.5px; }}
       .card-label {{ font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: {COLORS["text_muted"]}; font-weight: 600; }}
       .data-table {{ width: auto; border-collapse: collapse; margin: 0 0 20px 0; background-color: white; border: 1px solid {border_color}; }}
-      .data-table th {{ background-color: {COLORS["table_info_bg"]}; text-align: left; padding: 5px 10px; border: 1px solid {COLORS["border_light"]}; font-size: 12px; color: {COLORS["primary_dark"]}; text-transform: uppercase; font-weight: 600; letter-spacing: 0.3px; }}
-      .data-table td {{ padding: 5px 12px; border: 1px solid {border_color}; font-size: 13px; vertical-align: middle; color: {COLORS["text_dark"]}; }}
+      .data-table th {{ background-color: #f0f4f8; text-align: left; padding: 5px 10px; border: 1px solid {border_color}; font-size: 12px; color: {COLORS["primary_dark"]}; text-transform: uppercase; font-weight: 600; letter-spacing: 0.3px; }}
+      .data-table td {{ padding: 5px 12px; border: 1px solid {border_color}; font-size: 13px; vertical-align: middle; color: #333333; }}
     </style></head>
     <body style="background-color: {COLORS["bg_light"]}; margin: 0; padding: 20px 0;">
       <div class="container" style="border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: {COLORS["primary_dark"]};">
           <tr><td style="padding: 20px 24px; text-align: center;">
-            <h2 style="margin: 0; font-weight: 700; font-size: 20px; color: {COLORS["bg_white"]};">Report Monitoraggio Accessi in ISAB</h2>
-            <p style="margin: 8px 0 0 0; font-size: 13px; color: {COLORS["table_info_bg"]};">Generato il {current_date} da SyncroJob v{__version__}</p>
+            <h2 style="margin: 0; font-weight: 700; font-size: 20px; color: #ffffff;">Report Monitoraggio Accessi in ISAB</h2>
+            <p style="margin: 8px 0 0 0; font-size: 13px; color: #f0f4f8;">Generato il {current_date} da SyncroJob v{__version__}</p>
           </td></tr>
         </table>
-        <div style="padding: 16px 20px; background-color: {COLORS["bg_white"]};">
+        <div style="padding: 16px 20px; background-color: #ffffff;">
           <table class="summary-table" style="margin: 0 auto;">
             <tr>
               <td><div class="card" style="border-left: 3px solid {header_color}; text-align: left;"><span class="card-number">{data["total_monitored"]}</span><span class="card-label">Monitorati</span></div></td>
@@ -143,7 +143,7 @@ class ReportService:
             </tr>
           </table>
         </div>
-        <div style="padding: 0 20px 20px 20px; background-color: {COLORS["bg_white"]};">
+        <div style="padding: 0 20px 20px 20px; background-color: #ffffff;">
           <p style="margin: 0 0 8px 0; padding: 12px; background-color: {COLORS["bg_light"]}; border-radius: 6px; color: {sum_color}; font-size: 13px; border-left: 3px solid {sum_color}; font-weight: 500;">
             {sum_icon} {sum_text}</p>
           {trend_html}
@@ -170,7 +170,7 @@ class ReportService:
                 html += '<td style="width: 15px;"></td>'
             html += '<td style="vertical-align: top;"><table class="data-table"><thead><tr><th>Dipendente</th><th>Badge</th><th>Ultimo Accesso</th><th style="text-align: center;">Gg</th></tr></thead><tbody>'
             for idx, dip in enumerate(chunk):
-                row_bg = COLORS["bg_white"] if idx % 2 == 0 else COLORS["bg_light"]
+                row_bg = "#ffffff" if idx % 2 == 0 else COLORS["bg_light"]
                 html += f'<tr style="background-color: {row_bg};"><td>{dip["cognome"]} {dip["nome"]}</td><td>{dip["badge"]}</td><td>{dip["data"]}</td><td style="text-align: center; color: {color}; font-weight: 600;">{dip["giorni"]}</td></tr>'
             html += "</tbody></table></td>"
         html += "</tr></table>"
