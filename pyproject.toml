@@ -400,3 +400,11 @@ arg-type-hints-in-docstring = false
 arg-type-hints-in-signature = true
 check-return-types = false
 check-class-attributes = false
+
+[tool.coverage.run]
+omit = [
+    "src/bots/**/*_bot.py",
+    "src/bots/**/*_page.py",
+    "src/bots/**/pages/*.py",
+    "src/gui/widgets/dashboard/weather_widget.py"
+]

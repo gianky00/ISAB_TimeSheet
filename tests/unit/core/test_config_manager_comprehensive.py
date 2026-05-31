@@ -143,7 +143,7 @@ class TestConfigManager:
     def test_import_config_invalid_json(self, setup_config, tmp_path):
         import_file = tmp_path / "bad.json"
         import_file.write_text("not json", encoding="utf-8")
-        success, _ = import_config_from_file(import_file, async_save=False)
+        success, msg = import_config_from_file(import_file, async_save=False)
         assert success is False
         assert "non è un JSON valido" in msg
 

@@ -123,7 +123,7 @@ def finish_human(runner: Any, duration: float, with_cov: bool, root_dir: Path, c
         for f in runner.failed_list:
             console.print(f"  [red]•[/red] [bold white]{f['id']}:[/bold white] [dim]{f['error']}[/dim]")
     else:
-        console.print("\n[bold green]✨ Suite completata con successo![/bold green]")
+        console.print("\n[bold green][OK] Suite completata con successo![/bold green]")
 
 
 def _generate_coverage_reports(root_dir: Path, console: Console) -> None:

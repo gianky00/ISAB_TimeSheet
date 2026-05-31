@@ -65,10 +65,10 @@ class TestCertificatiEngine:
     def test_get_statistics(self, engine, mocker):
         # Data format: [IDX_ID_COEMI, IDX_CERTIFICATO, IDX_MODELLO, IDX_COSTRUTTORE, IDX_MATRICOLA, IDX_RANGE, ?, IDX_EMISSIONE, IDX_SCADENZA, ?, IDX_UBICAZIONE]
         data = [
-            ["ID1", "C1", "M1", "B", "MAT1", "R", "", "20/05/2026", "25/06/2026", "", "OFFICINA"],
+            ["ID1", "C1", "M1", "B", "MAT1", "R", "", "20/05/2026", "25/06/2026", "", "OFFICINA STRU"],
             ["ID2", "C2", "M2", "B", "MAT2", "R", "", "01/01/2026", "20/05/2026", "", "SEDE"],
-            ["ID3", "C3", "M3", "B", "MAT3", "R", "", "", "GUASTO", "", "UFFICIO STRUMENTALE"],
-            ["ID4", "C4", "M4", "B", "MAT4", "R", "", "", "", "", "UFFICIO CC"],
+            ["ID3", "C3", "M3", "B", "MAT3", "R", "", "", "GUASTO", "", "UFFICIO STRU"],
+            ["ID4", "C4", "M4", "B", "MAT4", "R", "", "", "", "", "UFFICIO CAPO CANTIERE"],
             ["ID5", "C5", "M5", "B", "MAT5", "R", "", "", "10/06/2026", "", "TECNICO"],
         ]
 
