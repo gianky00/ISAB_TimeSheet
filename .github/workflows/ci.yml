@@ -53,7 +53,7 @@ jobs:
         QT_QPA_PLATFORM: "offscreen"
         PYTEST_ADDOPTS: "-m 'not slow and not integration'"
       run: |
-        python scripts/generate_ci_context.py
+        python tools/generate_ci_context.py
 
     # Optional: Upload coverage
     - name: Upload coverage to Codecov
