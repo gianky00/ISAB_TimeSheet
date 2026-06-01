@@ -11,7 +11,7 @@ env:
 jobs:
   test:
     name: Test & Quality Check
-    runs-on: windows-latest
+    runs-on: windows-2025
     timeout-minutes: 360
     defaults:
       run:
