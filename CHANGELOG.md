@@ -1,3 +1,14 @@
+## Unreleased
+
+### Feat
+
+- **certificati**: aggiunta funzionalità Controllo Preventivo per gli strumenti
+- **certificati**: invio notifica email guasto, fix pdf stats e fix crash menu
+- **certificati**: implementata gestione guasti per strumenti campione (Opzione B)
+- **test**: comprehensive coverage expansion and report styling optimization
+
+## v1.55.0 (2026-05-27)
+
 ## v1.54.0 (2026-05-27)
 
 ### Fix

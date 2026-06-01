@@ -1,5 +1,55 @@
 [
   {
+    "version": "1.56.0",
+    "date": "2026-06-01",
+    "notes": [
+      {
+        "sha": "76f14287",
+        "message": "feat(certificati): aggiunta funzionalità Controllo Preventivo per gli strumenti"
+      },
+      {
+        "sha": "cd41704d",
+        "message": "feat(certificati): invio notifica email guasto, fix pdf stats e fix crash menu"
+      },
+      {
+        "sha": "dcd3ab1b",
+        "message": "feat(certificati): implementata gestione guasti per strumenti campione (Opzione B)"
+      },
+      {
+        "sha": "fe4a2d3b",
+        "message": "Merge pull request #155 from gianky00/feature/gui-optimization"
+      },
+      {
+        "sha": "9fc5c47a",
+        "message": "test: add comprehensive unit tests to reach coverage goals and update config"
+      },
+      {
+        "sha": "a046fc58",
+        "message": "chore: cleanup analysis files"
+      },
+      {
+        "sha": "80e4472c",
+        "message": "docs: stabilize 99%+ docstring coverage and fix mypy types"
+      },
+      {
+        "sha": "e333fe36",
+        "message": "feat(test): comprehensive coverage expansion and report styling optimization"
+      },
+      {
+        "sha": "d56b00a4",
+        "message": "Remove generated test report files"
+      },
+      {
+        "sha": "1366a3d2",
+        "message": "Merge pull request #154 from gianky00/feature/gui-optimization"
+      },
+      {
+        "sha": "594a58bf",
+        "message": "Merge pull request #153 from gianky00/feature/gui-optimization"
+      }
+    ]
+  },
+  {
     "version": "1.55.0",
     "date": "2026-05-27",
     "notes": [
