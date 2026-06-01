@@ -247,7 +247,7 @@ class CertificatiPdfExporter:
 
         return pages_html, has_nd
 
-    def _gather_and_sort_data(self) -> tuple[list[QTreeWidgetItem], list[tuple[str, ...]]]:
+    def _gather_and_sort_data(self) -> tuple[list[QTreeWidgetItem], list[dict[str, Any]]]:
         """Raccoglie e ordina i dati dal TreeWidget."""
         all_parents = []
         raw_data_for_stats = []
