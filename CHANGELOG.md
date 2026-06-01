@@ -1,5 +1,11 @@
 ## Unreleased
 
+### Fix
+
+- **typing**: risoluzione segnalazioni mypy in pdl_sync_manager e pdf_exporter
+
+## v1.56.0 (2026-06-01)
+
 ### Feat
 
 - **certificati**: aggiunta funzionalità Controllo Preventivo per gli strumenti

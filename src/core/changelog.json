@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.56.1",
+    "date": "2026-06-01",
+    "notes": [
+      {
+        "sha": "1a875c39",
+        "message": "fix(typing): risoluzione segnalazioni mypy in pdl_sync_manager e pdf_exporter"
+      }
+    ]
+  },
+  {
     "version": "1.56.0",
     "date": "2026-06-01",
     "notes": [
