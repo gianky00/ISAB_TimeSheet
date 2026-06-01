@@ -168,23 +168,23 @@ class CertificatiPdfExporter:
         painter.setPen(Qt.GlobalColor.darkGray)
 
         # Postilla Audit (Angolo in basso a sinistra)
-        if has_nd:
-            disclaimer = (
-                "(*) La dicitura 'Senza scadenza' identifica la strumentazione con certificazione "
-                "in fase di aggiornamento documentale, attualmente esclusa dall'impiego operativo. "
-                "Tutti gli apparati in elenco sono regolarmente tracciati e gestiti in piena "
-                "conformità alle procedure di controllo qualità vigenti."
-            )
-            font.setPixelSize(6)  # Testo piccolo per la postilla
-            painter.setFont(font)
-            disclaimer_rect = QRectF(15, height - 20, width - 100, 20)
-            painter.drawText(
-                disclaimer_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, disclaimer
-            )
+        # Viene mostrata sempre perché l'asterisco è sempre presente nel riquadro riassuntivo.
+        disclaimer = (
+            "(*) La dicitura 'Senza scadenza' identifica la strumentazione con certificazione "
+            "in fase di aggiornamento documentale, attualmente esclusa dall'impiego operativo. "
+            "Tutti gli apparati in elenco sono regolarmente tracciati e gestiti in piena "
+            "conformità alle procedure di controllo qualità vigenti."
+        )
+        font.setPixelSize(6)  # Testo piccolo per la postilla
+        painter.setFont(font)
+        disclaimer_rect = QRectF(15, height - 30, width - 150, 30)
+        painter.drawText(
+            disclaimer_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignBottom | Qt.TextFlag.TextWordWrap, disclaimer
+        )
 
-            # Ripristina font per la numerazione
-            font.setPixelSize(8)
-            painter.setFont(font)
+        # Ripristina font per la numerazione
+        font.setPixelSize(8)
+        painter.setFont(font)
 
         # Numerazione Pagine (Angolo in basso a destra)
         page_text = f"Pagina {current} / {total}"
@@ -303,7 +303,7 @@ class CertificatiPdfExporter:
         parts = re.split(r"(\d+)", id_coemi)
         return [(True, int(c)) if c.isdigit() else (False, c.lower()) for c in parts if c]
 
-    def _build_row_html(self, child: QTreeWidgetItem, is_current: bool, get_link_fn: Any) -> str:  # noqa: C901, PLR0915
+    def _build_row_html(self, child: QTreeWidgetItem, is_current: bool, get_link_fn: Any) -> str:  # noqa: C901, PLR0915, PLR0912
         """Costruisce l'HTML per una singola riga (corrente o storica)."""
         tree_any = self._get_tree()
         scadenza_str = child.text(tree_any.IDX_SCADENZA)
@@ -350,18 +350,21 @@ class CertificatiPdfExporter:
         row_html = f"<tr class='{row_class}'>"
         if is_current:
             annotazioni = child.text(tree_any.IDX_ANNOTAZIONI)
-            if days == -9999:
+            if days in (-9999, -8888):
                 guasto_info = []
                 if guasto_data:
                     guasto_info.append(f"Data: {guasto_data}")
                 if guasto_tipo:
-                    guasto_info.append(f"Tipo: {guasto_tipo}")
+                    guasto_info.append(f"Motivo: {guasto_tipo}" if days == -8888 else f"Tipo: {guasto_tipo}")
                 if guasto_note:
                     guasto_info.append(f"Note: {guasto_note}")
 
                 if guasto_info:
                     sep = "<br>" if annotazioni else ""
-                    annotazioni += f"{sep}<span style='color: #881337; font-weight: bold;'>⚠️ GUASTO:</span> " + " | ".join(guasto_info)
+                    if days == -9999:
+                        annotazioni += f"{sep}<span style='color: #881337; font-weight: bold;'>⚠️ GUASTO:</span> " + "<br>".join(guasto_info)
+                    else:
+                        annotazioni += f"{sep}<span style='color: #B8860B; font-weight: bold;'>🔍 CONTROLLO:</span> " + "<br>".join(guasto_info)
 
             row_html += f"<td class='text-center'>{child.text(tree_any.IDX_ID_STRUMENTO)}</td>"
             row_html += f"<td>{cert_display}</td>"
@@ -392,7 +395,7 @@ class CertificatiPdfExporter:
         row_html += "</tr>"
         return row_html
 
-    def _format_status_display(self, days: int | None, guasto_tipo: str = "") -> str:
+    def _format_status_display(self, days: int | None, guasto_tipo: str = "") -> str:  # noqa: PLR0911
         """Formatta il testo dello stato per la visualizzazione PDF."""
         stato_display = CertificatiEngine.format_days_text_short(days)
         for emoji in ("[OK]", "[ROSSO]", "[ARANCIONE]", "[GIALLO]", "[ERRORE]"):
@@ -401,6 +404,9 @@ class CertificatiPdfExporter:
 
         if days == -9999 or "GUASTO" in stato_display.upper():
             return "<span style='color: #881337; font-weight: bold;'>GUASTO</span>"
+
+        if days == -8888 or "CONTROLLARE" in stato_display.upper():
+            return "<span style='color: #B8860B; font-weight: bold;'>CONTROLLO</span>"
 
         if stato_display.startswith(StatoCertificatoLabel.SCADUTO):
             return stato_display.replace(f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>").replace(
@@ -422,6 +428,8 @@ class CertificatiPdfExporter:
         """Determina la classe CSS della riga basandosi sulla scadenza."""
         if days == CertificatiEngine.FAULTY_MARKER:
             return "parent-guasto"
+        if days == CertificatiEngine.CONTROL_MARKER:
+            return "parent-warning"
         if days is None:
             return "parent-nd"
         if days < 0:
@@ -535,7 +543,8 @@ class CertificatiPdfExporter:
                                 <span style="color: #d97706;">&#11044;</span> In Scadenza: <b>{s["in_scadenza"]}</b><br>
                                 <span style="color: #b91c1c;">&#11044;</span> Scaduti: <b>{s["scaduti"]}</b><br>
                                 <span style="color: #64748b;">&#11044;</span> Senza Scadenza *: <b>{s["senza_data"]}</b><br>
-                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{s["guasti"]}</b>
+                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{s["guasti"]}</b><br>
+                                <span style="color: #b45309;">&#11044;</span> Controlli: <b>{s["controlli"]}</b>
                             </td>
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
                                 &#127970; {UbicazioneStrumenti.UFFICIO_STRU.value}: <b>{s["ufficio_stru"]}</b><br>

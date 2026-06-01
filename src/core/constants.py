@@ -120,6 +120,7 @@ class StatoCertificatoLabel:
     ATTIVO = "Attivo"
     SENZA_SCADENZA = "N/D (Senza Scadenza)"
     GUASTO = "STRUMENTO GUASTO"
+    CONTROLLO = "DA CONTROLLARE"
 
 
 class TipoAnomalia(Enum):
@@ -127,6 +128,7 @@ class TipoAnomalia(Enum):
 
     MECCANICO = "Guasto meccanico"
     ELETTRONICO = "Guasto elettronico"
+    NON_ACCENDE = "Non si accende"
     FUORI_TOLLERANZA = "Fuori tolleranza"
     DISPLAY_ILLEGGIBILE = "Display illeggibile"
     DANNO_FISICO = "Danno fisico"

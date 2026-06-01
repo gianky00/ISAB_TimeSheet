@@ -48,6 +48,7 @@ class CertificatiEngine:
     WARNING_THRESHOLD: Final[int] = 15
     EXPIRING_THRESHOLD: Final[int] = 30
     FAULTY_MARKER: Final[int] = -9999
+    CONTROL_MARKER: Final[int] = -8888
 
     # Indici colonne dati certificati (Allineati al TreeWidget della UI per le statistiche PDF)
     IDX_ID_COEMI: Final[int] = 0
@@ -164,8 +165,10 @@ class CertificatiEngine:
         cls, scadenza_str: str, guasto_flag: int = 0
     ) -> tuple[int | None, str]:
         """Calcola giorni e stato, con supporto per il flag guasto dedicato."""
-        if guasto_flag:
+        if guasto_flag == 1:
             return cls.FAULTY_MARKER, Icons.STATUS_DOT_RED
+        if guasto_flag == 2:  # noqa: PLR2004
+            return cls.CONTROL_MARKER, Icons.STATUS_DOT_ORANGE
         return cls.calculate_days_and_status(scadenza_str)
 
     @classmethod
@@ -174,6 +177,9 @@ class CertificatiEngine:
         if days == cls.FAULTY_MARKER:
             tipo = guasto_tipo if guasto_tipo else "N/D"
             return f"❌ {StatoCertificatoLabel.GUASTO} ({tipo})"
+        if days == cls.CONTROL_MARKER:
+            tipo = guasto_tipo if guasto_tipo else "N/D"
+            return f"⚠️ {StatoCertificatoLabel.CONTROLLO} ({tipo})"
         return cls.format_days_text_short(days)
 
     @classmethod
@@ -185,6 +191,7 @@ class CertificatiEngine:
             "scaduti": 0,
             "senza_data": 0,
             "guasti": 0,
+            "controlli": 0,
             "ufficio_stru": 0,
             "ufficio_cc": 0,
             "officina": 0,
@@ -223,6 +230,8 @@ class CertificatiEngine:
         """Aggiorna i conteggi di stato e mappa le scadenze temporali."""
         if days == cls.FAULTY_MARKER:
             stats["guasti"] += 1
+        elif days == cls.CONTROL_MARKER:
+            stats["controlli"] += 1
         elif days is None:
             stats["senza_data"] += 1
         elif days < 0:

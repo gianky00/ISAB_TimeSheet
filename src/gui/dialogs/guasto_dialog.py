@@ -34,6 +34,7 @@ class GuastoDialog(QDialog):
         current_tipo: str = "",
         current_data: str = "",
         current_note: str = "",
+        is_controllo: bool = False,
     ) -> None:
         """Inizializza il dialog con i dati dello strumento.
 
@@ -45,11 +46,13 @@ class GuastoDialog(QDialog):
             current_tipo: Tipo anomalia corrente (per modifica).
             current_data: Data rilevamento corrente (per modifica).
             current_note: Note correnti (per modifica).
+            is_controllo: Flag per configurare l'interfaccia in modalità "Controllo Preventivo".
         """
         super().__init__(parent)
         self.id_coemi = id_coemi
         self.matricola = matricola
         self.modello = modello
+        self.is_controllo = is_controllo
         self._result_data: dict[str, str] = {}
         self._setup_ui(current_tipo, current_data, current_note)
 
@@ -61,7 +64,15 @@ class GuastoDialog(QDialog):
             current_data: Data rilevamento preimpostata.
             current_note: Note preimpostate.
         """
-        self.setWindowTitle("Segnala Guasto Strumento")
+        if self.is_controllo:
+            self.setWindowTitle("Richiesta Controllo Preventivo")
+            header_text = "🔍 Richiesta Controllo Preventivo"
+            header_color = "#DAA520"  # GoldenRod / Orange
+        else:
+            self.setWindowTitle("Segnala Guasto Strumento")
+            header_text = "⚠️ Segnala Guasto Strumento"
+            header_color = COLORS['error_red']
+
         self.setMinimumWidth(480)
         self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_white']}; }}")
 
@@ -70,9 +81,9 @@ class GuastoDialog(QDialog):
         layout.setSpacing(15)
 
         # Header
-        header = QLabel("⚠️ Segnala Guasto Strumento")
+        header = QLabel(header_text)
         header.setStyleSheet(
-            f"color: {COLORS['error_red']}; font-size: 18px; font-weight: bold; padding-bottom: 5px;"
+            f"color: {header_color}; font-size: 18px; font-weight: bold; padding-bottom: 5px;"
         )
         layout.addWidget(header)
 
@@ -104,11 +115,14 @@ class GuastoDialog(QDialog):
             field.setStyleSheet(readonly_style)
             form.addRow(lbl, field)
 
-        # Tipo anomalia
-        lbl_tipo = QLabel("Tipo Anomalia")
+        # Tipo anomalia / controllo
+        lbl_tipo = QLabel("Motivo Controllo" if self.is_controllo else "Tipo Anomalia")
         lbl_tipo.setStyleSheet(label_style)
         self.combo_tipo = QComboBox()
-        self.combo_tipo.addItems([t.value for t in TipoAnomalia])
+        if self.is_controllo:
+            self.combo_tipo.addItems(["Verifica pre-scadenza", "Controllo visivo", "Sospetta deriva misure", "Misure instabili", "Altro"])
+        else:
+            self.combo_tipo.addItems([t.value for t in TipoAnomalia])
         self.combo_tipo.setStyleSheet(input_style)
         if current_tipo:
             idx = self.combo_tipo.findText(current_tipo)
