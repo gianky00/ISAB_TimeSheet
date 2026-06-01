@@ -33,15 +33,15 @@ Il progetto adotta una politica **Zero Regressions**.
 
 - **Suite Completa (Robust Runner)**:
   ```bash
-  python tests/run_robust_tests.py
+  python -m tests.run_robust_test
   ```
 - **Test Rapidi (solo unit)**:
   ```bash
-  poetry run pytest -m "unit and not slow"
+  python -m tests.run_robust_test -m "unit and not slow"
   ```
 - **Test con coverage**:
   ```bash
-  poetry run pytest --cov=src --cov-report=term-missing
+  python -m tests.run_robust_test --cov=src --cov-report=term-missing
   ```
 
 ### Regole per Nuove Feature

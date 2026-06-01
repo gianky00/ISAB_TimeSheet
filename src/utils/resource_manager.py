@@ -190,6 +190,27 @@ class ResourceManager:
         return cls.TEMP_DIR / filename
 
     @classmethod
+    def get_changelog_path(cls) -> Path:
+        """Restituisce il percorso assoluto del file changelog.json.
+
+        Returns:
+          Path: Percorso al file changelog.json.
+        """
+        if getattr(sys, "frozen", False):
+            # In PyInstaller bundle, changelog.json è all'interno del pacchetto estratto (_MEIPASS o _internal)
+            # e mai accanto all'eseguibile sul filesystem esterno.
+            base_path = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+            target = base_path / "src" / "core" / "changelog.json"
+            if target.exists():
+                return target
+            # Fallback se siamo in modalità directory (_internal)
+            internal_path = Path(sys.executable).parent / "_internal"
+            target_internal = internal_path / "src" / "core" / "changelog.json"
+            if target_internal.exists():
+                return target_internal
+        return cls.PROJECT_ROOT / "src" / "core" / "changelog.json"
+
+    @classmethod
     def ensure_structure(cls) -> None:
         """Assicura che tutte le cartelle vitali per l'applicazione esistano sul filesystem."""
         config_dir = cls._get_config_dir()

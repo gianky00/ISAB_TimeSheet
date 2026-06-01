@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -6,146 +6,56 @@ from src.core.database.repositories.oda_repository import OdaRepository
 from src.models import OdaRecord
 
 
-@pytest.fixture
-def mock_db_manager():
-    db = MagicMock()
-    # Mocking paths
-    db.DB_STORICO_ODA = MagicMock()
-    db.DB_STORICO_ODA.exists.return_value = True
-    return db
+class TestOdaRepository:
+    @pytest.fixture
+    def mock_db(self):
+        m = MagicMock()
+        m.DB_STORICO_ODA = MagicMock()
+        m.DB_STORICO_ODA.exists.return_value = True
+        return m
 
+    @pytest.fixture
+    def repo(self, mock_db):
+        return OdaRepository(db_manager_instance=mock_db)
 
-@pytest.fixture
-def repo(mock_db_manager):
-    return OdaRepository(db_manager_instance=mock_db_manager)
+    @patch("src.core.database.repositories.oda_repository.dict", side_effect=lambda x: x)
+    def test_get_all_as_objects(self, mock_dict, repo, mock_db):
+        mock_conn = MagicMock()
+        mock_db.get_connection.return_value.__enter__.return_value = mock_conn
 
+        # Setup mock cursor
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
 
-def test_get_all_success_objects(repo, mock_db_manager):
-    mock_conn = MagicMock()
-    mock_cursor = MagicMock()
-    mock_db_manager.get_connection.return_value.__enter__.return_value = mock_conn
-    mock_conn.cursor.return_value = mock_cursor
-    mock_cursor.fetchall.return_value = [
-        {
-            "org_acq": "A",
-            "data_oda": "2026-01-01",
-            "oda": "1",
-            "pos_oda": "1",
-            "stato": "A",
-            "cat_contab": "C",
-            "descrizione": "Desc",
-            "qta": 1.0,
-            "uom": "U",
-            "data_consegna": "2026-01-01",
-            "valore_netto_pos": 1.0,
-            "valore_residuo": 1.0,
-            "valore_netto_oda": 1.0,
-            "divisione": "D",
-            "destinatario": "De",
-            "nome_destinatario": "Nd",
-            "codice_fornitore": "Cf",
-            "descrizione_fornitore": "Df",
-            "emittente_fattura": "Ef",
-            "desc_emittente_fattura": "Def",
-            "contract_card": "Cc",
-            "contratto": "C",
-            "posizione_contratto": "Pc",
-            "gruppo_acquisti": "Ga",
-            "indicatore_rilascio": "Ir",
-            "stato_rilascio": "Sr",
-            "attivita": "A",
-            "num_riga": "1",
-            "quantita": 1.0,
-            "unita_mis": "U",
-            "prezzo_lordo": 1.0,
-            "testo_breve": "Tb",
-        }
-    ]
+        # Setup riga con campi OdaRecord
+        fields = dict.fromkeys(OdaRecord.__dataclass_fields__, "")
+        fields.update({"oda": "100", "pos_oda": "10"})
 
-    results = repo.get_all(as_objects=True)
-    assert len(results) == 1
-    assert isinstance(results[0], OdaRecord)
+        mock_cursor.fetchall.return_value = [fields]
 
+        results = repo.get_all(as_objects=True)
+        assert len(results) == 1
+        assert results[0].oda == "100"
 
-def test_get_all_success_tuples(repo, mock_db_manager):
-    mock_conn = MagicMock()
-    mock_cursor = MagicMock()
-    mock_db_manager.get_connection.return_value.__enter__.return_value = mock_conn
-    mock_conn.cursor.return_value = mock_cursor
-    mock_cursor.fetchall.return_value = [("A", "2026-01-01")]
+    def test_get_all_filtered_date(self, repo, mock_db):
+        mock_conn = MagicMock()
+        mock_db.get_connection.return_value.__enter__.return_value = mock_conn
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.fetchall.return_value = [tuple([""] * len(repo.columns))]
 
-    results = repo.get_all(as_objects=False)
-    assert len(results) == 1
-    assert isinstance(results[0], tuple)
+        # Ricerca per data italiana
+        repo.get_all(search_text="23/05/2023", as_objects=False)
 
+        args = mock_cursor.execute.call_args
+        params = args[0][1]
+        # Deve aver convertito la data in ISO
+        assert "%2023-05-23%" in params
 
-def test_get_all_with_search_text(repo, mock_db_manager):
-    mock_conn = MagicMock()
-    mock_cursor = MagicMock()
-    mock_db_manager.get_connection.return_value.__enter__.return_value = mock_conn
-    mock_conn.cursor.return_value = mock_cursor
-    mock_cursor.fetchall.return_value = [
-        {
-            "org_acq": "A",
-            "data_oda": "2026-01-01",
-            "oda": "1",
-            "pos_oda": "1",
-            "stato": "A",
-            "cat_contab": "C",
-            "descrizione": "Desc",
-            "qta": 1.0,
-            "uom": "U",
-            "data_consegna": "2026-01-01",
-            "valore_netto_pos": 1.0,
-            "valore_residuo": 1.0,
-            "valore_netto_oda": 1.0,
-            "divisione": "D",
-            "destinatario": "De",
-            "nome_destinatario": "Nd",
-            "codice_fornitore": "Cf",
-            "descrizione_fornitore": "Df",
-            "emittente_fattura": "Ef",
-            "desc_emittente_fattura": "Def",
-            "contract_card": "Cc",
-            "contratto": "C",
-            "posizione_contratto": "Pc",
-            "gruppo_acquisti": "Ga",
-            "indicatore_rilascio": "Ir",
-            "stato_rilascio": "Sr",
-            "attivita": "A",
-            "num_riga": "1",
-            "quantita": 1.0,
-            "unita_mis": "U",
-            "prezzo_lordo": 1.0,
-            "testo_breve": "Tb",
-        }
-    ]
+    def test_get_all_db_not_exists(self, repo, mock_db):
+        mock_db.DB_STORICO_ODA.exists.return_value = False
+        assert repo.get_all() == []
 
-    # Text search
-    results = repo.get_all(search_text="test")
-    assert len(results) == 1
-
-    # Date search format change
-    results_date = repo.get_all(search_text="01/01/2026")
-    assert len(results_date) == 1
-
-
-def test_get_all_no_db(repo, mock_db_manager):
-    mock_db_manager.DB_STORICO_ODA.exists.return_value = False
-    assert repo.get_all() == []
-
-
-def test_get_all_with_date_search(repo, mock_db_manager):
-    mock_conn = MagicMock()
-    mock_cursor = MagicMock()
-    mock_db_manager.get_connection.return_value.__enter__.return_value = mock_conn
-    mock_conn.cursor.return_value = mock_cursor
-    mock_cursor.fetchall.return_value = []
-
-    # Esegui ricerca con formato data
-    repo.get_all(search_text="01/01/2026")
-
-    # Verifica che la query sia stata chiamata (indirettamente verificando i params)
-    assert mock_cursor.execute.called
-    _query, params = mock_cursor.execute.call_args[0]
-    assert "2026-01-01" in params[0]
+    def test_get_all_exception(self, repo, mock_db):
+        mock_db.get_connection.side_effect = Exception("DB error")
+        assert repo.get_all() == []

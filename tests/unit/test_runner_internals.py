@@ -1,8 +1,9 @@
-"""Unit test per le funzioni interne di run_robust_tests.py.
+"""Unit test per le funzioni interne di tests.run_robust_test.
 
 Verifica correttezza di parsing, classificazione errori,
 estrazione traceback e conteggio dei risultati.
 """
+# ruff: noqa: E402
 
 from __future__ import annotations
 
@@ -14,15 +15,12 @@ ROOT_DIR = Path(__file__).parent.parent.parent.resolve()
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from tests.run_robust_tests import (  # noqa: E402
-    FailureDetail,
-    TestResult as RunResult,
-    UltraRunner,
-    _classify_error,
-    _extract_failures,
-    _extract_traceback_block,
-    _parse_pytest_summary,
-)
+from rich.console import Console
+
+from tests.run_robust_test.engine import _classify_error, _extract_failures
+from tests.run_robust_test.models import FailureDetail, TestResult as RunResult
+from tests.run_robust_test.runner import UltraRunner
+from tests.run_robust_test.utils import _extract_traceback_block, _parse_pytest_summary
 
 # ─── _parse_pytest_summary ────────────────────────────────────────────────────
 
@@ -244,19 +242,19 @@ class TestUltraRunnerCounting:
     """Test per la correttezza dei conteggi nel runner."""
 
     def test_initial_state(self) -> None:
-        runner = UltraRunner()
+        runner = UltraRunner(console=Console())
         assert runner.total_passed == 0
         assert runner.total_failed == 0
         assert runner._exit_code == 0
-        assert runner.strategy == "SHOTGUN"
+        assert runner.strategy == "PARALLELO"
 
     def test_exit_code_attribute_exists(self) -> None:
         """ARCH-2 regression: il runner deve avere _exit_code, non chiamare sys.exit."""
-        runner = UltraRunner()
+        runner = UltraRunner(console=Console())
         assert hasattr(runner, "_exit_code")
 
     def test_file_results_accumulation(self) -> None:
-        runner = UltraRunner()
+        runner = UltraRunner(console=Console())
         r1 = RunResult(target="test_a.py", success=True, duration=1.0, passed=3, failed=0)
         r2 = RunResult(target="test_b.py", success=False, duration=2.0, passed=1, failed=2)
         runner.file_results.extend([r1, r2])

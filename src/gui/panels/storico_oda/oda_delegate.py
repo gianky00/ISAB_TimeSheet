@@ -6,6 +6,7 @@ e l'overlay shimmer animato sui parent al momento dell'espansione.
 """
 
 import math
+import operator
 from typing import cast
 
 from PySide6.QtCore import QModelIndex, QPersistentModelIndex, Qt
@@ -151,7 +152,7 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
 
         # Deduplicazione posizioni (Qt richiede valori strettamente in [0,1])
         seen: set[int] = set()
-        for pos, color in sorted(raw_stops, key=lambda s: s[0]):
+        for pos, color in sorted(raw_stops, key=operator.itemgetter(0)):
             key = int(pos * 100_000)
             if key not in seen:
                 gradient.setColorAt(pos, color)

@@ -20,7 +20,6 @@ def mock_config(tmp_path):
     fake_file = fake_dir / "config.json"
 
     # Patch sia la DIR che la FILE sia in paths che direttamente in config_manager
-    # per evitare che gli import precoci usino i valori reali.
     with (
         patch("src.core.paths.CONFIG_DIR", fake_dir),
         patch("src.core.paths.CONFIG_FILE", fake_file),
@@ -35,8 +34,8 @@ def test_config_manager_defaults(mock_config):
     val = config_manager.get_config_value("theme", "light")
     assert val == "light"
 
-    # Test setting value
-    config_manager.set_config_value("theme", "dark")
+    # Test setting value (forced synchronous for test)
+    config_manager.set_config_value("theme", "dark", async_save=False)
     assert config_manager.get_config_value("theme") == "dark"
 
     # Verify persistence
@@ -46,8 +45,10 @@ def test_config_manager_defaults(mock_config):
 
 
 def test_config_accounts(mock_config):
-    # Test adding account
-    config_manager.add_account("isab", {"username": "user1", "password": "pass1", "is_default": True})
+    # Test adding account (forced synchronous for test)
+    config_manager.add_account(
+        "isab", {"username": "user1", "password": "pass1", "is_default": True}, async_save=False
+    )
     accounts = config_manager.load_config().get("accounts", [])
     assert len(accounts) == 1
     assert accounts[0]["username"] == "user1"
@@ -56,8 +57,8 @@ def test_config_accounts(mock_config):
     default = config_manager.get_default_account("isab")
     assert default["username"] == "user1"
 
-    # Test removal
-    config_manager.remove_account("isab", "user1")
+    # Test removal (forced synchronous for test)
+    config_manager.remove_account("isab", "user1", async_save=False)
     assert len(config_manager.load_config().get("accounts", [])) == 0
 
 
@@ -91,9 +92,6 @@ def test_time_manager():
     from src.core import time_manager
 
     # Test get_trusted_time
-    # It might fail network in test, so it should return system time fallback (False trusted)
-    # or True if network works.
-
     dt, trusted = time_manager.get_trusted_time()
     assert isinstance(dt, datetime)
     assert isinstance(trusted, bool)

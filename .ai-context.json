@@ -3,7 +3,7 @@
   "$generated_by": "tools/generate_ai_context.py",
   "$note": "File generato automaticamente. NON modificare manualmente.",
   "project": "SyncroJob Enterprise (ISAB_TimeSheet)",
-  "version": "1.50.0",
+  "version": "1.55.0",
   "entry_point": "main.py",
   "python_version": ">=3.12,<3.13",
   "architectural_style": "Controller-Service-Repository (SRP)",
@@ -123,9 +123,9 @@
     "generate_ai_context": "poetry run python tools/generate_ai_context.py",
     "generate_ci_context": "poetry run python tools/generate_ci_context.py",
     "generate_architecture": "poetry run python tools/generate_architecture.py",
-    "tests": "poetry run pytest",
-    "tests_fast": "poetry run pytest -m 'unit and not slow'",
-    "tests_robust": "python tests/run_robust_tests.py",
+    "tests": "python -m tests.run_robust_test",
+    "tests_fast": "python -m tests.run_robust_test -m 'unit and not slow'",
+    "tests_robust": "python -m tests.run_robust_test",
     "bump_version": "poetry run cz bump"
   },
   "anti_breakage_rules": [

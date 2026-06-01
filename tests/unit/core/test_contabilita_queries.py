@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -7,48 +7,35 @@ from src.core.contabilita_queries import ContabilitaQueries
 
 
 class TestContabilitaQueries:
-    @pytest.fixture
-    def db_path(self, tmp_path):
-        p = tmp_path / "test_contabilita.db"
-        p.touch()
-        return p
+    @pytest.fixture(autouse=True)
+    def mock_repo(self):
+        with patch.object(ContabilitaQueries, "_repo") as mock:
+            self.repo = mock
+            yield mock
 
-    @patch("src.core.database.db_manager.get_connection")
-    def test_get_available_years_success(self, mock_get_conn, db_path):
-        mock_conn = MagicMock()
-        mock_get_conn.return_value.__enter__.return_value = mock_conn
-        mock_cursor = mock_conn.cursor.return_value
-        mock_cursor.fetchall.return_value = [(2024,), (2023,)]
+    def test_get_available_years(self):
+        self.repo.get_available_years.return_value = [2023]
+        assert ContabilitaQueries.get_available_years(Path("db.sqlite")) == [2023]
 
-        years = ContabilitaQueries.get_available_years(db_path)
+    def test_get_data_by_year(self):
+        self.repo.get_data_by_year.return_value = [("row",)]
+        res = ContabilitaQueries.get_data_by_year(Path("db.sqlite"), 2023)
+        assert res == [("row",)]
+        self.repo.get_data_by_year.assert_called_with(2023, as_objects=False)
 
-        assert years == [2024, 2023]
-        assert "UNION" in mock_cursor.execute.call_args[0][0]
+    def test_get_giornaliere_by_year(self):
+        self.repo.get_giornaliere_by_year.return_value = []
+        ContabilitaQueries.get_giornaliere_by_year(Path("db.sqlite"), 2023)
+        assert self.repo.get_giornaliere_by_year.called
 
-    @patch("src.core.database.db_manager.get_connection")
-    def test_get_available_years_no_file(self, mock_get_conn):
-        # Simula assenza di DB o errore sollevando eccezione che il manager o repo dovrebbe gestire
-        mock_get_conn.side_effect = FileNotFoundError()
-        years = ContabilitaQueries.get_available_years(Path("non_existent.db"))
-        assert years == []
+    def test_get_attivita_programmate_data(self):
+        ContabilitaQueries.get_attivita_programmate_data(Path("db.sqlite"))
+        assert self.repo.get_attivita_programmate.called
 
-    @patch("src.core.database.db_manager.get_connection")
-    def test_get_data_by_year_db_error(self, mock_get_conn, db_path):
-        mock_get_conn.side_effect = Exception("SQLite locked")
+    def test_get_certificati_campione_data(self):
+        ContabilitaQueries.get_certificati_campione_data(Path("db.sqlite"))
+        assert self.repo.get_certificati_campione.called
 
-        # Non deve sollevare eccezioni, ma ritornare lista vuota (SOP attuale)
-        data = ContabilitaQueries.get_data_by_year(db_path, 2024)
-        assert data == []
-
-    @patch("src.core.database.db_manager.get_connection")
-    def test_get_certificati_campione_logic(self, mock_get_conn, db_path):
-        mock_conn = MagicMock()
-        mock_get_conn.return_value.__enter__.return_value = mock_conn
-        mock_cursor = mock_conn.cursor.return_value
-
-        mock_cursor.fetchall.return_value = [("Cert1", "Note", "Lab", 1)]
-
-        data = ContabilitaQueries.get_certificati_campione_data(db_path)
-        assert len(data) == 1
-        assert data[0][0] == "Cert1"
-        assert "certificati_campione" in mock_cursor.execute.call_args[0][0]
+    def test_get_scarico_ore_data(self):
+        ContabilitaQueries.get_scarico_ore_data(Path("db.sqlite"))
+        assert self.repo.get_scarico_ore.called

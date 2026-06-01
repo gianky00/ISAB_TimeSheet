@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from src.core.backup.archive_rotator import ArchiveRotator
 from src.core.backup_manager import BackupManager
 
 
@@ -76,7 +77,8 @@ class TestBackupFeatures:
             # Forza tempi di modifica diversi
             os.utime(p, (1000 + i, 1000 + i))
 
-        BackupManager._cleanup_old_backups(target, keep=5)
+        # SRP: ArchiveRotator gestisce la rotazione
+        ArchiveRotator.rotate_backups(target, keep=5)
 
         remaining = list(target.glob("*.zip"))
         assert len(remaining) == 5

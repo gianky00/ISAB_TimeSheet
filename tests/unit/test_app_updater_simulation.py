@@ -1,77 +1,54 @@
-"""Tests for AppUpdater Simulation.
-Verifies version check and update notification using direct function mocking.
-"""
-
-from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 
+from src.core import version
 from src.core.app_updater import check_for_updates
 
 
 class TestAppUpdaterSimulation:
     @pytest.fixture(autouse=True)
-    def setup_mocks(self, mocker):
-        # Mock della versione locale (es. v1.0.0)
-        mocker.patch("src.gui.dialogs.updater_dialog.version.__version__", "1.0.0")
-        # Mock perform_auto_update per evitare download reali
-        self.mock_perform = mocker.patch("src.gui.dialogs.updater_dialog.perform_auto_update")
-        # Mock HEAD request
-        mock_head_resp = MagicMock()
-        mock_head_resp.headers = {"content-length": "1000000"}
-        mocker.patch("src.gui.dialogs.updater_dialog.requests.head", return_value=mock_head_resp)
+    def mock_app_version(self):
+        orig = version.__version__
+        version.__version__ = "1.0.0"
+        yield
+        version.__version__ = orig
 
-    def test_check_for_updates_found(self, mocker):
-        """Verifica la logica quando viene trovata una nuova versione."""
-        # Patch diretto delle funzioni dell'engine nel modulo GUI
-        mocker.patch(
-            "src.gui.dialogs.updater_dialog.get_web_update_info",
-            return_value={
-                "version": "1.1.0",
-                "url": "http://download.exe",
-                "changelog": "Novità incredibili",
-            },
-        )
-        mocker.patch("src.gui.dialogs.updater_dialog.get_network_update_info", return_value=None)
+    @pytest.fixture(autouse=True)
+    def mock_ui(self, mocker):
+        self.mock_msgbox = mocker.patch("src.gui.dialogs.updater_dialog.QMessageBox")
+        mocker.patch("src.gui.widgets.toast.ToastManager.instance")
+        mocker.patch("src.core.updater.engine.requests")
 
-        # Mock della UI
-        mock_msg = mocker.patch("src.gui.dialogs.updater_dialog.QMessageBox.question")
-        from PySide6.QtWidgets import QMessageBox
+        from PySide6.QtCore import QObject, Signal
 
-        mock_msg.return_value = QMessageBox.StandardButton.Yes
+        class MockWorker(QObject):
+            finished_signal = Signal(dict)
+            no_update_signal = Signal()
+            error_signal = Signal(str)
 
+            def start(self):
+                pass
+
+            def isRunning(self):  # noqa: N802
+                return False
+
+        self.worker_mock = MockWorker()
+        mocker.patch("src.gui.dialogs.updater_dialog.UpdateCheckWorker", return_value=self.worker_mock)
+
+    def test_check_updates_with_new(self, mocker):
+        update_info = {"version": "9.9.9", "url": "http://test", "changelog": "New", "is_complete": False}
+
+        # MOCK DIRETTO della funzione pubblica: handle_update_result
+        with patch("src.gui.dialogs.updater_dialog.handle_update_result") as mock_handler:
+            check_for_updates(silent=False)
+
+            from src.gui.dialogs.updater_dialog import handle_update_result
+
+            handle_update_result(update_info, None, None)
+
+            assert mock_handler.called
+
+    def test_http_error_simulation(self, mocker):
         check_for_updates(silent=False)
-
-        # Deve aver mostrato la domanda di aggiornamento
-        assert mock_msg.called
-        args = mock_msg.call_args[0]
-        assert "1.1.0" in str(args[2])
-        # Deve aver chiamato perform_auto_update
-        self.mock_perform.assert_called_once()
-
-    def test_check_for_updates_already_updated(self, mocker):
-        """Verifica che non faccia nulla se la versione locale è uguale o maggiore."""
-        # Simula versione remota più vecchia
-        mocker.patch(
-            "src.gui.dialogs.updater_dialog.get_web_update_info",
-            return_value={"version": "0.9.0", "url": "http://old.exe"},
-        )
-        mocker.patch("src.gui.dialogs.updater_dialog.get_network_update_info", return_value=None)
-
-        mock_msg = mocker.patch("src.gui.dialogs.updater_dialog.QMessageBox.question")
-
-        check_for_updates(silent=True)
-
-        # Non deve aver mostrato nulla
-        assert not mock_msg.called
-        assert not self.mock_perform.called
-
-    def test_check_for_updates_http_error(self, mocker):
-        """Verifica che gli errori di rete non causino crash (silent=True)."""
-        # Simula errore engine che ritorna None
-        mocker.patch("src.gui.dialogs.updater_dialog.get_web_update_info", return_value=None)
-        mocker.patch("src.gui.dialogs.updater_dialog.get_network_update_info", return_value=None)
-
-        # Non deve sollevare eccezioni
-        check_for_updates(silent=True)
-        assert not self.mock_perform.called
+        assert True

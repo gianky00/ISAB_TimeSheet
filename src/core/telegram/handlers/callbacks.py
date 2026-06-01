@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING, Any
 
-from telegram import Update, constants
+from telegram import CallbackQuery, Update, constants
 from telegram.ext import ContextTypes
 
 from src.core import config_manager
@@ -11,8 +11,6 @@ from src.core.telegram.ui.keyboards import TelegramUI
 from src.utils.printing import get_installed_printers
 
 if TYPE_CHECKING:
-    from telegram import CallbackQuery
-
     from src.core.telegram import TelegramService
 
 

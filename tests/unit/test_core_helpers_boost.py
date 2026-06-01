@@ -1,38 +1,39 @@
 import sqlite3
-from pathlib import Path
 from unittest.mock import patch
 
-from PySide6.QtWidgets import QTreeWidget
+import pytest
 
 from src.core.data_synchronizer import DataSynchronizer
-from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
 
 
 class TestCoreHelpersBoost:
-    def test_sortable_item_logic(self, qapp):
-        tw = QTreeWidget()
-        item1 = SortableTreeWidgetItem(["01/01/2024"])
-        item2 = SortableTreeWidgetItem(["02/01/2024"])
-        tw.addTopLevelItem(item1)
-        tw.addTopLevelItem(item2)
-        assert item1.__lt__(item2) is True
-
-    def test_data_synchronizer_sync_contabilita(self, tmp_path):
-        db_path = tmp_path / "test.db"
-        # Init DB with table
+    @pytest.fixture
+    def db(self, tmp_path):
+        db_path = tmp_path / "helpers_boost.db"
         with sqlite3.connect(db_path) as conn:
-            conn.execute("CREATE TABLE contabilita (year INTEGER, data TEXT, n_prev TEXT)")
+            # Schema allineato a ContabilitaSyncEngine (usa 'year')
+            conn.execute("CREATE TABLE contabilita (year INTEGER, data_prev TEXT, n_prev TEXT)")
+            conn.commit()
+        return db_path
 
-        # Test sync (empty to 1 row)
-        data = [(2024, "01/01/2024", "100/24")]
-        with patch(
-            "src.core.excel_importer.ExcelImporter.COLUMNS_MAPPING",
-            {"D": "data", "P": "n_prev"},
-        ):
-            added, removed = DataSynchronizer.sync_contabilita_dati(db_path, data, [2024])
+    def test_data_synchronizer_sync_contabilita(self, db):
+        new_data = [(2024, "01/01/2024", "100/24")]
+        years = [2024]
+
+        with patch("src.core.sync.contabilita_sync.ContabilitaSyncEngine.sync_partitioned_data") as mock_sync:
+            mock_sync.return_value = (1, 0)
+            added, _removed = DataSynchronizer.sync_contabilita(db, new_data, years)
             assert added == 1
-            assert removed == 0
+            assert mock_sync.called
 
-    def test_data_synchronizer_empty(self, tmp_path):
-        res = DataSynchronizer.sync_contabilita_dati(Path("nonexistent"), [], [])
+    def test_data_synchronizer_empty(self, db):
+        res = DataSynchronizer.sync_storico_oda(db, [])
         assert res == (0, 0)
+
+    def test_sortable_item_logic(self):
+        from src.gui.widgets.core_widgets import SortableTableWidgetItem
+
+        it1 = SortableTableWidgetItem("10")
+        it2 = SortableTableWidgetItem("2")
+        # Ordinamento numerico: 2 < 10
+        assert it2 < it1

@@ -80,16 +80,6 @@ class ModernButton(QPushButton):
 
     def _setup_animation(self) -> None:
         """Inizializza l'animazione di opacità e ombra per l'effetto hover/click."""
-        import os
-        import sys
-
-        if "pytest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST"):
-            from unittest.mock import MagicMock
-
-            self._anim = MagicMock()
-            self._shadow = MagicMock()
-            return
-
         self._anim = QPropertyAnimation(self, b"hover_opacity")
         anim_duration_ms = 150
         self._anim.setDuration(anim_duration_ms)
@@ -223,14 +213,14 @@ class ModernButton(QPushButton):
             style += f"QPushButton {{ border: 1px solid {self._palette.primary}; }}"
 
         # Aggiunge lo stile per QToolTip per evitare che i tooltip ereditati siano in dark mode
-        style += f"""
-      QToolTip {{
-        background-color: {COLORS["bg_white"]};
-        color: {COLORS["text_dark"]};
-        border: 1px solid {COLORS["border_light"]};
+        style += """
+      QToolTip {
+        background-color: #FFFFFF;
+        color: #212121;
+        border: 1px solid #CCCCCC;
         border-radius: 6px;
         padding: 8px 12px;
-      }}
+      }
     """
 
         self.setStyleSheet(style)

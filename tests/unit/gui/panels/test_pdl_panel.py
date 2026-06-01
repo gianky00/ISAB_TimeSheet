@@ -1,93 +1,127 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QWidget
 
 from src.core.pdl.pdl_controller import PDLController
 from src.gui.panels.pdl.pdl_panel import PDLDBPanel
 
 
-class TestPDLDBPanel:
-    @pytest.fixture
-    def controller(self):
-        c = MagicMock(spec=PDLController)
-        c.get_pdl_data.return_value = []
-        c.process_master_rows.return_value = []
-        return c
+class MockSubWidget(QWidget):
+    """Real QWidget to avoid addWidget failures."""
 
-    @pytest.fixture
-    def panel(self, controller, qtbot):
-        # Mocking ProgrammazioneTab to avoid complex child setup
-        with (
-            patch("src.gui.panels.pdl.pdl_panel.ProgrammazioneTab", return_value=QWidget()),
-            patch("src.core.sync_tracker.SyncTracker.get_formatted_status", return_value="N/D"),
-            patch("src.core.database.db_manager.execute_query", return_value=[]),
-        ):
-            p = PDLDBPanel(controller)
-            qtbot.addWidget(p)
-            p.show()
-            return p
+    filter_changed = Signal(dict)
+    site_changed = Signal()
+    area_changed = Signal()
+    update_clicked = Signal()
+    reset_clicked = Signal()
+    export_clicked = Signal()
 
-    def test_initialization(self, panel):
-        assert panel.controller is not None
-        assert panel.model is not None
-        assert panel.tabs.count() == 2
+    # PDLTableView signals
+    header_clicked = Signal(int)
+    row_double_clicked = Signal()
+    selection_changed_custom = Signal()
+    context_menu_requested = Signal(object)
 
-    def test_refresh_data_empty(self, panel, controller, qtbot):
-        controller.get_pdl_data.return_value = []
-        panel.refresh_data()
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.search_input = MagicMock()
+        self.lbl_sync_status = MagicMock()
+        self.site_filter = MagicMock()
+        self.area_filter = MagicMock()
+        self.unit_filter = MagicMock()
+        self.group_filter = MagicMock()
+        self.update_details = MagicMock()
+        self.optimize_columns = MagicMock()
 
-        assert panel.model.rowCount() == 0
-        qtbot.wait_until(lambda: panel.empty_state.isVisible())
+    def get_filters(self):
+        return {}
 
-    def test_refresh_data_with_items(self, panel, controller, qtbot):
-        mock_dto = MagicMock()
-        mock_dto.n_pdl = "123"
-        controller.get_pdl_data.return_value = [mock_dto]
-        controller.process_master_rows.return_value = [("Data", "Req", "123", "Area", "Unit", "Stat", "Desc")]
+    def clear(self):
+        pass
 
-        panel.refresh_data()
+    def set_pdl(self, pdl):
+        pass
 
-        qtbot.wait_until(lambda: not panel.empty_state.isVisible())
-        assert panel.model.rowCount() == 1
-        assert controller.get_pdl_data.called
+    def update_details(self, details, interventions):
+        pass
 
-    def test_reset_filters(self, panel):
-        panel.filters.search_input.setText("test")
-        panel._reset_filters()
-        assert panel.filters.search_input.text() == ""
+    def optimize_columns(self, count):
+        pass
 
-    def test_toggle_detail_view(self, panel, qtbot):
-        # Detail view starts hidden
-        assert not panel.detail_view.isVisible()
-        panel._toggle_detail_view()
-        qtbot.wait_until(lambda: panel.detail_view.isVisible())
-        panel._toggle_detail_view()
-        qtbot.wait_until(lambda: not panel.detail_view.isVisible())
+    def setVisible(self, visible):  # noqa: N802
+        super().setVisible(visible)
 
-    @patch("src.core.database.db_manager.execute_query")
-    def test_update_areas(self, mock_query, panel):
-        mock_query.return_value = [("Area 1",), ("Area 2",)]
-        panel.filters.site_filter.setCurrentText("ISAB Sud")
 
-        panel._update_areas()
+class MockTabs(QWidget):
+    """Real QWidget for AnimatedTabWidget."""
 
-        assert mock_query.called
-        assert panel.filters.area_filter.count() >= 3
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.addTab = MagicMock()
 
-    def test_on_selection_changed(self, panel, controller, qtbot):
-        # 1. Setup row in table
-        mock_dto = MagicMock()
-        mock_dto.n_pdl = "123/C"
-        mock_dto.to_full_list.return_value = ["Detail" for _ in range(21)]
-        panel._raw_full_data = [mock_dto]
 
-        # 2. Update model and select
-        panel.model.update_data([("D", "R", "123/C", "A", "U", "S", "D")])
-        panel.table.selectRow(0)
+@pytest.fixture
+def mock_pdl_controller():
+    controller = MagicMock(spec=PDLController)
+    controller.process_master_rows.return_value = []
+    return controller
 
-        # 3. Verify detail view update
-        with patch("src.core.pdl.pdl_service.PDLService.get_pdl_interventions", return_value=[]):
-            panel._on_selection_changed()
-            # Detail view labels are updated. "ID" is first header, "N PDL" is second.
-            assert panel.detail_view.detail_labels["ID"].text() == "Detail"
+
+@pytest.fixture(autouse=True)
+def global_pdl_mocks(mocker):
+    """Applica patch globali per isolare il pannello PDL dal DB e dai Worker reali."""
+    mocker.patch("src.gui.panels.pdl.pdl_panel.PDLFilterWidget", return_value=MockSubWidget())
+    mocker.patch("src.gui.panels.pdl.pdl_panel.PDLTableView", return_value=MockSubWidget())
+    mocker.patch("src.gui.panels.pdl.pdl_panel.PDLDetailView", return_value=MockSubWidget())
+    mocker.patch("src.gui.panels.pdl.pdl_panel.AnimatedTabWidget", return_value=MockTabs())
+    mocker.patch("src.gui.panels.pdl.pdl_panel.ProgrammazioneTab", return_value=MockSubWidget())
+    mocker.patch("src.gui.panels.pdl.pdl_panel.PDLDataWorker")
+    mocker.patch("src.core.sync_tracker.SyncTracker.get_formatted_status", return_value="N/D")
+    mocker.patch("src.core.database.repositories.pdl_repository.PdlRepository")
+    mocker.patch("src.gui.panels.pdl.pdl_panel.PDLService")
+
+
+def test_pdl_db_panel_init(qtbot, mock_pdl_controller):
+    panel = PDLDBPanel(controller=mock_pdl_controller)
+    qtbot.addWidget(panel)
+    panel.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen)
+
+    assert panel.controller == mock_pdl_controller
+    assert panel.model is not None
+
+
+def test_pdl_db_panel_refresh(qtbot, mock_pdl_controller, mocker):
+    mock_worker_cls = mocker.patch("src.gui.panels.pdl.pdl_panel.PDLDataWorker")
+    mock_worker = MagicMock()
+    mock_worker_cls.return_value = mock_worker
+
+    panel = PDLDBPanel(controller=mock_pdl_controller)
+    qtbot.addWidget(panel)
+
+    panel.refresh_data()
+    assert mock_worker.start.called
+
+
+def test_on_selection_changed(qtbot, mock_pdl_controller, mocker):
+    # Mock PDLService.get_pdl_interventions
+    mock_service = mocker.patch("src.gui.panels.pdl.pdl_panel.PDLService")
+    mock_service.get_pdl_interventions.return_value = []
+
+    panel = PDLDBPanel(controller=mock_pdl_controller)
+    qtbot.addWidget(panel)
+
+    mock_pdl = MagicMock()
+    mock_pdl.to_full_list.return_value = []
+    panel._raw_full_data = [mock_pdl]
+
+    # Mock table selection
+    mock_sel_model = MagicMock()
+    mock_idx = MagicMock()
+    mock_idx.row.return_value = 0
+    mock_sel_model.selectedRows.return_value = [mock_idx]
+    panel.table.selectionModel = MagicMock(return_value=mock_sel_model)
+
+    panel._on_selection_changed()
+    assert panel.detail_view.update_details.called

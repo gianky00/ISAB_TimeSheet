@@ -200,7 +200,7 @@ class SeleniumBaseBot(BaseBot, ABC):
         """Gestisce gli errori specifici del driver proponendo soluzioni come il download forzato."""
         msg = str(e).lower()
         if "chrome instance exited" in msg:
-            self.log("❌ CRASH: Chrome si  chiuso all'avvio", "ERROR")
+            self.log("❌ CRASH: Chrome si è chiuso all'avvio", "ERROR")
             self._force_driver_redownload()
         elif "version" in msg or "sessionnotcreated" in msg:
             self.log("❌ ERRORE CRITICO DRIVER: Versione incompatibile", "ERROR")

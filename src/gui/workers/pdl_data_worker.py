@@ -92,7 +92,7 @@ class PDLDataWorker(QThread):
 
     def _fetch_units(self) -> None:
         """Recupera le unità filtrate per sito e area."""
-        site = self.args[0] if len(self.args) > 0 else "Tutti i siti"
+        site = self.args[0] if self.args else "Tutti i siti"
         area = self.args[1] if len(self.args) > 1 else "Tutte"
 
         q = "SELECT DISTINCT unita FROM pdl WHERE 1=1"

@@ -6,6 +6,16 @@ from PySide6.QtWidgets import QComboBox
 from src.gui.panels import TimbratureDBPanel
 
 
+@pytest.fixture(autouse=True)
+def mock_sync_worker(mocker):
+    """Forza il worker delle timbrature ad essere sincrono."""
+
+    def mock_start(instance):
+        instance.run()
+
+    mocker.patch("src.gui.workers.timbrature_worker.TimbratureDataWorker.start", mock_start)
+
+
 @pytest.fixture
 def timbrature_db_panel(qtbot, mocker):
     # Mock dependencies BEFORE creating the panel
@@ -80,7 +90,8 @@ def test_import_excel_manually_success(timbrature_db_panel, qtbot, mocker):
     ):
         panel._import_excel_manually()
         assert panel.storage.import_excel.called
-        mock_toast.return_value.show.assert_called_with(ANY, "success")
+        # Check if any call matches "success". We skip checking "info" toast because it might be called first.
+        mock_toast.return_value.show.assert_any_call(ANY, "success")
 
 
 def test_import_excel_manually_fail(timbrature_db_panel, qtbot, mocker):
@@ -93,7 +104,8 @@ def test_import_excel_manually_fail(timbrature_db_panel, qtbot, mocker):
 
     with patch("src.gui.widgets.toast.ToastManager.instance") as mock_toast:
         panel._import_excel_manually()
-        mock_toast.return_value.show.assert_called_with(ANY, "error")
+        # Should have any call with "error"
+        mock_toast.return_value.show.assert_any_call(ANY, "error")
 
 
 def test_update_combo_boxes(timbrature_db_panel, qtbot):
@@ -109,5 +121,4 @@ def test_update_combo_boxes(timbrature_db_panel, qtbot):
 @patch("PySide6.QtWidgets.QInputDialog.getText")
 def test_manage_list_add_item(mock_get_text, mock_exec, timbrature_db_panel, qtbot):
     # Nota: _manage_list è stato rimosso in favore delle impostazioni generali.
-    # Questo test è obsoleto per TimbratureDBPanel ma lo manteniamo come stub se necessario.
     pass

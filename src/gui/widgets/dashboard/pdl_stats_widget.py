@@ -91,14 +91,7 @@ class AreaBadge(QPushButton):
       QPushButton:hover {{
         background-color: {border_color};
       }}
-      QToolTip {{
-        background-color: {COLORS["bg_white"]};
-        color: {COLORS["text_dark"]};
-        border: 1px solid {COLORS["border_light"]};
-        border-radius: 4px;
-        padding: 5px;
-        font-size: 10px;
-      }}
+      {TOOLTIP_CSS}
     """)
 
         self.clicked.connect(lambda: self.clicked_area.emit(name))
@@ -256,6 +249,7 @@ class PDLStatsWidget(ModernCard):
                 border-radius: 8px; padding: 1px; font-size: 12px; font-weight: 800; text-align: center;
             }}
             QPushButton:hover {{ background-color: {border}; }}
+            {TOOLTIP_CSS}
         """)
 
     def _apply_trend_style(self, label: QLabel, trend: float, prefix: str) -> None:

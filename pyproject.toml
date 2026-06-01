@@ -1,8 +1,14 @@
-[tool.poetry]
+[project]
 name = "syncrojob"
-version = "1.50.0"
+version = "1.55.0"
 description = "ISAB TimeSheet application"
-authors = ["Giancarlo Allegretti"]
+authors = [
+    { name = "Giancarlo Allegretti" }
+]
+requires-python = ">=3.12,<3.13"
+dynamic = ["dependencies"]
+
+[tool.poetry]
 packages = [
     { include = "src" },
 ]
@@ -84,6 +90,7 @@ types-pillow = "^10.2.0.20240822"
 types-setuptools = "^82.0.0.20260508"
 pydoclint = "^0.8.4"
 cohesion = "^1.2.0"
+gitpython = "^3.1.50"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -101,7 +108,7 @@ show_complexity = true
 average = true
 order = "SCORE"
 
-[tool.poetry.scripts]
+[project.scripts]
 # Comando per avviare l'app principale
 syncrojob = "main:main"
 
@@ -306,10 +313,6 @@ module = [
     "email_validator.*",
     "jaraco.*",
     "playwright.*",
-    "coverage",
-    "coverage.*",
-    "pydantic_settings.*",
-    "libcst.*",
 ]
 ignore_missing_imports = true
 
@@ -320,7 +323,7 @@ disallow_untyped_calls = false
 
 [tool.deptry]
 known_first_party = ["src", "admin"]
-exclude = [".venv", "build", "dist", "temp", "admin", "scripts", "site", "docs", "graveyard", "mutants", "scratch"]
+exclude = [".venv", "build", "dist", "temp", "admin", "scripts", "site", "docs", "graveyard", "mutants", "scratch", "tools"]
 
 [tool.deptry.per_rule_ignores]
 # DEP001 (imported but not declared): nessuna eccezione necessaria al momento
@@ -350,7 +353,7 @@ DEP004 = ["pytest", "pyfakefs", "rich"]
 
 [tool.codespell]
 skip = "*.pyc,*.ico,*.qss,*.lock,*.db,*.iss,*.csv,*.js,*.html,*.css,*.map,*.pem,./build/*,./dist/*,./temp/*,./.venv/*,./.git/*,./.ruff_cache/*,./.pytest_cache/*,./.hypothesis/*,./data/*,./htmlcov/*,./claude/*,./site/*,./admin/Crea Setup/*,./admin/Crea Licenze/*,*/_internal/*,*.tcl,*.msg,*.tm,*/build/*,*/dist/*,*.toc,warn-*.txt"
-ignore-words-list = "nome,ore,impossibile,stati,reparti,cantieri,fornitori,contratti,registrate,invalide,cliente,fase,accumulato,termine,momento,visuale,allo,rende,alle,classe,normale,visibile,ignora,configurate,comando,categorie,valide,celle,limite,installate,macchine,possibile,foto,tre,datas,distribuite,compatibile,accessibile,separato,cant,te,vai,variante,accumulare,generare,processore,somme,validata,probabile,quantit,mis,invisibile,applicato,appropriato,incluse,aggressivo,forse,incompatibile,sensibile,contro,compilate,aggregatore,interfacce,differente,visibilit,esclude,probabilit,formule,acquisito,viceversa,iif,lookin,nd,pard,ist,sie,som,als,fom,valies,whats,identifer,identifers,ot,ots,fo,lew,htE,hGe,nAm,dNE,ues,noe,mYe,sER,edn,vAS,akE,tye,tyes,ket,yuo,foT,ans,thq,tbe,tbi,fith,abd,ue,falso"
+ignore-words-list = "nome,ore,impossibile,stati,reparti,cantieri,fornitori,contratti,registrate,invalide,cliente,fase,accumulato,termine,momento,visuale,allo,rende,alle,classe,normale,visibile,ignora,configurate,comando,categorie,valide,celle,limite,installate,macchine,possibile,foto,tre,datas,distribuite,compatibile,accessibile,separato,cant,te,vai,variante,accumulare,generare,processore,somme,validata,probabile,quantit,mis,invisibile,applicato,appropriato,incluse,aggressivo,forse,incompatibile,sensibile,contro,compilate,aggregatore,interfacce,differente,visibilit,esclude,probabilit,formule,acquisito,viceversa,iif,lookin,nd,pard,ist,sie,som,als,fom,valies,whats,identifer,identifers,ot,ots,fo,lew,htE,hGe,nAm,dNE,ues,noe,mYe,sER,edn,vAS,akE,tye,tyes,ket,yuo,foT,ans,thq,tbe,tbi,fith,abd,ue,falso,doubleclick"
 check-filenames = true
 
 [tool.interrogate]
@@ -374,7 +377,7 @@ exclude_dirs = [".venv", "tests", "docs", "build", "dist", "temp", "admin", "scr
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "1.50.0"
+version = "1.55.0"
 tag_format = "v$version"
 changelog_file = "CHANGELOG.md"
 update_changelog_on_bump = true
@@ -397,3 +400,11 @@ arg-type-hints-in-docstring = false
 arg-type-hints-in-signature = true
 check-return-types = false
 check-class-attributes = false
+
+[tool.coverage.run]
+omit = [
+    "src/bots/**/*_bot.py",
+    "src/bots/**/*_page.py",
+    "src/bots/**/pages/*.py",
+    "src/gui/widgets/dashboard/weather_widget.py"
+]

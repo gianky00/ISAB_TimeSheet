@@ -18,12 +18,16 @@ class TestTimbratureBot:
         bot = TimbratureBot(username="u", password="p")
         bot.update_step = MagicMock()
 
+        # MOCK DRIVER - Critical fix
+        bot.driver = MagicMock()
+
         mock_page = mock_page_class.return_value
         mock_page.navigate_to_timbrature.return_value = True
         mock_page.download_timbrature.return_value = "report.xlsx"
 
         mock_storage = mock_storage_class.return_value
-        mock_storage.import_excel.return_value = (True, "Imported 10 rows")
+        # import_excel returns bool now
+        mock_storage.import_excel.return_value = True
 
         # Mock file unlink
         with patch("src.bots.portale_fornitori.timbrature.bot.Path") as mock_path:
@@ -40,6 +44,8 @@ class TestTimbratureBot:
     @patch("src.bots.portale_fornitori.timbrature.bot.TimbraturePage")
     def test_run_navigation_fail(self, mock_page_class):
         bot = TimbratureBot(username="u", password="p")
+        bot.driver = MagicMock()
+
         mock_page = mock_page_class.return_value
         mock_page.navigate_to_timbrature.return_value = False
 
@@ -49,8 +55,8 @@ class TestTimbratureBot:
     @patch("src.bots.portale_fornitori.timbrature.bot.TimbratureStorage")
     def test_import_to_db_static(self, mock_storage_class):
         mock_storage = mock_storage_class.return_value
-        mock_storage.import_excel.return_value = (True, "OK")
+        mock_storage.import_excel.return_value = True
 
         res = TimbratureBot.import_to_db_static("file.xlsx", Path("db.db"))
-        assert res == (True, "OK")
+        assert res is True
         assert mock_storage_class.called

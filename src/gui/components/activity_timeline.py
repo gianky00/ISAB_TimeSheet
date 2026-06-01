@@ -326,7 +326,7 @@ class ActivityTimelineWidget(QWidget):
         # Effetto movimento fluido tramite traduzione del sistema di coordinate
         painter.translate(self._grid_offset, self._grid_offset)
 
-        step = int(UI_SIZES["grid_step"])
+        step = UI_SIZES["grid_step"]
         # Disegniamo un'area leggermente piùgrande per coprire l'offset
         left, top = int(rect.left()) - step, int(rect.top()) - step
         right, bottom = int(rect.right()) + step, int(rect.bottom()) + step

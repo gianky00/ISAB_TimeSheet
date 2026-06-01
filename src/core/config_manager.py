@@ -226,18 +226,18 @@ def get_config_value(key: str, default: Any = None) -> Any:
     return load_config().get(key, default)
 
 
-def set_config_value(key: str, value: Any) -> bool:
+def set_config_value(key: str, value: Any, async_save: bool = True) -> bool:
     """Imposta e salva un singolo valore nella configurazione."""
     config = load_config()
     config[key] = value
-    return save_config(config)
+    return save_config(config, async_save=async_save)
 
 
-def set_config_values(updates: dict[str, Any]) -> bool:
+def set_config_values(updates: dict[str, Any], async_save: bool = True) -> bool:
     """Imposta e salva più valori contemporaneamente nella configurazione."""
     config = load_config()
     config.update(updates)
-    return save_config(config)
+    return save_config(config, async_save=async_save)
 
 
 def get_download_path() -> str:
@@ -255,47 +255,51 @@ def get_download_path() -> str:
     return str(path)
 
 
-def reset_to_defaults() -> bool:
+def reset_to_defaults(async_save: bool = True) -> bool:
     """Ripristina la configurazione ai valori predefiniti di fabbrica."""
-    return save_config(copy.deepcopy(DEFAULT_CONFIG))
+    return save_config(copy.deepcopy(DEFAULT_CONFIG), async_save=async_save)
 
 
 # --- ACCOUNT MANAGEMENT HELPERS ---
 
 
-def add_account(bot_type: str, account_data: dict[str, Any]) -> bool:
+def add_account(bot_type: str, account_data: dict[str, Any], async_save: bool = True) -> bool:
     """Aggiunge un nuovo account alla configurazione."""
     config = load_config()
     username = account_data.get("username", "")
     password = account_data.get("password", "")
     is_default = account_data.get("is_default", False)
-    account_type = account_data.get("type", "") if bot_type != "isab" else ""
+
+    # Se bot_type è safework, forza la chiave corretta anche se manca 'type' nei dati
+    account_type = account_data.get("type", "")
+    if bot_type == "safework" and not account_type:
+        account_type = "safework"
 
     add_account_logic(config, username, password, is_default, account_type)
-    return save_config(config)
+    return save_config(config, async_save=async_save)
 
 
-def remove_account(bot_type: str, username: str) -> bool:
+def remove_account(bot_type: str, username: str, async_save: bool = True) -> bool:
     """Rimuove un account dalla configurazione."""
     config = load_config()
     remove_account_logic(config, username)
-    return save_config(config)
+    return save_config(config, async_save=async_save)
 
 
-def set_default_account(bot_type: str, username: str) -> bool:
+def set_default_account(bot_type: str, username: str, async_save: bool = True) -> bool:
     """Imposta l'account di default per un tipo di bot."""
     config = load_config()
     if set_default_account_logic(config, username, bot_type):
-        return save_config(config)
+        return save_config(config, async_save=async_save)
     return False
 
 
-def switch_default_account(bot_type: str) -> bool:
+def switch_default_account(bot_type: str, async_save: bool = True) -> bool:
     """Ruota l'account di default per un tipo di bot (Round Robin)."""
     config = load_config()
     success, _ = switch_default_account_logic(config, bot_type)
     if success:
-        return save_config(config)
+        return save_config(config, async_save=async_save)
     return False
 
 
@@ -320,7 +324,7 @@ def get_default_account(bot_type: str) -> dict[str, Any] | None:
     return cast("dict[str, Any]", accounts[0])
 
 
-def import_config_from_file(file_path: Path) -> tuple[bool, str]:
+def import_config_from_file(file_path: Path, async_save: bool = True) -> tuple[bool, str]:
     """Importa una configurazione da un file esterno (backup)."""
     try:
         new_data = json.loads(file_path.read_text(encoding="utf-8"))
@@ -333,7 +337,7 @@ def import_config_from_file(file_path: Path) -> tuple[bool, str]:
             backup_msg = f"\nBackup precedente salvato in: {backup_file.name}"
 
         # Salva nuova (passando per save_config per criptare)
-        if save_config(new_data):
+        if save_config(new_data, async_save=async_save):
             return (
                 True,
                 f"Configurazione importata con successo.{backup_msg}",

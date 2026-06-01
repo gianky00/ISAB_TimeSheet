@@ -79,6 +79,7 @@ def run_command(
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            encoding="utf-8",
             env=env,
             bufsize=1,
             universal_newlines=True,
@@ -129,6 +130,7 @@ def run_command_safe(
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            encoding="utf-8",
             env=env,
             bufsize=1,
             universal_newlines=True,
@@ -336,17 +338,23 @@ def update_json_changelog(version: str, git_bin: str) -> None:
     if last_tag:
         with contextlib.suppress(Exception):
             logs_res = subprocess.run(
-                [git_bin, "log", f"{last_tag}..HEAD", "--pretty=format:%s"],
+                [git_bin, "log", f"{last_tag}..HEAD", "--pretty=format:%h|%s"],
                 cwd=ROOT_DIR,
                 capture_output=True,
                 text=True,
                 check=False,
             )
             logs = logs_res.stdout.splitlines()
-            notes = [line.strip() for line in logs if line.strip()]
+            for line in logs:
+                if line.strip():
+                    if "|" in line:
+                        sha, msg = line.split("|", 1)
+                        notes.append({"sha": sha.strip(), "message": msg.strip()})
+                    else:
+                        notes.append({"message": line.strip(), "sha": ""})
 
     if not notes:
-        notes = [f"Aggiornamenti e ottimizzazioni di stabilità per la versione v{version}"]
+        notes = [{"message": f"Aggiornamenti e ottimizzazioni di stabilità per la versione v{version}", "sha": ""}]
 
     # Carica il file JSON esistente
     changelog_data = []
@@ -473,6 +481,12 @@ def run_git_operations(
         if not ok:
             print("\n[ERROR] Comando fallito: Pushing to remote")
             rollback_versioned_files(snapshot)
+            # Rollback Git: Rimuove tag appena creato e resetta commit
+            git_bin = find_git_executable()
+            subprocess.run([git_bin, "tag", "-d", f"v{new_version}"], cwd=ROOT_DIR, check=False)
+            subprocess.run([git_bin, "reset", "--soft", "HEAD~1"], cwd=ROOT_DIR, check=False)
+            subprocess.run([git_bin, "reset", "HEAD", "."], cwd=ROOT_DIR, check=False)
+            print(f"[ROLLBACK] Tag v{new_version} rimosso e commit annullato.")
             return False
 
     return True
@@ -535,6 +549,12 @@ def main() -> None:
 
     git_bin = find_git_executable()
 
+    # Aggiunge la directory di git al PATH per i subprocessi (es. commitizen)
+    if git_bin and git_bin != "git":
+        git_dir = Path(git_bin).parent
+        if git_dir.exists():
+            os.environ["PATH"] = str(git_dir) + os.pathsep + os.environ["PATH"]
+
     # Rileva se lo script è in esecuzione in un terminale interattivo senza argomenti
     is_interactive = len(sys.argv) == 1 and sys.stdin.isatty()
 
@@ -546,6 +566,17 @@ def main() -> None:
         verify_clean_git_status(git_bin)
 
     start_time = time.time()
+
+    # 0. Sincronizzazione contesti e dipendenze
+    ai_context_script = ROOT_DIR / "tools" / "generate_ai_context.py"
+    if ai_context_script.exists():
+        run_command(
+            [str(VENV_PYTHON), str(ai_context_script)],
+            "Aggiornamento .ai-context.json",
+        )
+
+    # Verifica sincronia lock file (fondamentale per EXE stabile)
+    run_command(["poetry", "check", "--lock"], "Verifica integrità Poetry Lock")
 
     # 1. Pre-Flight Check Interno
     pre_flight_cmd = [str(VENV_PYTHON), "admin/pre_flight_check.py"]

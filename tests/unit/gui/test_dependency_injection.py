@@ -15,7 +15,7 @@ from src.core.pdl.pdl_controller import PDLController
 from src.gui.controllers.navigation_controller import NavigationController
 from src.gui.main_window.page_index import PageIndex
 
-# Importiamo le Viste (GUI) per verificare l'iniezione
+# Importiamo le Viste (GUI) per verificare lbl'iniezione
 from src.gui.panels.pdl.pdl_panel import PDLDBPanel
 from src.gui.panels.storico_oda.oda_panel import StoricoOdaPanel
 
@@ -51,12 +51,12 @@ def test_navigation_controller_dependency_injection(mock_main_window):
     assert isinstance(nav_controller.scarico_ore_controller, ScaricoOreController)
     assert isinstance(nav_controller.consuntivo_controller, ConsuntivoController)
 
-    # 3. Verifica l'Iniezione (Inversion of Control) all'interno di una Vista
+    # 3. Verifica lbl'Iniezione (Inversion of Control) all'interno di una Vista
     # Testiamo la creazione differita (Lazy Loading) del pannello PDL (Indice 6)
     pdl_panel = nav_controller.get_panel(6)
 
     assert isinstance(pdl_panel, PDLDBPanel), "Il costruttore deve restituire il pannello corretto"
-    assert hasattr(pdl_panel, "controller"), "Il pannello deve possedere l'attributo controller"
+    assert hasattr(pdl_panel, "controller"), "Il pannello deve possedere lbl'attributo controller"
 
     # VERIFICA CRITICA: Il controller all'interno della vista DEVE ESSERE ESATTAMENTE
     # la stessa istanza posseduta dal NavigationController (Singleton injection).

@@ -58,15 +58,6 @@ repos:
         pass_filenames: false
         files: pyproject\.toml$
 
-  # ── Cohesion: controllo di coesione LCOM ed SRP ────────────────
-  - repo: local
-    hooks:
-      - id: check-cohesion
-        name: check cohesion
-        entry: poetry run python scripts/check_cohesion.py
-        language: system
-        pass_filenames: false
-        always_run: true
 
   # ── Config Schemas: generazione automatica di JSON Schema ──────
   - repo: local

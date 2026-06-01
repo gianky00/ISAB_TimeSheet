@@ -8,106 +8,92 @@ import pytest
 from src.core.database.maintenance_worker import DatabaseMaintenanceWorker
 
 
-@pytest.fixture
-def mock_db_manager():
-    with patch("src.core.database.maintenance_worker.db_manager") as db:
-        yield db
+class TestDatabaseMaintenanceWorker:
+    @pytest.fixture
+    def worker(self):
+        # Impediamo l'esecuzione reale del thread
+        return DatabaseMaintenanceWorker()
 
+    def test_init(self, worker):
+        assert worker.name == "DatabaseMaintenanceWorker"
+        assert worker.daemon is True
+        assert len(worker.databases) > 0
 
-@pytest.fixture
-def worker(mock_db_manager):
-    return DatabaseMaintenanceWorker()
+    @patch("src.core.database.maintenance_worker.db_manager.get_write_connection")
+    def test_optimize_db_success(self, mock_conn, worker):
+        mock_cursor = MagicMock()
+        mock_conn.return_value.__enter__.return_value = mock_cursor
 
+        worker._optimize_db(Path("test.db"))
 
-def test_run_success(worker):
-    with patch.object(worker, "_optimize_db") as mock_opt:
-        with patch.object(worker, "_clean_logs") as mock_clean:
-            # Setup db paths to exist
-            for db in worker.databases:
-                db.exists = MagicMock(return_value=True)
+        # Analisi e Vacuum devono essere chiamati
+        mock_cursor.execute.assert_any_call("ANALYZE")
+        mock_cursor.execute.assert_any_call("VACUUM")
 
-            worker.run()
+    @patch("src.core.database.maintenance_worker.DatabaseMaintenanceWorker._optimize_db")
+    @patch("src.core.database.maintenance_worker.DatabaseMaintenanceWorker._clean_logs")
+    def test_run_success(self, mock_clean, mock_opt, worker, fs):
+        # Simula presenza db
+        test_db = Path("test1.db")
+        fs.create_file(str(test_db))
+        worker.databases = [test_db]
 
-            assert mock_opt.call_count == len(worker.databases)
-            mock_clean.assert_called_once_with(days=30)
+        worker.run()
 
+        assert mock_opt.called
+        mock_opt.assert_called_with(test_db)
+        assert mock_clean.called
 
-def test_run_optimize_error(worker):
-    with patch.object(worker, "_optimize_db", side_effect=Exception("Opt Error")):
-        with patch.object(worker, "_clean_logs"):
-            for db in worker.databases:
-                db.exists = MagicMock(return_value=True)
+    @patch("src.core.database.maintenance_worker.DatabaseMaintenanceWorker._optimize_db")
+    @patch("src.core.database.maintenance_worker.DatabaseMaintenanceWorker._clean_logs")
+    def test_run_db_not_exists(self, mock_clean, mock_opt, worker):
+        # Non crea il db
+        test_db = Path("missing.db")
+        worker.databases = [test_db]
 
-            # Should not raise exception
-            worker.run()
+        worker.run()
 
+        assert not mock_opt.called
+        assert mock_clean.called
 
-def test_run_db_not_exists(worker):
-    with patch.object(worker, "_optimize_db") as mock_opt:
-        with patch.object(worker, "_clean_logs"):
-            for db in worker.databases:
-                db.exists = MagicMock(return_value=False)
+    @patch("src.core.database.maintenance_worker.DatabaseMaintenanceWorker._optimize_db")
+    @patch("src.core.database.maintenance_worker.DatabaseMaintenanceWorker._clean_logs")
+    def test_run_db_exception(self, mock_clean, mock_opt, worker, fs):
+        test_db = Path("error.db")
+        fs.create_file(str(test_db))
+        worker.databases = [test_db]
 
-            worker.run()
-            assert mock_opt.call_count == 0
+        mock_opt.side_effect = Exception("DB Fail")
 
+        # Non deve crashare
+        worker.run()
 
-def test_optimize_db(worker, mock_db_manager):
-    mock_conn = MagicMock()
-    mock_db_manager.get_write_connection.return_value.__enter__.return_value = mock_conn
+        assert mock_opt.called
+        assert mock_clean.called
 
-    db_path = MagicMock(spec=Path)
-    db_path.name = "test.db"
+    def test_clean_logs(self, worker, fs):
+        with patch("src.core.database.maintenance_worker.LOGS_DIR", Path("/logs")):
+            fs.create_dir("/logs")
 
-    worker._optimize_db(db_path)
+            # File vecchi di 40 e 20 giorni
+            old_file = Path("/logs/old.log")
+            recent_file = Path("/logs/new.log")
 
-    assert mock_conn.execute.call_count == 2
-    mock_conn.execute.assert_any_call("ANALYZE")
-    mock_conn.execute.assert_any_call("VACUUM")
+            fs.create_file(str(old_file))
+            fs.create_file(str(recent_file))
 
+            old_time = (datetime.now(UTC) - timedelta(days=40)).timestamp()
+            recent_time = (datetime.now(UTC) - timedelta(days=20)).timestamp()
 
-def test_clean_logs(worker, tmp_path):
-    with patch("src.core.database.maintenance_worker.LOGS_DIR", tmp_path):
-        # Create old and new logs
-        old_log = tmp_path / "old.log"
-        old_log.write_text("old")
+            os.utime(str(old_file), (old_time, old_time))
+            os.utime(str(recent_file), (recent_time, recent_time))
 
-        new_log = tmp_path / "new.log"
-        new_log.write_text("new")
+            worker._clean_logs(30)
 
-        # We need to set actual mtime
-        cutoff = datetime.now(UTC) - timedelta(days=30)
+            assert not old_file.exists()
+            assert recent_file.exists()
 
-        old_time = (cutoff - timedelta(days=5)).timestamp()
-        new_time = (cutoff + timedelta(days=5)).timestamp()
-
-        os.utime(old_log, (old_time, old_time))
-        os.utime(new_log, (new_time, new_time))
-
-        worker._clean_logs(days=30)
-
-        # check old_log was unlinked
-        assert not old_log.exists()
-        assert new_log.exists()
-
-
-def test_clean_logs_dir_not_exists(worker):
-    with patch("src.core.database.maintenance_worker.LOGS_DIR") as mock_logs_dir:
-        mock_logs_dir.exists.return_value = False
-        worker._clean_logs(days=30)
-        mock_logs_dir.glob.assert_not_called()
-
-
-def test_clean_logs_error_unlinking(worker, tmp_path):
-    with patch("src.core.database.maintenance_worker.LOGS_DIR", tmp_path):
-        old_log = tmp_path / "old.log"
-        old_log.write_text("old")
-
-        cutoff = datetime.now(UTC) - timedelta(days=30)
-        old_time = (cutoff - timedelta(days=5)).timestamp()
-
-        os.utime(old_log, (old_time, old_time))
-
-        with patch.object(Path, "unlink", side_effect=Exception("Unlink Error")):
-            # Should not raise
-            worker._clean_logs(days=30)
+    def test_clean_logs_no_dir(self, worker, fs):
+        with patch("src.core.database.maintenance_worker.LOGS_DIR", Path("/missing_logs")):
+            # Se la dir non c'è, torna subito senza crash
+            worker._clean_logs(30)

@@ -15,7 +15,7 @@ def test_filter_worker_basic(qtbot):
         worker.start()
 
     # Verifichiamo che il segnale sia stato emesso con i parametri corretti (lista_indici, count)
-    assert blocker.args == [[0], 1], "Deve trovare solo l'indice 0 (Mario Rossi)"
+    assert blocker.args == [[0], 1], "Deve trovare solo lbl'indice 0 (Mario Rossi)"
 
 
 def test_filter_worker_cancellation(qtbot):

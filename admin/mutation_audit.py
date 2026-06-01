@@ -84,7 +84,7 @@ def run_mutation(target: str, trials: int, mode: str):
 
     # Costruzione comando
     # -s: source, -t: test command, -n: trials, --mode: f(ast), r(andom), search
-    test_cmd = "python -m pytest" if sys.platform == "win32" else "pytest"
+    test_cmd = f"{sys.executable} -m tests.run_robust_test"
     cmd = [
         mutatest_path,
         "-s",

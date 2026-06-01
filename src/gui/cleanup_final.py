@@ -35,35 +35,35 @@ ORPHAN_WIDGETS = [
 
 
 def remove_orphan_imports(content: str) -> str:
-    """Rimuove widget orfani dagli import PySide6.QtWidgets, solo se non usati nel file."""
+    """Rimuove widget orfani dagli import PySide6.QtWidgets, solo se non usati nel file.
+
+    Usa AST per una rilevazione robusta degli utilizzi reale.
+    """
+    try:
+        tree = ast.parse(content)
+        # Raccogliamo tutti i nomi utilizzati nel codice (caricamenti, store, attributi, annotazioni)
+        used_names = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Name):
+                used_names.add(node.id)
+            elif isinstance(node, ast.Attribute):
+                used_names.add(node.attr)
+    except Exception:
+        # In caso di errore di parsing (es. codice incompleto), restituiamo l'originale per sicurezza
+        return content
+
     for widget in ORPHAN_WIDGETS:
-        # Controlla se il widget  ancora usato nel codice (non solo nell'import)
-        # Cerca occorrenze fuori dalla riga di import
+        # Se il widget è effettivamente utilizzato nel codice, lo manteniamo
+        if widget in used_names:
+            continue
 
-        usage_pattern = re.compile(rf"\b{widget}\b")
+        # Altrimenti, procediamo con la rimozione testuale
+        # 1. Rimozione dall'import multi-linea (es. all'interno di parentesi)
+        # Pattern: "    QPushButton,\n" o "    QPushButton\n"
+        # Usiamo [ \t]* invece di \s* per evitare di consumare accidentalmente i newline successivi
+        content = re.sub(rf"^[ \t]*{widget},?[ \t]*\r?\n", "", content, flags=re.MULTILINE)
 
-        # Trova tutte le occorrenze
-        all_matches = list(usage_pattern.finditer(content))
-
-        # Filtra: conta solo le occorrenze NON nelle righe di import
-        usage_count = 0
-        for m in all_matches:
-            line_start = content.rfind("\n", 0, m.start()) + 1
-            line_end = content.find("\n", m.end())
-            if line_end == -1:
-                line_end = len(content)
-            line = content[line_start:line_end].strip()
-            if not line.startswith(("from ", "import ")):
-                usage_count += 1
-
-        if usage_count > 0:
-            continue  # Widget ancora usato direttamente, non rimuovere
-
-        # Rimuovi dall'import multi-linea
-        # Pattern: "  QPushButton,\n" o "  QPushButton\n"
-        content = re.sub(rf"^\s*{widget},?\s*\n", "", content, flags=re.MULTILINE)
-
-        # Pattern: in import a linea singola "from PySide6.QtWidgets import ..., QPushButton, ..."
+        # 2. Rimozione da import a linea singola "from ... import ..., QPushButton, ..."
         content = re.sub(rf",\s*{widget}\b", "", content)
         content = re.sub(rf"\b{widget}\s*,\s*", "", content)
 
@@ -90,7 +90,7 @@ def process_file(filepath: str) -> None:
     if content == original:
         return
 
-    # Validazione AST
+    # Validazione AST post-modifica
     try:
         ast.parse(content)
     except SyntaxError as e:

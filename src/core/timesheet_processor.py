@@ -51,7 +51,7 @@ class TimesheetProcessor:
                 src.unlink()
 
     @staticmethod
-    def _clean_pos_value(val: str) -> str:
+    def _clean_pos_value(val: str | None) -> str:
         """Alias per retrocompatibilità con i test."""
         from src.core.processing.timesheet.steps import ExtractMetadataStep  # noqa: PLC0415
 

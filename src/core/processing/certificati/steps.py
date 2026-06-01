@@ -70,7 +70,7 @@ class ReadCertificatiExcelStep(ProcessingStep):
 
         for i, row in df_preview.iterrows():
             row_values = [str(val).strip().upper() for val in row.values]
-            matches = sum(1 for kw in keywords if any(kw in str(rv) for rv in row_values))
+            matches = sum(1 for kw in keywords if any(kw in rv for rv in row_values))
 
             if matches > max_matches:
                 max_matches = matches

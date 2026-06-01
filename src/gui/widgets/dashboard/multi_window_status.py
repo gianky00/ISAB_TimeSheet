@@ -3,7 +3,7 @@
 Visualizza nella dashboard un riepilogo delle finestre attualmente sganciate, permettendo di riagganciarle.
 """
 
-import typing
+from typing import Any
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
@@ -176,7 +176,7 @@ class MultiWindowStatusWidget(QFrame):
 
         self.main_layout.addLayout(header_layout)
 
-    def update_modules(self, detached_panels: dict[int, dict[str, "typing.Any"]]) -> None:
+    def update_modules(self, detached_panels: dict[int, dict[str, Any]]) -> None:
         """Aggiorna la lista dei moduli sganciati. Mostra/Nasconde la card di conseguenza.
 
         Args:

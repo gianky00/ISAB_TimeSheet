@@ -28,7 +28,7 @@ class PerformanceMetric:
         return {
             "operation": self.operation,
             "duration_ms": round(self.duration_ms, 2),
-            "timestamp": self.timestamp.isoformat() + "Z",
+            "timestamp": self.timestamp.isoformat(),
             "metadata": self.metadata,
         }
 

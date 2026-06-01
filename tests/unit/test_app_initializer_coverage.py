@@ -1,43 +1,46 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from src.core.app_initializer import AppInitializer
-from src.core.license_validator import LicenseStatus
 
 
 class TestAppInitializerCoverage:
     """Test di copertura per la nuova architettura di AppInitializer."""
 
+    @pytest.fixture(autouse=True)
+    def reset_state(self):
+        AppInitializer._core_initialized = False
+        yield
+        AppInitializer._core_initialized = False
+
     @pytest.fixture
     def mock_core_deps(self, mocker):
-        """Mock per le dipendenze pesanti di initialize_core."""
+        """Mock per le dipendenze SRP di initialize_core."""
         return {
-            "get_status": mocker.patch("src.core.app_initializer.get_detailed_license_status"),
-            "run_update": mocker.patch("src.core.app_initializer.run_update"),
-            "db_init": mocker.patch("src.core.app_initializer.db_manager.init_db"),
+            "license_verify": mocker.patch(
+                "src.core.initialization.license_verifier.LicenseVerifier.verify_license"
+            ),
+            "db_init": mocker.patch(
+                "src.core.initialization.migration_engine.DatabaseMigrationEngine.initialize_database"
+            ),
             "setup_logging": mocker.patch.object(AppInitializer, "_setup_logging"),
             "ensure_driver": mocker.patch(
                 "src.utils.resource_manager.ResourceManager.ensure_automation_driver"
             ),
-            "backup": mocker.patch("src.core.app_initializer.DatabaseBackupManager.execute_backup"),
-            "hardware_id": mocker.patch(
-                "src.core.app_initializer.get_hardware_id", return_value="test_hw_id"
-            ),
+            "preload": mocker.patch.object(AppInitializer, "_preload_heavy_modules"),
+            "get_bots": mocker.patch("src.core.app_initializer.get_available_bots", return_value=[]),
         }
 
     def test_initialize_core_success(self, mock_core_deps):
-        """Test: Inizializzazione core completa con licenza valida."""
-        AppInitializer._core_initialized = False
-        mock_core_deps["get_status"].return_value = (LicenseStatus.VALID, "OK")
-
+        """Test: Inizializzazione core completa con successo."""
         res = AppInitializer.initialize_core()
 
         assert res is True
         assert AppInitializer._core_initialized is True
         mock_core_deps["setup_logging"].assert_called_once()
         mock_core_deps["db_init"].assert_called_once()
-        mock_core_deps["run_update"].assert_called_once()
+        mock_core_deps["license_verify"].assert_called_once()
 
     def test_initialize_core_already_done(self, mock_core_deps):
         """Test: Ritorna True subito se già inizializzato."""
@@ -46,38 +49,31 @@ class TestAppInitializerCoverage:
         assert res is True
         mock_core_deps["setup_logging"].assert_not_called()
 
-    def test_initialize_core_with_license_update(self, mock_core_deps):
-        """Test: Tenta update licenza e solleva eccezione se ancora non valida."""
-        AppInitializer._core_initialized = False
-        mock_core_deps["get_status"].return_value = (LicenseStatus.INVALID, "Expired")
+    def test_initialize_core_failure_wrapped(self, mock_core_deps):
+        """Test: Gestione eccezioni wrappate in StartupError."""
+        mock_core_deps["db_init"].side_effect = Exception("DB Crash")
 
-        with pytest.raises(Exception, match="Licenza non valida"):
-            AppInitializer.initialize_core()
+        from src.core.exceptions import StartupError
 
-        mock_core_deps["run_update"].assert_called_once()
-
-    def test_initialize_core_exception(self, mock_core_deps):
-        """Test: Gestione eccezioni durante inizializzazione (DB crash)."""
-        AppInitializer._core_initialized = False
-        mock_core_deps["db_init"].side_effect = Exception("Crash")
-        mock_core_deps["get_status"].return_value = (LicenseStatus.VALID, "OK")
-
-        with pytest.raises(Exception, match="Crash"):
+        with pytest.raises(StartupError, match="DB Crash"):
             AppInitializer.initialize_core()
 
         assert AppInitializer._core_initialized is False
 
-    def test_init_generator_steps(self, mocker):
-        """Test: Il generatore produce gli step attesi."""
+    def test_init_generator_flow(self, mocker):
+        """Test: Il generatore produce gli step attesi per la GUI."""
         mock_mw = MagicMock()
-        # Mock per evitare caricamento pannelli reali
         mocker.patch.object(mock_mw.navigation_controller, "get_panel", return_value=MagicMock())
         mocker.patch("src.core.config_manager.load_config", return_value={})
 
         gen = AppInitializer.init_generator(mock_mw)
 
         steps = list(gen)
-        # Verifica che ci siano step e che l'ultimo sia al 100%
         assert len(steps) > 0
         assert steps[-1][1] == 100
         assert "Sistema Pronto" in steps[-1][0]
+
+    @patch("src.core.app_initializer.configure_logging")
+    def test_setup_logging(self, mock_conf):
+        AppInitializer._setup_logging()
+        mock_conf.assert_called_once()

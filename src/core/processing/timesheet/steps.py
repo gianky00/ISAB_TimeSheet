@@ -15,7 +15,6 @@ from src.models.timesheet import TimesheetMetadata
 from src.utils.secure_logger import get_secure_logger
 
 if TYPE_CHECKING:
-    from openpyxl.cell.cell import Cell
     from openpyxl.workbook.workbook import Workbook
     from openpyxl.worksheet.worksheet import Worksheet
 
@@ -76,11 +75,14 @@ class ExtractMetadataStep(ProcessingStep):
             odc=odc, pos_values=pos_values, first_pos_cleaned=first_pos_cleaned
         )
 
-    def _clean_pos_value(self, val: str) -> str:
+    def _clean_pos_value(self, val: str | None) -> str:
         """Converte un valore POS in stringa intera pulita."""
-        if val.replace(".", "", 1).isdigit():
+        if val is None:
+            return ""
+        s = val.strip()
+        if s.replace(".", "", 1).isdigit():
             with suppress(Exception):
-                return str(int(float(val)))
+                return str(int(float(s)))
         return val
 
     def _deduce_odc_from_filename(self, file_path_str: str | Path) -> str:
@@ -147,7 +149,7 @@ class TransformSheetStep(ProcessingStep):
 
         # 2. Pulizia numerica colonna B
         for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=2, max_col=2):
-            cell = cast("Cell", row[0])
+            cell = cast("Any", row[0])
             if cell.value is not None:
                 s_val = str(cell.value).strip()
                 if s_val.replace(".", "", 1).isdigit():
@@ -172,7 +174,7 @@ class TransformSheetStep(ProcessingStep):
         """
         for col in ws.columns:
             max_len = 0
-            first_cell = cast("Cell", col[0])
+            first_cell = cast("Any", col[0])
             column_idx = first_cell.column
             if isinstance(column_idx, int):
                 col_letter = get_column_letter(column_idx)

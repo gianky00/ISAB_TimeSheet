@@ -682,6 +682,13 @@ def main() -> None:  # noqa: C901, PLR0912
     is_obfuscated = not args.debug_no_obfuscate
     if is_obfuscated:
         run_pyarmor()
+        # Copia changelog.json nella directory offuscata per includerlo nella build
+        orig_changelog = ROOT_DIR / "src" / "core" / "changelog.json"
+        dest_changelog = OBF_DIR / "src" / "core" / "changelog.json"
+        if orig_changelog.exists():
+            dest_changelog.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(orig_changelog, dest_changelog)
+            log_and_print(f"[BUILD] Copied changelog.json to obfuscated core: {dest_changelog}")
 
     if args.use_nuitka:
         run_nuitka(obfuscated=is_obfuscated)

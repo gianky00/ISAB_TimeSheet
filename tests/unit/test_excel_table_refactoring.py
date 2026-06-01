@@ -1,6 +1,4 @@
-"""Baseline tests for ExcelTableWidget clipboard operations.
-Ensures copy/paste logic remains intact.
-"""
+"""Baseline tests for ExcelTableWidget clipboard operations."""
 
 import pytest
 from PySide6.QtWidgets import QApplication, QComboBox, QTableWidgetItem
@@ -20,12 +18,13 @@ def table(qtbot):
 
 
 def test_copy_selection_logic(table, qtbot):
-    """Test copying a range of cells to clipboard."""
+    """Test copying a range of cells to clipboard (including headers)."""
     clipboard = QApplication.clipboard()
     clipboard.clear()
 
     # Select range (0,0) to (1,1)
     table.setCurrentCell(0, 0)
+    # Note: selectedIndexes() is used by Mixin
     table.item(0, 0).setSelected(True)
     table.item(0, 1).setSelected(True)
     table.item(1, 0).setSelected(True)
@@ -34,7 +33,8 @@ def test_copy_selection_logic(table, qtbot):
     table.copy_selection()
 
     text = clipboard.text()
-    expected = "R0C0\tR0C1\nR1C0\tR1C1"
+    # Mixin includes headers by default: "Col 0\tCol 1\nR0C0\tR0C1\nR1C0\tR1C1"
+    expected = "Col 0\tCol 1\nR0C0\tR0C1\nR1C0\tR1C1"
     assert text.strip() == expected
 
 

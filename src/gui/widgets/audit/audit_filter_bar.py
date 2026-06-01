@@ -4,7 +4,7 @@ Widget per la configurazione dei filtri di ricerca e visualizzazione all'interno
 """
 
 from collections.abc import Sequence
-from datetime import date as dt_date, datetime
+from datetime import date, datetime
 from typing import Any, Final, cast
 
 from PySide6.QtCore import QDate, Qt, Signal
@@ -191,8 +191,8 @@ class AuditFilterBar(ModernCard):
 
     def get_filters(self) -> dict[str, Any]:
         """Restituisce i parametri di filtraggio correnti per le query."""
-        start_dt = datetime.combine(cast("dt_date", self.date_from.date().toPython()), datetime.min.time())
-        end_dt = datetime.combine(cast("dt_date", self.date_to.date().toPython()), datetime.max.time())
+        start_dt = datetime.combine(cast("date", self.date_from.date().toPython()), datetime.min.time())
+        end_dt = datetime.combine(cast("date", self.date_to.date().toPython()), datetime.max.time())
         lvl_idx = self.level_combo.currentIndex()
         levels = self._get_levels_from_index(lvl_idx)
 

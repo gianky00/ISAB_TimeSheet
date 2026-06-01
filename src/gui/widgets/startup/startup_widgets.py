@@ -6,6 +6,7 @@ Collezione di widget animati utilizzati nella Splash Screen.
 import hashlib
 import math
 import random
+from typing import Any
 
 from PySide6.QtCore import (
     Property,
@@ -183,14 +184,15 @@ class GlowingProgressBar(QWidget):
         self.update()
 
     def _update_progress(self, diff: float) -> None:
-        """Applica lo smoothing asintotico al valore di visualizzazione."""
-        if diff > 0.001:
-            increment = diff * self._smooth_factor
-            min_step = 0.01
-            self._display_value += max(increment, min_step)
+        """Applica un incremento lineare limitato per frame per garantire una progressione fluida, lenta e senza scatti."""
+        if diff > 0:
+            # Aumenta al massimo di 0.15 punti per frame (circa 9% al secondo) per una salita ultra-morbida e cinematografica
+            max_increment = 0.15
+            # Se siamo al 100% acceleriamo leggermente la transizione finale per reattività alla chiusura
+            if self._value == 100:
+                max_increment = 1.0
+            self._display_value += min(diff, max_increment)
         elif diff < 0:
-            pass
-        else:
             self._display_value = float(self._value)
 
     def _spawn_particles(self, diff: float, pw: int, bar_y: int) -> None:
@@ -214,7 +216,7 @@ class GlowingProgressBar(QWidget):
 
     def _update_existing_particles(self, diff: float) -> None:
         """Aggiorna la fisica delle particelle attive."""
-        for p in self._particles[:]:
+        for p in self._particles.copy():
             p["x"] += p["vx"]
             p["y"] += p["vy"]
             p["life"] -= 0.04 if diff < 0.1 else 0.06
@@ -310,7 +312,7 @@ class GlowingProgressBar(QWidget):
         painter.save()
         painter.setBrush(QBrush(glow_grad))
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.drawEllipse(QPoint(int(pw), int(bar_y + bar_h / 2)), 80, 25)
+        painter.drawEllipse(QPoint(pw, int(bar_y + bar_h / 2)), 80, 25)
         painter.restore()
 
         grad = QLinearGradient(0.0, float(bar_y), float(pw), float(bar_y))
@@ -336,12 +338,8 @@ class GlowingProgressBar(QWidget):
         # Colore base Cyber-Blue sempre attivo per evitare lampeggi
         neon_color = QColor(100, 200, 255, 220)
 
-        # Gestione Scramble (Glitch dei caratteri) senza spegnere la luce
-        if self._glitch_ticks > 0:
-            chars = "0123456789%@#&X$!?"
-            perc_text = "".join(random.choice(chars) for _ in range(3)) + "%"  # noqa: S311
-        else:
-            perc_text = f"{int(self._display_value)}%"
+        # Mostra sempre la percentuale reale lineare senza effetto scramble glitch fittizio
+        perc_text = f"{int(self._display_value)}%"
 
         text_x = max(0, min(pw - 15, w - 40))
 
@@ -558,7 +556,7 @@ class ChangelogTicker(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.notes: list[str] = []
+        self.notes: list[dict[str, str]] = []
         self.current_idx = 0
         self.num_rows = 3
         self.target_positions: list[QPoint] = []
@@ -660,20 +658,28 @@ class ChangelogTicker(QWidget):
         self.positions_initialized = True
         self._show_batch()
 
-    def set_notes(self, notes: list[str]) -> None:
+    def set_notes(self, notes: list[Any]) -> None:
         """Configura le note. L'avvio effettivo avviene in showEvent."""
-        self.notes = [n for n in notes if n.strip()]
+        self.notes = []
+        for n in notes:
+            if isinstance(n, dict) and n.get("message", "").strip():
+                self.notes.append(n)
+            elif isinstance(n, str) and n.strip():
+                self.notes.append({"message": n.strip(), "sha": ""})
+
         if not self.notes:
-            self.notes = ["VERSIONE OTTIMIZZATA - PRONTA ALL'USO"]
+            self.notes = [{"message": "VERSIONE OTTIMIZZATA - PRONTA ALL'USO", "sha": ""}]
         self.current_idx = 0
 
-    def _format_note(self, note: str) -> str:
+    def _format_note(self, note_data: dict[str, str]) -> str:
         """Formatta la nota con tag neon, commit SHA (DNA) e stile premium."""
-        clean = note.strip()
+        clean = note_data.get("message", "").strip()
         lower = clean.lower()
 
-        # Generazione DNA deterministico basato sulla nota (Cyber-Trace)
-        dna = hashlib.sha256(clean.encode()).hexdigest()[:7]
+        # Usa il vero SHA o genera fallback deterministico
+        dna = note_data.get("sha", "")
+        if not dna:
+            dna = hashlib.sha256(clean.encode()).hexdigest()[:7]
 
         c_feat = self.COLORS.get("success_green", "#2ecc71")
         c_fix = self.COLORS.get("error_red", "#e74c3c")

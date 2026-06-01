@@ -65,7 +65,10 @@ class OdaRepository:
     def get_all(
         self, search_text: str | None = None, as_objects: bool = True
     ) -> list[OdaRecord] | list[tuple[Any, ...]]:
-        """Recupera tutti gli OdA, opzionalmente filtrati per testo."""
+        """Recupera tutti gli OdA, opzionalmente filtrati per testo.
+
+        Supporta il ritorno di oggetti Pydantic o tuple legacy.
+        """
         db_path = self.db.DB_STORICO_ODA
         if not db_path.exists():
             return []

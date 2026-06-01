@@ -1,76 +1,63 @@
-"""Tests for AppInitializer startup sequence."""
+from unittest.mock import MagicMock
 
-from unittest.mock import MagicMock, patch
+import pytest
 
 from src.core.app_initializer import AppInitializer
-from src.core.license_validator import LicenseStatus
 
 
-class TestAppInitializer:
-    def test_initialize_core_idempotency(self, mocker):
-        """Verifica che l'inizializzazione core non venga rieseguita se gia' fatta."""
-        AppInitializer._core_initialized = False  # Reset state
+class TestAppStartupSequence:
+    """Test della sequenza di avvio dell'applicazione (V9.4)."""
 
-        # Mocking components to avoid real side effects
-        mocker.patch("src.core.app_initializer.AppInitializer._setup_logging")
-        mocker.patch("src.core.app_initializer.db_manager.init_db")
-        mocker.patch("src.core.app_initializer.run_update")
-        mocker.patch(
-            "src.core.app_initializer.get_detailed_license_status",
-            return_value=(LicenseStatus.VALID, "OK"),
-        )
-        mocker.patch("src.utils.resource_manager.ResourceManager.ensure_automation_driver")
-        mocker.patch("src.core.app_initializer.DatabaseBackupManager.execute_backup")
-        mocker.patch("src.core.app_initializer.get_hardware_id", return_value="test")
+    @pytest.fixture(autouse=True)
+    def reset_state(self):
+        AppInitializer._core_initialized = False
+        yield
+        AppInitializer._core_initialized = False
 
-        success = AppInitializer.initialize_core()
-        assert success is True
+    @pytest.fixture
+    def mock_deps(self, mocker):
+        return {
+            "license": mocker.patch(
+                "src.core.initialization.license_verifier.LicenseVerifier.verify_license"
+            ),
+            "db": mocker.patch(
+                "src.core.initialization.migration_engine.DatabaseMigrationEngine.initialize_database"
+            ),
+            "logging": mocker.patch.object(AppInitializer, "_setup_logging"),
+            "driver": mocker.patch("src.utils.resource_manager.ResourceManager.ensure_automation_driver"),
+            "preload": mocker.patch.object(AppInitializer, "_preload_heavy_modules"),
+            "bots": mocker.patch("src.core.app_initializer.get_available_bots", return_value=[]),
+        }
+
+    def test_initialize_core_idempotency(self, mock_deps):
+        """Verifica che l'inizializzazione non venga ripetuta se già fatta."""
+        AppInitializer.initialize_core()
         assert AppInitializer._core_initialized is True
 
-        # Seconda chiamata: non deve chiamare init_db di nuovo
-        with patch("src.core.database.db_manager.init_db") as mock_init:
-            success2 = AppInitializer.initialize_core()
-            assert success2 is True
-            assert not mock_init.called
+        # Seconda chiamata
+        AppInitializer.initialize_core()
+        # I mock dovrebbero essere stati chiamati solo 1 volta (la prima)
+        assert mock_deps["logging"].call_count == 1
 
-    def test_init_generator_steps(self, mocker):
-        """Verifica che il generatore di inizializzazione GUI emetta gli step corretti."""
-        mock_mw = MagicMock()
-        mock_mw.navigation_controller.get_panel.return_value = MagicMock()
+    def test_initialize_core_failure_handling(self, mock_deps):
+        """Verifica che errori critici vengano catturati e lo stato resettato."""
+        mock_deps["db"].side_effect = Exception("Crash")
 
-        # Mock PageIndex to avoid real imports if needed, but it's usually safe
+        from src.core.exceptions import StartupError
 
-        gen = AppInitializer.init_generator(mock_mw)
-
-        steps = list(gen)
-        # Dovrebbe esserci uno step per ogni pannello + telegram + pronto
-        assert len(steps) > 5
-
-        # Verifica che l'ultimo step sia "Sistema Pronto" al 100%
-        last_name, last_prog = steps[-1]
-        assert "Pronto" in last_name
-        assert last_prog == 100
-
-        # Verifica che il navigation controller sia stato chiamato per caricare i pannelli
-        assert mock_mw.navigation_controller.get_panel.called
-
-    @patch("src.core.app_initializer.db_manager.init_db", side_effect=Exception("DB Error"))
-    def test_initialize_core_failure_handling(self, mock_db_init, mocker):
-        """Verifica che un errore nel core sollevi eccezione."""
-        import pytest
-
-        AppInitializer._core_initialized = False
-        mocker.patch("src.core.app_initializer.AppInitializer._setup_logging")
-        mocker.patch("src.core.app_initializer.run_update")
-        mocker.patch(
-            "src.core.app_initializer.get_detailed_license_status",
-            return_value=(LicenseStatus.VALID, "OK"),
-        )
-        mocker.patch("src.utils.resource_manager.ResourceManager.ensure_automation_driver")
-        mocker.patch("src.core.app_initializer.DatabaseBackupManager.execute_backup")
-        mocker.patch("src.core.app_initializer.get_hardware_id", return_value="test")
-
-        with pytest.raises(Exception, match="DB Error"):
+        with pytest.raises(StartupError):
             AppInitializer.initialize_core()
 
         assert AppInitializer._core_initialized is False
+
+    def test_init_generator_steps(self, mocker):
+        """Verifica il flusso degli step del generatore UI."""
+        mock_mw = MagicMock()
+        mocker.patch("src.core.config_manager.load_config", return_value={})
+        mocker.patch.object(mock_mw.navigation_controller, "get_panel", return_value=MagicMock())
+
+        gen = AppInitializer.init_generator(mock_mw)
+        steps = [name for name, prog in gen]
+
+        assert len(steps) > 5
+        assert "Sistema Pronto" in steps[-1]

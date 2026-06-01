@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+import json
 
 import pytest
 
@@ -7,52 +7,42 @@ from src.core import config_manager
 
 class TestConfigSafeWork:
     @pytest.fixture(autouse=True)
-    def mock_keyring(self):
-        # Disable real keyring calls
-        with patch("src.core.secrets_manager.keyring"):
-            yield
+    def setup_config(self, tmp_path, mocker):
+        env_dir = tmp_path / "safework_config"
+        env_dir.mkdir()
+        config_file = env_dir / "config.json"
 
-    @patch("src.core.config.security.SecretsManager")
-    @patch("src.core.config_manager._load_base_config")
-    @patch("src.core.config_manager.save_config")
-    def test_load_save_safework_accounts(self, mock_save, mock_load_base, mock_secrets):
-        # Force SecretsManager to return None (simulate not found in keyring)
-        mock_secrets.get_credential.return_value = None
+        config_manager._reset_configuration_for_testing()
+        mocker.patch("src.core.config_manager.CONFIG_FILE", config_file)
+        mocker.patch("src.core.config_manager.CONFIG_DIR", env_dir)
+        mocker.patch("src.core.paths.CONFIG_FILE", config_file)
 
-        # Setup initial config with SafeWork accounts
-        config_data = {
-            "safework_accounts": [{"username": "user1", "password": "ENC:v2:encrypted_pw"}],
-            "accounts": [],  # Standard accounts
-        }
-        mock_load_base.return_value = config_data
+        # Forza salvataggio sincrono
+        original_save = config_manager.save_config
 
-        # Mock decrypt
-        with patch("src.utils.security.password_manager.decrypt", return_value="real_pw"):
-            # We must be sure load_config doesn't use cache from previous tests
-            config_manager._config_cache = None
-            config = config_manager.load_config()
+        def mock_save(cfg, async_save=True):
+            return original_save(cfg, async_save=False)
 
-            assert "safework_accounts" in config
-            assert len(config["safework_accounts"]) > 0
-            acc = config["safework_accounts"][0]
-            assert acc["password"] == "real_pw"  # Should be decrypted
+        mocker.patch("src.core.config_manager.save_config", side_effect=mock_save)
 
-    @patch("src.core.config.security.SecretsManager")
-    @patch("src.core.config_manager.CONFIG_FILE", new=MagicMock())
-    @patch("builtins.open", new_callable=MagicMock)
-    @patch("json.dump")
-    def test_save_safework_config(self, mock_dump, mock_open, mock_secrets):
-        # Force SecretsManager unavailable to test file encryption fallback
-        mock_secrets.is_available.return_value = False
+        yield config_file
+        config_manager._reset_configuration_for_testing()
 
-        config = {"safework_accounts": [{"username": "user1", "password": "plain_pw"}]}
+    def test_load_save_safework_accounts(self, setup_config):
+        acc = {"username": "sw_user", "password": "sw_password", "is_default": True}
+        config_manager.add_account("safework", acc)
 
-        with patch("src.utils.security.password_manager.encrypt", return_value="encrypted_pw"):
-            config_manager.save_config(config)
+        # Fondamentale: reset cache prima del ricaricamento
+        config_manager._reset_configuration_for_testing()
+        config = config_manager.load_config()
 
-            # Check what was dumped
-            args, _ = mock_dump.call_args
-            dumped_config = args[0]
+        assert len(config.get("safework_accounts", [])) == 1
+        assert config["safework_accounts"][0]["username"] == "sw_user"
 
-            acc = dumped_config["safework_accounts"][0]
-            assert acc["password"] == "encrypted_pw"
+    def test_save_safework_config(self, setup_config):
+        config_manager.set_config_value("safework_last_site", "SUD")
+        # Sincronizzato grazie al patch
+
+        with open(setup_config) as f:
+            data = json.load(f)
+            assert data["safework_last_site"] == "SUD"

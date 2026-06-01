@@ -67,7 +67,7 @@ class CertificatiPdfExporter:
 
             # Mapping coordinate logiche (punti) su area fisica (pixel)
             painter.setViewport(layout.paintRectPixels(dpi))
-            painter.setWindow(0, 0, int(width_pt), int(paint_rect_pt.height()))
+            painter.setWindow(0, 0, width_pt, paint_rect_pt.height())
 
             total_pages = len(pages_html)
 
@@ -120,20 +120,23 @@ class CertificatiPdfExporter:
                 year = f"20{year_part}" if len(year_part) == short_year_len else year_part
 
         # Lista di possibili percorsi relativi (prioritari)
-        possible_rel_paths = []
+        possible_rel_paths: list[str] = []
         if year:
-            possible_rel_paths.append(os.path.join(year, f"{cert_name}.pdf"))
-            possible_rel_paths.append(os.path.join(year, f"{cert_name}.PDF"))
-            possible_rel_paths.append(os.path.join(year, cert_name, f"{cert_name}.pdf"))
-            possible_rel_paths.append(os.path.join(year, cert_name, f"{cert_name}.PDF"))
+            possible_rel_paths.extend(
+                (
+                    os.path.join(year, f"{cert_name}.pdf"),
+                    os.path.join(year, f"{cert_name}.PDF"),
+                    os.path.join(year, cert_name, f"{cert_name}.pdf"),
+                    os.path.join(year, cert_name, f"{cert_name}.PDF"),
+                )
+            )
 
-        possible_rel_paths.append(f"{cert_name}.pdf")
-        possible_rel_paths.append(f"{cert_name}.PDF")
+        possible_rel_paths.extend((f"{cert_name}.pdf", f"{cert_name}.PDF"))
 
         # Verifica fisica dei file
         for rel in possible_rel_paths:
             full_path = os.path.join(base_path_str, rel)
-            if os.path.exists(full_path):
+            if Path(full_path).exists():
                 return Path(full_path).as_uri()
 
         return ""
@@ -289,7 +292,7 @@ class CertificatiPdfExporter:
         if parent.childCount() > 0:
             child = parent.child(0)
             if child:
-                id_coemi = str(child.text(0))
+                id_coemi = child.text(0)
 
         parts = re.split(r"(\d+)", id_coemi)
         return [(True, int(c)) if c.isdigit() else (False, c.lower()) for c in parts if c]

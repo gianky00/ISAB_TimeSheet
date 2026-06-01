@@ -5,7 +5,6 @@ Worker asincrono per il caricamento e parsing del file changelog.json.
 
 import json
 import logging
-from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import QThread, Signal
@@ -25,7 +24,9 @@ class ChangelogWorker(QThread):
         """Esegue l'I/O su disco in background."""
         try:
             logger.info("[ChangelogWorker] Lettura changelog.json...")
-            changelog_path = Path(__file__).resolve().parent.parent.parent / "core" / "changelog.json"
+            from src.utils.resource_manager import ResourceManager
+
+            changelog_path = ResourceManager.get_changelog_path()
             changelog_data: list[dict[str, Any]] = []
 
             if changelog_path.exists():

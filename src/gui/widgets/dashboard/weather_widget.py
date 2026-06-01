@@ -51,14 +51,14 @@ AQI_UNHEALTHY_SENSITIVE = 60
 AQI_UNHEALTHY = 80
 
 # Stile forzato per evitare il bug della Dark Mode / Tooltip nero in PySide6.
-TOOLTIP_CSS = f"""
-QToolTip {{
-  background-color: {COLORS["bg_white"]};
-  color: {COLORS["text_dark"]};
-  border: 1px solid {COLORS["border_light"]};
+TOOLTIP_CSS = """
+QToolTip {
+  background-color: #FFFFFF;
+  color: #212121;
+  border: 1px solid #CCCCCC;
   border-radius: 6px;
   padding: 8px 12px;
-}}
+}
 """
 
 
@@ -188,7 +188,7 @@ class WindCompass(QWidget):
         font_val.setBold(True)
         painter.setFont(font_val)
         painter.setPen(QColor(COLORS["text_dark"]))
-        painter.drawText(QRectF(cx - 25, cy - 12, 50, 12), Qt.AlignmentFlag.AlignCenter, f"{int(self.speed)}")
+        painter.drawText(QRectF(cx - 25, cy - 12, 50, 12), Qt.AlignmentFlag.AlignCenter, str(int(self.speed)))
 
         font_unit = QFont()
         font_unit.setPointSize(5)

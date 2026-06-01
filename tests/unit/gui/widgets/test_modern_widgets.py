@@ -46,7 +46,7 @@ class TestModernButton:
         # Entrata mouse
         event = QEnterEvent(QPoint(0, 0), QPoint(0, 0), QPoint(0, 0))
         QApplication.sendEvent(btn, event)
-        # Aspettiamo che l'animazione inizi/finisca o controlliamo i valori target
+        # Aspettiamo che lbl'animazione inizi/finisca o controlliamo i valori target
         assert btn._anim.endValue() == 0.1
 
         # Uscita mouse
