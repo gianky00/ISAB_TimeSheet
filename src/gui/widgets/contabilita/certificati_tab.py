@@ -366,7 +366,7 @@ class CertificatiCampioneTab(QWidget):
         is_excluded = g["matricola"] in self.engine._exclusions
         is_print_excluded = g["matricola"] in self.engine._print_exclusions
         days_val: int | None = g["days"]
-        days_text = self.engine.format_days_text_short(days_val)
+        days_text = self.engine.format_days_text_with_guasto(days_val, g.get("guasto_tipo", ""))
 
         # Recupero numero certificato più recente (il primo della lista ordinata dall'engine)
         from src.core.contabilita_queries import ContabilitaQueries
@@ -394,7 +394,20 @@ class CertificatiCampioneTab(QWidget):
 
         status_icon: str = Icons.STATUS_DOT_GRAY if is_excluded else g["icon"]
         parent_item.setIcon(0, QIcon(get_asset_path(status_icon)))
-        parent_item.setData(0, Qt.ItemDataRole.UserRole, {"days": days_val, "matricola": g["matricola"]})
+        parent_item.setData(
+            0,
+            Qt.ItemDataRole.UserRole,
+            {
+                "days": days_val,
+                "matricola": g["matricola"],
+                "guasto_tipo": g.get("guasto_tipo", ""),
+                "guasto_data": g.get("guasto_data", ""),
+                "guasto_note": g.get("guasto_note", ""),
+            },
+        )
+
+        if g.get("guasto_note"):
+            parent_item.setToolTip(0, f"Note Guasto: {g['guasto_note']}")
 
         if is_excluded:
             font = parent_item.font(0)
@@ -522,6 +535,19 @@ class CertificatiCampioneTab(QWidget):
         """Aggiunge le azioni specifiche per l'item padre (strumento)."""
         matricola = self.engine.parse_parent_label(item.text(0))["matricola"]
 
+        # Recupera dati per il guasto
+        id_coemi = ""
+        matricola = ""
+        is_guasto = False
+        if item.childCount() > 0:
+            parsed = self.engine.parse_parent_label(item.text(0))
+            id_coemi = parsed["id_coemi"]
+            matricola = parsed["matricola"]
+            # Utilizziamo il marker di fault per dedurre lo stato attuale (lo styling passa -9999)
+            user_data = item.data(0, Qt.ItemDataRole.UserRole)
+            days = user_data.get("days") if isinstance(user_data, dict) else None
+            is_guasto = days == self.engine.FAULTY_MARKER
+
         # Monitoraggio
         is_ex = matricola in self.engine._exclusions
         mon_act = QAction("Includi nel monitoraggio" if is_ex else "Escludi dal monitoraggio", self)
@@ -537,7 +563,90 @@ class CertificatiCampioneTab(QWidget):
         menu.addAction(print_act)
 
         menu.addSeparator()
+
+        # Gestione Guasto
+        if is_guasto:
+            ripara_act = QAction("Contrassegna come Riparato", self)
+            ripara_act.setIcon(QIcon(get_asset_path(Icons.CHECK_CIRCLE)))
+            ripara_act.triggered.connect(lambda: self._mark_as_repaired(id_coemi, matricola))
+            menu.addAction(ripara_act)
+
+            mod_guasto_act = QAction("Modifica Dati Guasto", self)
+            mod_guasto_act.setIcon(QIcon(get_asset_path(Icons.EDIT)))
+            mod_guasto_act.triggered.connect(lambda: self._show_guasto_dialog(id_coemi, matricola, item, is_edit=True))
+            menu.addAction(mod_guasto_act)
+        else:
+            guasto_act = QAction("Segnala Guasto", self)
+            guasto_act.setIcon(QIcon(get_asset_path(Icons.ALERT)))
+            guasto_act.triggered.connect(lambda: self._show_guasto_dialog(id_coemi, matricola, item, is_edit=False))
+            menu.addAction(guasto_act)
+
+        menu.addSeparator()
         self._add_expansion_action(menu, item)
+
+    def _show_guasto_dialog(self, id_coemi: str, matricola: str, item: QTreeWidgetItem, is_edit: bool = False) -> None:
+        """Mostra il dialog per segnalare o modificare un guasto e ne salva i dati."""
+        from src.gui.dialogs.guasto_dialog import GuastoDialog
+
+        modello = self.engine.parse_parent_label(item.text(0))["modello"]
+
+        current_tipo = ""
+        current_data = ""
+        current_note = ""
+
+        if is_edit:
+            user_data = item.data(0, Qt.ItemDataRole.UserRole)
+            if isinstance(user_data, dict):
+                current_tipo = user_data.get("guasto_tipo", "")
+                current_data = user_data.get("guasto_data", "")
+                current_note = user_data.get("guasto_note", "")
+
+        dialog = GuastoDialog(
+            id_coemi=id_coemi,
+            matricola=matricola,
+            modello=modello,
+            current_tipo=current_tipo,
+            current_data=current_data,
+            current_note=current_note,
+            parent=self
+        )
+        if dialog.exec():
+            dati = dialog.get_result()
+            success = ContabilitaManager.update_certificato_guasto(
+                id_coemi=id_coemi,
+                matricola=matricola,
+                guasto=1,
+                guasto_tipo=dati["guasto_tipo"],
+                guasto_data=dati["guasto_data"],
+                guasto_note=dati["guasto_note"],
+            )
+            if success:
+                self.refresh_data()
+            else:
+                QMessageBox.critical(self, "Errore", "Impossibile salvare i dati del guasto.")
+
+    def _mark_as_repaired(self, id_coemi: str, matricola: str) -> None:
+        """Segna uno strumento come non più guasto."""
+        reply = QMessageBox.question(
+            self,
+            "Conferma Riparazione",
+            "Vuoi davvero contrassegnare questo strumento come riparato?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            success = ContabilitaManager.update_certificato_guasto(
+                id_coemi=id_coemi,
+                matricola=matricola,
+                guasto=0,
+                guasto_tipo="",
+                guasto_data="",
+                guasto_note="",
+            )
+            if success:
+                self.refresh_data()
+            else:
+                QMessageBox.critical(self, "Errore", "Impossibile rimuovere lo stato di guasto.")
 
     def _add_child_context_actions(self, menu: QMenu, item: QTreeWidgetItem) -> None:
         """Aggiunge le azioni per il singolo certificato (figlio)."""

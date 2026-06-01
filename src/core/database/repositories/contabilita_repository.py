@@ -236,7 +236,7 @@ class ContabilitaRepository:
                     "stato",
                 ]
                 cols_str = ", ".join(cols)
-                query = f"SELECT {cols_str}, annotazioni, ubicazione, id FROM certificati_campione ORDER BY id ASC"  # nosec B608
+                query = f"SELECT {cols_str}, annotazioni, ubicazione, guasto, guasto_tipo, guasto_data, guasto_note, id FROM certificati_campione ORDER BY id ASC"  # nosec B608
                 cursor.execute(query)
                 return [tuple(row) for row in cursor.fetchall()]
         except Exception:

@@ -73,4 +73,8 @@ class CertificatoCampioneRecord:
     stato: str
     annotazioni: str | None = None
     ubicazione: str | None = None
+    guasto: int = 0
+    guasto_tipo: str = ""
+    guasto_data: str = ""
+    guasto_note: str = ""
     id: int | None = None

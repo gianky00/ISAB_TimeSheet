@@ -113,7 +113,7 @@ class ContabilitaManager:
     @classmethod
     def update_certificato_field(cls, record_id: int, field: str, value: str) -> bool:
         """Aggiorna un singolo campo di un certificato campione."""
-        if field not in ("annotazioni", "ubicazione"):
+        if field not in ("annotazioni", "ubicazione", "guasto", "guasto_tipo", "guasto_data", "guasto_note"):
             return False
 
         try:
@@ -136,6 +136,37 @@ class ContabilitaManager:
             db_manager.execute_query(db_manager.DB_CONTABILITA, query, (value, id_coemi))
         except Exception:
             logger.exception("Errore aggiornamento ubicazione cumulativa", id_coemi=id_coemi)
+            return False
+        else:
+            return True
+
+    @classmethod
+    def update_certificato_guasto(  # noqa: PLR0913
+        cls, id_coemi: str, matricola: str, guasto: int, guasto_tipo: str, guasto_data: str, guasto_note: str
+    ) -> bool:
+        """Aggiorna lo stato di guasto per tutti i certificati di uno strumento."""
+        if not id_coemi and not matricola:
+            return False
+
+        try:
+            if id_coemi:
+                query = (
+                    "UPDATE certificati_campione SET guasto = ?, guasto_tipo = ?, "
+                    "guasto_data = ?, guasto_note = ? WHERE id_coemi = ?"
+                )
+                param = id_coemi
+            else:
+                query = (
+                    "UPDATE certificati_campione SET guasto = ?, guasto_tipo = ?, "
+                    "guasto_data = ?, guasto_note = ? WHERE matricola = ?"
+                )
+                param = matricola
+
+            db_manager.execute_query(
+                db_manager.DB_CONTABILITA, query, (guasto, guasto_tipo, guasto_data, guasto_note, param)
+            )
+        except Exception:
+            logger.exception("Errore aggiornamento guasto", id_coemi=id_coemi, matricola=matricola)
             return False
         else:
             return True

@@ -364,6 +364,9 @@ class CertificatiPdfExporter:
             stato_display = stato_display.replace(emoji, "")
         stato_display = stato_display.strip()
 
+        if "GUASTO" in stato_display:
+            return "<span style='color: #881337;'>GUASTO</span>"
+
         if stato_display.startswith(StatoCertificatoLabel.SCADUTO):
             return stato_display.replace(f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>").replace(
                 "gg fa)", " giorni"
@@ -383,7 +386,7 @@ class CertificatiPdfExporter:
     def _get_status_row_class(self, days: int | None) -> str:
         """Determina la classe CSS della riga basandosi sulla scadenza."""
         if days == CertificatiEngine.FAULTY_MARKER:
-            return "parent-no"
+            return "parent-guasto"
         if days is None:
             return "parent-nd"
         if days < 0:
@@ -427,6 +430,7 @@ class CertificatiPdfExporter:
         .parent-no td { background-color: #fee2e2; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
         .parent-warning td { background-color: #fef3c7; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
         .parent-nd td { background-color: #f1f5f9; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
+        .parent-guasto td { background-color: #fecdd3; color: #881337; font-weight: bold; border-top: 1pt solid #94a3b8; } /* Rosso scuro per guasti */
         .status-yes { color: #15803d; font-weight: bold; text-align: center; }
         .status-no { color: #b91c1c; font-weight: bold; text-align: center; }
         .status-warning { color: #b45309; font-weight: bold; text-align: center; }

@@ -28,7 +28,11 @@ class ContabilitaQueries:
     CERT_IDX_STATO = 9
     CERT_IDX_ANNOTAZIONI = 10
     CERT_IDX_UBICAZIONE = 11
-    CERT_IDX_ID = 12
+    CERT_IDX_GUASTO = 12
+    CERT_IDX_GUASTO_TIPO = 13
+    CERT_IDX_GUASTO_DATA = 14
+    CERT_IDX_GUASTO_NOTE = 15
+    CERT_IDX_ID = 16
 
     @classmethod
     def get_available_years(cls, db_path: Path) -> list[int]:

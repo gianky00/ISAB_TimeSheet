@@ -122,6 +122,19 @@ class StatoCertificatoLabel:
     GUASTO = "STRUMENTO GUASTO"
 
 
+class TipoAnomalia(Enum):
+    """Tipologie di anomalie per strumenti campione."""
+
+    MECCANICO = "Guasto meccanico"
+    ELETTRONICO = "Guasto elettronico"
+    FUORI_TOLLERANZA = "Fuori tolleranza"
+    DISPLAY_ILLEGGIBILE = "Display illeggibile"
+    DANNO_FISICO = "Danno fisico"
+    PERDITA_FLUIDO = "Perdita fluido"
+    CALIBRAZIONE_IMPOSSIBILE = "Calibrazione impossibile"
+    ALTRO = "Altro"
+
+
 class BrowserConfig:
     """Browser configuration constants."""
 

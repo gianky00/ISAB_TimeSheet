@@ -182,3 +182,16 @@ def mig_contabilita_v7(conn: sqlite3.Connection) -> None:
     if "errore" in cols and "errore_max" not in cols:
         with contextlib.suppress(sqlite3.OperationalError):
             cursor.execute("ALTER TABLE certificati_campione RENAME COLUMN errore TO errore_max")
+
+
+def mig_contabilita_v8(conn: sqlite3.Connection) -> None:
+    """Aggiunta colonne guasto a certificati_campione (v8)."""
+    cursor = conn.cursor()
+    with contextlib.suppress(sqlite3.OperationalError):
+        cursor.execute("ALTER TABLE certificati_campione ADD COLUMN guasto INTEGER DEFAULT 0")
+    with contextlib.suppress(sqlite3.OperationalError):
+        cursor.execute("ALTER TABLE certificati_campione ADD COLUMN guasto_tipo TEXT DEFAULT ''")
+    with contextlib.suppress(sqlite3.OperationalError):
+        cursor.execute("ALTER TABLE certificati_campione ADD COLUMN guasto_data TEXT DEFAULT ''")
+    with contextlib.suppress(sqlite3.OperationalError):
+        cursor.execute("ALTER TABLE certificati_campione ADD COLUMN guasto_note TEXT DEFAULT ''")
