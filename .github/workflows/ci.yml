@@ -55,9 +55,4 @@ jobs:
       run: |
         python tools/generate_ci_context.py
 
-    # Optional: Upload coverage
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.xml
-        fail_ci_if_error: false
+
