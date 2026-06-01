@@ -531,35 +531,49 @@ class CertificatiCampioneTab(QWidget):
         if viewport := self.tree.viewport():
             menu.exec(viewport.mapToGlobal(pos))
 
-    def _add_parent_context_actions(self, menu: QMenu, item: QTreeWidgetItem) -> None:
+    def _add_parent_context_actions(self, menu: QMenu, item: QTreeWidgetItem) -> None:  # noqa: PLR0915
         """Aggiunge le azioni specifiche per l'item padre (strumento)."""
-        matricola = self.engine.parse_parent_label(item.text(0))["matricola"]
-
         # Recupera dati per il guasto
         id_coemi = ""
         matricola = ""
+        modello = ""
         is_guasto = False
+        current_tipo = ""
+        current_data = ""
+        current_note = ""
+
         if item.childCount() > 0:
             parsed = self.engine.parse_parent_label(item.text(0))
             id_coemi = parsed["id_coemi"]
             matricola = parsed["matricola"]
-            # Utilizziamo il marker di fault per dedurre lo stato attuale (lo styling passa -9999)
+            modello = parsed["modello"]
+            # Utilizziamo il marker di fault per dedurre lo stato attuale
             user_data = item.data(0, Qt.ItemDataRole.UserRole)
-            days = user_data.get("days") if isinstance(user_data, dict) else None
+            days = None
+            if isinstance(user_data, dict):
+                days = user_data.get("days")
+                current_tipo = user_data.get("guasto_tipo", "")
+                current_data = user_data.get("guasto_data", "")
+                current_note = user_data.get("guasto_note", "")
             is_guasto = days == self.engine.FAULTY_MARKER
+        else:
+            # Fallback se non ci sono figli (raro)
+            parsed = self.engine.parse_parent_label(item.text(0))
+            matricola = parsed["matricola"]
+            modello = parsed["modello"]
 
         # Monitoraggio
         is_ex = matricola in self.engine._exclusions
         mon_act = QAction("Includi nel monitoraggio" if is_ex else "Escludi dal monitoraggio", self)
         mon_act.setIcon(QIcon(get_asset_path(Icons.CHECK_CIRCLE if is_ex else Icons.X_CIRCLE)))
-        mon_act.triggered.connect(lambda: self._toggle_exclusion(matricola))
+        mon_act.triggered.connect(lambda checked=False, m=matricola: self._toggle_exclusion(m))
         menu.addAction(mon_act)
 
         # Stampa
         is_pr_ex = matricola in self.engine._print_exclusions
         print_act = QAction("Includi nella stampa" if is_pr_ex else "Escludi dalla stampa", self)
         print_act.setIcon(QIcon(get_asset_path(Icons.FILE_TEXT if is_pr_ex else Icons.ALERT)))
-        print_act.triggered.connect(lambda: self._toggle_print_exclusion(matricola))
+        print_act.triggered.connect(lambda checked=False, m=matricola: self._toggle_print_exclusion(m))
         menu.addAction(print_act)
 
         menu.addSeparator()
@@ -568,38 +582,39 @@ class CertificatiCampioneTab(QWidget):
         if is_guasto:
             ripara_act = QAction("Contrassegna come Riparato", self)
             ripara_act.setIcon(QIcon(get_asset_path(Icons.CHECK_CIRCLE)))
-            ripara_act.triggered.connect(lambda: self._mark_as_repaired(id_coemi, matricola))
+            ripara_act.triggered.connect(lambda checked=False, idc=id_coemi, m=matricola: self._mark_as_repaired(idc, m))
             menu.addAction(ripara_act)
 
             mod_guasto_act = QAction("Modifica Dati Guasto", self)
             mod_guasto_act.setIcon(QIcon(get_asset_path(Icons.EDIT)))
-            mod_guasto_act.triggered.connect(lambda: self._show_guasto_dialog(id_coemi, matricola, item, is_edit=True))
+            mod_guasto_act.triggered.connect(
+                lambda checked=False, idc=id_coemi, m=matricola, mod=modello, ct=current_tipo, cd=current_data, cn=current_note:
+                self._show_guasto_dialog(idc, m, mod, ct, cd, cn)
+            )
             menu.addAction(mod_guasto_act)
         else:
             guasto_act = QAction("Segnala Guasto", self)
             guasto_act.setIcon(QIcon(get_asset_path(Icons.ALERT)))
-            guasto_act.triggered.connect(lambda: self._show_guasto_dialog(id_coemi, matricola, item, is_edit=False))
+            guasto_act.triggered.connect(
+                lambda checked=False, idc=id_coemi, m=matricola, mod=modello:
+                self._show_guasto_dialog(idc, m, mod)
+            )
             menu.addAction(guasto_act)
 
         menu.addSeparator()
         self._add_expansion_action(menu, item)
 
-    def _show_guasto_dialog(self, id_coemi: str, matricola: str, item: QTreeWidgetItem, is_edit: bool = False) -> None:
+    def _show_guasto_dialog(  # noqa: PLR0913
+        self,
+        id_coemi: str,
+        matricola: str,
+        modello: str,
+        current_tipo: str = "",
+        current_data: str = "",
+        current_note: str = ""
+    ) -> None:
         """Mostra il dialog per segnalare o modificare un guasto e ne salva i dati."""
         from src.gui.dialogs.guasto_dialog import GuastoDialog
-
-        modello = self.engine.parse_parent_label(item.text(0))["modello"]
-
-        current_tipo = ""
-        current_data = ""
-        current_note = ""
-
-        if is_edit:
-            user_data = item.data(0, Qt.ItemDataRole.UserRole)
-            if isinstance(user_data, dict):
-                current_tipo = user_data.get("guasto_tipo", "")
-                current_data = user_data.get("guasto_data", "")
-                current_note = user_data.get("guasto_note", "")
 
         dialog = GuastoDialog(
             id_coemi=id_coemi,
@@ -622,8 +637,49 @@ class CertificatiCampioneTab(QWidget):
             )
             if success:
                 self.refresh_data()
+
+                reply = QMessageBox.question(
+                    self,
+                    "Notifica Email",
+                    "Vuoi preparare un'email di notifica per questo guasto?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.Yes,
+                )
+                if reply == QMessageBox.StandardButton.Yes:
+                    self._draft_guasto_email(id_coemi, matricola, modello, dati)
             else:
                 QMessageBox.critical(self, "Errore", "Impossibile salvare i dati del guasto.")
+
+    def _draft_guasto_email(self, id_coemi: str, matricola: str, modello: str, dati: dict[str, str]) -> None:
+        """Prepara e apre la bozza dell'email per il guasto tramite il client predefinito."""
+        from urllib.parse import quote
+
+        from PySide6.QtCore import QUrl
+        from PySide6.QtGui import QDesktopServices
+
+        subject = f"Segnalazione Guasto Strumento: ID COEMI {id_coemi}" if id_coemi else f"Segnalazione Guasto Strumento: Matricola {matricola}"
+
+        body = (
+            f"Dettagli Strumento:\n"
+            f"- ID COEMI: {id_coemi or 'N/D'}\n"
+            f"- Matricola: {matricola or 'N/D'}\n"
+            f"- Modello: {modello}\n\n"
+            f"Dettagli Anomalia:\n"
+            f"- Tipo: {dati.get('guasto_tipo', '')}\n"
+            f"- Data Rilevamento: {dati.get('guasto_data', '')}\n"
+            f"- Note:\n{dati.get('guasto_note', '')}\n"
+        )
+
+        mailto_link = (
+            f"mailto:laboratoriostrumenti@coemi.it"
+            f"?cc=ciro.scaravelli@coemi.it"
+            f"&subject={quote(subject)}"
+            f"&Importance=High"
+            f"&X-Priority=1"
+            f"&body={quote(body)}"
+        )
+
+        QDesktopServices.openUrl(QUrl(mailto_link))
 
     def _mark_as_repaired(self, id_coemi: str, matricola: str) -> None:
         """Segna uno strumento come non più guasto."""

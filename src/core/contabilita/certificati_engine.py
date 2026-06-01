@@ -199,11 +199,19 @@ class CertificatiEngine:
 
         for r in data:
             stats["totale"] += 1
-            scadenza_str = str(r[cls.IDX_SCADENZA]) if len(r) > cls.IDX_SCADENZA else ""
-            days, _ = cls.calculate_days_and_status(scadenza_str)
+            days = None
+            if isinstance(r, dict) and "row" in r:
+                row_data = r["row"]
+                days = r.get("days")
+            else:
+                row_data = r
+
+            scadenza_str = str(row_data[cls.IDX_SCADENZA]) if len(row_data) > cls.IDX_SCADENZA else ""
+            if days is None:
+                days, _ = cls.calculate_days_and_status(scadenza_str)
 
             cls._process_status_stats(stats, days, scadenza_str, expiration_map)
-            cls._process_location_stats(stats, r)
+            cls._process_location_stats(stats, row_data)
 
         cls._analyze_bottlenecks(stats, expiration_map)
         return stats
@@ -493,13 +501,13 @@ class CertificatiEngine:
                 if len(latest) > ContabilitaQueries.CERT_IDX_SCADENZA
                 else ""
             )
-            
+
             guasto_flag = (
                 int(latest[ContabilitaQueries.CERT_IDX_GUASTO])
                 if len(latest) > ContabilitaQueries.CERT_IDX_GUASTO and latest[ContabilitaQueries.CERT_IDX_GUASTO]
                 else 0
             )
-            
+
             guasto_tipo = (
                 str(latest[ContabilitaQueries.CERT_IDX_GUASTO_TIPO])
                 if len(latest) > ContabilitaQueries.CERT_IDX_GUASTO_TIPO and latest[ContabilitaQueries.CERT_IDX_GUASTO_TIPO]

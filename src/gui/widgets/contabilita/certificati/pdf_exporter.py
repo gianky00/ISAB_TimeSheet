@@ -262,7 +262,13 @@ class CertificatiPdfExporter:
                 child = parent.child(0)
                 if child:
                     row_tuple = tuple(child.text(col) for col in range(self.tree.columnCount()))
-                    raw_data_for_stats.append(row_tuple)
+
+                    user_data = parent.data(0, Qt.ItemDataRole.UserRole)
+                    days = None
+                    if isinstance(user_data, dict):
+                        days = user_data.get("days")
+
+                    raw_data_for_stats.append({"row": row_tuple, "days": days})
 
         all_parents.sort(key=self._get_sort_key)
         return all_parents, raw_data_for_stats
@@ -297,14 +303,29 @@ class CertificatiPdfExporter:
         parts = re.split(r"(\d+)", id_coemi)
         return [(True, int(c)) if c.isdigit() else (False, c.lower()) for c in parts if c]
 
-    def _build_row_html(self, child: QTreeWidgetItem, is_current: bool, get_link_fn: Any) -> str:
+    def _build_row_html(self, child: QTreeWidgetItem, is_current: bool, get_link_fn: Any) -> str:  # noqa: C901, PLR0915
         """Costruisce l'HTML per una singola riga (corrente o storica)."""
         tree_any = self._get_tree()
         scadenza_str = child.text(tree_any.IDX_SCADENZA)
-        days, _ = CertificatiEngine.calculate_days_and_status(scadenza_str)
+
+        days = None
+        guasto_tipo = ""
+        guasto_data = ""
+        guasto_note = ""
+
+        if child.parent():
+            user_data = child.parent().data(0, Qt.ItemDataRole.UserRole)
+            if isinstance(user_data, dict):
+                days = user_data.get("days")
+                guasto_tipo = user_data.get("guasto_tipo", "")
+                guasto_data = user_data.get("guasto_data", "")
+                guasto_note = user_data.get("guasto_note", "")
+
+        if days is None:
+            days, _ = CertificatiEngine.calculate_days_and_status(scadenza_str)
 
         if is_current:
-            stato_display = self._format_status_display(days)
+            stato_display = self._format_status_display(days, guasto_tipo)
             row_class = self._get_status_row_class(days)
         else:
             stato_display = "STORICO"
@@ -328,6 +349,20 @@ class CertificatiPdfExporter:
 
         row_html = f"<tr class='{row_class}'>"
         if is_current:
+            annotazioni = child.text(tree_any.IDX_ANNOTAZIONI)
+            if days == -9999:
+                guasto_info = []
+                if guasto_data:
+                    guasto_info.append(f"Data: {guasto_data}")
+                if guasto_tipo:
+                    guasto_info.append(f"Tipo: {guasto_tipo}")
+                if guasto_note:
+                    guasto_info.append(f"Note: {guasto_note}")
+
+                if guasto_info:
+                    sep = "<br>" if annotazioni else ""
+                    annotazioni += f"{sep}<span style='color: #881337; font-weight: bold;'>⚠️ GUASTO:</span> " + " | ".join(guasto_info)
+
             row_html += f"<td class='text-center'>{child.text(tree_any.IDX_ID_STRUMENTO)}</td>"
             row_html += f"<td>{cert_display}</td>"
             row_html += f"<td>{modello}</td>"
@@ -339,7 +374,7 @@ class CertificatiPdfExporter:
             row_html += f"<td>{child.text(tree_any.IDX_SCADENZA)}</td>"
             row_html += f"<td class='col-stato'>{stato_display}</td>"
             row_html += f"<td>{ubicazione}</td>"
-            row_html += f"<td>{child.text(tree_any.IDX_ANNOTAZIONI)}</td>"
+            row_html += f"<td>{annotazioni}</td>"
         else:
             row_html += "<td></td>"
             row_html += f"<td>{storico_display}</td>"
@@ -357,15 +392,15 @@ class CertificatiPdfExporter:
         row_html += "</tr>"
         return row_html
 
-    def _format_status_display(self, days: int | None) -> str:
+    def _format_status_display(self, days: int | None, guasto_tipo: str = "") -> str:
         """Formatta il testo dello stato per la visualizzazione PDF."""
         stato_display = CertificatiEngine.format_days_text_short(days)
         for emoji in ("[OK]", "[ROSSO]", "[ARANCIONE]", "[GIALLO]", "[ERRORE]"):
             stato_display = stato_display.replace(emoji, "")
         stato_display = stato_display.strip()
 
-        if "GUASTO" in stato_display:
-            return "<span style='color: #881337;'>GUASTO</span>"
+        if days == -9999 or "GUASTO" in stato_display.upper():
+            return "<span style='color: #881337; font-weight: bold;'>GUASTO</span>"
 
         if stato_display.startswith(StatoCertificatoLabel.SCADUTO):
             return stato_display.replace(f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>").replace(
