@@ -55,6 +55,6 @@ jobs:
         QT_QPA_PLATFORM: "offscreen"
         PYTEST_ADDOPTS: "-m 'not slow and not integration'"
       run: |
-        python tools/generate_ci_context.py
+        poetry run python tools/generate_ci_context.py
 
 
