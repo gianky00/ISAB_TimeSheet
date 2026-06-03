@@ -2,6 +2,19 @@
 
 ### Fix
 
+- **pdl**: prevent silent UI crashes by casting imported dataframe to strings
+- **ci**: esegui generate_ci_context.py all'interno dell'ambiente virtuale di poetry per risolvere ModuleNotFoundError
+- **ci**: aggiornato il percorso dello script generate_ci_context.py (da scripts/ a tools/)
+- **ci**: aggiunti campi mancanti in tool.poetry per correggere l'errore di poetry install
+
+### Refactor
+
+- **gui**: ottimizzazione componenti base bot e gestione asincrona worker
+
+## v1.56.1 (2026-06-01)
+
+### Fix
+
 - **typing**: risoluzione segnalazioni mypy in pdl_sync_manager e pdf_exporter
 
 ## v1.56.0 (2026-06-01)

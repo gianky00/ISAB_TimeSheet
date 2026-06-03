@@ -1,5 +1,47 @@
 [
   {
+    "version": "1.56.2",
+    "date": "2026-06-03",
+    "notes": [
+      {
+        "sha": "c61477eb",
+        "message": "fix(pdl): prevent silent UI crashes by casting imported dataframe to strings"
+      },
+      {
+        "sha": "289e3332",
+        "message": "refactor(gui): ottimizzazione componenti base bot e gestione asincrona worker"
+      },
+      {
+        "sha": "5d40a916",
+        "message": "fix(ci): esegui generate_ci_context.py all'interno dell'ambiente virtuale di poetry per risolvere ModuleNotFoundError"
+      },
+      {
+        "sha": "e22c89d2",
+        "message": "chore(ci): pin windows runner to windows-2025 to suppress redirect notice"
+      },
+      {
+        "sha": "7d6064e0",
+        "message": "chore(ci): opt into Node.js 24 for GitHub Actions to fix deprecation warnings"
+      },
+      {
+        "sha": "6b1b13c6",
+        "message": "chore(ci): rimuovi step Codecov per assenza di report di copertura e token"
+      },
+      {
+        "sha": "13c47a09",
+        "message": "fix(ci): aggiornato il percorso dello script generate_ci_context.py (da scripts/ a tools/)"
+      },
+      {
+        "sha": "88a98af6",
+        "message": "chore(ci): update poetry version to 2.3.4 in github workflows"
+      },
+      {
+        "sha": "8a749112",
+        "message": "fix(ci): aggiunti campi mancanti in tool.poetry per correggere l'errore di poetry install"
+      }
+    ]
+  },
+  {
     "version": "1.56.1",
     "date": "2026-06-01",
     "notes": [
