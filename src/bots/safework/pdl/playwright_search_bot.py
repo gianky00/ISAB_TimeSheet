@@ -157,16 +157,27 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
             self.log(f"    File temporaneo rimosso: {Path(file_path).name}")
 
     def _import_to_db(self, file_path: str) -> None:
+        import re
         try:
             self.log("    Importazione in database...")
             start_time = time.time()
             df = pd.read_excel(file_path)
 
+            # Pulizia avanzata nomi colonne: toglie accenti incasinati e spazi multipli
+            clean_columns = {}
+            for col in df.columns:
+                c = str(col).upper()
+                c = re.sub(r'[^A-Z0-9 ]', '', c)
+                c = re.sub(r'\s+', ' ', c).strip()
+                clean_columns[col] = c
+            df.rename(columns=clean_columns, inplace=True)
+
             mapping_ita = {
-                "N  PDL": "n_pdl",
+                "N PDL": "n_pdl",
                 "DATA CREAZIONE": "data_creazione",
                 "AREA": "area",
-                "Unità": "unita",
+                "UNIT": "unita",
+                "UNITA": "unita",
                 "DITTA": "ditta",
                 "DESCRIZIONE DEL LAVORO": "descrizione_lavoro",
                 "TIPOLOGIA": "tipologia",
@@ -178,18 +189,35 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
                 "DATA EMISSIONE": "data_emissione",
                 "APRENTE": "aprente",
                 "DATA APERTURA": "data_apertura",
-                "Priorità": "priorita",
+                "PRIORIT": "priorita",
+                "PRIORITA": "priorita",
                 "CONTRATTO": "contratto",
                 "ORDINE": "ordine",
                 "SITO": "sito",
             }
             df.rename(columns=mapping_ita, inplace=True)
-            for col in mapping_ita.values():
+
+            target_cols = [
+                "n_pdl", "data_creazione", "area", "unita", "ditta",
+                "descrizione_lavoro", "tipologia", "stato", "apparecchiatura",
+                "richiedente", "data_richiesta", "emittente", "data_emissione",
+                "aprente", "data_apertura", "priorita", "contratto", "ordine", "sito"
+            ]
+
+            for col in target_cols:
                 if col not in df.columns:
                     df[col] = ""
+
+            # Forza tutto a stringa ed elimina i nan di pandas che in DB finiscono come stringhe "nan" o float ".0"
+            df = df.astype(str)
+            df.replace(["nan", "NaN", "<NA>", "None"], "", inplace=True)
             df.fillna("", inplace=True)
 
-            columns = list(mapping_ita.values())
+            # Rimuove il ".0" finale dai numeri (es. float di Ordine o Contratto esportati da excel)
+            for col in target_cols:
+                df[col] = df[col].apply(lambda x: x.removesuffix(".0"))
+
+            columns = target_cols
             data_to_insert = [tuple(row) for row in df[columns].values]
             placeholders = ", ".join(["?"] * len(columns))
             query = f"INSERT OR REPLACE INTO pdl ({', '.join(columns)}) VALUES ({placeholders})"
