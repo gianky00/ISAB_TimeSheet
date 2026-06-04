@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import pytest
 from rich.console import Console
@@ -10,6 +11,9 @@ console = Console()
 def test_validate_real_anagrafica():
     """Testa la validazione sullo script reale anagrafica_dipendenti.csv."""
     path = "data/anagrafiche/anagrafica_dipendenti.csv"
+    if not os.path.exists(path):
+        pytest.skip(f"File dati reale non trovato: {path} (Skipping per CI)")
+        
     try:
         # Caricamento con i parametri corretti identificati
         df = pd.read_csv(
