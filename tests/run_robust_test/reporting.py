@@ -124,15 +124,14 @@ def finish_human(runner: Any, duration: float, with_cov: bool, root_dir: Path, c
             console.print(f"  [red]•[/red] [bold white]{f['id']}:[/bold white] [dim]{f['error']}[/dim]")
     else:
         console.print("\n[bold green][OK] Suite completata con successo![/bold green]")
-        
+
     report_path = os.environ.get("TEST_REPORT_PATH")
     if report_path:
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(f"Totale: {runner.total_passed} passed, {runner.total_failed} failed in {duration:.2f}s\n\n")
             if runner.failed_list:
                 f.write("### Errori Rilevati:\n")
-                for fail in runner.failed_list:
-                    f.write(f"- `{fail['id']}`: {fail['error']}\n")
+                f.writelines(f"- `{fail['id']}`: {fail['error']}\n" for fail in runner.failed_list)
 
 
 def _generate_coverage_reports(root_dir: Path, console: Console) -> None:
