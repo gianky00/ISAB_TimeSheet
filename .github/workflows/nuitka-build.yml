@@ -22,7 +22,7 @@ jobs:
         python-version: "3.12"
         cache: 'pip'
 
-    - name: Install Poetry & Dependencies
+    - name: Install uv & Dependencies
       shell: pwsh
       run: |
         python -m pip install --upgrade pip
@@ -42,4 +42,4 @@ jobs:
         path: "devtools/gui/Crea Setup/Setup/*.exe"
         if-no-files-found: error
 
-# Fix Path & Poetry v1.1
+# Fix Path

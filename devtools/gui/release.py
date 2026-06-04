@@ -576,7 +576,7 @@ def main() -> None:
         )
 
     # Verifica sincronia lock file (fondamentale per EXE stabile)
-    run_command(["poetry", "check", "--lock"], "Verifica integrità Poetry Lock")
+    run_command(["uv", "lock"], "Verifica integrità uv.lock")
 
     # 1. Pre-Flight Check Interno
     pre_flight_cmd = [str(VENV_PYTHON), "devtools/gui/pre_flight_check.py"]

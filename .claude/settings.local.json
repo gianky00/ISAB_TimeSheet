@@ -61,7 +61,7 @@
       "Bash({)",
       "Bash(})",
       "Bash(ls:*)",
-      "Bash(poetry lock:*)",
+      "Bash(uv lock:*)",
       "Bash(git -C \"C:\\\\Users\\\\gianc\\\\Desktop\\\\SCRIPT\\\\ISAB_TimeSheet\" status)",
       "Bash(git -C \"C:\\\\Users\\\\gianc\\\\Desktop\\\\SCRIPT\\\\ISAB_TimeSheet\" diff tests/run_robust_test)",
       "Bash(git -C \"C:\\\\Users\\\\gianc\\\\Desktop\\\\SCRIPT\\\\ISAB_TimeSheet\" log --oneline -5)",

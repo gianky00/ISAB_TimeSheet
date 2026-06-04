@@ -42,6 +42,6 @@ Questo diario tiene traccia delle scoperte critiche e delle regole mandatorie pe
 ---
 
 ## 📈 Metriche di Qualità Target (Stato Attuale)
-- **Docstring Coverage**: >= 99% (via `poetry run interrogate src/`) — già raggiunto.
+- **Docstring Coverage**: >= 99% (via `uv run interrogate src/`) — già raggiunto.
 - **Test Coverage**: > 80% per i moduli Core e Bot Critici (target in corso).
 - **Zero Warnings**: Ruff 0 | MyPy 0 — già raggiunto e monitorato via pre-commit.

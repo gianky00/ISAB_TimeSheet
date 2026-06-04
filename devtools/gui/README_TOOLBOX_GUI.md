@@ -19,7 +19,7 @@ python devtools/gui/developer_toolbox_gui.py
 ## 📋 Funzionalità
 
 ### SYSTEM BOOTSTRAP AND SETUP
-- **Init System**: Installa/Aggiorna tutte le librerie tramite Poetry
+- **Init System**: Installa/Aggiorna tutte le librerie tramite uv
 
 ### QUALITY AND SECURITY ENGINE
 - **Full Audit**: Analisi totale (Sicurezza, Tipi, Stile e Test)
@@ -89,7 +89,7 @@ python devtools/gui/developer_toolbox_gui.py
 
 **La GUI non si avvia**:
 - Verifica che l'ambiente virtuale sia attivo
-- Esegui: `poetry install` o `pip install -e .`
+- Esegui: `uv sync` o `pip install -e .`
 
 **Il comando non produce output**:
 - Alcuni comandi potrebbero richiedere tempo prima di mostrare output
@@ -97,4 +97,4 @@ python devtools/gui/developer_toolbox_gui.py
 
 **Errore "python.exe not found"**:
 - Crea l'ambiente virtuale prima: `python -m venv .venv`
-- Oppure usa Poetry: `poetry install`
+- Oppure usa Poetry: `uv sync`

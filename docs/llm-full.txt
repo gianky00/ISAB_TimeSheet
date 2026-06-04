@@ -139,7 +139,7 @@ Tutti i bot che richiedono l'autenticazione utilizzano `LoginPage` (`src/infrast
 
 ## 📦 DIPENDENZE CRITICHE DEL PROGETTO (pyproject.toml)
 
-Futuri agenti IA possono fare affidamento immediato sulle seguenti librerie integrate nell'ambiente Poetry:
+Futuri agenti IA possono fare affidamento immediato sulle seguenti librerie integrate nell'ambiente uv:
 
 1. **GUI & Threading:**
    - `PySide6` (Interfaccia Grafica QT moderna, Signal & Slots, QThread)

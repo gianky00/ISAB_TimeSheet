@@ -557,7 +557,7 @@ class ApexAudit:
                         # lxml (transitiva)
                         "--ignore-vuln",
                         "CVE-2026-41066",
-                        # poetry (tool di build)
+                        # uv (tool di build)
                         "--ignore-vuln",
                         "CVE-2026-34591",
                         "--ignore-vuln",

@@ -60,7 +60,7 @@ SyncroJob è una suite software avanzata progettata per automatizzare, monitorar
 ### Setup Ambiente
 
 ```bash
-# Installazione dipendenze (Poetry)
+# Installazione dipendenze (uv)
 uv sync
 
 # Attivazione venv

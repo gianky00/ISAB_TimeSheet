@@ -8,7 +8,7 @@ Questo documento delinea le linee guida per lo sviluppo, il testing e il rilasci
 ### Prerequisiti
 
 - Python 3.12+
-- [Poetry](https://python-poetry.org/) (Gestore dipendenze)
+- [uv](https://docs.astral.sh/uv/) (Gestore dipendenze)
 - Git
 
 ### Installazione

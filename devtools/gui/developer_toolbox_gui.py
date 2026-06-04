@@ -183,7 +183,7 @@ class DeveloperToolboxGUI(QMainWindow):
                 (
                     "Init System",
                     self._init_system,
-                    "Installa/Aggiorna librerie (Poetry)",
+                    "Installa/Aggiorna librerie (uv)",
                 ),
             ],
         )
@@ -536,7 +536,7 @@ class DeveloperToolboxGUI(QMainWindow):
 
     def _init_system(self) -> None:
         """Opzione 0: Init System"""
-        self._run_command(["poetry", "install"], "Init System (Poetry Install)")
+        self._run_command(["uv", "sync"], "Init System (uv sync)")
 
     def _full_audit(self) -> None:
         """Opzione 1: Full Audit"""

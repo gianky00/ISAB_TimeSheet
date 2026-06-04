@@ -35,8 +35,7 @@ jobs:
       run: |
         pip config set global.timeout 1000
         pip config set global.retries 10
-        poetry config installer.max-workers 2
-
+        
     - name: Install dependencies
       run: uv sync
 
