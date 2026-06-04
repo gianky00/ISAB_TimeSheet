@@ -10,17 +10,28 @@ ai_role = "Senior Software Architect & QA Sentinel"
 strict_mode = true
 
 [commands]
-# Comandi obbligatori che l'IA deve usare per task specifici
+# Comandi obbligatori che l'IA deve usare per task specifici (utilizzare SEMPRE uv run)
 test_command = "uv run python -m tests.run_robust_test"
 lint_command = "uv run ruff check ."
 lint_fix_command = "uv run ruff check --fix ."
 typecheck_command = "uv run mypy ."
+docstring_check = "uv run interrogate -c pyproject.toml src tests"
+complexity_check = "uv run xenon --max-absolute B --max-modules B --max-average A src"
 
 [rules.architecture]
 # L'IA deve fallire (o rifiutarsi di procedere) se viola queste regole
 enforce_srp = true
 gui_must_not_import_business_logic = true
 max_class_lines = 300
+use_pydantic_v2 = true
+use_typing_protocol = true
+
+[rules.quality]
+# Standard di QA inderogabili
+mypy_strict_mode = true
+allow_implicit_any = false
+docstring_coverage_required = 99
+max_cyclomatic_complexity = "B"
 
 [rules.tools]
 # Comandi o librerie esplicitamente vietati
@@ -31,6 +42,7 @@ preferred_modules = { http = "httpx", logging = "loguru", data_validation = "pyd
 # Override locali per comportamenti specifici su PySide6
 allow_lambda_in_signals = true
 force_explicit_disconnect = true
+require_faulthandler = true
 
 [memory]
 # Configurazione per la persistenza della sessione AI
