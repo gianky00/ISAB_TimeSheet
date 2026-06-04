@@ -43,6 +43,14 @@ Prima di ogni commit o conclusione di task, devono essere superati i seguenti co
 - `PYSIDE6_OPTIMIZATION.md`: Best practices per le performance e signal safety in PySide6.
 - `docs/`: Documentazione tecnica, schemi JSON, piani di refactoring.
 
+### 🧩 Linee Guida di Dominio (Sotto-contesti AI)
+Quando lavori in una directory specifica, leggi sempre il relativo `GEMINI.md` per le regole architetturali di quel dominio:
+- `src/domain/GEMINI.md`: Regole per modelli dati puri e core business.
+- `src/application/GEMINI.md`: Regole per i casi d'uso (services e orchestratori).
+- `src/infrastructure/GEMINI.md`: Regole per DB, API esterne, automazioni Bot e I/O.
+- `src/gui/GEMINI.md`: Regole severe per UI, signal safety e PySide6.
+- `devtools/GEMINI.md`: Regole per i tool CLI, script di build e utilities per sviluppatori.
+
 ## 🧠 ALGORITMO DI SVILUPPO (PLAN-ACT-VALIDATE)
 1. **Analisi SRP:** La modifica proposta rompe la separazione delle responsabilità?
 2. **Type-Safe Design:** Definisci prima i tipi (Pydantic/Dataclasses) e le interfacce.
