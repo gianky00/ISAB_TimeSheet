@@ -1,0 +1,38 @@
+# ==============================================================================
+# ♾️ ISAB TIMESHEET - AI ARCHITECT MACHINE-READABLE OVERRIDES
+# ==============================================================================
+# Questo file fornisce direttive rigide e "machine-readable" per l'IA.
+# Integra il GEMINI.md (che è pensato per lettura umana) con regole bloccanti.
+
+[project]
+name = "ISAB_TimeSheet"
+ai_role = "Senior Software Architect & QA Sentinel"
+strict_mode = true
+
+[commands]
+# Comandi obbligatori che l'IA deve usare per task specifici
+test_command = "uv run python -m tests.run_robust_test"
+lint_command = "uv run ruff check ."
+lint_fix_command = "uv run ruff check --fix ."
+typecheck_command = "uv run mypy ."
+
+[rules.architecture]
+# L'IA deve fallire (o rifiutarsi di procedere) se viola queste regole
+enforce_srp = true
+gui_must_not_import_business_logic = true
+max_class_lines = 300
+
+[rules.tools]
+# Comandi o librerie esplicitamente vietati
+forbidden_modules = ["tkinter", "os.system", "requests"]
+preferred_modules = { http = "httpx", logging = "loguru", data_validation = "pydantic" }
+
+[rules.pyside6]
+# Override locali per comportamenti specifici su PySide6
+allow_lambda_in_signals = true
+force_explicit_disconnect = true
+
+[memory]
+# Configurazione per la persistenza della sessione AI
+state_dir = ".gemini/state/"
+use_scratchpad = true
