@@ -66,7 +66,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
         # 1. RUFF
         f.write("## Ruff Analysis\n")
         stdout, stderr, code = run_command([sys.executable, "-m", "ruff", "check", "."], "Ruff")
-        if code == 0 and not stdout:
+        if code == 0:
             f.write("Ruff: No issues found.\n\n")
         else:
             overall_success = False
