@@ -13,8 +13,8 @@ from typing import Any
 from PySide6.QtCore import QThread, QTimer, Signal
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
-from src.core import config_manager
-from src.core.constants import Icons
+from src.application.services import config_manager
+from src.application.services.constants import Icons
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.panels.settings.shared import style_button
 from src.gui.panels.settings.tabs.backup_tab import BackupTab
@@ -26,7 +26,7 @@ from src.gui.widgets.core_widgets import (
     PrimaryButton,
 )
 from src.gui.widgets.toast import ToastManager, toast_error
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 
 class ConfigSaveWorker(QThread):

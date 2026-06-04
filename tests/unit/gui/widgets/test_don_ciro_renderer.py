@@ -6,7 +6,7 @@ import pytest
 from PySide6.QtCore import QPointF, QRect
 from PySide6.QtGui import QPainter
 
-from src.core.mascot.don_ciro_engine import DonState, WeatherCond
+from src.application.services.mascot.don_ciro_engine import DonState, WeatherCond
 from src.gui.widgets.dashboard.don_ciro_renderer import DonCiroRenderer, RenderItem
 
 

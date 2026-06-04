@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 from PySide6.QtCore import QAbstractAnimation, QPropertyAnimation
 from PySide6.QtWidgets import QGraphicsOpacityEffect, QVBoxLayout, QWidget
 
-from src.utils.animation_helpers import (
+from src.infrastructure.utils.animation_helpers import (
     cleanup_animation_safely,
     cleanup_effect_safely,
     clear_layout_safely,

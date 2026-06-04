@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.app_initializer import AppInitializer
-from src.core.exceptions import StartupError
+from src.application.services.app_initializer import AppInitializer
+from src.application.services.exceptions import StartupError
 
 
 class TestAppInitializer:
@@ -12,11 +12,11 @@ class TestAppInitializer:
         AppInitializer._core_initialized = False
         AppInitializer._startup_alerts = []
 
-    @patch("src.core.app_initializer.configure_logging")
-    @patch("src.core.app_initializer.LicenseVerifier.verify_license")
-    @patch("src.core.app_initializer.DatabaseMigrationEngine.initialize_database")
-    @patch("src.core.app_initializer.ResourceManager.ensure_automation_driver")
-    @patch("src.core.app_initializer.AppInitializer._preload_heavy_modules")
+    @patch("src.application.services.app_initializer.configure_logging")
+    @patch("src.application.services.app_initializer.LicenseVerifier.verify_license")
+    @patch("src.application.services.app_initializer.DatabaseMigrationEngine.initialize_database")
+    @patch("src.application.services.app_initializer.ResourceManager.ensure_automation_driver")
+    @patch("src.application.services.app_initializer.AppInitializer._preload_heavy_modules")
     def test_initialize_core_success(self, mock_preload, mock_driver, mock_db, mock_lic, mock_log, fs):  # noqa: PLR0913
         progress = MagicMock()
         success = AppInitializer.initialize_core(progress_callback=progress)
@@ -31,12 +31,12 @@ class TestAppInitializer:
         AppInitializer._core_initialized = True
         assert AppInitializer.initialize_core() is True
 
-    @patch("src.core.app_initializer.LicenseVerifier.verify_license", side_effect=Exception("REVOCATA"))
+    @patch("src.application.services.app_initializer.LicenseVerifier.verify_license", side_effect=Exception("REVOCATA"))
     def test_initialize_core_critical_failure(self, mock_lic):
         with pytest.raises(Exception, match="REVOCATA"):
             AppInitializer.initialize_core()
 
-    @patch("src.core.app_initializer.LicenseVerifier.verify_license", side_effect=Exception("Random Error"))
+    @patch("src.application.services.app_initializer.LicenseVerifier.verify_license", side_effect=Exception("Random Error"))
     def test_initialize_core_generic_failure(self, mock_lic):
         with pytest.raises(StartupError):
             AppInitializer.initialize_core()
@@ -59,7 +59,7 @@ class TestAppInitializer:
         assert results[-1] == ("Sistema Pronto", 100)
         assert mock_mw.navigation_controller.get_panel.call_count == 12
 
-    @patch("src.utils.helpers.cleanup_bot_processes")
+    @patch("src.infrastructure.utils.helpers.cleanup_bot_processes")
     @patch("playwright.sync_api.sync_playwright")
     def test_preload_heavy_modules(self, mock_pw, mock_cleanup):
         # Mocking the context manager / entry point for playwright

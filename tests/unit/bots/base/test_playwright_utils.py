@@ -1,6 +1,6 @@
 from selenium.webdriver.common.by import By
 
-from src.bots.base.playwright_utils import get_playwright_selector
+from src.infrastructure.bots.base.playwright_utils import get_playwright_selector
 
 
 class TestPlaywrightUtils:

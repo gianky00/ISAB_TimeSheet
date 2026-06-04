@@ -12,7 +12,7 @@ import pytest
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 
-from src.bots.base.wait_helpers import (
+from src.infrastructure.bots.base.wait_helpers import (
     execute_with_wait,
     poll_for_download_complete,
     poll_for_file,
@@ -62,7 +62,7 @@ def temp_download_dir(tmp_path):
 class TestWaitForOverlay:
     """Test wait_for_overlay_to_disappear()."""
 
-    @patch("src.bots.base.wait_helpers.WebDriverWait")
+    @patch("src.infrastructure.bots.base.wait_helpers.WebDriverWait")
     def test_overlay_disappears_success(self, mock_wait_class, mock_driver):
         mock_wait = MagicMock()
         mock_wait_class.return_value = mock_wait
@@ -71,7 +71,7 @@ class TestWaitForOverlay:
         result = wait_for_overlay_to_disappear(mock_driver, (By.ID, "overlay"), timeout=10)
         assert result is True
 
-    @patch("src.bots.base.wait_helpers.WebDriverWait")
+    @patch("src.infrastructure.bots.base.wait_helpers.WebDriverWait")
     def test_overlay_timeout(self, mock_wait_class, mock_driver):
         mock_wait = MagicMock()
         mock_wait_class.return_value = mock_wait
@@ -84,7 +84,7 @@ class TestWaitForOverlay:
 class TestWaitForElementClickable:
     """Test wait_for_element_clickable()."""
 
-    @patch("src.bots.base.wait_helpers.WebDriverWait")
+    @patch("src.infrastructure.bots.base.wait_helpers.WebDriverWait")
     def test_element_clickable(self, mock_wait_class, mock_driver, mock_element):
         mock_wait = MagicMock()
         mock_wait_class.return_value = mock_wait
@@ -93,7 +93,7 @@ class TestWaitForElementClickable:
         result = wait_for_element_clickable(mock_driver, (By.ID, "button"))
         assert result == mock_element
 
-    @patch("src.bots.base.wait_helpers.WebDriverWait")
+    @patch("src.infrastructure.bots.base.wait_helpers.WebDriverWait")
     def test_element_not_clickable_timeout(self, mock_wait_class, mock_driver):
         mock_wait = MagicMock()
         mock_wait_class.return_value = mock_wait
@@ -106,7 +106,7 @@ class TestWaitForElementClickable:
 class TestWaitForElementStaleness:
     """Test wait_for_element_staleness()."""
 
-    @patch("src.bots.base.wait_helpers.WebDriverWait")
+    @patch("src.infrastructure.bots.base.wait_helpers.WebDriverWait")
     def test_element_becomes_stale(self, mock_wait_class, mock_driver, mock_element):
         mock_wait = MagicMock()
         mock_wait_class.return_value = mock_wait
@@ -225,7 +225,7 @@ class TestPollForNewFile:
 class TestSafeClickWithRetry:
     """Test safe_click_with_retry()."""
 
-    @patch("src.bots.base.wait_helpers.wait_for_element_clickable")
+    @patch("src.infrastructure.bots.base.wait_helpers.wait_for_element_clickable")
     def test_click_success_first_try(self, mock_wait_clickable, mock_driver):
         mock_element = MagicMock()
         mock_wait_clickable.return_value = mock_element
@@ -234,8 +234,8 @@ class TestSafeClickWithRetry:
         assert result is True
         mock_element.click.assert_called_once()
 
-    @patch("src.bots.base.wait_helpers.wait_for_element_clickable")
-    @patch("src.bots.base.wait_helpers.time.sleep")
+    @patch("src.infrastructure.bots.base.wait_helpers.wait_for_element_clickable")
+    @patch("src.infrastructure.bots.base.wait_helpers.time.sleep")
     def test_click_retry_on_intercept(self, mock_sleep, mock_wait_clickable, mock_driver):
         from selenium.common.exceptions import ElementClickInterceptedException
 
@@ -256,7 +256,7 @@ class TestSafeClickWithRetry:
 class TestExecuteWithWait:
     """Test execute_with_wait()."""
 
-    @patch("src.bots.base.wait_helpers.wait_for_overlay_to_disappear")
+    @patch("src.infrastructure.bots.base.wait_helpers.wait_for_overlay_to_disappear")
     def test_execute_action_with_wait(self, mock_wait_overlay, mock_driver):
         mock_wait_overlay.return_value = True
         action_called = False

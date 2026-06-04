@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from src.core.backup.zip_compressor import ZipCompressor
+from src.application.services.backup.zip_compressor import ZipCompressor
 
 
 def test_compress_directory_excludes_correctly(tmp_path: Path) -> None:

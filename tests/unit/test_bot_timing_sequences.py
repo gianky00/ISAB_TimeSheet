@@ -2,9 +2,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
-from src.bots.portale_fornitori.timbrature.bot import TimbratureBot
-from src.bots.safework.pdl.bot import SafeWorkPDLBot
+from src.infrastructure.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
+from src.infrastructure.bots.portale_fornitori.timbrature.bot import TimbratureBot
+from src.infrastructure.bots.safework.pdl.bot import SafeWorkPDLBot
 
 
 # Classi concrete per i test per evitare TypeError su metodi astratti
@@ -63,7 +63,7 @@ class TestBotTimingSequences:
 
     @pytest.fixture
     def mock_scarico_bot(self):
-        with patch("src.bots.base.base_bot.BaseBot._init_driver"):
+        with patch("src.infrastructure.bots.base.base_bot.BaseBot._init_driver"):
             bot = ConcreteScaricaTSBot(username="u", password="p", fornitore="F1")
             bot.driver = MagicMock()
             bot.wait = MagicMock()
@@ -73,8 +73,8 @@ class TestBotTimingSequences:
     @pytest.fixture
     def mock_safework_bot(self):
         with (
-            patch("src.bots.safework.base.SafeworkBaseBot._init_driver"),
-            patch("src.bots.safework.pdl.bot.SafeWorkPDLBot.__init__", return_value=None),
+            patch("src.infrastructure.bots.safework.base.SafeworkBaseBot._init_driver"),
+            patch("src.infrastructure.bots.safework.pdl.bot.SafeWorkPDLBot.__init__", return_value=None),
         ):
             bot = ConcreteSafeWorkPDLBot("u", "p")
             bot.driver = MagicMock()
@@ -86,7 +86,7 @@ class TestBotTimingSequences:
 
     @pytest.fixture
     def mock_timbrature_bot(self):
-        with patch("src.bots.base.base_bot.BaseBot._init_driver"):
+        with patch("src.infrastructure.bots.base.base_bot.BaseBot._init_driver"):
             bot = ConcreteTimbratureBot(username="u", password="p", fornitore="F1")
             bot.driver = MagicMock()
             bot.wait = MagicMock()
@@ -103,7 +103,7 @@ class TestBotTimingSequences:
             patch("time.sleep"),
             patch.object(ScaricaTSBot, "_attendi_scomparsa_overlay") as mock_wait_overlay,
         ):
-            with patch("src.bots.portale_fornitori.scarico_ts.bot.ActionChains"):
+            with patch("src.infrastructure.bots.portale_fornitori.scarico_ts.bot.ActionChains"):
                 mock_scarico_bot._setup_filters()
 
             # Non controlliamo più time.sleep(0.5) perché rimosso per efficienza.
@@ -127,7 +127,7 @@ class TestBotTimingSequences:
 
     def test_timbrature_navigation_timing(self, mock_timbrature_bot):
         """Verifica le attese durante la navigazione nel bot Timbrature."""
-        from src.bots.portale_fornitori.timbrature.pages.timbrature_page import (
+        from src.infrastructure.bots.portale_fornitori.timbrature.pages.timbrature_page import (
             TimbraturePage,
         )
 
@@ -141,7 +141,7 @@ class TestBotTimingSequences:
             page.wait = MagicMock()
             page.wait.until.return_value = mock_el
 
-            with patch("src.bots.portale_fornitori.timbrature.pages.timbrature_page.ActionChains"):
+            with patch("src.infrastructure.bots.portale_fornitori.timbrature.pages.timbrature_page.ActionChains"):
                 page.navigate_to_timbrature()
 
             # Verifichiamo che _wait_for_overlay sia stato chiamato invece di time.sleep espliciti
@@ -149,7 +149,7 @@ class TestBotTimingSequences:
 
     def test_timbrature_supplier_selection_timing(self, mock_timbrature_bot):
         """Verifica l'attesa durante la selezione del fornitore."""
-        from src.bots.portale_fornitori.timbrature.pages.timbrature_page import (
+        from src.infrastructure.bots.portale_fornitori.timbrature.pages.timbrature_page import (
             TimbraturePage,
         )
 
@@ -163,7 +163,7 @@ class TestBotTimingSequences:
 
             # Mock WebDriverWait interno a _select_supplier
             with patch(
-                "src.bots.portale_fornitori.timbrature.pages.timbrature_page.WebDriverWait"
+                "src.infrastructure.bots.portale_fornitori.timbrature.pages.timbrature_page.WebDriverWait"
             ) as mock_wait_class:
                 mock_wait_instance = mock_wait_class.return_value
                 mock_wait_instance.until.return_value = MagicMock()
@@ -180,8 +180,8 @@ class TestBotTimingSequences:
         files_before = set()
 
         with (
-            patch("src.bots.portale_fornitori.scarico_ts.bot.poll_for_new_file") as mock_poll,
-            patch("src.bots.portale_fornitori.scarico_ts.bot.sanitize_filename", return_value="safe"),
+            patch("src.infrastructure.bots.portale_fornitori.scarico_ts.bot.poll_for_new_file") as mock_poll,
+            patch("src.infrastructure.bots.portale_fornitori.scarico_ts.bot.sanitize_filename", return_value="safe"),
             patch.object(mock_scarico_bot, "_move_to_destination") as mock_move,
             patch.object(mock_scarico_bot, "_click_excel_export_button", return_value=True),
         ):

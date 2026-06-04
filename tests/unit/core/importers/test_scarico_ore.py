@@ -1,10 +1,10 @@
 from unittest.mock import MagicMock, patch
 
-from src.core.importers.scarico_ore import ScaricoOreImporter
+from src.application.services.importers.scarico_ore import ScaricoOreImporter
 
 
 class TestScaricoOreImporter:
-    @patch("src.core.importers.scarico_ore.Path")
+    @patch("src.application.services.importers.scarico_ore.Path")
     def test_import_scarico_ore_not_found(self, mock_path):
         """Testa import_scarico_ore con file non trovato."""
         mock_instance = mock_path.return_value
@@ -14,8 +14,8 @@ class TestScaricoOreImporter:
         assert success is False
         assert "non trovato" in msg
 
-    @patch("src.core.importers.scarico_ore.Pipeline")
-    @patch("src.core.importers.scarico_ore.Path")
+    @patch("src.application.services.importers.scarico_ore.Pipeline")
+    @patch("src.application.services.importers.scarico_ore.Path")
     def test_import_scarico_ore_success(self, mock_path, mock_pipeline_class):
         """Testa l'importazione con successo tramite pipeline."""
         mock_path.return_value.exists.return_value = True
@@ -28,8 +28,8 @@ class TestScaricoOreImporter:
         assert msg == "Importato"
         assert rows == [(1, "Test")]
 
-    @patch("src.core.importers.scarico_ore.zipfile.ZipFile")
-    @patch("src.core.importers.scarico_ore.Path")
+    @patch("src.application.services.importers.scarico_ore.zipfile.ZipFile")
+    @patch("src.application.services.importers.scarico_ore.Path")
     def test_scan_scarico_ore_rows_xml_parse(self, mock_path, mock_zip):
         """Testa la scansione rapida delle righe tramite parsing XML del file zip."""
         mock_path.return_value.exists.return_value = True
@@ -47,14 +47,14 @@ class TestScaricoOreImporter:
         count = ScaricoOreImporter.scan_scarico_ore_rows("/fake/path.xlsx")
         assert count == 100
 
-    @patch("src.core.importers.scarico_ore.zipfile.is_zipfile")
-    @patch("src.core.importers.scarico_ore.Path")
+    @patch("src.application.services.importers.scarico_ore.zipfile.is_zipfile")
+    @patch("src.application.services.importers.scarico_ore.Path")
     def test_scan_scarico_ore_rows_not_exists(self, mock_path, mock_is_zip):
         """Testa scan con file inesistente."""
         mock_path.return_value.exists.return_value = False
         assert ScaricoOreImporter.scan_scarico_ore_rows("/invalid") == 0
 
-    @patch("src.core.processing.scarico_ore.steps.ProcessScaricoOreRowsStep")
+    @patch("src.application.services.processing.scarico_ore.steps.ProcessScaricoOreRowsStep")
     def test_process_all_scarico_rows_alias(self, mock_step_class):
         """Testa l'alias per il processamento righe."""
         mock_step = mock_step_class.return_value

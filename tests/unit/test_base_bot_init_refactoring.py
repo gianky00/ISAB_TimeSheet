@@ -7,8 +7,8 @@ from unittest.mock import patch
 import pytest
 from selenium.common.exceptions import SessionNotCreatedException
 
-from src.bots.base.selenium_base_bot import SeleniumBaseBot
-from src.core.constants import BotStatus
+from src.application.services.constants import BotStatus
+from src.infrastructure.bots.base.selenium_base_bot import SeleniumBaseBot
 
 
 class ConcreteBot(SeleniumBaseBot):
@@ -43,13 +43,13 @@ class ConcreteBot(SeleniumBaseBot):
 @pytest.fixture
 def bot(mocker):
     # Mock profile patching globally for bot tests to avoid FileNotFoundError in headless
-    mocker.patch("src.bots.base.selenium_base_bot.patch_browser_profile")
+    mocker.patch("src.infrastructure.bots.base.selenium_base_bot.patch_browser_profile")
     return ConcreteBot("user", "pass")
 
 
 def test_init_driver_success(bot, mocker):
-    mocker.patch("src.bots.base.selenium_base_bot.Options")
-    m_chrome = mocker.patch("src.bots.base.selenium_base_bot.webdriver.Chrome")
+    mocker.patch("src.infrastructure.bots.base.selenium_base_bot.Options")
+    m_chrome = mocker.patch("src.infrastructure.bots.base.selenium_base_bot.webdriver.Chrome")
     m_manager = mocker.patch("webdriver_manager.chrome.ChromeDriverManager")
     m_manager.return_value.install.return_value = "chromedriver.exe"
 
@@ -61,9 +61,9 @@ def test_init_driver_success(bot, mocker):
 
 
 def test_init_driver_headless_config(bot, mocker):
-    mocker.patch("src.core.config_manager.load_config", return_value={"browser_headless": True})
-    m_options = mocker.patch("src.bots.base.selenium_base_bot.Options")
-    mocker.patch("src.bots.base.selenium_base_bot.webdriver.Chrome")
+    mocker.patch("src.application.services.config_manager.load_config", return_value={"browser_headless": True})
+    m_options = mocker.patch("src.infrastructure.bots.base.selenium_base_bot.Options")
+    mocker.patch("src.infrastructure.bots.base.selenium_base_bot.webdriver.Chrome")
     mocker.patch(
         "webdriver_manager.chrome.ChromeDriverManager"
     ).return_value.install.return_value = "chromedriver.exe"
@@ -74,10 +74,10 @@ def test_init_driver_headless_config(bot, mocker):
 
 def test_init_driver_failure_handling(bot, mocker):
     mocker.patch(
-        "src.utils.resource_manager.ResourceManager.ensure_automation_driver", return_value="chromedriver.exe"
+        "src.infrastructure.utils.resource_manager.ResourceManager.ensure_automation_driver", return_value="chromedriver.exe"
     )
     mocker.patch(
-        "src.bots.base.selenium_base_bot.webdriver.Chrome", side_effect=Exception("chrome instance exited")
+        "src.infrastructure.bots.base.selenium_base_bot.webdriver.Chrome", side_effect=Exception("chrome instance exited")
     )
 
     logs = []
@@ -92,16 +92,16 @@ def test_init_driver_failure_handling(bot, mocker):
 
 def test_init_driver_version_error(bot, mocker):
     mocker.patch(
-        "src.utils.resource_manager.ResourceManager.ensure_automation_driver", return_value="chromedriver.exe"
+        "src.infrastructure.utils.resource_manager.ResourceManager.ensure_automation_driver", return_value="chromedriver.exe"
     )
     fake_dir = Path("/tmp/drivers")
-    mocker.patch("src.utils.resource_manager.ResourceManager.get_writable_drivers_dir", return_value=fake_dir)
+    mocker.patch("src.infrastructure.utils.resource_manager.ResourceManager.get_writable_drivers_dir", return_value=fake_dir)
 
     # Mock exists/unlink to avoid side effects
     mocker.patch("pathlib.Path.exists", return_value=True)
     mocker.patch("pathlib.Path.unlink")
 
-    with patch("src.bots.base.selenium_base_bot.webdriver.Chrome") as mock_chrome:
+    with patch("src.infrastructure.bots.base.selenium_base_bot.webdriver.Chrome") as mock_chrome:
         mock_chrome.side_effect = SessionNotCreatedException("version mismatch")
         logs = []
         bot.set_log_callback(lambda m: logs.append(m))

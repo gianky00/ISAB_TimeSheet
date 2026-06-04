@@ -9,9 +9,9 @@ from typing import Any
 
 from PySide6.QtCore import QThread, Signal
 
-from src.core.contabilita.certificati_engine import CertificatiEngine
-from src.core.contabilita_manager import ContabilitaManager
-from src.core.contabilita_queries import ContabilitaQueries
+from src.application.services.contabilita.certificati_engine import CertificatiEngine
+from src.application.services.contabilita_manager import ContabilitaManager
+from src.application.services.contabilita_queries import ContabilitaQueries
 
 logger = logging.getLogger(__name__)
 

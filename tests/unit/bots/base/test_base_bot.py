@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.bots.base.base_bot import BaseBot
-from src.core.constants import BotStatus
+from src.application.services.constants import BotStatus
+from src.infrastructure.bots.base.base_bot import BaseBot
 
 
 class MockBot(BaseBot):
@@ -63,7 +63,7 @@ class TestBaseBot:
         bot_no_creds = MockBot("", "")
         assert bot_no_creds.validate_data([{"k": "v"}])[0] is False
 
-    @patch("src.bots.base.execution_guard.ExecutionGuard.check_environment")
+    @patch("src.infrastructure.bots.base.execution_guard.ExecutionGuard.check_environment")
     def test_execute_environment_denied(self, mock_guard):
         """Testa execute quando l'ambiente non è pronto (es. licenza)."""
         mock_guard.return_value = (False, "ACCESSO NEGATO: Licenza scaduta")
@@ -73,7 +73,7 @@ class TestBaseBot:
         assert res is False
         assert bot.status == BotStatus.ERROR
 
-    @patch("src.bots.base.execution_guard.ExecutionGuard.check_environment")
+    @patch("src.infrastructure.bots.base.execution_guard.ExecutionGuard.check_environment")
     def test_execute_success_flow(self, mock_guard):
         """Testa il flusso di esecuzione positivo."""
         mock_guard.return_value = (True, "OK")
@@ -92,7 +92,7 @@ class TestBaseBot:
         with pytest.raises(InterruptedError):
             bot._check_stop()
 
-    @patch("src.bots.base.execution_guard.ExecutionGuard.check_environment")
+    @patch("src.infrastructure.bots.base.execution_guard.ExecutionGuard.check_environment")
     def test_execute_fatal_error(self, mock_guard):
         """Testa la gestione di errori fatali durante run."""
         mock_guard.return_value = (True, "OK")

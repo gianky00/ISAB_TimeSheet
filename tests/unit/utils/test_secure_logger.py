@@ -1,6 +1,6 @@
 import logging
 
-from src.utils.secure_logger import SensitiveDataFilter, get_secure_logger
+from src.infrastructure.utils.secure_logger import SensitiveDataFilter, get_secure_logger
 
 
 class TestSecureLogger:

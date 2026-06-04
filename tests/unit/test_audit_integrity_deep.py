@@ -1,6 +1,6 @@
 """Deep tests for AuditIntegrity and chain verification."""
 
-from src.core.audit.integrity import AuditIntegrity
+from src.application.services.audit.integrity import AuditIntegrity
 
 
 class TestAuditIntegrityDeep:

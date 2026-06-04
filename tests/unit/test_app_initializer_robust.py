@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from PySide6.QtWidgets import QApplication
 
-from src.core.app_initializer import AppInitializer
+from src.application.services.app_initializer import AppInitializer
 
 
 class TestAppInitializerRobust:
@@ -20,12 +20,12 @@ class TestAppInitializerRobust:
         """Mocka QApplication."""
         return QApplication([]) if not QApplication.instance() else QApplication.instance()
 
-    @patch("src.core.app_initializer.AppInitializer._setup_logging")
-    @patch("src.core.initialization.migration_engine.DatabaseMigrationEngine.initialize_database")
-    @patch("src.core.initialization.license_verifier.LicenseVerifier.verify_license")
-    @patch("src.utils.resource_manager.ResourceManager.ensure_automation_driver")
-    @patch("src.core.app_initializer.get_available_bots")
-    @patch("src.core.app_initializer.AppInitializer._preload_heavy_modules")
+    @patch("src.application.services.app_initializer.AppInitializer._setup_logging")
+    @patch("src.application.services.initialization.migration_engine.DatabaseMigrationEngine.initialize_database")
+    @patch("src.application.services.initialization.license_verifier.LicenseVerifier.verify_license")
+    @patch("src.infrastructure.utils.resource_manager.ResourceManager.ensure_automation_driver")
+    @patch("src.application.services.app_initializer.get_available_bots")
+    @patch("src.application.services.app_initializer.AppInitializer._preload_heavy_modules")
     def test_initialize_core_success(
         self,
         mock_preload,
@@ -48,8 +48,8 @@ class TestAppInitializerRobust:
         mock_driver.assert_called_once()
         mock_preload.assert_called_once()
 
-    @patch("src.core.app_initializer.AppInitializer._setup_logging")
-    @patch("src.core.initialization.license_verifier.LicenseVerifier.verify_license")
+    @patch("src.application.services.app_initializer.AppInitializer._setup_logging")
+    @patch("src.application.services.initialization.license_verifier.LicenseVerifier.verify_license")
     def test_initialize_core_license_invalid(
         self,
         mock_license,
@@ -65,8 +65,8 @@ class TestAppInitializerRobust:
 
         assert AppInitializer._core_initialized is False
 
-    @patch("src.core.app_initializer.logger")
-    @patch("src.core.initialization.migration_engine.DatabaseMigrationEngine.initialize_database")
+    @patch("src.application.services.app_initializer.logger")
+    @patch("src.application.services.initialization.migration_engine.DatabaseMigrationEngine.initialize_database")
     def test_initialize_core_failure(
         self,
         mock_db_init,
@@ -79,10 +79,10 @@ class TestAppInitializerRobust:
         with (
             patch.object(AppInitializer, "_setup_logging"),
             patch.object(AppInitializer, "_verify_environment"),
-            patch("src.core.initialization.license_verifier.LicenseVerifier.verify_license"),
+            patch("src.application.services.initialization.license_verifier.LicenseVerifier.verify_license"),
         ):
             # Mi aspetto eccezione StartupError (wrappata)
-            from src.core.exceptions import StartupError
+            from src.application.services.exceptions import StartupError
 
             with pytest.raises(StartupError, match="DB Error"):
                 AppInitializer.initialize_core()
@@ -110,13 +110,13 @@ class TestAppInitializerRobust:
         for idx in expected_indices:
             mock_nav.get_panel.assert_any_call(idx)
 
-    @patch("src.core.app_initializer.configure_logging")
+    @patch("src.application.services.app_initializer.configure_logging")
     def test_setup_logging_success(self, mock_conf):
         """Test configurazione logging."""
         AppInitializer._setup_logging()
         mock_conf.assert_called_once()
 
-    @patch("src.core.app_initializer.configure_logging", side_effect=Exception("Log Fail"))
+    @patch("src.application.services.app_initializer.configure_logging", side_effect=Exception("Log Fail"))
     @patch("logging.basicConfig")
     def test_setup_logging_fallback(self, mock_basic, mock_conf):
         """Test fallback logging base su errore."""

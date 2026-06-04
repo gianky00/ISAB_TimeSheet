@@ -9,7 +9,7 @@ from typing import Any
 
 from PySide6.QtCore import QThread, Signal
 
-from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
+from src.application.services.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
 
 logger = logging.getLogger(__name__)
 

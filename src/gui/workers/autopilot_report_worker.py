@@ -8,7 +8,7 @@ import logging
 
 from PySide6.QtCore import QThread, Signal
 
-from src.core.report_service import ReportService
+from src.application.services.report_service import ReportService
 
 logger = logging.getLogger(__name__)
 

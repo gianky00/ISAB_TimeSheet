@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.bots.base.base_bot import BaseBot
-from src.core.constants import BotStatus
+from src.application.services.constants import BotStatus
+from src.infrastructure.bots.base.base_bot import BaseBot
 
 
 # Classe concreta per testare BaseBot (che è astratta)
@@ -34,7 +34,7 @@ class MockBot(BaseBot):
 
     def _save_error_state(self, error_msg):
         # Implementazione reale per testare test_save_error_state_generation
-        from src.core.paths import get_logs_path
+        from src.application.services.paths import get_logs_path
 
         error_dir = Path(get_logs_path()) / "errors"
         error_dir.mkdir(parents=True, exist_ok=True)
@@ -56,9 +56,9 @@ class TestBotResilienceAdvanced:
     @pytest.fixture
     def bot(self, tmp_path, mocker):
         """Setup del bot con percorsi mockati."""
-        mocker.patch("src.core.paths.get_logs_path", return_value=str(tmp_path / "logs"))
+        mocker.patch("src.application.services.paths.get_logs_path", return_value=str(tmp_path / "logs"))
         # Mocking ExecutionGuard to avoid license issues
-        mocker.patch("src.bots.base.base_bot.ExecutionGuard.check_environment", return_value=(True, "OK"))
+        mocker.patch("src.infrastructure.bots.base.base_bot.ExecutionGuard.check_environment", return_value=(True, "OK"))
         bot = MockBot("user", "pass")
         bot.signals = MagicMock()
         bot.driver = None  # FIX: Inizializza attributo driver

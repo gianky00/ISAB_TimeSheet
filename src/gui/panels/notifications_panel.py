@@ -22,8 +22,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons
-from src.core.notification_manager import NotificationManager
+from src.application.services.constants import Icons
+from src.application.services.notification_manager import NotificationManager
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.panels.health_panel import HealthPanel
 from src.gui.styles import COLORS
@@ -32,7 +32,7 @@ from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.notification_card import NotificationCard
 from src.gui.widgets.notification_group_header import NotificationGroupHeader
 from src.gui.widgets.notification_toolbar import NotificationToolbar
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 
 @dataclass

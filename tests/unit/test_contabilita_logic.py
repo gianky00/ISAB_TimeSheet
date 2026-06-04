@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.contabilita_manager import ContabilitaManager
+from src.application.services.contabilita_manager import ContabilitaManager
 
 
 class TestContabilitaLogic:
@@ -14,11 +14,11 @@ class TestContabilitaLogic:
         mock_rows = [{"year": 2024}]
         with (
             patch(
-                "src.core.contabilita.importer_service.ExcelReadStep.execute",
+                "src.application.services.contabilita.importer_service.ExcelReadStep.execute",
                 side_effect=lambda ctx: ctx.update({"success": True, "rows": mock_rows, "years": [2024]}),
             ),
             patch(
-                "src.core.contabilita.importer_service.DatabaseSyncStep.execute",
+                "src.application.services.contabilita.importer_service.DatabaseSyncStep.execute",
                 side_effect=lambda ctx: ctx.update({"success": True, "total_added": 1, "total_removed": 0}),
             ),
         ):
@@ -52,11 +52,11 @@ class TestContabilitaLogic:
 
         with (
             patch(
-                "src.core.contabilita.stats_service.ContabilitaQueries.get_data_by_year",
+                "src.application.services.contabilita.stats_service.ContabilitaQueries.get_data_by_year",
                 return_value=mock_oda,
             ),
             patch(
-                "src.core.contabilita.stats_service.ContabilitaQueries.get_giornaliere_by_year",
+                "src.application.services.contabilita.stats_service.ContabilitaQueries.get_giornaliere_by_year",
                 return_value=mock_giornaliere,
             ),
         ):
@@ -73,12 +73,12 @@ class TestContabilitaLogic:
         g_dir.mkdir()
         with (
             patch(
-                "src.core.excel_importer.ExcelImporter.import_giornaliere",
+                "src.application.services.excel_importer.ExcelImporter.import_giornaliere",
                 return_value=(True, "OK", [], [2024]),
             ),
-            patch("src.core.data_synchronizer.DataSynchronizer.sync_giornaliere", return_value=(1, 0)),
+            patch("src.application.services.data_synchronizer.DataSynchronizer.sync_giornaliere", return_value=(1, 0)),
             patch(
-                "src.core.contabilita.importer_service.ContabilitaImporterService._prepare_odc_lookup_map",
+                "src.application.services.contabilita.importer_service.ContabilitaImporterService._prepare_odc_lookup_map",
                 return_value={},
             ),
         ):
@@ -87,12 +87,12 @@ class TestContabilitaLogic:
             assert added == 1
 
     def test_scan_workload(self, manager):
-        with patch("src.core.excel_importer.ExcelImporter.scan_workload", return_value=(10, 5)):
+        with patch("src.application.services.excel_importer.ExcelImporter.scan_workload", return_value=(10, 5)):
             rows, files = manager.scan_workload("fake.xlsx", "fake_dir")
             assert rows == 10
             assert files == 5
 
     def test_scan_scarico_ore_rows(self, manager):
-        with patch("src.core.excel_importer.ExcelImporter.scan_scarico_ore_rows", return_value=100):
+        with patch("src.application.services.excel_importer.ExcelImporter.scan_scarico_ore_rows", return_value=100):
             rows = manager.scan_scarico_ore_rows("fake.xlsx")
             assert rows == 100

@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.panels.settings.tabs.config_tab import SettingCard
 from src.gui.styles import COLORS
 

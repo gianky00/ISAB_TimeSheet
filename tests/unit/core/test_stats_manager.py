@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.stats_manager import StatsManager
+from src.application.services.stats_manager import StatsManager
 
 
 class TestStatsManager:
@@ -13,8 +13,8 @@ class TestStatsManager:
         # Reset singleton instance
         StatsManager._instance = None
 
-    @patch("src.core.config_manager.load_config")
-    @patch("src.core.config_manager.set_config_value")
+    @patch("src.application.services.config_manager.load_config")
+    @patch("src.application.services.config_manager.set_config_value")
     def test_singleton_and_init(self, mock_set, mock_load):
         mock_load.return_value = {"statistics": {"bot1": {"runs": 1}}}
 
@@ -24,8 +24,8 @@ class TestStatsManager:
         assert mgr is mgr2
         assert mgr.stats["bot1"]["runs"] == 1
 
-    @patch("src.core.config_manager.load_config", return_value={})
-    @patch("src.core.config_manager.set_config_value")
+    @patch("src.application.services.config_manager.load_config", return_value={})
+    @patch("src.application.services.config_manager.set_config_value")
     def test_increment_usage(self, mock_set, mock_load):
         mgr = StatsManager()
         mgr.increment_usage("new_bot")
@@ -37,8 +37,8 @@ class TestStatsManager:
         mgr.increment_usage("new_bot")
         assert mgr.stats["new_bot"]["runs"] == 2
 
-    @patch("src.core.config_manager.load_config", return_value={})
-    @patch("src.core.config_manager.set_config_value")
+    @patch("src.application.services.config_manager.load_config", return_value={})
+    @patch("src.application.services.config_manager.set_config_value")
     def test_increment_error(self, mock_set, mock_load):
         mgr = StatsManager()
         mgr.increment_error("bot_fail")
@@ -46,8 +46,8 @@ class TestStatsManager:
         assert mgr.stats["bot_fail"]["errors"] == 1
         assert mgr.stats["bot_fail"]["runs"] == 0
 
-    @patch("src.core.config_manager.load_config", return_value={})
-    @patch("src.core.config_manager.set_config_value")
+    @patch("src.application.services.config_manager.load_config", return_value={})
+    @patch("src.application.services.config_manager.set_config_value")
     def test_async_save_logic(self, mock_set, mock_load):
         mgr = StatsManager()
 
@@ -62,8 +62,8 @@ class TestStatsManager:
         assert args[0] == "statistics"
         assert args[1]["async_bot"]["runs"] == 1
 
-    @patch("src.core.config_manager.load_config", return_value={})
-    @patch("src.core.config_manager.set_config_value")
+    @patch("src.application.services.config_manager.load_config", return_value={})
+    @patch("src.application.services.config_manager.set_config_value")
     def test_migration_from_old_file(self, mock_set, mock_load, fs):
         # Setup filesystem
         config_dir = Path("/config")
@@ -72,7 +72,7 @@ class TestStatsManager:
         fs.create_file(str(old_file), contents='{"legacy_bot": {"runs": 10}}')
 
         # Patch CONFIG_DIR e FileNames.STATISTICS per matchare il nostro fs simulato
-        with patch("src.core.config_manager.CONFIG_DIR", config_dir):
+        with patch("src.application.services.config_manager.CONFIG_DIR", config_dir):
             mgr = StatsManager()
             assert mgr.stats["legacy_bot"]["runs"] == 10
             # Attendiamo il salvataggio asincrono scatenato dal caricamento con migrazione

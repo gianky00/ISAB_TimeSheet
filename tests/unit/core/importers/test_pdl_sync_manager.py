@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.importers.pdl_sync_manager import ProgrammingSyncManager
+from src.application.services.importers.pdl_sync_manager import ProgrammingSyncManager
 
 
 class TestPdlSyncManager:
@@ -11,14 +11,14 @@ class TestPdlSyncManager:
         fs.create_file("master.xlsm")
         return ProgrammingSyncManager("master.xlsm")
 
-    @patch("src.core.importers.pdl_sync_manager.win32com.client", create=True)
+    @patch("src.application.services.importers.pdl_sync_manager.win32com.client", create=True)
     def test_get_excel_workbook_new_instance(self, mock_win32, manager):
         mock_app = MagicMock()
         mock_win32.DispatchEx.return_value = mock_app
         mock_app.Workbooks.Open.return_value = MagicMock(Name="master.xlsm")
         mock_win32.GetActiveObject.side_effect = Exception("No active Excel")
 
-        with patch("src.core.importers.pdl_sync_manager._win32com_found", True):
+        with patch("src.application.services.importers.pdl_sync_manager._win32com_found", True):
             assert manager._get_excel_workbook() is True
             assert manager.excel_app == mock_app
 
@@ -41,7 +41,7 @@ class TestPdlSyncManager:
         mappa = manager._map_master_pdls()
         assert "PDL1" in mappa
 
-    @patch("src.core.importers.pdl_sync_manager.openpyxl.load_workbook")
+    @patch("src.application.services.importers.pdl_sync_manager.openpyxl.load_workbook")
     def test_analyze_downloaded_file_mocked(self, mock_load, manager):
         mock_wb = MagicMock()
         mock_ws = MagicMock()
@@ -73,12 +73,12 @@ class TestPdlSyncManager:
         assert manager.excel_app.ScreenUpdating is True
 
     @patch(
-        "src.core.importers.pdl_sync_manager.ProgrammingSyncManager._get_excel_workbook", return_value=True
+        "src.application.services.importers.pdl_sync_manager.ProgrammingSyncManager._get_excel_workbook", return_value=True
     )
-    @patch("src.core.importers.pdl_sync_manager.ProgrammingSyncManager._map_master_pdls")
-    @patch("src.core.importers.pdl_sync_manager.ProgrammingSyncManager._analyze_downloaded_file")
-    @patch("src.core.importers.pdl_sync_manager.ProgrammingSyncManager._apply_modifications_to_master")
-    @patch("src.core.importers.pdl_sync_manager.ProgrammingSyncManager._insert_new_pdls")
+    @patch("src.application.services.importers.pdl_sync_manager.ProgrammingSyncManager._map_master_pdls")
+    @patch("src.application.services.importers.pdl_sync_manager.ProgrammingSyncManager._analyze_downloaded_file")
+    @patch("src.application.services.importers.pdl_sync_manager.ProgrammingSyncManager._apply_modifications_to_master")
+    @patch("src.application.services.importers.pdl_sync_manager.ProgrammingSyncManager._insert_new_pdls")
     def test_process_downloaded_report_full(self, m_ins, m_app, m_ana, m_map, m_get, manager):  # noqa: PLR0913
         manager.excel_app = MagicMock()
         manager.wb_master = MagicMock()
@@ -102,14 +102,14 @@ class TestPdlSyncManager:
         assert mock_app.Quit.called
         assert manager.excel_app is None
 
-    @patch("src.core.importers.pdl_sync_manager.win32com.client", create=True)
+    @patch("src.application.services.importers.pdl_sync_manager.win32com.client", create=True)
     def test_get_excel_workbook_already_open(self, mock_win32, manager):
         mock_app = MagicMock()
         mock_win32.GetActiveObject.return_value = mock_app
         mock_wb = MagicMock(Name="master.xlsm")
         mock_app.Workbooks = [mock_wb]
 
-        with patch("src.core.importers.pdl_sync_manager._win32com_found", True):
+        with patch("src.application.services.importers.pdl_sync_manager._win32com_found", True):
             assert manager._get_excel_workbook() is True
             assert manager.wb_master == mock_wb
             assert manager._is_already_open is True

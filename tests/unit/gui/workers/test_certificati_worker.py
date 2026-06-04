@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from src.core.contabilita.certificati_engine import CertificatiEngine
+from src.application.services.contabilita.certificati_engine import CertificatiEngine
 from src.gui.workers.certificati_worker import CertificatiWorker
 
 

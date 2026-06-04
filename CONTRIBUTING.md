@@ -15,11 +15,11 @@ Questo documento delinea le linee guida per lo sviluppo, il testing e il rilasci
 
 1. **Installazione dipendenze e venv**:
    ```bash
-   poetry install
+   uv sync
    ```
 2. **Attivazione Virtual Environment**:
    ```bash
-   poetry shell
+   uv venv
    ```
    _(Oppure usa l'interprete `.venv/Scripts/python.exe` nel tuo IDE)_.
 
@@ -59,23 +59,23 @@ Prima di un commit, **tutti** i seguenti controlli devono passare (già automati
 
 ```bash
 # Linting e formattazione
-poetry run ruff check --fix
-poetry run ruff format
+uv run ruff check --fix
+uv run ruff format
 
 # Type checking (strict)
-poetry run mypy --strict src/
+uv run mypy --strict src/
 
 # Docstring coverage
-poetry run interrogate src/
+uv run interrogate src/
 
 # Complessità ciclomatica
-poetry run xenon src/ --max-absolute B --max-modules B --max-average A
+uv run xenon src/ --max-absolute B --max-modules B --max-average A
 
 # Coesione SRP (LCOM)
-poetry run python scripts/check_cohesion.py
+uv run python devtools/maintenance/check_cohesion.py
 
-# Tutti in una volta
-poetry run pre-commit run --all-files
+# Tutto in una volta
+uv run pre-commit run --all-files
 ```
 
 ---
@@ -86,11 +86,11 @@ La versione è gestita automaticamente da **commitizen**. Non modificare mai `ve
 
 1. **Bump della versione** (calcola automaticamente major/minor/patch da commit convenzionali):
    ```bash
-   poetry run cz bump
+   uv run cz bump
    ```
 2. **Build distribuibile** (PyInstaller):
    ```bash
-   python "admin/Crea Setup/build_dist.py"
+   python "devtools/gui/Crea Setup/build_dist.py"
    ```
 3. L'installer viene generato nella cartella `dist/`.
 
@@ -98,18 +98,22 @@ La versione è gestita automaticamente da **commitizen**. Non modificare mai `ve
 
 ## 🏛️ Architettura
 
-Vedi [`.ai-context.json`](./.ai-context.json) per il contesto architetturale completo in formato machine-readable.
+Vedi [`.ai-context.json`](./docs/resources/.ai-context.json) per il contesto architetturale completo in formato machine-readable.
 
-- **Core** (`src/core/`): Logica di business pura. ZERO dipendenze dalla GUI.
-- **GUI** (`src/gui/`): Interfaccia PySide6. Dipende SOLO da Core. ZERO query SQL dirette.
-- **Bots** (`src/bots/`): Automazione browser (Selenium/Playwright). Logica isolata.
-- **Protocolli**: Vedi `src/core/interfaces.py` per i contratti formali `BotProtocol` e `DataImporterProtocol`.
+L'architettura segue una **Layered Architecture** rigorosa:
+- `src/domain/`: Logica di business e modelli Pydantic.
+- `src/application/services/`: Coordinamento e servizi core.
+- `src/infrastructure/`: Implementazioni tecniche (Bot, DB, Utils).
+- `src/gui/`: Interfaccia PySide6.
+- `src/api/`: Bridge esterni (Telegram).
+
+Tutti i tool di sviluppo sono centralizzati in `devtools/`.
 
 ---
 
 ## 🚨 Regole Anti-Breakage Critiche
 
 1. **Signal Safety PySide6**: Non rimuovere mai le `lambda` dalle connessioni dei segnali.
-2. **Settings Singleton**: Usa sempre `from src.core.config.settings import settings`. MAI istanziare `SyncroJobSettings` direttamente.
+2. **Settings Singleton**: Usa sempre `from src.application.services.config.settings import settings`. MAI istanziare `SyncroJobSettings` direttamente.
 3. **Dialogs**: Usa `ConfirmationDialog` (non `QMessageBox`) e `StandardInputDialog` (non `QInputDialog`).
 4. **Logging**: Solo `loguru`. Implementa `@logger.catch` sugli entry point critici.

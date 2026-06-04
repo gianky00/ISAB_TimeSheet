@@ -9,7 +9,7 @@ from typing import Any
 
 from PySide6.QtCore import QThread, Signal
 
-from src.core.contabilita_manager import ContabilitaManager
+from src.application.services.contabilita_manager import ContabilitaManager
 
 logger = logging.getLogger(__name__)
 

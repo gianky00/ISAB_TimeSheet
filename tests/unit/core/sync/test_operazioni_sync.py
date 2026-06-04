@@ -2,7 +2,7 @@ import sqlite3
 from pathlib import Path
 from unittest.mock import patch
 
-from src.core.sync.operazioni_sync import OperazioniSyncEngine
+from src.application.services.sync.operazioni_sync import OperazioniSyncEngine
 
 
 class TestOperazioniSyncEngine:
@@ -12,13 +12,13 @@ class TestOperazioniSyncEngine:
         conn.execute(f"CREATE TABLE {table_name} ({cols_def})")
         return conn
 
-    @patch("src.core.sync.operazioni_sync.db_manager.get_connection")
+    @patch("src.application.services.sync.operazioni_sync.db_manager.get_connection")
     def test_sync_attivita_programmate(self, mock_conn):
         # We don't need a real db if we mock everything, but testing with real SQLite is better
         conn = sqlite3.connect(":memory:")
         # We need to know the columns expected. The code uses ExcelImporter.ATTIVITA_PROGRAMMATE_MAPPING
         # Let's mock ExcelImporter.ATTIVITA_PROGRAMMATE_MAPPING
-        with patch("src.core.sync.operazioni_sync.ExcelImporter") as mock_importer:
+        with patch("src.application.services.sync.operazioni_sync.ExcelImporter") as mock_importer:
             mock_importer.ATTIVITA_PROGRAMMATE_MAPPING = {"Col1": "db_col1", "Col2": "db_col2"}
             conn.execute("CREATE TABLE attivita_programmate (db_col1 TEXT, db_col2 TEXT, styles TEXT)")
             conn.execute("INSERT INTO attivita_programmate VALUES ('old1', 'old2', 's')")
@@ -38,10 +38,10 @@ class TestOperazioniSyncEngine:
             assert len(res) == 2
             assert res[0][0] == "new1"
 
-    @patch("src.core.sync.operazioni_sync.db_manager.get_connection")
+    @patch("src.application.services.sync.operazioni_sync.db_manager.get_connection")
     def test_sync_scarico_ore(self, mock_conn):
         conn = sqlite3.connect(":memory:")
-        with patch("src.core.sync.operazioni_sync.ExcelImporter") as mock_importer:
+        with patch("src.application.services.sync.operazioni_sync.ExcelImporter") as mock_importer:
             mock_importer.SCARICO_ORE_COLS = ["col1", "col2"]
             conn.execute("CREATE TABLE scarico_ore (col1 TEXT, col2 TEXT)")
             conn.execute("INSERT INTO scarico_ore VALUES ('o1', 'o2')")

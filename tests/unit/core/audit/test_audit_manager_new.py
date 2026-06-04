@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.audit.manager import AuditManager
-from src.core.audit.models import Severity, Status
+from src.application.services.audit.manager import AuditManager
+from src.application.services.audit.models import Severity, Status
 
 
 class TestAuditManager:
@@ -25,8 +25,8 @@ class TestAuditManager:
         task = self.manager._log_queue.get()
         assert task["action"] == "Test Action"
 
-    @patch("src.core.audit.manager.AuditIntegrity.calculate_hash", return_value="hash123")
-    @patch("src.core.audit.manager.AuditManager._get_current_user", return_value="testuser")
+    @patch("src.application.services.audit.manager.AuditIntegrity.calculate_hash", return_value="hash123")
+    @patch("src.application.services.audit.manager.AuditManager._get_current_user", return_value="testuser")
     def test_execute_log_internal(self, mock_user, mock_hash):
         self.manager.db.get_last_hash.return_value = "prev"
         self.manager.db.insert_log.return_value = 100

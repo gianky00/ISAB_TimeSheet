@@ -21,18 +21,18 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.config_manager import get_config_value, set_config_value
-from src.core.constants import Icons, UbicazioneStrumenti
-from src.core.contabilita.certificati_engine import CertificatiEngine
-from src.core.contabilita_manager import ContabilitaManager
-from src.core.notification_manager import NotificationManager
+from src.application.services.config_manager import get_config_value, set_config_value
+from src.application.services.constants import Icons, UbicazioneStrumenti
+from src.application.services.contabilita.certificati_engine import CertificatiEngine
+from src.application.services.contabilita_manager import ContabilitaManager
+from src.application.services.notification_manager import NotificationManager
 from src.gui.dialogs.certificati_analysis_dialog import ScadenzeAnalysisDialog
 from src.gui.styles import COLORS
 from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
 from src.gui.widgets.core_widgets import PrimaryButton
 from src.gui.workers.certificati_worker import CertificatiWorker
 from src.gui.workers.pdf_export_worker import PDFExportWorker
-from src.utils.helpers import get_asset_path, safe_open
+from src.infrastructure.utils.helpers import get_asset_path, safe_open
 
 from .certificati.tree_widget import CertificatiTreeWidget
 
@@ -369,7 +369,7 @@ class CertificatiCampioneTab(QWidget):
         days_text = self.engine.format_days_text_with_guasto(days_val, g.get("guasto_tipo", ""))
 
         # Recupero numero certificato più recente (il primo della lista ordinata dall'engine)
-        from src.core.contabilita_queries import ContabilitaQueries
+        from src.application.services.contabilita_queries import ContabilitaQueries
 
         latest_cert_num = ""
         if g.get("certificates"):
@@ -419,7 +419,7 @@ class CertificatiCampioneTab(QWidget):
 
     def _add_child_items(self, parent: SortableTreeWidgetItem, g: dict[str, Any]) -> None:
         """Aggiunge i certificati (corrente e storico) come figli dell'item padre."""
-        from src.core.contabilita_queries import ContabilitaQueries
+        from src.application.services.contabilita_queries import ContabilitaQueries
 
         for i, cert in enumerate(g["certificates"]):
             err_val = (
@@ -458,7 +458,7 @@ class CertificatiCampioneTab(QWidget):
 
     def _get_ubicazione_safe(self, cert: tuple[Any, ...]) -> str:
         """Ritorna l'ubicazione con fallback su ASSENTE."""
-        from src.core.contabilita_queries import ContabilitaQueries
+        from src.application.services.contabilita_queries import ContabilitaQueries
 
         idx = ContabilitaQueries.CERT_IDX_UBICAZIONE
         val = cert[idx] if len(cert) > idx else None

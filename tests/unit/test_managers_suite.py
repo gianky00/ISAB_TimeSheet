@@ -3,15 +3,15 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.audit_manager import AuditManager
-from src.core.stats_manager import StatsManager
+from src.application.services.audit_manager import AuditManager
+from src.application.services.stats_manager import StatsManager
 
 
 @pytest.fixture
 def temp_audit_db(tmp_path, mocker):
     db_file = tmp_path / "audit_log.db"
     # Patch signals to avoid PySide6 issues
-    mocker.patch("src.core.audit.manager.AuditSignals.instance")
+    mocker.patch("src.application.services.audit.manager.AuditSignals.instance")
 
     # Force re-initialization for the singleton in test
     AuditManager._instance = None
@@ -25,7 +25,7 @@ def temp_audit_db(tmp_path, mocker):
 
 @pytest.fixture
 def mock_config_stats():
-    with patch("src.core.stats_manager.config_manager") as mock_cfg:
+    with patch("src.application.services.stats_manager.config_manager") as mock_cfg:
         mock_cfg.load_config.return_value = {}
         # Force re-initialization
         StatsManager._instance = None

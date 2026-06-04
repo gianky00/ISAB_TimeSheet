@@ -1,7 +1,7 @@
 import contextlib
 
-from src.core.preventivi_manager import PreventiviManager
-from src.core.sync_tracker import SyncTracker
+from src.application.services.preventivi_manager import PreventiviManager
+from src.application.services.sync_tracker import SyncTracker
 from src.gui.components.scarico_ore.model import ScaricoOreTableModel
 
 

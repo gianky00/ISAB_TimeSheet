@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 from rich.console import Console
 
-from src.core.schemas import validate_dipendenti
+from src.application.services.schemas import validate_dipendenti
 
 console = Console()
 

@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from src.core.backup.archive_rotator import ArchiveRotator
-from src.core.backup_manager import BackupManager
+from src.application.services.backup.archive_rotator import ArchiveRotator
+from src.application.services.backup_manager import BackupManager
 
 
 class TestBackupFeatures:
@@ -49,8 +49,8 @@ class TestBackupFeatures:
     def test_create_backup_logic(self, mock_dirs, mocker):
         """Verifica che il backup contenga solo i file corretti."""
         source, target = mock_dirs
-        mocker.patch("src.core.backup_manager.CONFIG_DIR", source)
-        mocker.patch("src.core.backup_manager.BackupManager.get_backup_dir", return_value=target)
+        mocker.patch("src.application.services.backup_manager.CONFIG_DIR", source)
+        mocker.patch("src.application.services.backup_manager.BackupManager.get_backup_dir", return_value=target)
 
         # Esegui backup
         success, zip_path = BackupManager.create_backup()
@@ -86,7 +86,7 @@ class TestBackupFeatures:
     def test_restore_backup_safe_extraction(self, mock_dirs, mocker):
         """Verifica che il restore sovrascriva i dati nella sorgente."""
         source, target = mock_dirs
-        mocker.patch("src.core.backup_manager.CONFIG_DIR", source)
+        mocker.patch("src.application.services.backup_manager.CONFIG_DIR", source)
 
         # Crea uno zip di backup
         zip_path = target / "test_restore.zip"

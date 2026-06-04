@@ -2,11 +2,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from src.core.importers.giornaliere import GiornaliereImporter
+from src.application.services.importers.giornaliere import GiornaliereImporter
 
 
 class TestGiornaliereImporter:
-    @patch("src.core.importers.giornaliere.Path")
+    @patch("src.application.services.importers.giornaliere.Path")
     def test_scan_files_no_path(self, mock_path):
         """Testa scan_files con path nullo o inesistente."""
         assert GiornaliereImporter.scan_files(None) == 0
@@ -15,7 +15,7 @@ class TestGiornaliereImporter:
         mock_instance.exists.return_value = False
         assert GiornaliereImporter.scan_files("/invalid/path") == 0
 
-    @patch("src.core.importers.giornaliere.Path")
+    @patch("src.application.services.importers.giornaliere.Path")
     def test_scan_files_valid_structure(self, mock_path):
         """Testa scan_files con una struttura di cartelle valida."""
         mock_root = MagicMock()
@@ -44,7 +44,7 @@ class TestGiornaliereImporter:
         count = GiornaliereImporter.scan_files("/fake/path")
         assert count == 2
 
-    @patch("src.core.importers.giornaliere.Path")
+    @patch("src.application.services.importers.giornaliere.Path")
     def test_import_giornaliere_not_found(self, mock_path):
         """Testa import_giornaliere con directory non trovata."""
         mock_root = MagicMock()
@@ -55,8 +55,8 @@ class TestGiornaliereImporter:
         assert success is False
         assert "non trovata" in msg
 
-    @patch("src.core.importers.giornaliere.GiornaliereImporter._run_parallel_import")
-    @patch("src.core.importers.giornaliere.Path")
+    @patch("src.application.services.importers.giornaliere.GiornaliereImporter._run_parallel_import")
+    @patch("src.application.services.importers.giornaliere.Path")
     def test_import_giornaliere_empty(self, mock_path, mock_run_parallel):
         """Testa import_giornaliere quando non ci sono task."""
         mock_root = MagicMock()
@@ -70,7 +70,7 @@ class TestGiornaliereImporter:
         assert rows == []
         assert years == []
 
-    @patch("src.core.processing.giornaliere.steps.NormalizeGiornalieraStep")
+    @patch("src.application.services.processing.giornaliere.steps.NormalizeGiornalieraStep")
     def test_normalize_giornaliera_columns_alias(self, mock_step_class):
         """Testa l'alias per la normalizzazione colonne."""
         import pandas as pd
@@ -82,7 +82,7 @@ class TestGiornaliereImporter:
         assert mock_step.execute.called
         assert isinstance(res, pd.DataFrame)
 
-    @patch("src.core.importers.giornaliere.Path")
+    @patch("src.application.services.importers.giornaliere.Path")
     def test_collect_giornaliere_tasks(self, mock_path):
         """Testa la raccolta dei task di importazione."""
         mock_root = MagicMock()

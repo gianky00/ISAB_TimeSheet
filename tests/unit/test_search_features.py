@@ -6,8 +6,8 @@ import sqlite3
 
 import pytest
 
-from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
-from src.core.contabilita_manager import ContabilitaManager
+from src.application.services.contabilita_manager import ContabilitaManager
+from src.infrastructure.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
 
 @pytest.fixture
@@ -17,12 +17,12 @@ def mock_db(tmp_path, mocker):
 
     # Patch DatabaseManager properties using PropertyMock
     mocker.patch(
-        "src.core.database.DatabaseManager.DB_CONTABILITA",
+        "src.application.services.database.DatabaseManager.DB_CONTABILITA",
         new_callable=mocker.PropertyMock,
         return_value=db_path,
     )
     mocker.patch(
-        "src.core.database.DatabaseManager.DB_TIMBRATURE",
+        "src.application.services.database.DatabaseManager.DB_TIMBRATURE",
         new_callable=mocker.PropertyMock,
         return_value=db_path,
     )

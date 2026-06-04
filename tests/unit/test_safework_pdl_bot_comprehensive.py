@@ -2,22 +2,22 @@
 =========================================================
 Test suite blindata post-refactoring.
 
-Matches source code: src/bots/safework/pdl/bot.py
+Matches source code: src/infrastructure/bots/safework/pdl/bot.py
 """
 
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.bots.safework.pdl.bot import SafeWorkPDLBot
-from src.core.constants import BotStatus
+from src.application.services.constants import BotStatus
+from src.infrastructure.bots.safework.pdl.bot import SafeWorkPDLBot
 
 
 class TestSafeWorkPDLBotComprehensive:
     @pytest.fixture
     def bot(self, mocker, tmp_path):
         """Fixture per inizializzare il bot con driver e wait mockati."""
-        mocker.patch("src.bots.base.base_bot.BaseBot.__init__", return_value=None)
+        mocker.patch("src.infrastructure.bots.base.base_bot.BaseBot.__init__", return_value=None)
 
         bot = SafeWorkPDLBot(username="u", password="p", download_path=str(tmp_path))
         bot.driver = MagicMock()
@@ -56,13 +56,13 @@ class TestSafeWorkPDLBotComprehensive:
 
     def test_validate_data_scenarios(self, bot, mocker):
         """Verifica la validazione preventiva dei dati."""
-        mocker.patch("src.bots.base.base_bot.BaseBot.validate_data", return_value=(True, ""))
+        mocker.patch("src.infrastructure.bots.base.base_bot.BaseBot.validate_data", return_value=(True, ""))
         ok, _msg = bot.validate_data([{"numero_pdl": "123456/C"}])
         assert ok is True
 
     def test_gestisci_ricerca_estesa_success(self, bot, mocker):
         """Test successo click su 'Si' nel popup di ricerca estesa."""
-        mocker.patch("src.bots.safework.pdl.bot.WebDriverWait.until", return_value=True)
+        mocker.patch("src.infrastructure.bots.safework.pdl.bot.WebDriverWait.until", return_value=True)
         mock_msg = MagicMock()
         mock_msg.is_displayed.return_value = False
         bot.driver.find_element.return_value = mock_msg
@@ -78,7 +78,7 @@ class TestSafeWorkPDLBotComprehensive:
     def test_gestisci_ricerca_estesa_no_pdl(self, bot, mocker):
         """Test caso PdL non trovato nemmeno con ricerca estesa."""
         # Forziamo il ritorno di True mockando i find_elements
-        mocker.patch("src.bots.safework.pdl.bot.WebDriverWait.until", return_value=True)
+        mocker.patch("src.infrastructure.bots.safework.pdl.bot.WebDriverWait.until", return_value=True)
 
         # Mock del driver per saltare il primo ramo (messaggio) e usare il secondo (numPermessiTrovati == 0)
         bot.driver.find_element.return_value = MagicMock()
@@ -105,26 +105,26 @@ class TestSafeWorkPDLBotComprehensive:
 
     def test_scarica_parte_prima_success(self, bot, mocker):
         """Test scarico P1 con mock rename."""
-        mocker.patch("src.bots.safework.pdl.bot.poll_for_new_file", return_value="fake.pdf")
+        mocker.patch("src.infrastructure.bots.safework.pdl.bot.poll_for_new_file", return_value="fake.pdf")
         mocker.patch.object(bot, "_clean_pdf")
         mocker.patch("time.sleep")
-        mocker.patch("src.bots.safework.pdl.bot.Path.rename")
+        mocker.patch("src.infrastructure.bots.safework.pdl.bot.Path.rename")
 
         res = bot._scarica_parte_prima("123")
         assert res is not None
 
     def test_scarica_parte_seconda_accordion_strategies(self, bot, mocker):
         """Test scarico P2."""
-        mocker.patch("src.bots.safework.pdl.bot.poll_for_new_file", return_value="fake.pdf")
+        mocker.patch("src.infrastructure.bots.safework.pdl.bot.poll_for_new_file", return_value="fake.pdf")
         mocker.patch.object(bot, "_espandi_parte_seconda", return_value=True)
-        mocker.patch("src.bots.safework.pdl.bot.Path.rename")
+        mocker.patch("src.infrastructure.bots.safework.pdl.bot.Path.rename")
 
         res = bot._scarica_parte_seconda("123")
         assert res is not None
 
     def test_unisci_e_stampa_logic(self, bot, mocker):
         """Test unione PDF."""
-        mocker.patch("src.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True)
+        mocker.patch("src.infrastructure.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True)
         mocker.patch("os.rename")
         item = {"numero_pdl": "569157/C", "print_enabled": True}
         all_paths = []

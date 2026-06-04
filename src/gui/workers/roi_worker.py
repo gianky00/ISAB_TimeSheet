@@ -8,7 +8,7 @@ import logging
 
 from PySide6.QtCore import QThread, Signal
 
-from src.core.stats.roi_engine import ROIEngine
+from src.application.services.stats.roi_engine import ROIEngine
 
 logger = logging.getLogger(__name__)
 

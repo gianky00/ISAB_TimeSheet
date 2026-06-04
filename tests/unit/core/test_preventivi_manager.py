@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.preventivi_manager import GeneratoreWorker, PreventiviGeneratorManager
+from src.application.services.preventivi_manager import GeneratoreWorker, PreventiviGeneratorManager
 
 
 class TestPreventiviManager:
@@ -43,10 +43,10 @@ class TestPreventiviManager:
             assert "Print_Area" not in xml
             assert "<other>Data</other>" in xml
 
-    @patch("src.core.preventivi_manager.win32com.client.Dispatch")
-    @patch("src.core.preventivi_manager.pythoncom.CoInitialize")
-    @patch("src.core.preventivi_manager.pythoncom.CoUninitialize")
-    @patch("src.core.preventivi_manager._win32com_found", True)
+    @patch("src.application.services.preventivi_manager.win32com.client.Dispatch")
+    @patch("src.application.services.preventivi_manager.pythoncom.CoInitialize")
+    @patch("src.application.services.preventivi_manager.pythoncom.CoUninitialize")
+    @patch("src.application.services.preventivi_manager._win32com_found", True)
     def test_fill_excel_data_mock(self, mock_uninit, mock_init, mock_dispatch, manager, fs):
         fs.create_file("test.xlsm")
         mock_app = mock_dispatch.return_value
@@ -64,7 +64,7 @@ class TestPreventiviManager:
         mock_sheet.Range.assert_any_call("A11")  # Prima riga descrizione
         mock_sheet.Range.assert_any_call("A12")  # Seconda riga descrizione
 
-    @patch("src.core.preventivi_manager.PreventiviGeneratorManager.generate_preventivo")
+    @patch("src.application.services.preventivi_manager.PreventiviGeneratorManager.generate_preventivo")
     def test_generatore_worker_signals(self, mock_gen, qtbot):
         mock_gen.return_value = (True, "path/to/file.xlsm")
 

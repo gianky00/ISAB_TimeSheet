@@ -2,9 +2,9 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pandas as pd
 
-from src.core.employees import EmployeeManager
-from src.core.importers.giornaliere import GiornaliereImporter
-from src.core.importers.storico_oda import StoricoOdaImporter
+from src.application.services.employees import EmployeeManager
+from src.application.services.importers.giornaliere import GiornaliereImporter
+from src.application.services.importers.storico_oda import StoricoOdaImporter
 
 
 class TestImportersLogic:
@@ -88,7 +88,7 @@ class TestImportersLogic:
         assert cleaned["ore"].iloc[1] == "4"
 
         # --- Employee Manager Tests ---
-        @patch("src.core.employees.db_manager")
+        @patch("src.application.services.employees.db_manager")
         def test_import_from_csv(self, mock_db):
             manager = EmployeeManager()
 
@@ -138,10 +138,10 @@ class TestImportersLogic:
                 "Data_nascita",
             ]
 
-            with patch("src.core.employees.csv.DictReader", return_value=mock_reader):
+            with patch("src.application.services.employees.csv.DictReader", return_value=mock_reader):
                 with patch("builtins.open", mock_open()):
                     with patch("pathlib.Path.exists", return_value=True):
-                        with patch("src.core.sync_tracker.SyncTracker.update_status"):
+                        with patch("src.application.services.sync_tracker.SyncTracker.update_status"):
                             count = manager.import_from_csv("dummy.csv")
 
             assert count == 2

@@ -1,10 +1,10 @@
 from unittest.mock import patch
 
-from src.core.importers.certificati import CertificatiImporter
+from src.application.services.importers.certificati import CertificatiImporter
 
 
 class TestCertificatiImporter:
-    @patch("src.core.importers.certificati.Path")
+    @patch("src.application.services.importers.certificati.Path")
     def test_import_certificati_campione_not_found(self, mock_path):
         """Testa import_certificati_campione con file non trovato."""
         mock_instance = mock_path.return_value
@@ -14,8 +14,8 @@ class TestCertificatiImporter:
         assert success is False
         assert "File non trovato" in msg
 
-    @patch("src.core.importers.certificati.Pipeline")
-    @patch("src.core.importers.certificati.Path")
+    @patch("src.application.services.importers.certificati.Pipeline")
+    @patch("src.application.services.importers.certificati.Path")
     def test_import_certificati_campione_success(self, mock_path, mock_pipeline_class):
         """Testa l'importazione con successo tramite pipeline."""
         mock_path.return_value.exists.return_value = True
@@ -33,8 +33,8 @@ class TestCertificatiImporter:
         assert rows == [(1, "Test")]
         assert mock_pipeline.run.called
 
-    @patch("src.core.importers.certificati.Pipeline")
-    @patch("src.core.importers.certificati.Path")
+    @patch("src.application.services.importers.certificati.Pipeline")
+    @patch("src.application.services.importers.certificati.Path")
     def test_import_certificati_campione_error(self, mock_path, mock_pipeline_class):
         """Testa la gestione errori durante l'importazione."""
         mock_path.return_value.exists.return_value = True

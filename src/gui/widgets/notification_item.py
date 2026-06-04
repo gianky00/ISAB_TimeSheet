@@ -7,13 +7,13 @@ from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
-from src.core.constants import Icons
-from src.core.notification_manager import NotificationManager
+from src.application.services.constants import Icons
+from src.application.services.notification_manager import NotificationManager
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import (
     IconButton,
 )
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 
 # Widget per singola notifica

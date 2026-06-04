@@ -1,4 +1,4 @@
-"""Tests for src.core managers."""
+"""Tests for src.application.services managers."""
 
 import json
 from datetime import UTC
@@ -6,8 +6,8 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core import config_manager
-from src.core.database import DatabaseManager
+from src.application.services import config_manager
+from src.application.services.database import DatabaseManager
 
 
 # --- CONFIG MANAGER ---
@@ -21,10 +21,10 @@ def mock_config(tmp_path):
 
     # Patch sia la DIR che la FILE sia in paths che direttamente in config_manager
     with (
-        patch("src.core.paths.CONFIG_DIR", fake_dir),
-        patch("src.core.paths.CONFIG_FILE", fake_file),
-        patch("src.core.config_manager.CONFIG_DIR", fake_dir),
-        patch("src.core.config_manager.CONFIG_FILE", fake_file),
+        patch("src.application.services.paths.CONFIG_DIR", fake_dir),
+        patch("src.application.services.paths.CONFIG_FILE", fake_file),
+        patch("src.application.services.config_manager.CONFIG_DIR", fake_dir),
+        patch("src.application.services.config_manager.CONFIG_FILE", fake_file),
     ):
         yield fake_file
 
@@ -89,7 +89,7 @@ def test_time_manager():
     # Helper to create datetime
     from datetime import datetime
 
-    from src.core import time_manager
+    from src.application.services import time_manager
 
     # Test get_trusted_time
     dt, trusted = time_manager.get_trusted_time()
@@ -97,13 +97,13 @@ def test_time_manager():
     assert isinstance(trusted, bool)
 
     # Mock network time
-    with patch("src.core.time_manager.get_network_time") as mock_net:
+    with patch("src.application.services.time_manager.get_network_time") as mock_net:
         mock_net.return_value = datetime(2025, 1, 1, tzinfo=UTC)
         dt, trusted = time_manager.get_trusted_time()
         assert dt == datetime(2025, 1, 1, tzinfo=UTC)
         assert trusted is True
 
-    with patch("src.core.time_manager.get_network_time") as mock_net:
+    with patch("src.application.services.time_manager.get_network_time") as mock_net:
         mock_net.return_value = None
         dt, trusted = time_manager.get_trusted_time()
         assert trusted is False

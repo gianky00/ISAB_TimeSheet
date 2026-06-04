@@ -12,17 +12,17 @@ from src.gui.panels.timbrature_bot import TimbratureBotPanel
 @pytest.fixture
 def mock_config(mocker):
     """Fixture per mockare config_manager."""
-    mock_load = mocker.patch("src.core.config_manager.load_config")
+    mock_load = mocker.patch("src.application.services.config_manager.load_config")
     mock_load.return_value = {
         "fornitori": ["COEMI", "ALTRO"],
         "last_timbrature_societa": "ISAB",
         "last_timbrature_fornitore": "COEMI",
     }
-    mocker.patch("src.core.config_manager.set_config_value")
+    mocker.patch("src.application.services.config_manager.set_config_value")
     mocker.patch(
-        "src.core.config_manager.get_default_account", return_value={"username": "u", "password": "p"}
+        "src.application.services.config_manager.get_default_account", return_value={"username": "u", "password": "p"}
     )
-    mocker.patch("src.core.config_manager.get_download_path", return_value="/mock/downloads")
+    mocker.patch("src.application.services.config_manager.get_download_path", return_value="/mock/downloads")
     return mock_load
 
 

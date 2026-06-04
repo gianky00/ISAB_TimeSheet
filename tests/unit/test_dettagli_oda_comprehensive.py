@@ -3,8 +3,8 @@
 Copre navigazione, download, database import e cleanup residui.
 
 Matches source code:
-- src/bots/portale_fornitori/dettagli_oda/bot.py
-- src/bots/portale_fornitori/dettagli_oda/pages/dettagli_oda_page.py
+- src/infrastructure/bots/portale_fornitori/dettagli_oda/bot.py
+- src/infrastructure/bots/portale_fornitori/dettagli_oda/pages/dettagli_oda_page.py
 """
 
 from pathlib import Path
@@ -12,8 +12,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
-from src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import (
+from src.infrastructure.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
+from src.infrastructure.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import (
     DettagliOdAPage,
 )
 
@@ -34,7 +34,7 @@ class TestDettagliOdaComprehensive:
         ok, _msg = bot.validate_data([])
         assert ok is True
 
-    @patch("src.bots.portale_fornitori.dettagli_oda.bot.DettagliOdAPage")
+    @patch("src.infrastructure.bots.portale_fornitori.dettagli_oda.bot.DettagliOdAPage")
     def test_bot_run_loop_success(self, mock_page_cls, bot, mocker):
         """Test ciclo principale con successo."""
         mock_page = mock_page_cls.return_value
@@ -58,7 +58,7 @@ class TestDettagliOdaComprehensive:
 
     def test_bot_import_oda_to_db(self, bot, mocker):
         """Verifica l'integrazione con OdaManager (bypassando il multiprocess)."""
-        mock_manager = mocker.patch("src.bots.portale_fornitori.dettagli_oda.bot.OdaManager")
+        mock_manager = mocker.patch("src.infrastructure.bots.portale_fornitori.dettagli_oda.bot.OdaManager")
         mock_manager.import_oda_from_excel.return_value = (True, "OK", 5, [])
 
         # Mock dell'esecutore per farlo girare in-process durante il test
@@ -85,13 +85,13 @@ class TestDettagliOdaComprehensive:
 
         mock_driver.execute_script.assert_called()
 
-    @patch("src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page.ActionChains")
+    @patch("src.infrastructure.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page.ActionChains")
     def test_page_setup_supplier_success(self, mock_action_chains):
         mock_driver = MagicMock()
 
         # Mock WebDriverWait prima dell'istanziazione
         with patch(
-            "src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page.WebDriverWait"
+            "src.infrastructure.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page.WebDriverWait"
         ) as mock_wait:
             mock_wait.return_value.until.return_value = MagicMock()
             page = DettagliOdAPage(mock_driver)
@@ -102,7 +102,7 @@ class TestDettagliOdaComprehensive:
         mock_driver = MagicMock()
 
         with patch(
-            "src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page.WebDriverWait"
+            "src.infrastructure.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page.WebDriverWait"
         ) as mock_wait:
             mock_wait.return_value.until.return_value = MagicMock()
             page = DettagliOdAPage(mock_driver)
@@ -121,7 +121,7 @@ class TestDettagliOdaComprehensive:
 
         # Patchiamo l'helper centralizzato invece del metodo rimosso
         with patch(
-            "src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page.poll_for_new_file",
+            "src.infrastructure.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page.poll_for_new_file",
             return_value=file_mock,
         ) as mock_poll:
             # Simuliamo una parte del metodo _download
@@ -129,7 +129,7 @@ class TestDettagliOdaComprehensive:
             assert res == file_mock
             mock_poll.assert_called_once()
 
-    @patch("src.bots.portale_fornitori.dettagli_oda.bot.DettagliOdAPage")
+    @patch("src.infrastructure.bots.portale_fornitori.dettagli_oda.bot.DettagliOdAPage")
     def test_bot_run_no_oda_list_general(self, mock_page_cls, bot, mocker):
         """Test scarico lista generale."""
         mock_page = mock_page_cls.return_value

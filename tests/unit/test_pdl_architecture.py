@@ -2,9 +2,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.database.repositories.pdl_repository import PdlRepository
-from src.core.pdl.pdl_controller import PDLController
-from src.models import PdlRecord
+from src.application.services.database.repositories.pdl_repository import PdlRepository
+from src.application.services.pdl.pdl_controller import PDLController
+from src.domain import PdlRecord
 
 
 class TestPdlArchitecture:
@@ -49,7 +49,7 @@ class TestPdlArchitecture:
         assert records[0].n_pdl == "PDL1"
 
     def test_controller_data_loading(self, mock_db_manager):
-        with patch("src.core.database.repositories.pdl_repository.PdlRepository.get_filtered") as mock_get:
+        with patch("src.application.services.database.repositories.pdl_repository.PdlRepository.get_filtered") as mock_get:
             record = PdlRecord(
                 id=1,
                 n_pdl="PDL1",

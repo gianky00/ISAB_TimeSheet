@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.sync_tracker import SyncTracker
+from src.application.services.sync_tracker import SyncTracker
 
 
 class TestSyncTrackerRobust:
@@ -18,7 +18,7 @@ class TestSyncTrackerRobust:
         # Mock del percorso file
         test_state_file = tmp_path / "data" / "sync_state.json"
 
-        with patch("src.core.sync_tracker.SyncTracker.STATE_FILE", test_state_file):
+        with patch("src.application.services.sync_tracker.SyncTracker.STATE_FILE", test_state_file):
             yield test_state_file
 
     def test_update_and_get_status(self, reset_tracker):

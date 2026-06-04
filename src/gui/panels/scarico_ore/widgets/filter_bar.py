@@ -6,12 +6,12 @@ Componente UI per la visualizzazione delle statistiche e dei filtri di ricerca.
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.styles import COLORS, LABEL_MUTED, LINEEDIT_STYLE
 from src.gui.widgets import ModernButton
 from src.gui.widgets.core_widgets import SearchInput
 from src.gui.widgets.modern_card import ModernCard
-from src.utils.helpers import get_asset_path
+from src.infrastructure.utils.helpers import get_asset_path
 
 
 class ScaricoOreFilterBar(ModernCard):

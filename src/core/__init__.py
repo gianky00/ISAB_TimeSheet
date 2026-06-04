@@ -1,1 +1,0 @@
-"""SyncroJob - Core Module."""

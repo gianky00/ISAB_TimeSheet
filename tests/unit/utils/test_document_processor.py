@@ -1,11 +1,11 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from src.utils.document_processor import DocumentProcessor
+from src.infrastructure.utils.document_processor import DocumentProcessor
 
 
 class TestDocumentProcessor:
-    @patch("src.utils.document_processor.fitz")
+    @patch("src.infrastructure.utils.document_processor.fitz")
     def test_extract_text_success(self, mock_fitz):
         # Setup mock doc
         mock_doc = MagicMock()
@@ -17,7 +17,7 @@ class TestDocumentProcessor:
         text = DocumentProcessor.extract_text(Path("test.pdf"))
         assert text == "Hello PDF"
 
-    @patch("src.utils.document_processor.fitz")
+    @patch("src.infrastructure.utils.document_processor.fitz")
     def test_is_pdf_searchable(self, mock_fitz):
         mock_doc = MagicMock()
         mock_page = MagicMock()
@@ -30,7 +30,7 @@ class TestDocumentProcessor:
         mock_page.get_text.return_value = "Some text"
         assert DocumentProcessor.is_pdf_searchable(Path("test.pdf")) is True
 
-    @patch("src.utils.document_processor.fitz")
+    @patch("src.infrastructure.utils.document_processor.fitz")
     def test_merge_pdfs_success(self, mock_fitz, fs):
         fs.create_file("p1.pdf", contents=b"content1")
         fs.create_file("p2.pdf", contents=b"content2")
@@ -84,7 +84,7 @@ class TestDocumentProcessor:
 
     def test_append_to_pdf_result_invalid(self):
         mock_result = MagicMock()
-        with patch("src.utils.document_processor.fitz.open") as mock_open:
+        with patch("src.infrastructure.utils.document_processor.fitz.open") as mock_open:
             mock_pdf = MagicMock()
             mock_pdf.page_count = 0  # Invalido
             mock_open.return_value.__enter__.return_value = mock_pdf

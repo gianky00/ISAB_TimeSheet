@@ -2,21 +2,21 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.dipendenti.report_service import ReportService
+from src.application.services.dipendenti.report_service import ReportService
 
 
 class TestReportServiceDipendenti:
     @pytest.fixture
     def mock_db(self, mocker):
-        return mocker.patch("src.core.dipendenti.report_service.db_manager")
+        return mocker.patch("src.application.services.dipendenti.report_service.db_manager")
 
     @pytest.fixture
     def mock_timbrature_maps(self, mocker):
-        return mocker.patch("src.core.dipendenti.report_service.build_timbrature_maps")
+        return mocker.patch("src.application.services.dipendenti.report_service.build_timbrature_maps")
 
     @pytest.fixture
     def mock_history(self, mocker):
-        return mocker.patch("src.core.dipendenti.report_service.ReportHistory")
+        return mocker.patch("src.application.services.dipendenti.report_service.ReportHistory")
 
     def test_gather_report_data(self, mock_db, mock_timbrature_maps):
         # Setup data
@@ -105,7 +105,7 @@ class TestReportServiceDipendenti:
             e_list = []
 
             # Mock pandas
-            with patch("src.core.dipendenti.report_service.pd.DataFrame") as mock_df:
+            with patch("src.application.services.dipendenti.report_service.pd.DataFrame") as mock_df:
                 path = ReportService.create_report_excel(w_list, e_list)
                 assert path is not None
                 assert "report Accessi ISAB" in str(path)

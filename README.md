@@ -61,32 +61,32 @@ SyncroJob è una suite software avanzata progettata per automatizzare, monitorar
 
 ```bash
 # Installazione dipendenze (Poetry)
-poetry install
+uv sync
 
 # Attivazione venv
-poetry shell
+uv venv
 ```
 
 ### Comandi Utili
 
 ```bash
 # Avvio app
-poetry run syncrojob
+uv run syncrojob
 
 # Suite di test completa
 python -m tests.run_robust_test
 
 # Linting + fix automatico
-poetry run ruff check --fix
+uv run ruff check --fix
 
 # Type checking strict
-poetry run mypy --strict src/
+uv run mypy --strict src/
 
 # Tutti i quality gate pre-commit
-poetry run pre-commit run --all-files
+uv run pre-commit run --all-files
 
 # Bump versione (commitizen — non modificare version.py manualmente!)
-poetry run cz bump
+uv run cz bump
 ```
 
 Per la documentazione architetturale completa, vedi [`.ai-context.json`](./.ai-context.json) e [`CLAUDE.md`](./CLAUDE.md).

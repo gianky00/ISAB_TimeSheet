@@ -4,7 +4,7 @@ import pytest
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QWidget
 
-from src.core.pdl.pdl_controller import PDLController
+from src.application.services.pdl.pdl_controller import PDLController
 from src.gui.panels.pdl.pdl_panel import PDLDBPanel
 
 
@@ -78,8 +78,8 @@ def global_pdl_mocks(mocker):
     mocker.patch("src.gui.panels.pdl.pdl_panel.AnimatedTabWidget", return_value=MockTabs())
     mocker.patch("src.gui.panels.pdl.pdl_panel.ProgrammazioneTab", return_value=MockSubWidget())
     mocker.patch("src.gui.panels.pdl.pdl_panel.PDLDataWorker")
-    mocker.patch("src.core.sync_tracker.SyncTracker.get_formatted_status", return_value="N/D")
-    mocker.patch("src.core.database.repositories.pdl_repository.PdlRepository")
+    mocker.patch("src.application.services.sync_tracker.SyncTracker.get_formatted_status", return_value="N/D")
+    mocker.patch("src.application.services.database.repositories.pdl_repository.PdlRepository")
     mocker.patch("src.gui.panels.pdl.pdl_panel.PDLService")
 
 

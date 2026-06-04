@@ -12,9 +12,9 @@ Analizzare la directory `src/` del progetto corrente e generare uno script Pytho
 
 ## 🔍 Fasi di Analisi Richieste
 
-1.  **Core Discovery**: Analizza `src/core/` per identificare i manager (Secrets, Config, Sync, Audit, Telegram).
+1.  **Core Discovery**: Analizza `src/application/services/` per identificare i manager (Secrets, Config, Sync, Audit, Telegram).
 2.  **GUI Mapping**: Analizza `src/gui/panels/` e `src/gui/widgets/` per mappare i moduli utente.
-3.  **Bot Inventory**: Analizza `src/bots/` per identificare i portali esterni supportati (ISAB, SafeWork).
+3.  **Bot Inventory**: Analizza `src/infrastructure/bots/` per identificare i portali esterni supportati (ISAB, SafeWork).
 4.  **Data Flow**: Identifica come i bot scrivono nel DB (`DataSynchronizer`) e come la GUI comunica con il Core.
 
 ## 🛠️ Requisiti Tecnici dello Script da Generare

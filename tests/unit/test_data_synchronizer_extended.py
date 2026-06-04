@@ -1,7 +1,7 @@
 import pytest
 
-from src.core.data_synchronizer import DataSynchronizer
-from src.core.database import db_manager
+from src.application.services.data_synchronizer import DataSynchronizer
+from src.application.services.database import db_manager
 
 
 class TestDataSynchronizerDetailed:

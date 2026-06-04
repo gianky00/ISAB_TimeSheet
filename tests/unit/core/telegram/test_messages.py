@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.core.telegram.handlers.messages import handle_photo, handle_text_input, handle_voice
+from src.api.telegram.handlers.messages import handle_photo, handle_text_input, handle_voice
 
 
 class TestTelegramMessages:

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.core.database.manager import DatabaseManager
+from src.application.services.database.manager import DatabaseManager
 
 
 class TestDatabaseManager:

@@ -21,12 +21,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.config_manager import get_config_value
-from src.core.constants import Icons
+from src.application.services.config_manager import get_config_value
+from src.application.services.constants import Icons
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
 from src.gui.widgets.sidebar_button import SidebarButton
-from src.utils.helpers import get_asset_path
+from src.infrastructure.utils.helpers import get_asset_path
 
 from .sidebar.animations import SidebarAnimationManager
 from .sidebar.components import SidebarChildButton, SidebarGroup, SidebarSubGroup
@@ -594,7 +594,7 @@ class SidebarWidget(QFrame):
             last_viewed = get_config_value("changelog_last_viewed_version", "")
 
             # Leggiamo l'ultima versione disponibile nel changelog.json
-            from src.utils.resource_manager import ResourceManager
+            from src.infrastructure.utils.resource_manager import ResourceManager
 
             changelog_path = ResourceManager.get_changelog_path()
             if changelog_path.exists():

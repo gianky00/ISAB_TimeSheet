@@ -2,9 +2,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.database.repositories.oda_repository import OdaRepository
-from src.core.oda.oda_controller import ODAController
-from src.models import OdaRecord
+from src.application.services.database.repositories.oda_repository import OdaRepository
+from src.application.services.oda.oda_controller import ODAController
+from src.domain import OdaRecord
 
 
 class TestOdaArchitecture:
@@ -68,7 +68,7 @@ class TestOdaArchitecture:
         assert records[0].oda == "12345"
 
     def test_controller_grouping(self, mock_db_manager):
-        with patch("src.core.database.repositories.oda_repository.OdaRepository.get_all") as mock_get_all:
+        with patch("src.application.services.database.repositories.oda_repository.OdaRepository.get_all") as mock_get_all:
             record = OdaRecord(
                 org_acq="ORG1",
                 data_oda="2024-05-13",

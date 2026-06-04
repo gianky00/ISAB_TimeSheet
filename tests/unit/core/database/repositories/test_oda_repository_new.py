@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.core.database.repositories.oda_repository import OdaRepository
+from src.application.services.database.repositories.oda_repository import OdaRepository
 
 
 @pytest.fixture

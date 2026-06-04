@@ -3,8 +3,8 @@ import sys
 import pytest
 from PySide6.QtWidgets import QApplication
 
-from src.bots.base.step_manager import StepStatus
 from src.gui.components.activity_timeline import ActivityTimelineWidget
+from src.infrastructure.bots.base.step_manager import StepStatus
 
 
 @pytest.fixture(scope="session")

@@ -23,7 +23,7 @@ class TestDashboardComponents:
 
     def test_activity_feed_refresh(self, qapp, mocker):
         # Patch corretta della fonte del singleton
-        mock_audit = mocker.patch("src.core.audit_manager.AuditManager.instance")
+        mock_audit = mocker.patch("src.application.services.audit_manager.AuditManager.instance")
         mock_audit.return_value.get_logs.return_value = [
             {"action": "A", "entity": "E", "status": "success", "timestamp": "2023-01-01"}
         ]

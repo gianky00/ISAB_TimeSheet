@@ -20,13 +20,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons
-from src.core.notification_manager import NotificationManager
+from src.application.services.constants import Icons
+from src.application.services.notification_manager import NotificationManager
 from src.gui.styles import COLORS
 from src.gui.styles.notification_styles import LEVEL_STYLES, get_notification_qss
 from src.gui.widgets.core_widgets import IconButton
 from src.gui.widgets.modern_button import ModernButton
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 
 class NotificationCard(QFrame):

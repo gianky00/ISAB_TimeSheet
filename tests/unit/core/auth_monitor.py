@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from unittest.mock import patch
 
-from src.core.auth_monitor import _normalize, _parse_date, check_expiring_isab_authorizations
+from src.application.services.auth_monitor import _normalize, _parse_date, check_expiring_isab_authorizations
 
 
 class TestAuthMonitor:
@@ -14,11 +14,11 @@ class TestAuthMonitor:
         assert _parse_date("15/01/2024").month == 1
         assert _parse_date("invalid") is None
 
-    @patch("src.core.database.db_manager.execute_query")
+    @patch("src.application.services.database.db_manager.execute_query")
     def test_check_expiring_isab_authorizations_logic(self, mock_query):
         # Setup THRESHOLD_DAYS: warning=45, expired=60 (presumibilmente)
         # Mocking today as 2024-05-17
-        with patch("src.core.auth_monitor.datetime") as mock_dt:
+        with patch("src.application.services.auth_monitor.datetime") as mock_dt:
             mock_dt.now.return_value = datetime(2024, 5, 17, tzinfo=UTC)
             mock_dt.strptime = datetime.strptime
 
@@ -61,7 +61,7 @@ class TestAuthMonitor:
             assert res_neri["cf_mancante"] is True
             assert res_neri["stato"] == "SCADUTA"
 
-    @patch("src.core.database.db_manager.execute_query")
+    @patch("src.application.services.database.db_manager.execute_query")
     def test_check_expiring_isab_authorizations_error(self, mock_query):
         mock_query.side_effect = Exception("DB Fail")
         assert check_expiring_isab_authorizations() == []

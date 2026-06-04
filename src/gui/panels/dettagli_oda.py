@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING, Any
 from PySide6.QtCore import QDate, QTimer
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
-from src.core import config_manager
-from src.core.constants import Icons
+from src.application.services import config_manager
+from src.application.services.constants import Icons
 from src.gui.controllers.bot_worker import BotWorker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel
@@ -23,10 +23,10 @@ from src.gui.widgets import BotParametersWidget, EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.safework.status_list import StatusListWidget
 from src.gui.widgets.toast import ToastManager
-from src.utils.helpers import get_asset_path
+from src.infrastructure.utils.helpers import get_asset_path
 
 if TYPE_CHECKING:
-    from src.bots.base.base_bot import BaseBot
+    from src.infrastructure.bots.base.base_bot import BaseBot
 
 
 class DettagliOdAPanel(BaseBotPanel):
@@ -52,7 +52,7 @@ class DettagliOdAPanel(BaseBotPanel):
         self._setup_content()
 
         # Forza inizializzazione timeline immediata per Dettagli OdA (Previene blocchi su _on_start)
-        from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
+        from src.infrastructure.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
 
         self.activity_timeline.set_steps(DettagliOdABot.STEPS)
 
@@ -68,7 +68,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
     def get_bot_class(self) -> type["BaseBot"]:
         """Restituisce la classe bot specifica per lo scarico dei dettagli OdA."""
-        from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
+        from src.infrastructure.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
 
         return DettagliOdABot
 
@@ -312,7 +312,7 @@ class DettagliOdAPanel(BaseBotPanel):
         if not params_override:
             self._save_data()
 
-        from src.core.config_manager import load_config
+        from src.application.services.config_manager import load_config
 
         config = load_config()
 

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.logging.sinks import AggregatedMetricsSink, BotLogSink, MetricsRotatingSink
+from src.application.services.logging.sinks import AggregatedMetricsSink, BotLogSink, MetricsRotatingSink
 
 
 class TestSinks:

@@ -4,11 +4,11 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 
-from src.core.importers.attivita import AttivitaImporter
+from src.application.services.importers.attivita import AttivitaImporter
 
 
 class TestAttivitaImporter:
-    @patch("src.core.importers.attivita.Path")
+    @patch("src.application.services.importers.attivita.Path")
     def test_import_attivita_programmate_not_found(self, mock_path):
         """Testa import_attivita_programmate con file non trovato."""
         mock_instance = mock_path.return_value
@@ -18,8 +18,8 @@ class TestAttivitaImporter:
         assert success is False
         assert "non trovato" in msg
 
-    @patch("src.core.importers.attivita.AttivitaImporter._read_attivita_programmate_sheet")
-    @patch("src.core.importers.attivita.Path")
+    @patch("src.application.services.importers.attivita.AttivitaImporter._read_attivita_programmate_sheet")
+    @patch("src.application.services.importers.attivita.Path")
     def test_import_attivita_programmate_sheet_not_found(self, mock_path, mock_read):
         """Testa import_attivita_programmate quando il foglio non esiste."""
         mock_path.return_value.exists.return_value = True
@@ -65,7 +65,7 @@ class TestAttivitaImporter:
         assert rows[0][0] == "PS1"
         assert rows[0][-1] == ""  # styles
 
-    @patch("src.core.importers.attivita.AttivitaImporter._get_pd")
+    @patch("src.application.services.importers.attivita.AttivitaImporter._get_pd")
     def test_read_attivita_programmate_sheet_success(self, mock_get_pd):
         """Testa la lettura del foglio excel con successo."""
         mock_pd = mock_get_pd.return_value
@@ -76,7 +76,7 @@ class TestAttivitaImporter:
         assert isinstance(res, pd.DataFrame)
         assert mock_pd.read_excel.called
 
-    @patch("src.core.importers.attivita.AttivitaImporter._get_pd")
+    @patch("src.application.services.importers.attivita.AttivitaImporter._get_pd")
     def test_read_attivita_programmate_sheet_fallback(self, mock_get_pd):
         """Testa il fallback sul motore openpyxl se il primo tentativo fallisce."""
         mock_pd = mock_get_pd.return_value

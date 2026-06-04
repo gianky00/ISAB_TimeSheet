@@ -3,14 +3,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.constants import Icons
-from src.core.contabilita.certificati_engine import CertificatiEngine
+from src.application.services.constants import Icons
+from src.application.services.contabilita.certificati_engine import CertificatiEngine
 
 
 class TestCertificatiEngine:
     @pytest.fixture
     def engine(self, tmp_path, mocker):
-        mocker.patch("src.core.paths.DB_DIR", tmp_path)
+        mocker.patch("src.application.services.paths.DB_DIR", tmp_path)
         return CertificatiEngine()
 
     def test_load_save_exclusions(self, engine, tmp_path):
@@ -26,8 +26,8 @@ class TestCertificatiEngine:
 
     def test_calculate_days_and_status(self, engine, mocker):
         mock_now = datetime(2026, 5, 25, 0, 0, 0, tzinfo=UTC)
-        mocker.patch("src.core.contabilita.certificati_engine.datetime", mocker.Mock(wraps=datetime))
-        import src.core.contabilita.certificati_engine as ce_mod
+        mocker.patch("src.application.services.contabilita.certificati_engine.datetime", mocker.Mock(wraps=datetime))
+        import src.application.services.contabilita.certificati_engine as ce_mod
 
         ce_mod.datetime.now.return_value = mock_now
         ce_mod.datetime.strptime = datetime.strptime
@@ -96,7 +96,7 @@ class TestCertificatiEngine:
         assert stats["picco_imminente"]["count"] == 5
         assert stats["picco_imminente"]["inizio"] == "01/06"
 
-    @patch("src.core.contabilita.certificati_engine.get_config_value")
+    @patch("src.application.services.contabilita.certificati_engine.get_config_value")
     @patch("os.walk")
     def test_find_certificate_path(self, mock_walk, mock_config, tmp_path):
         mock_config.return_value = str(tmp_path)

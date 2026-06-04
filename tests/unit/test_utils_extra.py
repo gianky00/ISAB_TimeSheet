@@ -1,7 +1,7 @@
 import logging
 
-from src.utils.log_humanizer import SmartLogTranslator
-from src.utils.secure_logger import SensitiveDataFilter, get_secure_logger
+from src.infrastructure.utils.log_humanizer import SmartLogTranslator
+from src.infrastructure.utils.secure_logger import SensitiveDataFilter, get_secure_logger
 
 
 def test_log_humanizer_categories():

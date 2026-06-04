@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.data_synchronizer import DataSynchronizer
+from src.application.services.data_synchronizer import DataSynchronizer
 
 
 @pytest.fixture
@@ -12,7 +12,7 @@ def db_path(tmp_path):
 
 def test_sync_storico_oda(db_path):
     # Setup mock per SmartSyncEngine.sync_upsert_smart
-    with patch("src.core.data_synchronizer.SmartSyncEngine.sync_upsert_smart") as mock_sync:
+    with patch("src.application.services.data_synchronizer.SmartSyncEngine.sync_upsert_smart") as mock_sync:
         mock_sync.return_value = (5, 2)
 
         data = [("O1", 1, 1), ("O2", 1, 2)]
@@ -25,7 +25,7 @@ def test_sync_storico_oda(db_path):
 
 def test_sync_attivita_programmate(db_path):
     # Setup mock per SmartSyncEngine.sync_full_replace_with_metadata
-    with patch("src.core.data_synchronizer.SmartSyncEngine.sync_full_replace_with_metadata") as mock_sync:
+    with patch("src.application.services.data_synchronizer.SmartSyncEngine.sync_full_replace_with_metadata") as mock_sync:
         mock_sync.return_value = (10, 0)
 
         data = [("ps1", "a1", "desc1")]

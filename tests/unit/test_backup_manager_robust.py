@@ -5,7 +5,7 @@ from unittest.mock import ANY, patch
 
 import pytest
 
-from src.core.backup_manager import BackupManager
+from src.application.services.backup_manager import BackupManager
 
 
 class TestBackupManagerRobust:
@@ -21,13 +21,13 @@ class TestBackupManagerRobust:
         (config_dir / "ignored.txt").write_text("Ignore me")
 
         # Mocka la variabile globale in backup_manager
-        with patch("src.core.backup_manager.CONFIG_DIR", config_dir):
+        with patch("src.application.services.backup_manager.CONFIG_DIR", config_dir):
             yield config_dir
 
     @pytest.fixture
     def mock_audit(self):
         """Mocka AuditManager per evitare scritture su DB reale."""
-        with patch("src.core.backup_manager.AuditManager") as mock:
+        with patch("src.application.services.backup_manager.AuditManager") as mock:
             yield mock.instance.return_value
 
     @pytest.fixture
@@ -47,14 +47,14 @@ class TestBackupManagerRobust:
 
     def test_get_backup_dir_onedrive(self, mock_cloud_env):
         """Test selezione automatica directory backup."""
-        with patch("src.core.backup_manager.load_config", return_value={}):
+        with patch("src.application.services.backup_manager.load_config", return_value={}):
             backup_dir = BackupManager.get_backup_dir()
             assert backup_dir == mock_cloud_env / "SyncroJob_Backups"
             assert backup_dir.exists()
 
     def test_create_backup_success(self, mock_config_dir, mock_cloud_env, mock_audit):
         """Test creazione backup zip."""
-        with patch("src.core.backup_manager.load_config", return_value={}):
+        with patch("src.application.services.backup_manager.load_config", return_value={}):
             success, path_str = BackupManager.create_backup()
 
             assert success is True
@@ -83,9 +83,9 @@ class TestBackupManagerRobust:
         empty_conf.mkdir()
 
         with (
-            patch("src.core.backup_manager.CONFIG_DIR", empty_conf),
+            patch("src.application.services.backup_manager.CONFIG_DIR", empty_conf),
             patch(
-                "src.core.backup_manager.BackupManager.get_backup_dir",
+                "src.application.services.backup_manager.BackupManager.get_backup_dir",
                 return_value=tmp_path,
             ),
         ):
@@ -105,7 +105,7 @@ class TestBackupManagerRobust:
             # Forza mtime per ordine
             os.utime(f, (i * 1000, i * 1000))
 
-        from src.core.backup.archive_rotator import ArchiveRotator
+        from src.application.services.backup.archive_rotator import ArchiveRotator
 
         ArchiveRotator.rotate_backups(backup_dir, keep=5)
 
@@ -143,7 +143,7 @@ class TestBackupManagerRobust:
     def test_list_backups(self, tmp_path):
         """Test listaggio backup."""
         with patch(
-            "src.core.backup_manager.BackupManager.get_backup_dir",
+            "src.application.services.backup_manager.BackupManager.get_backup_dir",
             return_value=tmp_path,
         ):
             (tmp_path / "SyncroJob_Backup_A.zip").touch()

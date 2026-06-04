@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.logging.config import LoggingConfig
-from src.core.logging.logger import StructuredLogger, get_logger
+from src.application.services.logging.config import LoggingConfig
+from src.application.services.logging.logger import StructuredLogger, get_logger
 
 
 @pytest.fixture
@@ -40,7 +40,7 @@ def test_should_log():
     assert logger._should_log("DEBUG") is False
 
 
-@patch("src.core.logging.logger.get_config")
+@patch("src.application.services.logging.logger.get_config")
 def test_get_logger_factory(mock_get_config):
     mock_get_config.return_value = MagicMock()
     logger1 = get_logger("test1")

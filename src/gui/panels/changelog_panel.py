@@ -35,13 +35,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.config_manager import set_config_value
-from src.core.constants import Icons
-from src.core.version import __version__
+from src.application.services.config_manager import set_config_value
+from src.application.services.constants import Icons
+from src.application.services.version import __version__
 from src.gui.styles import COLORS, SCROLL_AREA_TRANSPARENT
 from src.gui.styles.widget_styles import CARD_STYLE
 from src.gui.workers.changelog_worker import ChangelogWorker
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
 
@@ -56,11 +56,11 @@ class DiagnosticsWorker(QThread):
         # 1. Recupero Git Commit SHA
         sha = "dev"
         try:
-            from admin.release import ROOT_DIR, find_git_executable
+            from devtools.gui.release import ROOT_DIR, find_git_executable
 
-            git_bin = find_git_executable()
+            git_exe = find_git_executable()
             res = subprocess.run(  # nosec B603
-                [git_bin, "rev-parse", "--short", "HEAD"],
+                [git_exe, "rev-parse", "--short", "HEAD"],
                 cwd=ROOT_DIR,
                 capture_output=True,
                 text=True,
@@ -757,11 +757,11 @@ class ChangelogPanel(QWidget):
     def _get_git_commit_sha(self) -> str:
         """Recupera lo short commit SHA attuale dal repository Git locale."""
         try:
-            from admin.release import ROOT_DIR, find_git_executable
+            from devtools.gui.release import ROOT_DIR, find_git_executable
 
-            git_bin = find_git_executable()
+            git_exe = find_git_executable()
             res = subprocess.run(  # nosec B603
-                [git_bin, "rev-parse", "--short", "HEAD"],
+                [git_exe, "rev-parse", "--short", "HEAD"],
                 cwd=ROOT_DIR,
                 capture_output=True,
                 text=True,
@@ -794,7 +794,7 @@ class ChangelogPanel(QWidget):
         """Restituisce la data dell'ultimo aggiornamento disponibile in formato GG/MM/AAAA."""
         import contextlib
 
-        from src.utils.resource_manager import ResourceManager
+        from src.infrastructure.utils.resource_manager import ResourceManager
 
         changelog_path = ResourceManager.get_changelog_path()
 
@@ -901,7 +901,7 @@ class ChangelogPanel(QWidget):
 
     def _read_changelog_from_disk(self) -> list[dict[str, Any]]:
         """Legge il file changelog.json da disco e applica un fallback in caso di errori."""
-        from src.utils.resource_manager import ResourceManager
+        from src.infrastructure.utils.resource_manager import ResourceManager
 
         changelog_path = ResourceManager.get_changelog_path()
         changelog_data: list[dict[str, Any]] = []

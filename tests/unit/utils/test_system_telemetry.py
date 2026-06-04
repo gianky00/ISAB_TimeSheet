@@ -1,6 +1,6 @@
 import os
 
-from src.utils.system_telemetry import get_current_process_ram_mb
+from src.infrastructure.utils.system_telemetry import get_current_process_ram_mb
 
 
 class TestSystemTelemetry:

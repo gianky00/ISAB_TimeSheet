@@ -34,7 +34,7 @@ from PySide6.QtWidgets import (
 )
 
 # Rimossa dipendenza sincrona a get_hardware_id e get_license_info per reattività all'avvio
-from src.core.version import __version__
+from src.application.services.version import __version__
 from src.gui.styles import COLORS
 
 # Import widget specializzati
@@ -49,7 +49,7 @@ from src.gui.widgets.startup.startup_widgets import (
     TechBlueprint,
     TypewriterLabel,
 )
-from src.utils.helpers import get_asset_path
+from src.infrastructure.utils.helpers import get_asset_path
 
 logger = logging.getLogger(__name__)
 
@@ -365,7 +365,7 @@ class StartupDialog(QDialog):
         try:
             import json
 
-            from src.utils.resource_manager import ResourceManager
+            from src.infrastructure.utils.resource_manager import ResourceManager
 
             changelog_path = ResourceManager.get_changelog_path()
             if changelog_path.exists():
@@ -513,7 +513,7 @@ class StartupDialog(QDialog):
         try:
             import json
 
-            from src.utils.resource_manager import ResourceManager
+            from src.infrastructure.utils.resource_manager import ResourceManager
 
             changelog_path = ResourceManager.get_changelog_path()
             if changelog_path.exists():

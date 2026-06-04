@@ -25,10 +25,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.styles import COLORS
 from src.gui.styles.constants import ANIMATION_TIMINGS
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 from ..design.colors import get_palette
 from ..design.spacing import BorderRadius

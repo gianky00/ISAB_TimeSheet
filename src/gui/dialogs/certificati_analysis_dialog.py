@@ -23,9 +23,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import UbicazioneStrumenti
-from src.core.logging import get_logger
-from src.core.version import __app_name__, __version__
+from src.application.services.constants import UbicazioneStrumenti
+from src.application.services.logging import get_logger
+from src.application.services.version import __app_name__, __version__
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
 from src.gui.widgets.core_widgets import PrimaryButton

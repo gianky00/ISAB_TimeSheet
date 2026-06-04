@@ -19,8 +19,8 @@ class TestBaseBotPanel:
         assert panel.controls is not None
         assert panel.log_widget is not None
 
-    @patch("src.core.audit_manager.AuditManager.instance")
-    @patch("src.core.stats_manager.StatsManager.increment_usage")
+    @patch("src.application.services.audit_manager.AuditManager.instance")
+    @patch("src.application.services.stats_manager.StatsManager.increment_usage")
     def test_on_start_flow(self, mock_stats, mock_audit, panel, qtbot):
         panel._on_start()
 
@@ -39,7 +39,7 @@ class TestBaseBotPanel:
         assert panel.worker.stop.called
         assert "Arresto richiesto" in panel.status_card._status_label.text()
 
-    @patch("src.core.audit_manager.AuditManager.instance")
+    @patch("src.application.services.audit_manager.AuditManager.instance")
     def test_on_worker_finished_success(self, mock_audit, panel, qtbot):
         panel.start_time = panel.start_time or MagicMock()  # Simula start
         panel.worker = MagicMock()
@@ -52,7 +52,7 @@ class TestBaseBotPanel:
         # Wait for the QTimer(0) lambda to be called
         qtbot.wait_until(lambda: mock_audit.return_value.log_action.called, timeout=1000)
 
-    @patch("src.core.config_manager.get_default_account")
+    @patch("src.application.services.config_manager.get_default_account")
     def test_get_credentials(self, mock_get, panel):
         mock_get.return_value = {"username": "admin", "password": "123"}
         u, p = panel.get_credentials()

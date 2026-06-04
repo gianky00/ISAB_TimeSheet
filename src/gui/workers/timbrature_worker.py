@@ -9,7 +9,7 @@ from typing import Any
 
 from PySide6.QtCore import QThread, Signal
 
-from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
+from src.infrastructure.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
 logger = logging.getLogger(__name__)
 

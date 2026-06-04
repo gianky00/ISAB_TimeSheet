@@ -3,13 +3,13 @@ from unittest.mock import MagicMock, patch
 
 from selenium.webdriver.common.by import By
 
-from src.bots.safework.programmazione_sync.bot import SafeWorkProgrammazioneSyncBot
+from src.infrastructure.bots.safework.programmazione_sync.bot import SafeWorkProgrammazioneSyncBot
 
 
 class TestSafeWorkProgrammazioneSyncComprehensive(unittest.TestCase):
     def setUp(self):
         self.mock_driver = MagicMock()
-        with patch("src.bots.safework.base.SafeworkBaseBot.__init__", return_value=None):
+        with patch("src.infrastructure.bots.safework.base.SafeworkBaseBot.__init__", return_value=None):
             self.bot = SafeWorkProgrammazioneSyncBot("user", "pass")
             self.bot.signals = MagicMock()
             self.bot.signals.log_message = MagicMock()
@@ -36,7 +36,7 @@ class TestSafeWorkProgrammazioneSyncComprehensive(unittest.TestCase):
         self.assertEqual(self.bot.get_name(), "Sincronizzazione Programmazione")
         self.assertEqual(self.bot.name, "programmazione_sync")
 
-    @patch("src.bots.safework.programmazione_sync.bot.poll_for_new_file")
+    @patch("src.infrastructure.bots.safework.programmazione_sync.bot.poll_for_new_file")
     @patch.object(SafeWorkProgrammazioneSyncBot, "_attendi_scomparsa_overlay")
     def test_run_success_flow(self, mock_overlay, mock_poll):
         """Test del flusso di sincronizzazione (download excel)."""

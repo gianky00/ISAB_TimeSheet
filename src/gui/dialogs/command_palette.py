@@ -36,7 +36,7 @@ from src.gui.widgets.core_widgets import (
     SearchInput,
     StandardListWidget,
 )
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 if TYPE_CHECKING:
     from collections.abc import Callable

@@ -7,7 +7,7 @@ from src.gui.main_window.main_window import MainWindow
 def test_full_ui_e2e_integration(qtbot, mocker):
     # Mockiamo costruttori pesanti o driver initialization
     mocker.patch(
-        "src.utils.resource_manager.ResourceManager.ensure_automation_driver", return_value="dummy_path"
+        "src.infrastructure.utils.resource_manager.ResourceManager.ensure_automation_driver", return_value="dummy_path"
     )
 
     # Istanziamo la MainWindow dell'applicazione (Carica TUTTI i widget e panel!)

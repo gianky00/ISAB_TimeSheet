@@ -16,14 +16,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.panels.settings.shared import create_group_box, style_button, style_input
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import (
     PrimaryButton,
     StandardInput,
 )
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 
 class PathsPage(QWidget):
@@ -148,7 +148,7 @@ class PathsPage(QWidget):
             return
 
         from src.gui.widgets.toast import ToastManager
-        from src.utils.helpers import safe_open
+        from src.infrastructure.utils.helpers import safe_open
 
         path = Path(path_str).resolve()
         if not path.exists():

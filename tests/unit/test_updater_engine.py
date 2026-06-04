@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from src.core.updater.engine import (
+from src.application.services.updater.engine import (
     DownloadWorker,
     get_local_setup_path,
     get_network_update_info,
@@ -40,9 +40,9 @@ class TestUpdaterEngine:
         set_pending_installer("/non/existent.exe")
         assert has_pending_update() is False
 
-    @patch("src.core.updater.engine.requests.get")
+    @patch("src.application.services.updater.engine.requests.get")
     def test_get_web_update_info(self, mock_get):
-        from src.core import version
+        from src.application.services import version
 
         with patch.object(version, "UPDATE_URL", "http://update.com"):
             mock_resp = MagicMock()
@@ -54,7 +54,7 @@ class TestUpdaterEngine:
             assert info["version"] == "2.0"
 
     def test_get_network_update_info(self, tmp_path):
-        from src.core import version
+        from src.application.services import version
 
         net_dir = tmp_path / "network"
         net_dir.mkdir()

@@ -13,7 +13,7 @@ from PySide6.QtCore import QBuffer, QIODevice, QRect, Qt
 from PySide6.QtGui import QGuiApplication, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication
 
-from src.core.telegram.bridge.interfaces import AppStatusProvider, ScreenshotProvider
+from src.api.telegram.bridge.interfaces import AppStatusProvider, ScreenshotProvider
 
 
 class TelegramGUIBridge(ScreenshotProvider, AppStatusProvider):

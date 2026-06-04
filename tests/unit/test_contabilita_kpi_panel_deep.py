@@ -7,9 +7,9 @@ class TestContabilitaKPIPanelDeep:
     @pytest.fixture
     def panel(self, qtbot, mocker):
         # Mocking complex dependencies to avoid Qt crashes in headless
-        mocker.patch("src.core.sync_tracker.SyncTracker.get_formatted_status", return_value="OK")
+        mocker.patch("src.application.services.sync_tracker.SyncTracker.get_formatted_status", return_value="OK")
         mocker.patch(
-            "src.core.contabilita.stats_service.ContabilitaStats.get_year_stats",
+            "src.application.services.contabilita.stats_service.ContabilitaStats.get_year_stats",
             return_value={
                 "total_prev": 1000.0,
                 "total_ore": 100.0,
@@ -21,7 +21,7 @@ class TestContabilitaKPIPanelDeep:
             },
         )
         mocker.patch(
-            "src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024]
+            "src.application.services.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024]
         )
 
         p = ContabilitaKPIPanel()

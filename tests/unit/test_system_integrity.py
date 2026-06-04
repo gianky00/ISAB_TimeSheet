@@ -3,8 +3,8 @@
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock
 
-from src.core.audit.manager import AuditManager
-from src.utils.system_telemetry import get_current_process_ram_mb
+from src.application.services.audit.manager import AuditManager
+from src.infrastructure.utils.system_telemetry import get_current_process_ram_mb
 
 
 class TestSystemIntegrity:

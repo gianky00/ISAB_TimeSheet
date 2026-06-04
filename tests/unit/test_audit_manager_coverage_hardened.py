@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.audit_manager import AuditManager
+from src.application.services.audit_manager import AuditManager
 
 
 class TestAuditManager:
@@ -17,12 +17,12 @@ class TestAuditManager:
         # Patch DatabaseManager properties on the CLASS to affect all instances (and the singleton)
         # Note: We must patch it where it's DEFINED
         mocker.patch(
-            "src.core.database.db_manager.DB_AUDIT",
+            "src.application.services.database.db_manager.DB_AUDIT",
             db_path,
         )
 
         # Patch Signals singleton instance
-        mocker.patch("src.core.audit.manager.AuditSignals.instance")
+        mocker.patch("src.application.services.audit.manager.AuditSignals.instance")
 
         # Reset singleton
         AuditManager._instance = None
@@ -93,7 +93,7 @@ class TestAuditManager:
         assert not any(log_entry["action"] == "Old Action" for log_entry in logs)
 
     def test_notification_emission(self, manager):
-        with patch("src.core.notification_manager.NotificationManager.instance") as mock_notif:
+        with patch("src.application.services.notification_manager.NotificationManager.instance") as mock_notif:
             manager.log_action("Action", notify=True)
             manager._log_queue.join()
             mock_notif.return_value.add_notification.assert_called_once()

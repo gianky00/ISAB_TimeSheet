@@ -7,7 +7,7 @@ import logging
 
 from PySide6.QtCore import QThread, Signal
 
-from src.core.stats.pdl_stats_engine import PDLStatsEngine
+from src.application.services.stats.pdl_stats_engine import PDLStatsEngine
 
 logger = logging.getLogger(__name__)
 

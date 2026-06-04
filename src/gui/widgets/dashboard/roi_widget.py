@@ -10,13 +10,13 @@ from typing import NamedTuple
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
-from src.core.constants import Icons
-from src.core.stats.roi_engine import ROIEngine, ROIMetrics
+from src.application.services.constants import Icons
+from src.application.services.stats.roi_engine import ROIEngine, ROIMetrics
 from src.gui.styles import COLORS
 from src.gui.widgets.animated_progress_bar import AnimatedProgressBar
 from src.gui.widgets.modern_card import ModernCard
 from src.gui.workers.roi_worker import ROIWorker
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
 

@@ -5,10 +5,10 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.audit.integrity import AuditIntegrity
-from src.core.audit_manager import AuditManager
-from src.core.database import DatabaseManager, db_manager
-from src.utils.security import PasswordManager
+from src.application.services.audit.integrity import AuditIntegrity
+from src.application.services.audit_manager import AuditManager
+from src.application.services.database import DatabaseManager, db_manager
+from src.infrastructure.utils.security import PasswordManager
 
 
 class TestHardeningAuditSecurity:
@@ -18,10 +18,10 @@ class TestHardeningAuditSecurity:
         db_path = tmp_path / "audit_hardening.db"
 
         # Patch il path nel modulo
-        mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_path)
+        mocker.patch("src.application.services.audit.database.AuditDatabase.DB_PATH", db_path)
 
         # Forza reinizializzazione di AuditDatabase
-        from src.core.audit.database import AuditDatabase
+        from src.application.services.audit.database import AuditDatabase
 
         # Inizializzazione esplicita del DB e delle tabelle
         db = AuditDatabase()
@@ -29,9 +29,9 @@ class TestHardeningAuditSecurity:
         db._init_db()  # Forza creazione tabelle
 
         # Patch signals
-        mocker.patch("src.core.audit.manager.AuditSignals.instance")
+        mocker.patch("src.application.services.audit.manager.AuditSignals.instance")
 
-        with patch("src.core.audit.manager.AuditManager._instance", None):
+        with patch("src.application.services.audit.manager.AuditManager._instance", None):
             manager = AuditManager()
             # Forza il manager a puntare al DB corretto
             manager.db.db_path = db_path
@@ -41,7 +41,7 @@ class TestHardeningAuditSecurity:
     def db_env(self, tmp_path, mocker):
         """Setup isolato per DatabaseManager e FTS5."""
         # Patch CONFIG_DIR per altri usi
-        mocker.patch("src.core.paths.CONFIG_DIR", tmp_path)
+        mocker.patch("src.application.services.paths.CONFIG_DIR", tmp_path)
 
         # Patch i percorsi DB direttamente nella classe per sovrascrivere i valori statici
         data_dir = tmp_path / "data"
@@ -133,9 +133,9 @@ class TestHardeningAuditSecurity:
         """Test: Migrazione fluida dal formato ENC: al formato ENC:v2:."""
         sec_dir = tmp_path / "security"
         sec_dir.mkdir(parents=True, exist_ok=True)
-        mocker.patch("src.utils.security.SECURITY_DIR", sec_dir)
+        mocker.patch("src.infrastructure.utils.security.SECURITY_DIR", sec_dir)
 
-        with patch("src.utils.security.PasswordManager._instance", None):
+        with patch("src.infrastructure.utils.security.PasswordManager._instance", None):
             pm = PasswordManager()
             plaintext = "LegacySecret123"
 
@@ -160,9 +160,9 @@ class TestHardeningAuditSecurity:
         # Scriviamo spazzatura nel file chiave
         key_file.write_text("NOT_A_FERNET_KEY")
 
-        mocker.patch("src.utils.security.SECURITY_DIR", sec_dir)
+        mocker.patch("src.infrastructure.utils.security.SECURITY_DIR", sec_dir)
 
-        with patch("src.utils.security.PasswordManager._instance", None):
+        with patch("src.infrastructure.utils.security.PasswordManager._instance", None):
             pm = PasswordManager()
             # Deve aver rigenerato una chiave valida
             assert pm._key != b"NOT_A_FERNET_KEY"

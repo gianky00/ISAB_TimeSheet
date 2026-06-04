@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from src.utils.printing import get_installed_printers, print_pdf
+from src.infrastructure.utils.printing import get_installed_printers, print_pdf
 
 
 class TestPrintingWindowsMocked:
@@ -36,7 +36,7 @@ class TestPrintingWindowsMocked:
         mocker.patch("PIL.Image.frombytes")
         mocker.patch("PIL.ImageWin.Dib")
         mocker.patch("time.sleep")
-        mocker.patch("src.utils.printing._set_printer_duplex_powershell")
+        mocker.patch("src.infrastructure.utils.printing._set_printer_duplex_powershell")
 
         # 3. Esecuzione
         success = print_pdf(str(dummy_pdf), "MyPrinter")

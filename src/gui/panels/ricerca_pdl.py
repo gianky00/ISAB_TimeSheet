@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core import config_manager
+from src.application.services import config_manager
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel
 from src.gui.styles import COLORS, STATUS_COLORS
@@ -27,7 +27,7 @@ from src.gui.widgets.core_widgets import (
 from src.gui.widgets.toast import ToastManager
 
 if TYPE_CHECKING:
-    from src.bots.base.base_bot import BaseBot
+    from src.infrastructure.bots.base.base_bot import BaseBot
 
 
 class RicercaPDLPanel(BaseBotPanel):
@@ -82,7 +82,7 @@ class RicercaPDLPanel(BaseBotPanel):
 
     def get_bot_class(self) -> type[BaseBot]:
         """Restituisce la classe SafeWorkPDLSearchBot associata."""
-        from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
+        from src.infrastructure.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
 
         return SafeWorkPDLSearchBot
 

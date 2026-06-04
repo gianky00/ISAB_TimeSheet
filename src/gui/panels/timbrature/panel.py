@@ -21,11 +21,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
-from src.core import config_manager
-from src.core.audit_manager import AuditManager
-from src.core.constants import Icons
-from src.core.utils.formatters import format_date_it
+from src.application.services import config_manager
+from src.application.services.audit_manager import AuditManager
+from src.application.services.constants import Icons
+from src.application.services.utils.formatters import format_date_it
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.formatters import FastTableModel
 from src.gui.styles import COLORS
@@ -35,7 +34,8 @@ from src.gui.widgets.core_widgets import (
 )
 from src.gui.widgets.toast import ToastManager
 from src.gui.workers.timbrature_worker import TimbratureDataWorker
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.bots.portale_fornitori.timbrature.storage import TimbratureStorage
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 from .components.detail_view import TimbratureDetailView
 from .components.settings_tab import TimbratureSettingsTab
@@ -91,7 +91,7 @@ class TimbratureDBPanel(QWidget):
             self._update_filter_combos()
             self.refresh_data()
         except Exception as e:
-            from src.core.logging import get_logger
+            from src.application.services.logging import get_logger
 
             get_logger(__name__).error(f"Error in deferred init: {e}")
 

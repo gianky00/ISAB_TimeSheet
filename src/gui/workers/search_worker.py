@@ -7,7 +7,7 @@ from typing import Any
 
 from PySide6.QtCore import QThread, Signal
 
-from src.core.search.search_service import SearchService
+from src.application.services.search.search_service import SearchService
 
 
 class SearchWorker(QThread):

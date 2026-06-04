@@ -39,7 +39,7 @@ def _print_exception_and_exit(
     import contextlib
 
     with contextlib.suppress(Exception):
-        from src.core.config_manager import CONFIG_DIR
+        from src.application.services.config_manager import CONFIG_DIR
 
         crash_file = CONFIG_DIR / "crash.txt"
         with crash_file.open("a", encoding="utf-8") as f:
@@ -52,12 +52,12 @@ def _print_exception_and_exit(
 
 sys.excepthook = _print_exception_and_exit
 
-from src.core.config_manager import CONFIG_DIR
-from src.core.logging import (
+from src.application.services.config_manager import CONFIG_DIR
+from src.application.services.logging import (
     configure_logging,
     get_logger,
 )
-from src.utils.resource_manager import ResourceManager
+from src.infrastructure.utils.resource_manager import ResourceManager
 
 # Setup path (ResourceManager handles frozen vs dev)
 ROOT_DIR = ResourceManager.PROJECT_ROOT
@@ -103,7 +103,7 @@ def _setup_windows_taskbar(app: QApplication) -> None:
     """Configura l'icona della taskbar e l'AppUserModelID su Windows."""
     from PySide6.QtGui import QIcon
 
-    from src.core.version import __version__
+    from src.application.services.version import __version__
 
     if os.name == "nt":
         try:
@@ -149,7 +149,7 @@ def _run_phase1(
 
         def run(self) -> None:
             try:
-                from src.core.app_initializer import AppInitializer
+                from src.application.services.app_initializer import AppInitializer
 
                 logger.info("Starting Phase 1 initialization")
                 success = AppInitializer.initialize_core(progress_callback=self.progress.emit)
@@ -194,7 +194,7 @@ def _run_phase3(
     """Esegue la fase 3 di precaricamento GUI."""
     from PySide6.QtCore import QTimer
 
-    from src.core.app_initializer import AppInitializer
+    from src.application.services.app_initializer import AppInitializer
 
     gen = AppInitializer.init_generator(mw)
 
@@ -285,7 +285,11 @@ def _init_splash() -> tuple[Callable[[str, int], None], Callable[[], None], Call
 def _send_license_to_splash(send_lic_fn: Callable[[str, str, str], None]) -> None:
     """Invia in modo sicuro i dati di licenza (in cache o reali) allo splash screen."""
     try:
-        from src.core.license_validator import get_hardware_id, get_license_client, get_license_expiry
+        from src.application.services.license_validator import (
+            get_hardware_id,
+            get_license_client,
+            get_license_expiry,
+        )
 
         cliente = get_license_client()
         hw_id = get_hardware_id()
@@ -326,8 +330,8 @@ def main() -> None:
     server.newConnection.connect(handle_conn)
     upd, cls, send_lic = _init_splash()
 
-    from src.core.audit.signals import AuditSignals
-    from src.core.notification_manager import NotificationManager
+    from src.application.services.audit.signals import AuditSignals
+    from src.application.services.notification_manager import NotificationManager
 
     # Pre-inizializzazione sicura dei Singleton QObject sul Main Thread
     # Previene l'errore "access violation" quando emettono segnali dopo la morte del Phase1Worker
@@ -343,7 +347,7 @@ def main() -> None:
     # Invia nuovamente i dati di licenza aggiornati dopo la Fase 1
     _send_license_to_splash(send_lic)
 
-    from src.core.app_initializer import AppInitializer
+    from src.application.services.app_initializer import AppInitializer
     from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 
     for s, m in AppInitializer.get_alerts():

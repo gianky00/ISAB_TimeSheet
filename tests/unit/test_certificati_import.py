@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from src.core.contabilita_manager import ContabilitaManager
+from src.application.services.contabilita_manager import ContabilitaManager
 
 
 class TestCertificatiImport(unittest.TestCase):
@@ -29,7 +29,7 @@ class TestCertificatiImport(unittest.TestCase):
         # Mock read_sql for existing rows (return empty)
         mock_read_sql.return_value = pd.DataFrame()
 
-        with patch("src.core.data_synchronizer.DataSynchronizer.sync_certificati_campione") as mock_sync:
+        with patch("src.application.services.data_synchronizer.DataSynchronizer.sync_certificati_campione") as mock_sync:
             mock_sync.return_value = (1, 0)
 
             # 1. Preview DataFrame (simulate header at row 5)

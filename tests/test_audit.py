@@ -10,7 +10,7 @@ sys.path.insert(0, str(src_path))
 
 try:
     print("1. Importazione AuditManager...")
-    from src.core.audit_manager import AuditManager
+    from src.application.services.audit_manager import AuditManager
 
     print("   [OK] Import OK")
 

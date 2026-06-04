@@ -1,4 +1,4 @@
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.widgets.empty_state import EmptyStateWidget
 from src.gui.widgets.shimmer_widget import ShimmerItem, ShimmerSkeleton
 

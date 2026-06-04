@@ -2,8 +2,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.core.telegram.handlers import callbacks
-from src.core.telegram_manager import TelegramService
+from src.api.telegram.handlers import callbacks
+from src.api.telegram_manager import TelegramService
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ class TestTelegramHandlersDeep:
 
         # Test year selection
         with patch(
-            "src.core.contabilita_manager.ContabilitaManager.get_available_years",
+            "src.application.services.contabilita_manager.ContabilitaManager.get_available_years",
             return_value=[2024],
         ):
             await callbacks._handle_db_actions(service, "db_select_year_strumentale", mock_query, "123")

@@ -2,7 +2,7 @@ import sqlite3
 import time
 from pathlib import Path
 
-from src.core.data_synchronizer import DataSynchronizer
+from src.application.services.data_synchronizer import DataSynchronizer
 
 
 def setup_test_db(db_path, num_rows=10000):

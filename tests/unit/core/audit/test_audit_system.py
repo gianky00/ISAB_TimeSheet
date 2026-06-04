@@ -4,9 +4,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.core.audit.integrity import AuditIntegrity
-from src.core.audit.manager import AuditManager
-from src.core.audit.models import Severity, Status
+from src.application.services.audit.integrity import AuditIntegrity
+from src.application.services.audit.manager import AuditManager
+from src.application.services.audit.models import Severity, Status
 
 
 class TestAuditSystem:

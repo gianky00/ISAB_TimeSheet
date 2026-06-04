@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from src.core.contabilita_worker import ContabilitaWorker
+from src.application.services.contabilita_worker import ContabilitaWorker
 
 
 class TestContabilitaWorkerDeep:
@@ -8,13 +8,13 @@ class TestContabilitaWorkerDeep:
         worker = ContabilitaWorker("fake_path.xlsx")
 
         with (
-            patch("src.core.contabilita_manager.ContabilitaManager.init_db"),
+            patch("src.application.services.contabilita_manager.ContabilitaManager.init_db"),
             patch(
-                "src.core.contabilita_manager.ContabilitaManager.scan_workload",
+                "src.application.services.contabilita_manager.ContabilitaManager.scan_workload",
                 return_value=(1, 1),
             ),
-            patch("src.core.contabilita_manager.ContabilitaManager.import_data_from_excel") as mock_import,
-            patch("src.core.contabilita_worker.Path.exists", return_value=True),
+            patch("src.application.services.contabilita_manager.ContabilitaManager.import_data_from_excel") as mock_import,
+            patch("src.application.services.contabilita_worker.Path.exists", return_value=True),
         ):
             mock_import.return_value = (True, "Successo", 10, 2)
 
@@ -29,16 +29,16 @@ class TestContabilitaWorkerDeep:
         worker = ContabilitaWorker("bad_path")
         # We test the logic of run() directly but mock everything inside to catch exception
         with (
-            patch("src.core.contabilita_manager.ContabilitaManager.init_db"),
+            patch("src.application.services.contabilita_manager.ContabilitaManager.init_db"),
             patch(
-                "src.core.contabilita_manager.ContabilitaManager.scan_workload",
+                "src.application.services.contabilita_manager.ContabilitaManager.scan_workload",
                 return_value=(1, 1),
             ),
             patch(
-                "src.core.contabilita_manager.ContabilitaManager.import_data_from_excel",
+                "src.application.services.contabilita_manager.ContabilitaManager.import_data_from_excel",
                 side_effect=Exception("Crash"),
             ),
-            patch("src.core.contabilita_worker.Path.exists", return_value=True),
+            patch("src.application.services.contabilita_worker.Path.exists", return_value=True),
         ):
             # Direct call to run() instead of start() to see how it handles exception
             # Actually worker.run() has a try-except? Let's check

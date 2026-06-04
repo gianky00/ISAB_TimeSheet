@@ -10,7 +10,7 @@ from src.gui.widgets.security_dashboard import SecurityDashboard
 @pytest.fixture
 def mock_audit_manager(mocker):
     """Fixture per mockare AuditManager."""
-    mock_mgr = mocker.patch("src.core.audit_manager.AuditManager.instance")
+    mock_mgr = mocker.patch("src.application.services.audit_manager.AuditManager.instance")
     instance = mocker.MagicMock()
     mock_mgr.return_value = instance
     return instance

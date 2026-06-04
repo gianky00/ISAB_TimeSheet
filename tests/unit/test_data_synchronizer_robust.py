@@ -1,7 +1,7 @@
 import pytest
 
-from src.core.exceptions import ValidationError
-from src.core.sync.base import BaseSyncEngine
+from src.application.services.exceptions import ValidationError
+from src.application.services.sync.base import BaseSyncEngine
 
 
 class TestDataSynchronizerRobust:

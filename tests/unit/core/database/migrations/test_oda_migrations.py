@@ -2,7 +2,7 @@ import sqlite3
 
 import pytest
 
-from src.core.database.migrations.storico_oda import mig_storico_oda_v1, mig_storico_oda_v2
+from src.application.services.database.migrations.storico_oda import mig_storico_oda_v1, mig_storico_oda_v2
 
 
 class TestOdaMigrations:

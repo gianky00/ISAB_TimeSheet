@@ -6,7 +6,7 @@ import pytest
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QMainWindow
 
-from src.core.notification_manager import NotificationManager
+from src.application.services.notification_manager import NotificationManager
 from src.gui.main_window.controllers.signal_connector import SignalConnector
 
 

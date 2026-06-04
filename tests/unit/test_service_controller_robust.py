@@ -44,12 +44,12 @@ class TestServiceControllerRobust:
             controller.queue_manager.schedule_bot("bot1", mock_panel, "portale_fornitori", "msg")
             assert mock_sched.called
 
-    @patch("src.core.config_manager.load_config")
+    @patch("src.application.services.config_manager.load_config")
     def test_check_scheduled_tasks_timbrature(self, mock_load, controller, mw):
         # We need to ensure the time matches
         fixed_now = datetime(2026, 5, 12, 9, 0, 0)
 
-        with patch("src.core.autopilot.scheduler.datetime") as mock_dt:
+        with patch("src.application.services.autopilot.scheduler.datetime") as mock_dt:
             mock_dt.now.return_value = fixed_now
             mock_load.return_value = {
                 "timbrature_autopilot_enabled": True,

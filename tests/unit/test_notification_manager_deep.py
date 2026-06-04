@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.notification_manager import NotificationManager
+from src.application.services.notification_manager import NotificationManager
 
 
 class TestNotificationManagerDeep:
@@ -13,7 +13,7 @@ class TestNotificationManagerDeep:
         # Reset istanza globale per isolamento
         NotificationManager._reset_instance_for_testing()
 
-        with patch("src.core.notification_manager.CONFIG_DIR", tmp_path):
+        with patch("src.application.services.notification_manager.CONFIG_DIR", tmp_path):
             nm = NotificationManager.instance()
             # Assicuriamoci che il file sia quello temporaneo
             nm.notifications_file = tmp_path / "notifications.json"

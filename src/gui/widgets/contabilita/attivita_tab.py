@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.excel_importer import ExcelImporter
+from src.application.services.excel_importer import ExcelImporter
 from src.gui.widgets import ExcelTableWidget
 from src.gui.widgets.core_widgets import (
     FilterComboBox,

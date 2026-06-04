@@ -4,7 +4,7 @@ Questo diario tiene traccia delle scoperte critiche e delle regole mandatorie pe
 
 ## 🛡️ REGOLA MANDATORIA (MANDATORY)
 **OGNI OPERAZIONE DI TEST DEVE UTILIZZARE IL RUNNER ROBUSTO.**
-- **Comando**: `scripts/avvio_test.bat`
+- **Comando**: `devtools/maintenance/avvio_test.bat`
 - **Engine**: `python -m tests.run_robust_test`
 - **DIVIETO**: Non usare `pytest` direttamente. Il runner robusto gestisce l'isolamento dei processi Qt, i timeout e previene i crash della GDI su Windows.
 
@@ -31,7 +31,7 @@ Questo diario tiene traccia delle scoperte critiche e delle regole mandatorie pe
 ## 🛠️ Convenzioni di Testing
 
 ### 1. Struttura dei Test
-- I file di test devono rispecchiare la struttura della cartella `src/` all'interno di `tests/` (es. `src/core/auth.py` -> `tests/unit/test_auth.py`).
+- I file di test devono rispecchiare la struttura della cartella `src/` all'interno di `tests/` (es. `src/application/services/auth.py` -> `tests/unit/test_auth.py`).
 - Utilizzare fixture globali definite in `tests/conftest.py`.
 
 ### 2. Mocking e Isolamento

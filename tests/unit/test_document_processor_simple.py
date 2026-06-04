@@ -1,7 +1,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from src.utils.document_processor import DocumentProcessor
+from src.infrastructure.utils.document_processor import DocumentProcessor
 
 
 class TestDocumentProcessorSimple:
@@ -9,8 +9,8 @@ class TestDocumentProcessorSimple:
         # Path non esistente deve ritornare stringa vuota senza crash tramite exception block
         assert DocumentProcessor.extract_text(Path("missing.pdf")) == ""
 
-    @patch("src.utils.document_processor.Path")
-    @patch("src.utils.document_processor.fitz")
+    @patch("src.infrastructure.utils.document_processor.Path")
+    @patch("src.infrastructure.utils.document_processor.fitz")
     def test_merge_pdfs_logic(self, mock_fitz, mock_path_cls, tmp_path):
         # Mock Path() per simulare file esistenti
         mock_path_instance = MagicMock()

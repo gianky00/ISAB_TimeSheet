@@ -10,11 +10,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import FilterComboBox, IconButton, StandardInput
 from src.gui.widgets.modern_button import ModernButton
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 
 class AccountDialog(QDialog):

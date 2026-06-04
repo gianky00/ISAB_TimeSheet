@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.core.notification_manager import NotificationManager
+from src.application.services.notification_manager import NotificationManager
 
 
 class TestNotificationManager:

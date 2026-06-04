@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.autopilot.scheduler import AutopilotScheduler
+from src.application.services.autopilot.scheduler import AutopilotScheduler
 
 
 @pytest.fixture
@@ -31,10 +31,10 @@ def test_scheduler_signals_emission(scheduler: AutopilotScheduler) -> None:
     }
 
     # Mock del config_manager.load_config
-    with patch("src.core.config_manager.load_config", return_value=mock_config):
+    with patch("src.application.services.config_manager.load_config", return_value=mock_config):
         # Mock di datetime per restituire le 09:00:02 (così scatta il log ed è l'orario esatto)
         mock_now = datetime(2026, 5, 22, 9, 0, 2)
-        with patch("src.core.autopilot.scheduler.datetime") as mock_datetime:
+        with patch("src.application.services.autopilot.scheduler.datetime") as mock_datetime:
             mock_datetime.now.return_value = mock_now
             mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
 
@@ -76,9 +76,9 @@ def test_scheduler_disabled_tasks(scheduler: AutopilotScheduler) -> None:
         "certificati_autopilot_enabled": False,
     }
 
-    with patch("src.core.config_manager.load_config", return_value=mock_config):
+    with patch("src.application.services.config_manager.load_config", return_value=mock_config):
         mock_now = datetime(2026, 5, 22, 9, 0, 0)
-        with patch("src.core.autopilot.scheduler.datetime") as mock_datetime:
+        with patch("src.application.services.autopilot.scheduler.datetime") as mock_datetime:
             mock_datetime.now.return_value = mock_now
 
             bot_mock = MagicMock()

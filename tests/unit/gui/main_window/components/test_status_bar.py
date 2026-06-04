@@ -64,8 +64,8 @@ class TestStatusBarComponent:
 
     def test_update_license_info(self, qtbot, real_main_window, mock_license_info, mocker):
         """Verifica lbl'aggiornamento delle label di licenza."""
-        mocker.patch("src.core.config_manager.load_config", return_value={"last_login_date": "20/05/2026"})
-        mocker.patch("src.core.config_manager.set_config_value")
+        mocker.patch("src.application.services.config_manager.load_config", return_value={"last_login_date": "20/05/2026"})
+        mocker.patch("src.application.services.config_manager.set_config_value")
 
         comp = StatusBarComponent(real_main_window)
         comp.footer_left.update_info = MagicMock()
@@ -90,7 +90,7 @@ class TestStatusBarComponent:
         mocker.patch("PySide6.QtCore.QTime.currentTime", return_value=QTime(8, 0))
 
         config = {"timbrature_autopilot_enabled": True, "timbrature_autopilot_time": "09:30"}
-        mocker.patch("src.core.config_manager.load_config", return_value=config)
+        mocker.patch("src.application.services.config_manager.load_config", return_value=config)
 
         comp = StatusBarComponent(real_main_window)
         comp.status_portale.setAutopilot = MagicMock()
@@ -107,7 +107,7 @@ class TestStatusBarComponent:
         mocker.patch("PySide6.QtCore.QTime.currentTime", return_value=QTime(22, 0))
 
         config = {"ricerca_pdl_autopilot_enabled": True, "ricerca_pdl_autopilot_time": "02:00"}
-        mocker.patch("src.core.config_manager.load_config", return_value=config)
+        mocker.patch("src.application.services.config_manager.load_config", return_value=config)
 
         comp = StatusBarComponent(real_main_window)
         comp.status_safework.setAutopilot = MagicMock()

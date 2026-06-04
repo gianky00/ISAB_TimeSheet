@@ -2,7 +2,7 @@ import json
 import os
 from unittest.mock import MagicMock, patch
 
-from src.core.updater.engine import (
+from src.application.services.updater.engine import (
     DownloadWorker,
     get_local_setup_path,
     get_network_update_info,
@@ -19,13 +19,13 @@ class TestUpdaterEngine:
         path = get_local_setup_path(url)
         assert path.endswith("setup.exe")
 
-    @patch("src.core.updater.engine.requests.get")
+    @patch("src.application.services.updater.engine.requests.get")
     def test_get_web_update_info_success(self, mock_get):
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"version": "1.2.3"}
         mock_get.return_value = mock_response
-        with patch("src.core.version.UPDATE_URL", "http://update.com"):
+        with patch("src.application.services.version.UPDATE_URL", "http://update.com"):
             assert get_web_update_info() == {"version": "1.2.3"}
 
     def test_get_network_update_info_success(self, fs):
@@ -34,7 +34,7 @@ class TestUpdaterEngine:
         fs.create_file(
             f"{net_path}/version.json", contents=json.dumps({"version": "2.0.0", "url": "setup.exe"})
         )
-        with patch("src.core.version.NETWORK_UPDATE_PATH", net_path):
+        with patch("src.application.services.version.NETWORK_UPDATE_PATH", net_path):
             info = get_network_update_info()
             assert info["version"] == "2.0.0"
 
@@ -44,15 +44,15 @@ class TestUpdaterEngine:
         set_pending_installer(installer)
         assert has_pending_update() is True
 
-    @patch("src.core.updater.engine.subprocess.Popen")
-    @patch("src.core.updater.engine.sys.exit")
+    @patch("src.application.services.updater.engine.subprocess.Popen")
+    @patch("src.application.services.updater.engine.sys.exit")
     def test_run_installer_and_exit(self, mock_exit, mock_popen, fs):
         setup_path = "/tmp/setup.exe"
         fs.create_file(setup_path)
         run_installer_and_exit(setup_path)
         assert mock_popen.called
 
-    @patch("src.core.updater.engine.requests.get")
+    @patch("src.application.services.updater.engine.requests.get")
     def test_download_worker_http(self, mock_get, fs):
         url = "http://example.com/setup.exe"
         setup_path = get_local_setup_path(url)

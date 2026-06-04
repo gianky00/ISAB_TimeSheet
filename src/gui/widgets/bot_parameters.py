@@ -25,8 +25,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core import config_manager
-from src.core.constants import Icons
+from src.application.services import config_manager
+from src.application.services.constants import Icons
 from src.gui.styles import COLORS, COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
 from src.gui.widgets.core_widgets import (
     FilterComboBox,
@@ -35,7 +35,7 @@ from src.gui.widgets.core_widgets import (
 )
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
-from src.utils.helpers import get_asset_path, get_colored_icon, safe_open
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon, safe_open
 
 from .calendar_date_edit import CalendarDateEdit
 

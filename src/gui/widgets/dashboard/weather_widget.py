@@ -35,13 +35,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons
-from src.core.weather_service import WeatherService
+from src.application.services.constants import Icons
+from src.application.services.weather_service import WeatherService
 from src.gui.styles import BUTTON_ICON_ONLY, COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.modern_card import ModernCard
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
 
@@ -388,7 +388,7 @@ class WeatherWidget(ModernCard):
         self.weather_service = WeatherService.instance()
         self._is_loading = False
         self._current_weather_style = "default"
-        from src.core.config_manager import get_config_value
+        from src.application.services.config_manager import get_config_value
 
         self._showing_details = bool(get_config_value("weather_show_details", False))
         self._transitioning = False
@@ -539,7 +539,7 @@ class WeatherWidget(ModernCard):
 
         self.lbl_icon_sunrise = QLabel()
         self.lbl_icon_sunrise.setPixmap(
-            get_colored_icon("assets/icons/sunrise.svg", COLORS["text_muted"]).pixmap(12, 12)
+            get_colored_icon("assets/ui/icons/sunrise.svg", COLORS["text_muted"]).pixmap(12, 12)
         )
         header_h.addWidget(self.lbl_icon_sunrise)
 
@@ -554,7 +554,7 @@ class WeatherWidget(ModernCard):
 
         self.lbl_icon_sunset = QLabel()
         self.lbl_icon_sunset.setPixmap(
-            get_colored_icon("assets/icons/sunset.svg", COLORS["text_muted"]).pixmap(12, 12)
+            get_colored_icon("assets/ui/icons/sunset.svg", COLORS["text_muted"]).pixmap(12, 12)
         )
         header_h.addWidget(self.lbl_icon_sunset)
 
@@ -860,7 +860,7 @@ class WeatherWidget(ModernCard):
                     # Rimuoviamo l'effetto per non impattare sulle performance grafiche
                     self.panel_details.setGraphicsEffect(None)  # type: ignore[arg-type]
                     # Salva lo stato
-                    from src.core.config_manager import set_config_value
+                    from src.application.services.config_manager import set_config_value
 
                     set_config_value("weather_show_details", True)
 
@@ -920,7 +920,7 @@ class WeatherWidget(ModernCard):
                     # Normalizziamo l'angolo di Don Ciro
                     self.don_ciro.set_yaw_angle(0.0)
                     # Salva lo stato
-                    from src.core.config_manager import set_config_value
+                    from src.application.services.config_manager import set_config_value
 
                     set_config_value("weather_show_details", False)
 
@@ -1244,21 +1244,21 @@ class WeatherWidget(ModernCard):
         """Ritorna il percorso dell'icona e il colore associato al codice meteo WMO."""
         sunny_code = 0
         if code == sunny_code:
-            return "assets/icons/sun.svg", COLORS["warning_yellow"]
+            return "assets/ui/icons/sun.svg", COLORS["warning_yellow"]
         cloudy_codes = (1, 2, 3)
         if code in cloudy_codes:
-            return "assets/icons/cloud-sun.svg", COLORS["primary_blue"]
+            return "assets/ui/icons/cloud-sun.svg", COLORS["primary_blue"]
         fog_codes = (45, 48)
         if code in fog_codes:
-            return "assets/icons/cloud-fog.svg", COLORS["text_muted"]
+            return "assets/ui/icons/cloud-fog.svg", COLORS["text_muted"]
         rain_start = 50
         rain_end = 95
         if rain_start <= code < rain_end:
-            return "assets/icons/cloud-rain.svg", COLORS["primary_blue"]
+            return "assets/ui/icons/cloud-rain.svg", COLORS["primary_blue"]
         storm_start = 95
         if code >= storm_start:
-            return "assets/icons/cloud-lightning.svg", COLORS["warning_yellow"]
-        return "assets/icons/cloud.svg", COLORS["text_dark"]
+            return "assets/ui/icons/cloud-lightning.svg", COLORS["warning_yellow"]
+        return "assets/ui/icons/cloud.svg", COLORS["text_dark"]
 
     def _get_condition_text(self, code: int) -> str:
         """Traduce il codice meteo numerico WMO in una descrizione testuale in italiano."""

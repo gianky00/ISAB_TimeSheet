@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.core.contabilita.scarico_ore.controller import ScaricoOreController
+from src.application.services.contabilita.scarico_ore.controller import ScaricoOreController
 from src.gui.panels.scarico_ore_panel import ScaricoOrePanel
 
 

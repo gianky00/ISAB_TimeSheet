@@ -9,7 +9,7 @@ from PySide6.QtCore import Property, QEasingCurve, QEvent, QPropertyAnimation, S
 from PySide6.QtWidgets import QGraphicsDropShadowEffect, QPushButton, QWidget
 
 from src.gui.styles import COLORS
-from src.utils.helpers import get_colored_icon
+from src.infrastructure.utils.helpers import get_colored_icon
 
 from ..design.colors import get_palette
 

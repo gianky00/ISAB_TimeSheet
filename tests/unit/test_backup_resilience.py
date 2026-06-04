@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from src.core.backup.archive_rotator import ArchiveRotator
-from src.core.backup_manager import BackupManager
+from src.application.services.backup.archive_rotator import ArchiveRotator
+from src.application.services.backup_manager import BackupManager
 
 
 class TestBackupResilience:
@@ -26,9 +26,9 @@ class TestBackupResilience:
 
     def test_backup_creation_and_filtering(self, setup_files, mocker):
         source_dir, backup_dir = setup_files
-        mocker.patch("src.core.backup_manager.CONFIG_DIR", source_dir)
-        mocker.patch("src.core.backup_manager.BackupManager.get_backup_dir", return_value=backup_dir)
-        mocker.patch("src.core.backup_manager.AuditManager")
+        mocker.patch("src.application.services.backup_manager.CONFIG_DIR", source_dir)
+        mocker.patch("src.application.services.backup_manager.BackupManager.get_backup_dir", return_value=backup_dir)
+        mocker.patch("src.application.services.backup_manager.AuditManager")
         success, zip_path = BackupManager.create_backup()
         assert success is True
         assert Path(zip_path).exists()
@@ -53,8 +53,8 @@ class TestBackupResilience:
         zip_path = backup_dir / "test_restore.zip"
         with zipfile.ZipFile(zip_path, "w") as zipf:
             zipf.writestr("database.db", "restored_data")
-        mocker.patch("src.core.backup_manager.CONFIG_DIR", source_dir)
-        mocker.patch("src.core.backup_manager.AuditManager")
+        mocker.patch("src.application.services.backup_manager.CONFIG_DIR", source_dir)
+        mocker.patch("src.application.services.backup_manager.AuditManager")
         success, _ = BackupManager.restore_backup(str(zip_path))
         assert success is True
         assert (source_dir / "database.db").read_text() == "restored_data"

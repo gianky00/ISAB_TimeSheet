@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.telegram.service import TelegramService
+from src.api.telegram.service import TelegramService
 
 
 class TestTelegramService:
@@ -10,8 +10,8 @@ class TestTelegramService:
     def service(self):
         return TelegramService()
 
-    @patch("src.core.config_manager.load_config")
-    @patch("src.core.telegram.service.threading.Thread")
+    @patch("src.application.services.config_manager.load_config")
+    @patch("src.api.telegram.service.threading.Thread")
     def test_start_service_success(self, mock_thread, mock_config, service):
         mock_config.return_value = {"telegram_token": "TOKEN", "telegram_chat_id": "123"}
 
@@ -20,7 +20,7 @@ class TestTelegramService:
         assert mock_thread.called
         assert service.connected_chat_id == "123"
 
-    @patch("src.core.config_manager.load_config")
+    @patch("src.application.services.config_manager.load_config")
     def test_start_service_missing_token(self, mock_config, service):
         mock_config.return_value = {"telegram_token": ""}
 
@@ -34,7 +34,7 @@ class TestTelegramService:
         service.stop_service()
         assert not service.stop_event.is_set()
 
-    @patch("src.core.telegram.service.asyncio.run_coroutine_threadsafe")
+    @patch("src.api.telegram.service.asyncio.run_coroutine_threadsafe")
     def test_send_message_sync(self, mock_run, service):
         service.connected_chat_id = "123"
         service.loop = MagicMock()
@@ -56,6 +56,6 @@ class TestTelegramService:
         assert await service._check_auth(mock_update) is False
 
     def test_build_application(self, service):
-        with patch("src.core.telegram.service.Application.builder") as mock_builder:
+        with patch("src.api.telegram.service.Application.builder") as mock_builder:
             service._build_application("TOKEN")
             assert mock_builder.return_value.token.called

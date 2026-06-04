@@ -4,19 +4,19 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.audit_manager import AuditManager
+from src.application.services.audit_manager import AuditManager
 
 
 class TestAuditManager:
-    """Test coverage for src/core/audit modular V2."""
+    """Test coverage for src/application/services/audit modular V2."""
 
     @pytest.fixture
     def temp_db_manager(self, tmp_path, mocker):
         db_file = tmp_path / "audit_test.db"
         # Patch the actual location in db_manager
-        mocker.patch("src.core.database.db_manager.DB_AUDIT", db_file)
+        mocker.patch("src.application.services.database.db_manager.DB_AUDIT", db_file)
         # Patch AuditSignals to avoid PySide6 issues in headless
-        mocker.patch("src.core.audit.manager.AuditSignals.instance")
+        mocker.patch("src.application.services.audit.manager.AuditSignals.instance")
 
         # Reset singleton
         AuditManager._instance = None
@@ -76,11 +76,11 @@ class TestAuditManager:
 
     def test_get_current_user_env(self, temp_db_manager):
         # Patch os in manager.py
-        with patch("src.core.audit.manager.os.environ.get") as mock_env:
+        with patch("src.application.services.audit.manager.os.environ.get") as mock_env:
             mock_env.return_value = "TEST_USER"
             assert temp_db_manager._get_current_user() == "TEST_USER"
 
-    @patch("src.core.notification_manager.NotificationManager.instance")
+    @patch("src.application.services.notification_manager.NotificationManager.instance")
     def test_notification_trigger(self, mock_notify, temp_db_manager):
         mock_instance = MagicMock()
         mock_notify.return_value = mock_instance

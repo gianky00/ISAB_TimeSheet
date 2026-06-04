@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.data_synchronizer import DataSynchronizer
+from src.application.services.data_synchronizer import DataSynchronizer
 
 
 @pytest.fixture
@@ -12,7 +12,7 @@ def mock_db_path():
 
 
 def test_sync_contabilita(mock_db_path):
-    with patch("src.core.data_synchronizer.ContabilitaSyncEngine") as mock_engine:
+    with patch("src.application.services.data_synchronizer.ContabilitaSyncEngine") as mock_engine:
         mock_engine.sync_contabilita.return_value = (10, 0)
 
         # Test input list format
@@ -27,7 +27,7 @@ def test_sync_contabilita(mock_db_path):
 
 
 def test_sync_giornaliere(mock_db_path):
-    with patch("src.core.data_synchronizer.ContabilitaSyncEngine") as mock_engine:
+    with patch("src.application.services.data_synchronizer.ContabilitaSyncEngine") as mock_engine:
         mock_engine.sync_giornaliere.return_value = (5, 0)
 
         data = [("val1",), ("val2",)]

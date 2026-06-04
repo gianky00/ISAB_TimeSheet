@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from src.core.importers.contabilita import ContabilitaImporter
+from src.application.services.importers.contabilita import ContabilitaImporter
 
 
 def test_scan_sheets_valid_excel():

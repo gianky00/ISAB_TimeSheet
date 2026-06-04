@@ -1,14 +1,14 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from src.bots.portale_fornitori.carico_ts.bot import CaricoTSBot
-from src.bots.portale_fornitori.carico_ts.pages.carico_ts_page import CaricoTSPage
+from src.infrastructure.bots.portale_fornitori.carico_ts.bot import CaricoTSBot
+from src.infrastructure.bots.portale_fornitori.carico_ts.pages.carico_ts_page import CaricoTSPage
 
 
 class TestCaricoTSBotComprehensive(unittest.TestCase):
     def setUp(self):
         self.mock_driver = MagicMock()
-        with patch("src.bots.base.base_bot.BaseBot.__init__", return_value=None):
+        with patch("src.infrastructure.bots.base.base_bot.BaseBot.__init__", return_value=None):
             self.bot = CaricoTSBot()
             self.bot.signals = MagicMock()  # FIX: Inizializza mock segnali
 
@@ -34,7 +34,7 @@ class TestCaricoTSBotComprehensive(unittest.TestCase):
 
     def test_validate_data(self):
         # Parent validation success
-        with patch("src.bots.base.base_bot.BaseBot.validate_data", return_value=(True, "")):
+        with patch("src.infrastructure.bots.base.base_bot.BaseBot.validate_data", return_value=(True, "")):
             # Missing oda
             valid, msg = self.bot.validate_data({"rows": [{"nome": "M"}]})
             self.assertFalse(valid)
@@ -44,7 +44,7 @@ class TestCaricoTSBotComprehensive(unittest.TestCase):
             valid, msg = self.bot.validate_data({"rows": [{"numero_oda": "123"}]})
             self.assertTrue(valid)
 
-    @patch("src.bots.portale_fornitori.carico_ts.bot.CaricoTSPage")
+    @patch("src.infrastructure.bots.portale_fornitori.carico_ts.bot.CaricoTSPage")
     def test_run_success(self, mock_page_class):
         mock_page = mock_page_class.return_value
         mock_page.navigate.return_value = True
@@ -63,27 +63,27 @@ class TestCaricoTSPageComprehensive(unittest.TestCase):
         self.mock_driver = MagicMock()
         self.mock_log = MagicMock()
         with patch(
-            "src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.WebDriverWait"
+            "src.infrastructure.bots.portale_fornitori.carico_ts.pages.carico_ts_page.WebDriverWait"
         ) as mock_wait_class:
             self.mock_wait = MagicMock()
             mock_wait_class.return_value = self.mock_wait
             self.page = CaricoTSPage(self.mock_driver, self.mock_log)
 
-    @patch("src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.EC")
+    @patch("src.infrastructure.bots.portale_fornitori.carico_ts.pages.carico_ts_page.EC")
     def test_navigate_success(self, mock_ec):
         mock_btn = MagicMock()
         self.mock_wait.until.return_value = mock_btn
 
         # _wait_overlay internal call
         with patch(
-            "src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.WebDriverWait"
+            "src.infrastructure.bots.portale_fornitori.carico_ts.pages.carico_ts_page.WebDriverWait"
         ) as mock_wait_overlay:
             result = self.page.navigate()
             self.assertTrue(result)
             mock_btn.click.assert_called_once()
 
-    @patch("src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.ActionChains")
-    @patch("src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.EC")
+    @patch("src.infrastructure.bots.portale_fornitori.carico_ts.pages.carico_ts_page.ActionChains")
+    @patch("src.infrastructure.bots.portale_fornitori.carico_ts.pages.carico_ts_page.EC")
     def test_select_supplier_flow(self, mock_ec, mock_action_class):
         mock_arrow = MagicMock()
         mock_opt = MagicMock()
@@ -94,7 +94,7 @@ class TestCaricoTSPageComprehensive(unittest.TestCase):
 
         # New WebDriverWait(driver, 5) for option
         with patch(
-            "src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.WebDriverWait"
+            "src.infrastructure.bots.portale_fornitori.carico_ts.pages.carico_ts_page.WebDriverWait"
         ) as mock_local_wait_class:
             mock_local_wait = MagicMock()
             mock_local_wait_class.return_value = mock_local_wait
@@ -106,7 +106,7 @@ class TestCaricoTSPageComprehensive(unittest.TestCase):
             mock_action_class.return_value.move_to_element.assert_called_with(mock_arrow)
             self.mock_driver.execute_script.assert_any_call("arguments[0].click();", mock_opt)
 
-    @patch("src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.EC")
+    @patch("src.infrastructure.bots.portale_fornitori.carico_ts.pages.carico_ts_page.EC")
     def test_process_oda_js_injection(self, mock_ec):
         mock_inp = MagicMock()
         mock_btn = MagicMock()

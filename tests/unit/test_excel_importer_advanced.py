@@ -6,9 +6,9 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from src.core.excel_importer import ExcelImporter
-from src.core.importers.contabilita import ContabilitaImporter
-from src.core.importers.giornaliere import GiornaliereImporter
+from src.application.services.excel_importer import ExcelImporter
+from src.application.services.importers.contabilita import ContabilitaImporter
+from src.application.services.importers.giornaliere import GiornaliereImporter
 
 
 class TestExcelImporterAdvanced:
@@ -44,16 +44,16 @@ class TestExcelImporterAdvanced:
             )
         ]
         mocker.patch(
-            "src.core.importers.contabilita.ContabilitaImporter._process_single_sheet",
+            "src.application.services.importers.contabilita.ContabilitaImporter._process_single_sheet",
             return_value=mock_data,
         )
         mocker.patch(
-            "src.core.importers.contabilita.ContabilitaImporter._get_excel_file",
+            "src.application.services.importers.contabilita.ContabilitaImporter._get_excel_file",
             return_value=mock_xls,
         )
-        mocker.patch("src.core.importers.contabilita.Path.exists", return_value=True)
+        mocker.patch("src.application.services.importers.contabilita.Path.exists", return_value=True)
         mocker.patch(
-            "src.core.importers.contabilita.ContabilitaImporter._decrypt_if_encrypted",
+            "src.application.services.importers.contabilita.ContabilitaImporter._decrypt_if_encrypted",
             return_value=("fake_path", False),
         )
 
@@ -84,8 +84,8 @@ class TestExcelImporterAdvanced:
         )
 
         with (
-            patch("src.core.processing.giornaliere.steps.pd.read_excel", return_value=df_giorn),
-            patch("src.core.importers.giornaliere.SyncGiornaliereStep.execute", return_value=None),
+            patch("src.application.services.processing.giornaliere.steps.pd.read_excel", return_value=df_giorn),
+            patch("src.application.services.importers.giornaliere.SyncGiornaliereStep.execute", return_value=None),
         ):
             _year, rows, err = GiornaliereImporter._process_single_giornaliera((2026, Path("test.xlsx"), {}))
             assert err is None
@@ -112,8 +112,8 @@ class TestExcelImporterAdvanced:
         lookup = {"P999": "54001234"}
 
         with (
-            patch("src.core.processing.giornaliere.steps.pd.read_excel", return_value=df),
-            patch("src.core.importers.giornaliere.SyncGiornaliereStep.execute", return_value=None),
+            patch("src.application.services.processing.giornaliere.steps.pd.read_excel", return_value=df),
+            patch("src.application.services.importers.giornaliere.SyncGiornaliereStep.execute", return_value=None),
         ):
             _year, rows, _err = GiornaliereImporter._process_single_giornaliera(
                 (2026, Path("f.xlsx"), lookup)
@@ -126,7 +126,7 @@ class TestExcelImporterAdvanced:
 
     def test_process_scarico_ore_row_with_styles(self):
         """Test: Estrazione stili (colori) da una riga scarico ore."""
-        from src.core.processing.scarico_ore.steps import ProcessScaricoOreRowsStep
+        from src.application.services.processing.scarico_ore.steps import ProcessScaricoOreRowsStep
 
         mock_row = []
         # data, pers1, pers2, odc, pos, dalle, alle, totale_ore, descrizione, finito, commessa

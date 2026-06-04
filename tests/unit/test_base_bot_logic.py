@@ -3,10 +3,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 from selenium.common.exceptions import TimeoutException, WebDriverException
 
-# Assuming BaseBot is in src.bots.base.base_bot or similar.
+# Assuming BaseBot is in src.infrastructure.bots.base.base_bot or similar.
 # Since we haven't seen the file, we mock the class logic we want to test
 # or import if we can find it.
-# Based on file structure `src/bots/base/`, let's check `__init__.py` or similar.
+# Based on file structure `src/infrastructure/bots/base/`, let's check `__init__.py` or similar.
 # But for now, I will construct a generic test that mocks the Selenium driver behaviors
 # that are typical in BaseBot.
 

@@ -2,7 +2,11 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from src.core.config.migration import check_and_migrate_local_config, deep_update_paths, migrate_legacy_keys
+from src.application.services.config.migration import (
+    check_and_migrate_local_config,
+    deep_update_paths,
+    migrate_legacy_keys,
+)
 
 
 class TestConfigMigration:
@@ -34,7 +38,7 @@ class TestConfigMigration:
         assert migrate_legacy_keys(config) is False
 
     def test_check_and_migrate_local_config_success(self, fs):
-        from src.core.constants import FileNames
+        from src.application.services.constants import FileNames
 
         # Setup legacy dir e file
         legacy_dir = Path("/legacy_app")
@@ -47,12 +51,12 @@ class TestConfigMigration:
         fs.create_dir(str(target_dir))
 
         # Patching CONFIG_DIR in migration module
-        with patch("src.core.config.migration.CONFIG_DIR", target_dir):
-            with patch("src.core.config.migration.user_data_dir", return_value="/legacy_app"):
+        with patch("src.application.services.config.migration.CONFIG_DIR", target_dir):
+            with patch("src.application.services.config.migration.user_data_dir", return_value="/legacy_app"):
                 load_mock = MagicMock(return_value={})
                 write_mock = MagicMock()
 
-                with patch("src.core.config.migration.sys") as mock_sys:
+                with patch("src.application.services.config.migration.sys") as mock_sys:
                     mock_sys.frozen = False
 
                     res = check_and_migrate_local_config(Path("/tmp"), load_mock, write_mock)

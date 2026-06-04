@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.autopilot.cert_automation import CertCampioneAutomator
+from src.application.services.autopilot.cert_automation import CertCampioneAutomator
 
 
 class TestCertCampioneAutomator:
@@ -43,15 +43,15 @@ class TestCertCampioneAutomator:
 
     def test_run_invalid_path(self, automator):
         config = {"certificati_campione_path": "C:/invalid/path.xlsx"}
-        with patch("src.core.autopilot.cert_automation.Path.exists", return_value=False):
+        with patch("src.application.services.autopilot.cert_automation.Path.exists", return_value=False):
             automator.run(config)
             assert automator._cert_worker is None
 
     def test_run_success_start(self, automator):
         config = {"certificati_campione_path": "C:/valid/path.xlsx"}
-        with patch("src.core.autopilot.cert_automation.Path.exists", return_value=True):
+        with patch("src.application.services.autopilot.cert_automation.Path.exists", return_value=True):
             # Patch explicitly where it's used inside the method (dynamic import)
-            with patch("src.core.contabilita_worker.ContabilitaWorker") as mock_worker_class:
+            with patch("src.application.services.contabilita_worker.ContabilitaWorker") as mock_worker_class:
                 automator.run(config)
                 assert automator._cert_worker is not None
                 mock_worker_class.assert_called_once()
@@ -59,7 +59,7 @@ class TestCertCampioneAutomator:
 
     def test_on_worker_finished_critical_error(self, automator):
         automator._cert_worker = MagicMock()
-        with patch("src.core.autopilot.cert_automation.NotificationManager") as mock_nm:
+        with patch("src.application.services.autopilot.cert_automation.NotificationManager") as mock_nm:
             automator._on_worker_finished(False, "Errore critico: DB locked", 0, 0, 1.0)
             mock_nm.instance().add_notification.assert_called_once()
             args = mock_nm.instance().add_notification.call_args[1]
@@ -67,9 +67,9 @@ class TestCertCampioneAutomator:
 
     def test_on_worker_finished_success(self, automator):
         automator._cert_worker = MagicMock()
-        with patch("src.core.autopilot.cert_automation.NotificationManager") as mock_nm:
+        with patch("src.application.services.autopilot.cert_automation.NotificationManager") as mock_nm:
             with patch.object(automator, "_generate_outlook_draft") as mock_gen:
-                with patch("src.core.autopilot.cert_automation.config_manager") as mock_cfg:
+                with patch("src.application.services.autopilot.cert_automation.config_manager") as mock_cfg:
                     automator._on_worker_finished(True, "OK", 5, 0, 2.0)
                     mock_gen.assert_called_once()
                     mock_cfg.set_config_value.assert_called_once()
@@ -79,7 +79,7 @@ class TestCertCampioneAutomator:
 
     def test_on_worker_finished_exception(self, automator):
         automator._cert_worker = MagicMock()
-        with patch("src.core.autopilot.cert_automation.NotificationManager") as mock_nm:
+        with patch("src.application.services.autopilot.cert_automation.NotificationManager") as mock_nm:
             with patch.object(automator, "_generate_outlook_draft", side_effect=Exception("Gen Error")):
                 automator._on_worker_finished(True, "OK", 0, 0, 0.5)
                 mock_nm.instance().add_notification.assert_called_once()

@@ -12,17 +12,17 @@ from typing import TYPE_CHECKING, Any
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel
 from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import BotParametersWidget, EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.safework.status_list import StatusListWidget
-from src.utils.helpers import get_asset_path
+from src.infrastructure.utils.helpers import get_asset_path
 
 if TYPE_CHECKING:
-    from src.bots.base.base_bot import BaseBot
+    from src.infrastructure.bots.base.base_bot import BaseBot
 
 
 class PrenotaBPPanel(BaseBotPanel):
@@ -80,7 +80,7 @@ class PrenotaBPPanel(BaseBotPanel):
         Returns:
             Type[PrenotaBPBot]: Classe del bot.
         """
-        from src.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot
+        from src.infrastructure.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot
 
         return PrenotaBPBot
 
@@ -194,7 +194,7 @@ class PrenotaBPPanel(BaseBotPanel):
         """Carica l'ultima lista BP e i parametri temporali dalla configurazione."""
         self._is_loading = True
         try:
-            from src.core.bots.services import PrenotaBPService
+            from src.application.services.bots.services import PrenotaBPService
 
             service = PrenotaBPService()
             cfg = service.load_config()
@@ -226,7 +226,7 @@ class PrenotaBPPanel(BaseBotPanel):
             "data_a": date_a,
         }
 
-        from src.core.bots.services import PrenotaBPService
+        from src.application.services.bots.services import PrenotaBPService
 
         service = PrenotaBPService()
         service.save_config(params, self.data_table.get_data())
@@ -268,7 +268,7 @@ class PrenotaBPPanel(BaseBotPanel):
         if not params_override:
             self._save_data()
 
-        from src.core.bots.services import PrenotaBPService
+        from src.application.services.bots.services import PrenotaBPService
 
         service = PrenotaBPService()
 

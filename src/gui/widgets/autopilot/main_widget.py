@@ -28,13 +28,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core import config_manager
-from src.core.constants import Icons
+from src.application.services import config_manager
+from src.application.services.constants import Icons
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import (
     IconButton,
 )
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 from .config_cards import AutopilotConfigCard, AutopilotConfigCardWithInterval, BotVisualInfo
 from .event_card import AutopilotEventCard, EventInfo

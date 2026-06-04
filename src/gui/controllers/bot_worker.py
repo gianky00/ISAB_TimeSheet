@@ -12,10 +12,10 @@ from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import QThread, Signal
 
-from src.bots import create_bot
+from src.infrastructure.bots import create_bot
 
 if TYPE_CHECKING:
-    from src.bots.base.base_bot import BaseBot
+    from src.infrastructure.bots.base.base_bot import BaseBot
 
 logger = logging.getLogger(__name__)
 

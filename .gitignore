@@ -41,18 +41,14 @@ dist/
 *.manifest
 *.egg-info/
 .eggs/
-admin/Crea Setup/Setup/
-admin/Crea Setup/build/
-admin/Crea Setup/dist/
+devtools/gui/Crea Setup/Setup/
+devtools/gui/Crea Setup/build/
+devtools/gui/Crea Setup/dist/
 
 # Testing & Coverage
 .coverage
 .coverage.*
-htmlcov/
-.pytest_cache/
-.hypothesis/
-.mypy_cache/
-.ruff_cache/
+.cache/
 coverage.xml
 *.lcov
 .test_results.json
@@ -63,7 +59,6 @@ coverage.xml
 *.log
 startup.log*
 startup_debug.log*
-build_log.txt
 profiling_report.html
 npm-debug.log*
 ruff_report*
@@ -91,12 +86,10 @@ database.db
 *.sublime-workspace
 
 # Project specific
-temp/
-tmp/
 reports/
-admin/Crea Licenze/_intelleo-licenses/
-admin/Crea Licenze/PC_COEMI_GIGLIUTO/
-admin/Crea Licenze/PC_MILLO_COEMI/
+devtools/gui/Crea Licenze/_intelleo-licenses/
+devtools/gui/Crea Licenze/PC_COEMI_GIGLIUTO/
+devtools/gui/Crea Licenze/PC_MILLO_COEMI/
 *.pkl
 test_cache.pkl
 architecture.png

@@ -2,13 +2,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.contabilita_worker import ContabilitaWorker
+from src.application.services.contabilita_worker import ContabilitaWorker
 
 
 class TestContabilitaWorker:
     @pytest.fixture
     def mock_manager(self, mocker):
-        return mocker.patch("src.core.contabilita_worker.ContabilitaManager")
+        return mocker.patch("src.application.services.contabilita_worker.ContabilitaManager")
 
     @pytest.fixture
     def worker(self, mocker):
@@ -34,7 +34,7 @@ class TestContabilitaWorker:
         worker.certificati_path = str(tmp_path / "certificati.xlsx")
 
         # Mock Path exists
-        with patch("src.core.contabilita_worker.Path.exists", return_value=True):
+        with patch("src.application.services.contabilita_worker.Path.exists", return_value=True):
             # Mock Manager methods
             mock_manager.scan_workload.return_value = (
                 5,
@@ -74,7 +74,7 @@ class TestContabilitaWorker:
         """Test internal total ops calculation."""
         worker.attivita_path = "exists"
         with (
-            patch("src.core.contabilita_worker.Path.exists", return_value=True),
+            patch("src.application.services.contabilita_worker.Path.exists", return_value=True),
         ):
             mock_manager.scan_workload.return_value = (5, 5)
             # 5 sheets + 5 files + 1 attivita + 0 certificati = 11

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 from PySide6.QtGui import QColor
 
-from src.core.logging.analytics import Anomaly
+from src.application.services.logging.analytics import Anomaly
 from src.gui.panels.health_panel import AnomalyCard, HealthPanel, HealthScoreBadge, StatCard
 from src.gui.styles import COLORS
 

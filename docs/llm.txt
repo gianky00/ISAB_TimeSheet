@@ -1,5 +1,5 @@
 > **[DEPRECATO]** Questo file è stato sostituito da `.ai-context.json` nella root del progetto,
-> generato automaticamente da `tools/generate_ai_context.py` e sempre aggiornato al pre-commit.
+> generato automaticamente da `devtools/cli/generate_ai_context.py` e sempre aggiornato al pre-commit.
 > Conservato a scopo storico/di riferimento. NON modificare manualmente.
 
 ---
@@ -27,7 +27,7 @@ c:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet/
 │   │   └── contabilita.py     # Modello transazioni e ore strumentali
 │   ├── core/                  # Logica di business, servizi e Manager Singleton
 │   │   ├── audit_manager.py   # Registro audit immutabile (SHA-256) con database SQLite dedicato
-│   │   ├── config/            # Gestione configurazione tipizzata
+│   │   ├── devtools/devtools/config/            # Gestione configurazione tipizzata
 │   │   │   └── settings.py    # Schema e modello di configurazione centralizzato (pydantic-settings)
 │   │   ├── config_manager.py  # Gestione configurazione centralizzata JSON legacy (config.json)
 │   │   ├── notification_mgr.py# Gestione notifiche centralizzata
@@ -113,10 +113,10 @@ graph TD
 
 ### 1. Separazione delle Responsabilità (SRP)
 - **Logica vs GUI:** La GUI (`src/gui/`) deve occuparsi solo di visualizzazione, animazioni e propagazione dei segnali. Nessuna query diretta a database, scraping o elaborazione complessa deve avvenire nella GUI.
-- **Controller/Service:** La logica di business deve risiedere nei Manager (`src/core/`) o nei Controller dedicati.
+- **Controller/Service:** La logica di business deve risiedere nei Manager (`src/application/services/`) o nei Controller dedicati.
 
 ### 2. Impostazioni Tipizzate ed AI-Friendly (Pydantic Settings)
-- **Configurazioni Centralizzate:** Tutte le impostazioni dell'applicazione sono definite e validate rigidamente in `src/core/config/settings.py` tramite la classe `SyncroJobSettings` che eredita da `BaseSettings` di `pydantic-settings`.
+- **Configurazioni Centralizzate:** Tutte le impostazioni dell'applicazione sono definite e validate rigidamente in `src/application/services/devtools/devtools/config/settings.py` tramite la classe `SyncroJobSettings` che eredita da `BaseSettings` di `pydantic-settings`.
 - **Integrazione Variabili Ambiente:** Il sistema supporta la validazione a runtime e l'override istantaneo da variabili di ambiente con prefisso `SYNCROJOB_` (12-Factor App pattern) per garantire portabilità e robustezza.
 
 ### 3. Integrità e Sicurezza dei Segnali PySide6 (QT)

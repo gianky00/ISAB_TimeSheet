@@ -20,7 +20,7 @@ from PySide6.QtGui import (
     QRadialGradient,
 )
 
-from src.core.mascot.don_ciro_engine import DonState, WeatherCond
+from src.application.services.mascot.don_ciro_engine import DonState, WeatherCond
 
 if TYPE_CHECKING:
     from collections.abc import Callable

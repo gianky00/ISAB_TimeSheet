@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from src.core.logging.migration import LoggingAdapter, get_logger, migrate_logging_call
+from src.application.services.logging.migration import LoggingAdapter, get_logger, migrate_logging_call
 
 
 class TestLoggingMigration:
@@ -9,7 +9,7 @@ class TestLoggingMigration:
         assert isinstance(logger, LoggingAdapter)
 
     def test_logging_adapter_debug(self):
-        with patch("src.core.logging.migration.get_new_logger") as mock_get_new:
+        with patch("src.application.services.logging.migration.get_new_logger") as mock_get_new:
             mock_structured = MagicMock()
             mock_get_new.return_value = mock_structured
 
@@ -19,7 +19,7 @@ class TestLoggingMigration:
             mock_structured.debug.assert_called_with("Msg Arg1", key="val")
 
     def test_logging_adapter_info(self):
-        with patch("src.core.logging.migration.get_new_logger") as mock_get_new:
+        with patch("src.application.services.logging.migration.get_new_logger") as mock_get_new:
             mock_structured = MagicMock()
             mock_get_new.return_value = mock_structured
 
@@ -29,7 +29,7 @@ class TestLoggingMigration:
             mock_structured.info.assert_called_with("Msg Arg1", key="val")
 
     def test_logging_adapter_warning(self):
-        with patch("src.core.logging.migration.get_new_logger") as mock_get_new:
+        with patch("src.application.services.logging.migration.get_new_logger") as mock_get_new:
             mock_structured = MagicMock()
             mock_get_new.return_value = mock_structured
 
@@ -39,7 +39,7 @@ class TestLoggingMigration:
             mock_structured.warning.assert_called_with("Msg Arg1", key="val")
 
     def test_logging_adapter_error(self):
-        with patch("src.core.logging.migration.get_new_logger") as mock_get_new:
+        with patch("src.application.services.logging.migration.get_new_logger") as mock_get_new:
             mock_structured = MagicMock()
             mock_get_new.return_value = mock_structured
 
@@ -49,7 +49,7 @@ class TestLoggingMigration:
             mock_structured.error.assert_called_with("Msg", k="v")
 
     def test_logging_adapter_critical(self):
-        with patch("src.core.logging.migration.get_new_logger") as mock_get_new:
+        with patch("src.application.services.logging.migration.get_new_logger") as mock_get_new:
             mock_structured = MagicMock()
             mock_get_new.return_value = mock_structured
 
@@ -59,7 +59,7 @@ class TestLoggingMigration:
             mock_structured.critical.assert_called_with("Crit", a="b")
 
     def test_logging_adapter_exception_with_exc(self):
-        with patch("src.core.logging.migration.get_new_logger") as mock_get_new:
+        with patch("src.application.services.logging.migration.get_new_logger") as mock_get_new:
             mock_structured = MagicMock()
             mock_get_new.return_value = mock_structured
 
@@ -76,7 +76,7 @@ class TestLoggingMigration:
             assert isinstance(kwargs["exc"], ValueError)
 
     def test_logging_adapter_exception_without_exc(self):
-        with patch("src.core.logging.migration.get_new_logger") as mock_get_new:
+        with patch("src.application.services.logging.migration.get_new_logger") as mock_get_new:
             mock_structured = MagicMock()
             mock_get_new.return_value = mock_structured
 
@@ -91,6 +91,6 @@ class TestLoggingMigration:
 
         new_code = migrate_logging_call(old_code)
 
-        assert "from src.core.logging import get_logger" in new_code
+        assert "from src.application.services.logging import get_logger" in new_code
         assert "logger = get_logger(__name__)" in new_code
         assert "logger.info( 'Msg')" in new_code

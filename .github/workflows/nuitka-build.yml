@@ -26,22 +26,20 @@ jobs:
       shell: pwsh
       run: |
         python -m pip install --upgrade pip
-        pip install poetry==2.3.4
-        poetry config virtualenvs.create true
-        poetry config virtualenvs.in-project true
-        poetry install --no-interaction --no-root --with dev
+        pip install uv
+                        uv sync --with dev
 
     - name: Build with Nuitka
       shell: pwsh
       run: |
         $env:PYTHONUTF8=1
-        poetry run python "admin/Crea Setup/build_dist.py" --use-nuitka --no-deploy --no-network
+        uv run python "devtools/gui/Crea Setup/build_dist.py" --use-nuitka --no-deploy --no-network
 
     - name: Upload Installer
       uses: actions/upload-artifact@v4
       with:
         name: SyncroJob-Installer-Nuitka
-        path: "admin/Crea Setup/Setup/*.exe"
+        path: "devtools/gui/Crea Setup/Setup/*.exe"
         if-no-files-found: error
 
 # Fix Path & Poetry v1.1

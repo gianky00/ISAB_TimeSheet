@@ -4,15 +4,15 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from src.core.importers.base import BaseImporter
+from src.application.services.importers.base import BaseImporter
 
 
 class TestBaseImporter:
     def test_get_pd(self):
         assert BaseImporter._get_pd() is pd
 
-    @patch("src.core.importers.base.msoffcrypto")
-    @patch("src.core.importers.base.config_manager.load_config")
+    @patch("src.application.services.importers.base.msoffcrypto")
+    @patch("src.application.services.importers.base.config_manager.load_config")
     def test_decrypt_if_encrypted_with_msoffcrypto(self, mock_load, mock_msoff, fs):
         mock_load.return_value = {"excel_decryption_password": "test"}
         mock_office_file = MagicMock()
@@ -27,7 +27,7 @@ class TestBaseImporter:
         assert mock_office_file.load_key.called
         assert mock_office_file.decrypt.called
 
-    @patch("src.core.importers.base.msoffcrypto", None)
+    @patch("src.application.services.importers.base.msoffcrypto", None)
     def test_decrypt_if_encrypted_no_msoffcrypto(self, fs):
         test_file = Path("/test.xlsx")
         decrypted_obj, was_encrypted = BaseImporter._decrypt_if_encrypted(test_file)
@@ -53,7 +53,7 @@ class TestBaseImporter:
         # Unknown
         assert BaseImporter._identify_sheet_year("Foglio1") is None
 
-    @patch("src.core.importers.base.pd.ExcelFile")
+    @patch("src.application.services.importers.base.pd.ExcelFile")
     def test_get_excel_file_engines(self, mock_excel_file):
         file_obj = MagicMock()
 

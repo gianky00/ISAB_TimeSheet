@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from PySide6.QtCore import QObject
 
-from src.core.telegram_bridge import TelegramUIBridge
+from src.application.services.telegram_bridge import TelegramUIBridge
 
 
 class TestTelegramBridge:
@@ -14,11 +14,11 @@ class TestTelegramBridge:
         return m
 
     def test_init_and_setup(self, mock_mw):
-        with patch("src.core.telegram_bridge.TelegramGUIBridge"):
-            with patch("src.core.telegram_bridge.TelegramUICommands"):
-                with patch("src.core.telegram_bridge.TelegramDataProcessor"):
-                    with patch("src.core.telegram_bridge.TelegramSystemHandler"):
-                        with patch("src.core.telegram_bridge.TelegramIntentHandler"):
+        with patch("src.application.services.telegram_bridge.TelegramGUIBridge"):
+            with patch("src.application.services.telegram_bridge.TelegramUICommands"):
+                with patch("src.application.services.telegram_bridge.TelegramDataProcessor"):
+                    with patch("src.application.services.telegram_bridge.TelegramSystemHandler"):
+                        with patch("src.application.services.telegram_bridge.TelegramIntentHandler"):
                             bridge = TelegramUIBridge(mock_mw)
 
                             bridge.setup_connections()
@@ -31,11 +31,11 @@ class TestTelegramBridge:
                             assert mock_mw.telegram.intent_received.connect.called
 
     def test_dispatch_command(self, mock_mw):
-        with patch("src.core.telegram_bridge.TelegramGUIBridge"):
-            with patch("src.core.telegram_bridge.TelegramUICommands"):
-                with patch("src.core.telegram_bridge.TelegramDataProcessor"):
-                    with patch("src.core.telegram_bridge.TelegramSystemHandler"):
-                        with patch("src.core.telegram_bridge.TelegramIntentHandler"):
+        with patch("src.application.services.telegram_bridge.TelegramGUIBridge"):
+            with patch("src.application.services.telegram_bridge.TelegramUICommands"):
+                with patch("src.application.services.telegram_bridge.TelegramDataProcessor"):
+                    with patch("src.application.services.telegram_bridge.TelegramSystemHandler"):
+                        with patch("src.application.services.telegram_bridge.TelegramIntentHandler"):
                             bridge = TelegramUIBridge(mock_mw)
                             bridge.system_handler = MagicMock()
                             bridge.ui_commands = MagicMock()
@@ -56,11 +56,11 @@ class TestTelegramBridge:
                             bridge._dispatch_command("unknown", {})
 
     def test_dispatch_data(self, mock_mw):
-        with patch("src.core.telegram_bridge.TelegramGUIBridge"):
-            with patch("src.core.telegram_bridge.TelegramUICommands"):
-                with patch("src.core.telegram_bridge.TelegramDataProcessor"):
-                    with patch("src.core.telegram_bridge.TelegramSystemHandler"):
-                        with patch("src.core.telegram_bridge.TelegramIntentHandler"):
+        with patch("src.application.services.telegram_bridge.TelegramGUIBridge"):
+            with patch("src.application.services.telegram_bridge.TelegramUICommands"):
+                with patch("src.application.services.telegram_bridge.TelegramDataProcessor"):
+                    with patch("src.application.services.telegram_bridge.TelegramSystemHandler"):
+                        with patch("src.application.services.telegram_bridge.TelegramIntentHandler"):
                             bridge = TelegramUIBridge(mock_mw)
                             bridge.data_processor = MagicMock()
 

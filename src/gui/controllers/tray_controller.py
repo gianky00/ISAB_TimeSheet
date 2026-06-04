@@ -5,9 +5,9 @@ from typing import Any
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.styles import COLORS
-from src.utils.helpers import get_app_icon_path, get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_app_icon_path, get_asset_path, get_colored_icon
 
 
 class TrayController:

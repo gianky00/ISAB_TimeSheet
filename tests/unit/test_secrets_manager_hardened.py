@@ -5,7 +5,7 @@ Verifies secure storage and retrieval of credentials.
 import base64
 import os
 
-from src.core.secrets_manager import SecretsManager
+from src.application.services.secrets_manager import SecretsManager
 
 
 class TestSecretsManagerHardened:
@@ -34,7 +34,7 @@ class TestSecretsManagerHardened:
 
     def test_keyring_store_retrieve(self, mocker):
         """Testa l'integrazione con keyring (mocked)."""
-        mock_keyring = mocker.patch("src.core.secrets_manager.keyring")
+        mock_keyring = mocker.patch("src.application.services.secrets_manager.keyring")
 
         SecretsManager.store_credential("test_service", "user1", "pass123")
         mock_keyring.set_password.assert_called_once_with("SyncroJob_test_service", "user1", "pass123")
@@ -61,7 +61,7 @@ class TestSecretsManagerHardened:
     def test_delete_credential_handling(self, mocker):
         """Verifica la gestione sicura dell'eliminazione (anche se fallisce)."""
         # Patchiamo keyring e la sua sottoclasse errors in modo che l'exception sia valida
-        mock_keyring = mocker.patch("src.core.secrets_manager.keyring")
+        mock_keyring = mocker.patch("src.application.services.secrets_manager.keyring")
 
         # Definiamo una eccezione reale per il mock
         class MockDeleteError(Exception):

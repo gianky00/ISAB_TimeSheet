@@ -13,8 +13,8 @@ import requests
 from packaging import version as pkg_version
 from PySide6.QtCore import QThread, Signal
 
-from src.core import version
-from src.core.updater.engine import (
+from src.application.services import version
+from src.application.services.updater.engine import (
     get_local_setup_path,
     get_network_update_info,
     get_web_update_info,

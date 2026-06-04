@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.widgets.dashboard_stat_card import DashboardStatCard
 from src.gui.widgets.status_card import StatusCard
 

@@ -5,8 +5,8 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core import config_manager
-from src.core.config_manager import (
+from src.application.services import config_manager
+from src.application.services.config_manager import (
     load_config,
     save_config,
 )
@@ -20,8 +20,8 @@ class TestConfigManagerHardened:
         mock_config_dir = tmp_path / "syncrojob_config"
         mock_config_file = mock_config_dir / "config.json"
 
-        mocker.patch("src.core.config_manager.CONFIG_DIR", mock_config_dir)
-        mocker.patch("src.core.config_manager.CONFIG_FILE", mock_config_file)
+        mocker.patch("src.application.services.config_manager.CONFIG_DIR", mock_config_dir)
+        mocker.patch("src.application.services.config_manager.CONFIG_FILE", mock_config_file)
 
         # Reset cache globale tra i test
         config_manager._reset_configuration_for_testing()
@@ -74,7 +74,7 @@ class TestConfigManagerHardened:
         setup_config.write_text(json.dumps(old_data))
 
         # Mock password_manager per decrittare la vecchia pass
-        with patch("src.utils.security.password_manager.decrypt", return_value="plain_pass"):
+        with patch("src.infrastructure.utils.security.password_manager.decrypt", return_value="plain_pass"):
             config = load_config()
 
         assert "isab_username" not in config
@@ -114,8 +114,8 @@ class TestConfigManagerHardened:
 
     def test_credential_storage_priority(self, mocker):
         """Verifica che il keyring abbia priorità sul file."""
-        mocker.patch("src.core.secrets_manager.SecretsManager.is_available", return_value=True)
-        m_store = mocker.patch("src.core.secrets_manager.SecretsManager.store_credential")
+        mocker.patch("src.application.services.secrets_manager.SecretsManager.is_available", return_value=True)
+        m_store = mocker.patch("src.application.services.secrets_manager.SecretsManager.store_credential")
 
         config = load_config()
         config["accounts"] = [{"username": "boss", "password": "top_secret"}]

@@ -12,7 +12,7 @@ from src.gui.panels.scarico_ts import ScaricaTSPanel
 @pytest.fixture
 def mock_config(mocker):
     """Fixture per mockare config_manager."""
-    mock = mocker.patch("src.core.config_manager.load_config")
+    mock = mocker.patch("src.application.services.config_manager.load_config")
     mock.return_value = {
         "fornitori": ["COEMI", "ALTRO"],
         "isab_accounts": [{"username": "u", "password": "p", "is_default": True}],
@@ -23,7 +23,7 @@ def mock_config(mocker):
 @pytest.fixture
 def mock_service(mocker):
     """Fixture per mockare ScaricoTSService."""
-    mock_cls = mocker.patch("src.core.bots.services.ScaricoTSService")
+    mock_cls = mocker.patch("src.application.services.bots.services.ScaricoTSService")
     instance = MagicMock()
 
     instance.load_config.return_value = {

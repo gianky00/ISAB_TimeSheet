@@ -2,14 +2,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.core.notification_manager import NotificationManager
+from src.application.services.notification_manager import NotificationManager
 
 
 class TestNotificationManager:
     @pytest.fixture(autouse=True)
     def reset_singleton(self, mocker, tmp_path):
         """Reset automatico dell'istanza per ogni test."""
-        mocker.patch("src.core.notification_manager.CONFIG_DIR", tmp_path)
+        mocker.patch("src.application.services.notification_manager.CONFIG_DIR", tmp_path)
         NotificationManager._reset_instance_for_testing()
         yield
 

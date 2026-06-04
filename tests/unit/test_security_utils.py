@@ -2,13 +2,13 @@ from unittest.mock import patch
 
 import pytest
 
-from src.utils.security import PasswordManager
+from src.infrastructure.utils.security import PasswordManager
 
 
 @pytest.fixture
 def clean_security_dir(tmp_path):
     # Mocking di SECURITY_DIR con una dir temporanea
-    with patch("src.utils.security.SECURITY_DIR", tmp_path):
+    with patch("src.infrastructure.utils.security.SECURITY_DIR", tmp_path):
         yield tmp_path
 
 

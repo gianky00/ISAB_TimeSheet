@@ -20,12 +20,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.oda.oda_controller import ODAController
-from src.core.sync_tracker import SyncTracker
+from src.application.services.oda.oda_controller import ODAController
+from src.application.services.sync_tracker import SyncTracker
 from src.gui.widgets.toast import ToastManager
 from src.gui.workers.oda_data_worker import ODADataWorker
 from src.gui.workers.oda_io_worker import OdaIOWorker
-from src.utils.helpers import safe_open
+from src.infrastructure.utils.helpers import safe_open
 
 from .oda_filter_widget import OdaFilterWidget
 from .oda_legend import OdaLegendWidget

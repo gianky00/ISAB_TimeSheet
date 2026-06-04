@@ -1,11 +1,11 @@
 from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
-from src.core.report_service import ReportService
+from src.application.services.report_service import ReportService
 
 
 class TestReportService:
-    @patch("src.core.report_service.db_manager.execute_query")
+    @patch("src.application.services.report_service.db_manager.execute_query")
     def test_collect_employee_status_lists(self, mock_query):
         # Dipendenti: id, cognome, nome, CF, badge, data_ass
         dips = [
@@ -39,12 +39,12 @@ class TestReportService:
         assert e_list[0]["cognome"] == "BIANCHI"
         assert e_list[0]["giorni"] == 40
 
-    @patch("src.core.report_service.os.name", "nt")
-    @patch("src.core.report_service.win32_client")
-    @patch("src.core.report_service.ReportService._collect_employee_status_lists")
-    @patch("src.core.report_service.ReportHistory.save_report")
-    @patch("src.core.report_service.config_manager.set_config_value")
-    @patch("src.core.report_service.NotificationManager.instance")
+    @patch("src.application.services.report_service.os.name", "nt")
+    @patch("src.application.services.report_service.win32_client")
+    @patch("src.application.services.report_service.ReportService._collect_employee_status_lists")
+    @patch("src.application.services.report_service.ReportHistory.save_report")
+    @patch("src.application.services.report_service.config_manager.set_config_value")
+    @patch("src.application.services.report_service.NotificationManager.instance")
     def test_send_scheduled_report_email_success(
         self, mock_notif, mock_set, mock_save, mock_collect, mock_win32
     ):
@@ -87,23 +87,23 @@ class TestReportService:
         assert l_nm[("VERDI", "LUIGI")] == 20
         assert "CF4" not in l_cf
 
-    @patch("src.core.report_service.win32_client", None)
-    @patch("src.core.report_service.logger")
+    @patch("src.application.services.report_service.win32_client", None)
+    @patch("src.application.services.report_service.logger")
     def test_dispatch_outlook_no_client(self, mock_logger):
         ReportService._dispatch_outlook_email([], [])
         assert mock_logger.error.called
         assert "non disponibile" in mock_logger.error.call_args[0][0]
 
-    @patch("src.core.report_service.ReportService._collect_employee_status_lists")
-    @patch("src.core.report_service.logger")
+    @patch("src.application.services.report_service.ReportService._collect_employee_status_lists")
+    @patch("src.application.services.report_service.logger")
     def test_send_scheduled_report_empty(self, mock_logger, mock_collect):
         mock_collect.return_value = ([], [])
         ReportService.send_scheduled_report_email()
         assert mock_logger.info.called
 
-    @patch("src.core.report_service.os.name", "posix")
-    @patch("src.core.report_service.ReportService._collect_employee_status_lists")
-    @patch("src.core.report_service.logger")
+    @patch("src.application.services.report_service.os.name", "posix")
+    @patch("src.application.services.report_service.ReportService._collect_employee_status_lists")
+    @patch("src.application.services.report_service.logger")
     def test_send_scheduled_report_wrong_os(self, mock_logger, mock_collect):
         mock_collect.return_value = ([{"x": 1}], [])
         ReportService.send_scheduled_report_email()

@@ -7,7 +7,7 @@ from selenium.common.exceptions import (
 )
 from selenium.webdriver.common.by import By
 
-from src.bots.base import wait_helpers
+from src.infrastructure.bots.base import wait_helpers
 
 
 class TestWaitHelpersRobust:
@@ -16,7 +16,7 @@ class TestWaitHelpersRobust:
     def test_wait_for_overlay_disappear_success(self):
         """Test overlay scompare."""
         mock_driver = MagicMock()
-        with patch("src.bots.base.wait_helpers.WebDriverWait") as mock_wait:
+        with patch("src.infrastructure.bots.base.wait_helpers.WebDriverWait") as mock_wait:
             mock_wait.return_value.until.return_value = True
             res = wait_helpers.wait_for_overlay_to_disappear(mock_driver, (By.ID, "overlay"))
             assert res is True
@@ -24,7 +24,7 @@ class TestWaitHelpersRobust:
     def test_wait_for_overlay_timeout(self):
         """Test overlay timeout."""
         mock_driver = MagicMock()
-        with patch("src.bots.base.wait_helpers.WebDriverWait") as mock_wait:
+        with patch("src.infrastructure.bots.base.wait_helpers.WebDriverWait") as mock_wait:
             mock_wait.return_value.until.side_effect = TimeoutException()
             res = wait_helpers.wait_for_overlay_to_disappear(mock_driver, (By.ID, "overlay"))
             assert res is False
@@ -33,7 +33,7 @@ class TestWaitHelpersRobust:
         """Test elemento diventa stale."""
         mock_elem = MagicMock()
         mock_driver = MagicMock()
-        with patch("src.bots.base.wait_helpers.WebDriverWait") as mock_wait:
+        with patch("src.infrastructure.bots.base.wait_helpers.WebDriverWait") as mock_wait:
             mock_wait.return_value.until.return_value = True
             assert wait_helpers.wait_for_element_staleness(mock_driver, mock_elem) is True
 
@@ -41,14 +41,14 @@ class TestWaitHelpersRobust:
         """Test elemento cliccabile."""
         mock_elem = MagicMock()
         mock_driver = MagicMock()
-        with patch("src.bots.base.wait_helpers.WebDriverWait") as mock_wait:
+        with patch("src.infrastructure.bots.base.wait_helpers.WebDriverWait") as mock_wait:
             mock_wait.return_value.until.return_value = mock_elem
             res = wait_helpers.wait_for_element_clickable(mock_driver, (By.ID, "btn"))
             assert res == mock_elem
 
     # --- File Polling Tests (Mocked File System for Stability) ---
 
-    @patch("src.bots.base.wait_helpers.Path.glob")
+    @patch("src.infrastructure.bots.base.wait_helpers.Path.glob")
     def test_poll_for_file_found(self, mock_glob, tmp_path):
         """Test polling file trovato (mocked file object)."""
         # Mock file
@@ -74,7 +74,7 @@ class TestWaitHelpersRobust:
         found = wait_helpers.poll_for_file(directory=tmp_path, pattern="*.xlsx", timeout=1, poll_interval=0.1)
         assert found == expected_path
 
-    @patch("src.bots.base.wait_helpers.Path.glob")
+    @patch("src.infrastructure.bots.base.wait_helpers.Path.glob")
     def test_poll_for_file_timeout(self, mock_glob, tmp_path):
         """Test polling timeout (mocked glob)."""
         mock_glob.return_value = []  # Nessun file
@@ -84,7 +84,7 @@ class TestWaitHelpersRobust:
         )
         assert found is None
 
-    @patch("src.bots.base.wait_helpers.Path.glob")
+    @patch("src.infrastructure.bots.base.wait_helpers.Path.glob")
     def test_poll_for_file_exclude_temp(self, mock_glob, tmp_path):
         """Test esclusione file temporanei (mocked)."""
         f_ignore = MagicMock()
@@ -114,7 +114,7 @@ class TestWaitHelpersRobust:
         )
         assert found == expected_path
 
-    @patch("src.bots.base.wait_helpers.Path.glob")
+    @patch("src.infrastructure.bots.base.wait_helpers.Path.glob")
     def test_poll_for_file_min_age(self, mock_glob, tmp_path):
         """Test filtro per età minima (mocked stat)."""
         f = MagicMock()
@@ -208,7 +208,7 @@ class TestWaitHelpersRobust:
         mock_elem = MagicMock()
 
         with patch(
-            "src.bots.base.wait_helpers.wait_for_element_clickable",
+            "src.infrastructure.bots.base.wait_helpers.wait_for_element_clickable",
             return_value=mock_elem,
         ):
             res = wait_helpers.safe_click_with_retry(mock_driver, (By.ID, "btn"))
@@ -224,7 +224,7 @@ class TestWaitHelpersRobust:
         mock_elem.click.side_effect = [ElementClickInterceptedException(), None]
 
         with patch(
-            "src.bots.base.wait_helpers.wait_for_element_clickable",
+            "src.infrastructure.bots.base.wait_helpers.wait_for_element_clickable",
             return_value=mock_elem,
         ):
             res = wait_helpers.safe_click_with_retry(mock_driver, (By.ID, "btn"), retry_delay=0.01)
@@ -238,7 +238,7 @@ class TestWaitHelpersRobust:
         mock_driver = MagicMock()
 
         with patch(
-            "src.bots.base.wait_helpers.wait_for_overlay_to_disappear",
+            "src.infrastructure.bots.base.wait_helpers.wait_for_overlay_to_disappear",
             return_value=True,
         ):
             res = wait_helpers.execute_with_wait(action, mock_driver, (By.ID, "loader"))

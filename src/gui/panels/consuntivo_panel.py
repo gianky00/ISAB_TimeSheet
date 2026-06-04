@@ -9,7 +9,7 @@ from typing import Any
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
-from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
+from src.application.services.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.widgets.contabilita.consuntivo.crea_nuovo_tab import CreaNuovoTab
 from src.gui.widgets.contabilita.consuntivo.impostazioni_tab import ImpostazioniTab

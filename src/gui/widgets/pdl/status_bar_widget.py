@@ -14,9 +14,9 @@ from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QPainter, QPainterPath
 from PySide6.QtWidgets import QSizePolicy, QWidget
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.styles import COLORS
-from src.utils.helpers import get_asset_path
+from src.infrastructure.utils.helpers import get_asset_path
 
 if TYPE_CHECKING:
     from PySide6.QtGui import QPaintEvent

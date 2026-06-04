@@ -8,10 +8,10 @@ from src.gui.panels.scarico_pdl import ScaricoPDLPanel
 @pytest.fixture
 def mock_gui_deps(mocker):
     # Mocking external services
-    mocker.patch("src.core.database.db_manager", MagicMock())
+    mocker.patch("src.application.services.database.db_manager", MagicMock())
     # Note: LyraSentinel might not exist or be needed here, keeping it generic
-    mocker.patch("src.core.notification_manager.NotificationManager.instance")
-    mocker.patch("src.core.config_manager.load_config", return_value={})
+    mocker.patch("src.application.services.notification_manager.NotificationManager.instance")
+    mocker.patch("src.application.services.config_manager.load_config", return_value={})
     return mocker
 
 

@@ -8,11 +8,11 @@ from src.gui.panels import BaseBotPanel, CaricoTSPanel, DettagliOdAPanel, Scaric
 @pytest.fixture
 def mock_ui_deps(mocker):
     # Mocking external managers used in panels
-    mocker.patch("src.core.config_manager.load_config", return_value={})
-    mocker.patch("src.core.config_manager.set_config_value")
-    mocker.patch("src.core.audit_manager.AuditManager")
-    mocker.patch("src.core.stats_manager.StatsManager")
-    mocker.patch("src.utils.helpers.get_asset_path", return_value="")
+    mocker.patch("src.application.services.config_manager.load_config", return_value={})
+    mocker.patch("src.application.services.config_manager.set_config_value")
+    mocker.patch("src.application.services.audit_manager.AuditManager")
+    mocker.patch("src.application.services.stats_manager.StatsManager")
+    mocker.patch("src.infrastructure.utils.helpers.get_asset_path", return_value="")
 
     # **CRITICAL**: Mock TimelineWidget to prevent QTimer crashes in CI
     mocker.patch("src.gui.widgets.timeline_widget.TimelineWidget")

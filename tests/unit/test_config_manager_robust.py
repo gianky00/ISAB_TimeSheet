@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.config_manager import (
+from src.application.services.config_manager import (
     _reset_configuration_for_testing,
     add_account,
     get_default_account,
@@ -30,13 +30,13 @@ class TestConfigManagerRobust:
 
         # Patch variabili globali in entrambi i moduli che le usano
         with (
-            patch("src.core.config_manager.CONFIG_DIR", self.mock_config_dir),
-            patch("src.core.config_manager.CONFIG_FILE", self.mock_config_file),
-            patch("src.core.paths.CONFIG_DIR", self.mock_config_dir),
-            patch("src.core.paths.CONFIG_FILE", self.mock_config_file),
-            patch("src.core.paths.DB_DIR", self.mock_config_dir / "data"),
-            patch("src.core.paths.LOGS_DIR", self.mock_config_dir / "logs"),
-            patch("src.core.config.security.SecretsManager") as mock_sec,
+            patch("src.application.services.config_manager.CONFIG_DIR", self.mock_config_dir),
+            patch("src.application.services.config_manager.CONFIG_FILE", self.mock_config_file),
+            patch("src.application.services.paths.CONFIG_DIR", self.mock_config_dir),
+            patch("src.application.services.paths.CONFIG_FILE", self.mock_config_file),
+            patch("src.application.services.paths.DB_DIR", self.mock_config_dir / "data"),
+            patch("src.application.services.paths.LOGS_DIR", self.mock_config_dir / "logs"),
+            patch("src.application.services.config.security.SecretsManager") as mock_sec,
         ):
             # Crea fisicamente le directory per i path getters
             (self.mock_config_dir / "data").mkdir(parents=True, exist_ok=True)
@@ -157,7 +157,7 @@ class TestConfigManagerRobust:
 
     def test_path_getters(self):
         """Test getter dei percorsi."""
-        from src.core.paths import get_data_path, get_logs_path
+        from src.application.services.paths import get_data_path, get_logs_path
 
         data_path = get_data_path()
         logs_path = get_logs_path()
@@ -168,7 +168,7 @@ class TestConfigManagerRobust:
         assert Path(data_path).exists()
         assert Path(logs_path).exists()
 
-    @patch("src.core.config.security.SecretsManager")
+    @patch("src.application.services.config.security.SecretsManager")
     def test_credential_encryption_fallback(self, mock_sec):
         """Test crittografia locale password se keyring non disponibile."""
         mock_sec.is_available.return_value = False
@@ -177,11 +177,11 @@ class TestConfigManagerRobust:
         # Setup mock encryption
         with (
             patch(
-                "src.utils.security.password_manager.encrypt",
+                "src.infrastructure.utils.security.password_manager.encrypt",
                 side_effect=lambda x: f"ENC:v2:{x}",
             ),
             patch(
-                "src.utils.security.password_manager.decrypt",
+                "src.infrastructure.utils.security.password_manager.decrypt",
                 side_effect=lambda x: x.replace("ENC:v2:", ""),
             ),
         ):

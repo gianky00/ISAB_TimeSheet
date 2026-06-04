@@ -3,14 +3,14 @@ from unittest.mock import MagicMock, patch
 
 from selenium.webdriver.common.by import By
 
-from src.bots.safework.pages.visualizza_attivita_page import VisualizzaAttivitaPage
-from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
+from src.infrastructure.bots.safework.pages.visualizza_attivita_page import VisualizzaAttivitaPage
+from src.infrastructure.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
 
 
 class TestSafeWorkProgrammazioneComprehensive(unittest.TestCase):
     def setUp(self):
         self.mock_driver = MagicMock()
-        with patch("src.bots.safework.base.SafeworkBaseBot.__init__", return_value=None):
+        with patch("src.infrastructure.bots.safework.base.SafeworkBaseBot.__init__", return_value=None):
             self.bot = SafeWorkProgrammazioneBot("user", "pass")
             self.bot.signals = MagicMock()  # Inizializza manualmente signals
 
@@ -36,8 +36,8 @@ class TestSafeWorkProgrammazioneComprehensive(unittest.TestCase):
         self.assertEqual(self.bot.get_name(), "Programmazione PDL")
         self.assertEqual(self.bot.name, "programmazione_pdl")
 
-    @patch("src.bots.safework.programmazione.bot.pd.read_excel")
-    @patch("src.bots.safework.programmazione.bot.poll_for_new_file")
+    @patch("src.infrastructure.bots.safework.programmazione.bot.pd.read_excel")
+    @patch("src.infrastructure.bots.safework.programmazione.bot.poll_for_new_file")
     @patch.object(SafeWorkProgrammazioneBot, "click_robusto")
     @patch.object(SafeWorkProgrammazioneBot, "_attendi_scomparsa_overlay")
     def test_run_success_flow(self, mock_overlay, mock_click, mock_poll, mock_read_excel):
@@ -61,7 +61,7 @@ class TestSafeWorkProgrammazioneComprehensive(unittest.TestCase):
         mock_df.iterrows.return_value = [(0, mock_row)]
         mock_read_excel.return_value = mock_df
 
-        with patch("src.bots.safework.programmazione.bot.Path.unlink"):
+        with patch("src.infrastructure.bots.safework.programmazione.bot.Path.unlink"):
             result = self.bot.run(data)
 
             self.assertTrue(result)

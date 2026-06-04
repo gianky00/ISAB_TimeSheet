@@ -1,7 +1,7 @@
 import json
 from unittest.mock import patch
 
-from src.core.logging.formatters import HumanFormatter, JSONFormatter
+from src.application.services.logging.formatters import HumanFormatter, JSONFormatter
 
 
 class TestFormatters:

@@ -1,4 +1,4 @@
-from src.models.pdl import PdlProgrammazioneRecord, PdlRecord
+from src.domain.pdl import PdlProgrammazioneRecord, PdlRecord
 
 
 class TestPdlModels:

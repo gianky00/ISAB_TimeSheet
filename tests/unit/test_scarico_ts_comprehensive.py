@@ -3,8 +3,8 @@
 Copre il loop di scarico multi-OdA, la rinomina unica dei file e il cleanup.
 
 Matches source code:
-- src/bots/portale_fornitori/scarico_ts/bot.py
-- src/bots/portale_fornitori/scarico_ts/pages/scarico_ts_page.py
+- src/infrastructure/bots/portale_fornitori/scarico_ts/bot.py
+- src/infrastructure/bots/portale_fornitori/scarico_ts/pages/scarico_ts_page.py
 """
 
 from pathlib import Path
@@ -13,16 +13,16 @@ from unittest.mock import MagicMock, patch
 import pytest
 from selenium.webdriver.remote.webelement import WebElement
 
-from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
-from src.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page import ScaricoTSPage
-from src.core.constants import BotStatus
+from src.application.services.constants import BotStatus
+from src.infrastructure.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
+from src.infrastructure.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page import ScaricoTSPage
 
 
 class TestScaricoTSComprehensive:
     @pytest.fixture
     def bot(self, mocker):
         """Inizializza bot con mock totali per isolamento."""
-        with patch("src.bots.base.base_bot.BaseBot.__init__", return_value=None):
+        with patch("src.infrastructure.bots.base.base_bot.BaseBot.__init__", return_value=None):
             bot = ScaricaTSBot()
             bot.driver = MagicMock()
             bot.wait = MagicMock()
@@ -49,7 +49,7 @@ class TestScaricoTSComprehensive:
     @pytest.fixture
     def page(self, bot):
         """Inizializza Page Object."""
-        with patch("src.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page.WebDriverWait") as mock_wait:
+        with patch("src.infrastructure.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page.WebDriverWait") as mock_wait:
             page = ScaricoTSPage(bot.driver, bot.log)
             # Creiamo due mock distinti
             page.wait = MagicMock()
@@ -62,7 +62,7 @@ class TestScaricoTSComprehensive:
 
     def test_bot_validate_data(self, bot):
         """Verifica validazione input specifica per Scarico TS."""
-        with patch("src.bots.base.base_bot.BaseBot.validate_data", return_value=(True, "")):
+        with patch("src.infrastructure.bots.base.base_bot.BaseBot.validate_data", return_value=(True, "")):
             # Fallimento: manca fornitore (data è dict, self.fornitore è vuoto)
             ok, msg = bot.validate_data({"rows": [{"numero_oda": "123"}]})
             assert ok is False
@@ -75,7 +75,7 @@ class TestScaricoTSComprehensive:
 
     def test_bot_validate_data_missing_fornitore_in_data(self, bot):
         """Verifica validazione quando il fornitore manca sia nel bot che nel dict."""
-        with patch("src.bots.base.base_bot.BaseBot.validate_data", return_value=(True, "")):
+        with patch("src.infrastructure.bots.base.base_bot.BaseBot.validate_data", return_value=(True, "")):
             bot.fornitore = ""
             data = {"rows": [{"numero_oda": "123"}]}
             ok, msg = bot.validate_data(data)
@@ -113,7 +113,7 @@ class TestScaricoTSComprehensive:
 
     def test_bot_vba_processing_integration(self, bot, mocker):
         """Verifica chiamata al processore VBA."""
-        mock_proc = mocker.patch("src.bots.portale_fornitori.scarico_ts.bot.TimesheetProcessor")
+        mock_proc = mocker.patch("src.infrastructure.bots.portale_fornitori.scarico_ts.bot.TimesheetProcessor")
         mock_proc.process_and_move.return_value = (True, "OK")
 
         bot.elabora_ts = True
@@ -124,7 +124,7 @@ class TestScaricoTSComprehensive:
     def test_bot_run_vba_processing_failure(self, bot, mocker):
         """Verifica gestione errore VBA."""
         mocker.patch(
-            "src.bots.portale_fornitori.scarico_ts.bot.TimesheetProcessor.process_and_move",
+            "src.infrastructure.bots.portale_fornitori.scarico_ts.bot.TimesheetProcessor.process_and_move",
             return_value=(False, "VBA Error"),
         )
         bot.elabora_ts = True
@@ -144,7 +144,7 @@ class TestScaricoTSComprehensive:
         """Verifica setup filtri con interazione complessa (Combo Arrow + Date)."""
         page._wait_for_overlay = MagicMock()
         # Mock ActionChains
-        mock_ac = mocker.patch("src.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page.ActionChains")
+        mock_ac = mocker.patch("src.infrastructure.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page.ActionChains")
         mock_ac_inst = mock_ac.return_value
         mock_ac_inst.move_to_element.return_value = mock_ac_inst
         mock_ac_inst.click.return_value = mock_ac_inst
@@ -242,14 +242,14 @@ class TestScaricoTSComprehensive:
         download_dir.mkdir()
 
         # Mock ActionChains per evitare errori JS dispatch
-        mocker.patch("src.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page.ActionChains")
+        mocker.patch("src.infrastructure.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page.ActionChains")
 
         mocker.patch.object(page, "_wait_for_download", return_value=download_dir / "test.xlsx")
         mocker.patch.object(page, "_resolve_unique_path", return_value=download_dir / "final.xlsx")
         # Mocking click per evitare chiamate driver reali
         mocker.patch.object(page, "_wait_for_overlay")
         mock_cleanup = mocker.patch(
-            "src.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page.cleanup_chrome_temp_files",
+            "src.infrastructure.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page.cleanup_chrome_temp_files",
             return_value=["marker"],
         )
 

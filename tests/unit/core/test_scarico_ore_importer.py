@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from src.core.processing.scarico_ore.steps import ProcessScaricoOreRowsStep
+from src.application.services.processing.scarico_ore.steps import ProcessScaricoOreRowsStep
 
 
 class TestScaricoOreImporter:

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.database.manager import DatabaseManager
+from src.application.services.database.manager import DatabaseManager
 
 
 class TestDatabaseManager:
@@ -48,7 +48,7 @@ class TestDatabaseManager:
 
     def test_execute_query_retry_on_locked(self):
         # Simula blocco DB
-        with patch("src.core.database.manager.sqlite3.connect") as mock_conn:
+        with patch("src.application.services.database.manager.sqlite3.connect") as mock_conn:
             mock_conn.side_effect = [
                 sqlite3.OperationalError("database is locked"),
                 sqlite3.OperationalError("database is locked"),
@@ -60,7 +60,7 @@ class TestDatabaseManager:
             mock_cursor.fetchall.return_value = []
 
             # Ridurre sleep per velocità test
-            with patch("src.core.database.manager.time.sleep"):
+            with patch("src.application.services.database.manager.time.sleep"):
                 self.manager.execute_query(self.db_path, "SELECT 1")
 
             assert mock_conn.call_count == 3

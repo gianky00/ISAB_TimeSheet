@@ -3,8 +3,8 @@ from unittest.mock import MagicMock
 import pytest
 from PySide6.QtCore import QObject
 
-from src.core.telegram.bridge.data_processor import TelegramDataProcessor
-from src.core.telegram.bridge.intent_handler import TelegramIntentHandler
+from src.api.telegram.bridge.data_processor import TelegramDataProcessor
+from src.api.telegram.bridge.intent_handler import TelegramIntentHandler
 
 
 class TestTelegramBridgeLogic:

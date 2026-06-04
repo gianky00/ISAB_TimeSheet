@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.config_manager import (
+from src.application.services.config_manager import (
     _atomic_write_json,
     _load_base_config,
     _reset_configuration_for_testing,
@@ -17,9 +17,9 @@ class TestConfigManagerAdvanced:
     def clean_cache(self):
         _reset_configuration_for_testing()
 
-    @patch("src.core.config_manager.CONFIG_FILE")
+    @patch("src.application.services.config_manager.CONFIG_FILE")
     @patch(
-        "src.core.config_manager.os.environ",
+        "src.application.services.config_manager.os.environ",
         {"SYNCROJOB_BROWSER_HEADLESS": "true", "SYNCROJOB_BROWSER_TIMEOUT": "60"},
     )
     def test_load_base_config_env_override(self, mock_file):
@@ -39,10 +39,10 @@ class TestConfigManagerAdvanced:
         with target.open("r", encoding="utf-8") as f:
             assert json.load(f) == data
 
-    @patch("src.core.config_manager.CONFIG_FILE")
-    @patch("src.core.config.security.SecretsManager.is_available", return_value=True)
-    @patch("src.core.config.security.SecretsManager.store_credential")
-    @patch("src.core.config_manager._atomic_write_json")
+    @patch("src.application.services.config_manager.CONFIG_FILE")
+    @patch("src.application.services.config.security.SecretsManager.is_available", return_value=True)
+    @patch("src.application.services.config.security.SecretsManager.store_credential")
+    @patch("src.application.services.config_manager._atomic_write_json")
     def test_save_config_credential_protection(self, mock_atomic, mock_store, mock_is_avail, mock_file):
         config = {"accounts": [{"username": "user1", "password": "clear_password"}]}
         save_config(config)
@@ -64,7 +64,7 @@ class TestConfigManagerAdvanced:
         assert "accounts" in legacy
         assert any(a["username"] == "old_user" for a in legacy["accounts"])
 
-    @patch("src.core.config_manager.CONFIG_FILE")
+    @patch("src.application.services.config_manager.CONFIG_FILE")
     def test_load_base_config_malformed_json_fallback(self, mock_file):
         mock_file.exists.return_value = True
         mock_file.read_text.return_value = "{ incomplete json"

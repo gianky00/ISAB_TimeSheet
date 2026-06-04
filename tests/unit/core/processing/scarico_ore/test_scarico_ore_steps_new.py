@@ -1,7 +1,7 @@
 import json
 from unittest.mock import MagicMock, patch
 
-from src.core.processing.scarico_ore.steps import (
+from src.application.services.processing.scarico_ore.steps import (
     LoadScaricoOreStep,
     ProcessScaricoOreRowsStep,
     SyncScaricoOreStep,
@@ -9,7 +9,7 @@ from src.core.processing.scarico_ore.steps import (
 
 
 class TestScaricoOreProcessingSteps:
-    @patch("src.core.processing.scarico_ore.steps.openpyxl.load_workbook")
+    @patch("src.application.services.processing.scarico_ore.steps.openpyxl.load_workbook")
     def test_load_scarico_ore_step_success(self, mock_load, fs):
         fs.create_file("scarico.xlsx")
         mock_wb = MagicMock()
@@ -77,7 +77,7 @@ class TestScaricoOreProcessingSteps:
         # Invalid: missing both P1 and P2
         assert step._validate_scarico_row(["D", "", "", "O", "P", "8", "17", "8", "D", "S", "C"]) is False
 
-    @patch("src.core.data_synchronizer.DataSynchronizer.sync_scarico_ore")
+    @patch("src.application.services.data_synchronizer.DataSynchronizer.sync_scarico_ore")
     def test_sync_scarico_ore_step(self, mock_sync):
         mock_sync.return_value = (50, 10)
         step = SyncScaricoOreStep()

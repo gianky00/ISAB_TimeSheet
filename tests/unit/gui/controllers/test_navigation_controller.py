@@ -20,11 +20,11 @@ def test_navigation_controller_init(qtbot):
 
     # Mock core controllers initialization to avoid DB connections
     with (
-        patch("src.core.oda.oda_controller.ODAController"),
-        patch("src.core.dipendenti.anagrafica_controller.AnagraficaController"),
-        patch("src.core.pdl.pdl_controller.PDLController"),
-        patch("src.core.contabilita.scarico_ore.controller.ScaricoOreController"),
-        patch("src.core.contabilita.consuntivo.consuntivo_controller.ConsuntivoController"),
+        patch("src.application.services.oda.oda_controller.ODAController"),
+        patch("src.application.services.dipendenti.anagrafica_controller.AnagraficaController"),
+        patch("src.application.services.pdl.pdl_controller.PDLController"),
+        patch("src.application.services.contabilita.scarico_ore.controller.ScaricoOreController"),
+        patch("src.application.services.contabilita.consuntivo.consuntivo_controller.ConsuntivoController"),
     ):
         nav = NavigationController(mw)
         assert nav.mw == mw
@@ -37,11 +37,11 @@ def test_navigate_to_valid(qtbot):
     qtbot.addWidget(mw)
 
     with (
-        patch("src.core.oda.oda_controller.ODAController"),
-        patch("src.core.dipendenti.anagrafica_controller.AnagraficaController"),
-        patch("src.core.pdl.pdl_controller.PDLController"),
-        patch("src.core.contabilita.scarico_ore.controller.ScaricoOreController"),
-        patch("src.core.contabilita.consuntivo.consuntivo_controller.ConsuntivoController"),
+        patch("src.application.services.oda.oda_controller.ODAController"),
+        patch("src.application.services.dipendenti.anagrafica_controller.AnagraficaController"),
+        patch("src.application.services.pdl.pdl_controller.PDLController"),
+        patch("src.application.services.contabilita.scarico_ore.controller.ScaricoOreController"),
+        patch("src.application.services.contabilita.consuntivo.consuntivo_controller.ConsuntivoController"),
     ):
         nav = NavigationController(mw)
 
@@ -62,11 +62,11 @@ def test_detach_reattach_panel(qtbot):
     qtbot.addWidget(mw)
 
     with (
-        patch("src.core.oda.oda_controller.ODAController"),
-        patch("src.core.dipendenti.anagrafica_controller.AnagraficaController"),
-        patch("src.core.pdl.pdl_controller.PDLController"),
-        patch("src.core.contabilita.scarico_ore.controller.ScaricoOreController"),
-        patch("src.core.contabilita.consuntivo.consuntivo_controller.ConsuntivoController"),
+        patch("src.application.services.oda.oda_controller.ODAController"),
+        patch("src.application.services.dipendenti.anagrafica_controller.AnagraficaController"),
+        patch("src.application.services.pdl.pdl_controller.PDLController"),
+        patch("src.application.services.contabilita.scarico_ore.controller.ScaricoOreController"),
+        patch("src.application.services.contabilita.consuntivo.consuntivo_controller.ConsuntivoController"),
     ):
         nav = NavigationController(mw)
 
@@ -109,11 +109,11 @@ def test_navigate_to_panel_key(qtbot):
     qtbot.addWidget(mw)
 
     with (
-        patch("src.core.oda.oda_controller.ODAController"),
-        patch("src.core.dipendenti.anagrafica_controller.AnagraficaController"),
-        patch("src.core.pdl.pdl_controller.PDLController"),
-        patch("src.core.contabilita.scarico_ore.controller.ScaricoOreController"),
-        patch("src.core.contabilita.consuntivo.consuntivo_controller.ConsuntivoController"),
+        patch("src.application.services.oda.oda_controller.ODAController"),
+        patch("src.application.services.dipendenti.anagrafica_controller.AnagraficaController"),
+        patch("src.application.services.pdl.pdl_controller.PDLController"),
+        patch("src.application.services.contabilita.scarico_ore.controller.ScaricoOreController"),
+        patch("src.application.services.contabilita.consuntivo.consuntivo_controller.ConsuntivoController"),
     ):
         nav = NavigationController(mw)
         nav.navigate_to = MagicMock()

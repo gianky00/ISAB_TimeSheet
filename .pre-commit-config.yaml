@@ -35,7 +35,7 @@ repos:
     rev: v2.4.1
     hooks:
       - id: codespell
-        args: ["--skip=./admin/Crea Setup/*,./admin/Crea Licenze/*,*.rtf,*.pdf,*.ico"]
+        args: ["--skip=./devtools/gui/Crea Setup/*,./devtools/gui/Crea Licenze/*,*.rtf,*.pdf,*.ico"]
         additional_dependencies: [tomli]
 
   # ── Deptry: dependency hygiene ──────────────────────────────
@@ -52,8 +52,8 @@ repos:
   - repo: local
     hooks:
       - id: poetry-check
-        name: poetry check
-        entry: poetry check
+        name: uv lock
+        entry: uv lock
         language: system
         pass_filenames: false
         files: pyproject\.toml$
@@ -64,25 +64,25 @@ repos:
     hooks:
       - id: generate-schemas
         name: generate schemas
-        entry: poetry run python tools/generate_schemas.py
+        entry: uv run python devtools/cli/generate_schemas.py
         language: system
         pass_filenames: false
-        files: src/core/config/settings\.py$
+        files: src/application/services/devtools/devtools/config/settings\.py$
 
   # ── AI Context: aggiornamento contesto architetturale per IA ───
   - repo: local
     hooks:
       - id: generate-ai-context
         name: generate ai context
-        entry: poetry run python tools/generate_ai_context.py
+        entry: uv run python devtools/cli/generate_ai_context.py
         language: system
         pass_filenames: false
         files: >-
           (?x)^(
-            src/core/version\.py|
-            src/core/interfaces\.py|
-            src/core/exceptions\.py|
-            src/core/constants\.py|
-            src/core/config/settings\.py|
-            tools/generate_ai_context\.py
+            src/application/services/version\.py|
+            src/application/services/interfaces\.py|
+            src/application/services/exceptions\.py|
+            src/application/services/constants\.py|
+            src/application/services/devtools/devtools/config/settings\.py|
+            devtools/cli/generate_ai_context\.py
           )$

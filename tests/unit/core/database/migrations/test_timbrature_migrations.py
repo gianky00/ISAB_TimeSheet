@@ -2,7 +2,7 @@ import sqlite3
 
 import pytest
 
-from src.core.database.migrations.timbrature import (
+from src.application.services.database.migrations.timbrature import (
     mig_timbrature_v1,
     mig_timbrature_v2,
     mig_timbrature_v3,

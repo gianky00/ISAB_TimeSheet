@@ -2,11 +2,11 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from src.core.importers.contabilita import ContabilitaImporter
+from src.application.services.importers.contabilita import ContabilitaImporter
 
 
 class TestContabilitaImporter:
-    @patch("src.core.importers.contabilita.Path")
+    @patch("src.application.services.importers.contabilita.Path")
     def test_import_contabilita_dati_not_found(self, mock_path):
         """Testa import_contabilita_dati con file non trovato."""
         mock_instance = mock_path.return_value
@@ -16,9 +16,9 @@ class TestContabilitaImporter:
         assert success is False
         assert "non trovato" in msg
 
-    @patch("src.core.importers.contabilita.ContabilitaImporter._get_excel_file")
-    @patch("src.core.importers.contabilita.ContabilitaImporter._decrypt_if_encrypted")
-    @patch("src.core.importers.contabilita.Path")
+    @patch("src.application.services.importers.contabilita.ContabilitaImporter._get_excel_file")
+    @patch("src.application.services.importers.contabilita.ContabilitaImporter._decrypt_if_encrypted")
+    @patch("src.application.services.importers.contabilita.Path")
     def test_import_contabilita_dati_no_valid_sheets(self, mock_path, mock_decrypt, mock_get_excel):
         """Testa import_contabilita_dati senza fogli validi."""
         mock_path.return_value.exists.return_value = True
@@ -60,7 +60,7 @@ class TestContabilitaImporter:
         assert ContabilitaImporter._identify_sheet_year("Preventivi") == current_year
         assert ContabilitaImporter._identify_sheet_year("Unknown") is None
 
-    @patch("src.core.importers.contabilita.ContabilitaImporter._get_pd")
+    @patch("src.application.services.importers.contabilita.ContabilitaImporter._get_pd")
     def test_find_header_row(self, mock_get_pd):
         """Testa la ricerca della riga di intestazione."""
         mock_pd = mock_get_pd.return_value
@@ -76,7 +76,7 @@ class TestContabilitaImporter:
         assert idx == 1
 
     @patch("zipfile.is_zipfile")
-    @patch("src.core.importers.contabilita.Path")
+    @patch("src.application.services.importers.contabilita.Path")
     def test_scan_sheets_not_zip(self, mock_path, mock_is_zip):
         """Testa scan_sheets con un file non zip (es. .xls vecchio)."""
         mock_path.return_value.exists.return_value = True

@@ -1,5 +1,5 @@
 > **[DEPRECATO]** Questo file è stato sostituito da `.ai-context.json` nella root del progetto,
-> generato automaticamente da `tools/generate_ai_context.py` e sempre aggiornato al pre-commit.
+> generato automaticamente da `devtools/cli/generate_ai_context.py` e sempre aggiornato al pre-commit.
 > Conservato a scopo storico/di riferimento. NON modificare manualmente.
 
 ---
@@ -12,7 +12,7 @@ Questo manuale tecnico fornisce informazioni di riferimento dettagliate e specif
 
 ## 🗄️ ARCHIVIAZIONE DATI & SCHEMI DATABASE (SQLITE)
 
-SyncroJob Enterprise gestisce i propri dati persistenti tramite più database SQLite salvati nella cartella configurata `%APPDATA%/SyncroJob/data/` (o determinata dinamicamente da `src/core/paths.py`).
+SyncroJob Enterprise gestisce i propri dati persistenti tramite più database SQLite salvati nella cartella configurata `%APPDATA%/SyncroJob/data/` (o determinata dinamicamente da `src/application/services/paths.py`).
 
 ### 1. Database Storico Ordini di Acquisto (`storico_oda.db`)
 Contiene la tabella principale `storico_oda` che traccia l'importazione degli OdA estratti dal portale fornitori ISAB.
@@ -57,7 +57,7 @@ Contiene la tabella principale `storico_oda` che traccia l'importazione degli Od
 ---
 
 ### 2. Database delle Sincronizzazioni JSON (`sync_state.json`)
-Gestito dalla classe `SyncTracker` (`src/core/sync_tracker.py`), tiene traccia dell'ultimo stato di sincronizzazione eseguito per ciascun modulo.
+Gestito dalla classe `SyncTracker` (`src/application/services/sync_tracker.py`), tiene traccia dell'ultimo stato di sincronizzazione eseguito per ciascun modulo.
 
 #### Struttura del dizionario JSON:
 ```json
@@ -88,7 +88,7 @@ Gestito dalla classe `SyncTracker` (`src/core/sync_tracker.py`), tiene traccia d
 ---
 
 ### 3. Registro Audit Immutabile (`audit_log.db`)
-Gestito da `AuditManager` (`src/core/audit_manager.py`). Ogni inserimento genera un hash SHA-256 concatenato con il record precedente per garantire che il file log non venga manomesso.
+Gestito da `AuditManager` (`src/application/services/audit_manager.py`). Ogni inserimento genera un hash SHA-256 concatenato con il record precedente per garantire che il file log non venga manomesso.
 
 #### Schema della Tabella `audit_logs`:
 - **id** (INTEGER PRIMARY KEY AUTOINCREMENT): Identificativo progressivo.
@@ -104,7 +104,7 @@ Gestito da `AuditManager` (`src/core/audit_manager.py`). Ogni inserimento genera
 
 ## 🤖 CLASSI CORE E LOGICA BOT (SELENIUM / PLAYWRIGHT)
 
-Tutte le automazioni browser ereditano da `BaseBot` (`src/bots/base/base_bot.py`), garantendo una gestione unificata dei profili Chrome, del logger loguru e degli stati operativi.
+Tutte le automazioni browser ereditano da `BaseBot` (`src/infrastructure/bots/base/base_bot.py`), garantendo una gestione unificata dei profili Chrome, del logger loguru e degli stati operativi.
 
 ### 1. Firma della Classe `BaseBot`
 ```python
@@ -133,7 +133,7 @@ class BaseBot:
 ```
 
 ### 2.LoginPage Pattern
-Tutti i bot che richiedono l'autenticazione utilizzano `LoginPage` (`src/bots/base/login_page.py`) che automatizza l'inserimento sicuro delle credenziali utente memorizzate cifrate o protette tramite il `SecretsManager`. I locators (identificatori CSS/XPath) non sono mai hardcoded all'interno dei passaggi logici del bot, ma risiedono in un file `locators.py` specifico di ciascun modulo del bot (Pattern Page Object Model).
+Tutti i bot che richiedono l'autenticazione utilizzano `LoginPage` (`src/infrastructure/bots/base/login_page.py`) che automatizza l'inserimento sicuro delle credenziali utente memorizzate cifrate o protette tramite il `SecretsManager`. I locators (identificatori CSS/XPath) non sono mai hardcoded all'interno dei passaggi logici del bot, ma risiedono in un file `locators.py` specifico di ciascun modulo del bot (Pattern Page Object Model).
 
 ---
 

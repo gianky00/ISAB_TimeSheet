@@ -9,10 +9,10 @@ from typing import Any, Optional
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QApplication
 
-from src.core.logging import get_logger
+from src.application.services.logging import get_logger
 from src.gui.design.colors import LIGHT, ColorPalette
 from src.gui.styles.constants import COLORS, FONT_SIZES, UI_SIZES
-from src.utils.helpers import get_asset_path
+from src.infrastructure.utils.helpers import get_asset_path
 
 logger = get_logger(__name__)
 
@@ -107,7 +107,7 @@ class ThemeManager:
             return
 
         # 1. Carica QSS del tema specifico
-        qss_path = Path(get_asset_path(f"assets/styles/{theme_name}.qss"))
+        qss_path = Path(get_asset_path(f"assets/ui/styles/{theme_name}.qss"))
         qss_content = ""
         if qss_path.exists():
             try:
@@ -120,7 +120,7 @@ class ThemeManager:
             qss_content = f"QMainWindow {{ background-color: {self.palette.background}; }}"
 
         # 2. Carica QSS degli Overrides globali
-        overrides_path = Path(get_asset_path("assets/styles/overrides.qss"))
+        overrides_path = Path(get_asset_path("assets/ui/styles/overrides.qss"))
         overrides_content = ""
         if overrides_path.exists():
             try:

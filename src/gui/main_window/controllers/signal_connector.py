@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QObject
 
-from src.core.notification_manager import NotificationManager
+from src.application.services.notification_manager import NotificationManager
 from src.gui.widgets.toast import ToastManager
 
 if TYPE_CHECKING:

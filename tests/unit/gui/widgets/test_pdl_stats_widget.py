@@ -3,7 +3,7 @@
 import pytest
 from PySide6.QtCore import Qt
 
-from src.core.stats.pdl_stats_engine import AreaStats, PDLMetrics
+from src.application.services.stats.pdl_stats_engine import AreaStats, PDLMetrics
 from src.gui.widgets.dashboard.pdl_stats_widget import AreaBadge, PDLStatsWidget
 
 

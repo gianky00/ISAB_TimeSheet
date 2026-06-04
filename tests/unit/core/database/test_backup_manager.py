@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.database.backup_manager import DatabaseBackupManager
+from src.application.services.database.backup_manager import DatabaseBackupManager
 
 
 class TestDatabaseBackupManager:
@@ -15,16 +15,16 @@ class TestDatabaseBackupManager:
         self.backup_dir = self.db_dir / "backups"
         fs.create_dir(str(self.db_dir))
 
-        with patch("src.core.database.backup_manager.DB_DIR", self.db_dir):
-            with patch("src.core.database.backup_manager.DatabaseBackupManager.BACKUP_DIR", self.backup_dir):
+        with patch("src.application.services.database.backup_manager.DB_DIR", self.db_dir):
+            with patch("src.application.services.database.backup_manager.DatabaseBackupManager.BACKUP_DIR", self.backup_dir):
                 yield
 
-    @patch("src.core.database.backup_manager.AuditManager.instance")
+    @patch("src.application.services.database.backup_manager.AuditManager.instance")
     def test_execute_backup_success(self, mock_audit, fs):
         fs.create_file(str(self.db_dir / "db1.db"))
         fs.create_file(str(self.db_dir / "db2.db"))
 
-        with patch("src.core.database.backup_manager.DatabaseBackupManager._safe_copy", return_value=True):
+        with patch("src.application.services.database.backup_manager.DatabaseBackupManager._safe_copy", return_value=True):
             success = DatabaseBackupManager.execute_backup()
 
         assert success is True
@@ -44,7 +44,7 @@ class TestDatabaseBackupManager:
             for d in self.backup_dir.iterdir():
                 assert len(list(d.iterdir())) == 0
 
-    @patch("src.core.database.backup_manager.sqlite3.connect")
+    @patch("src.application.services.database.backup_manager.sqlite3.connect")
     def test_safe_copy_sqlite_success(self, mock_conn):
         src = Path("/src.db")
         dst = Path("/dst.db")
@@ -58,8 +58,8 @@ class TestDatabaseBackupManager:
         mock_cursor.execute.assert_called_once()
         assert "VACUUM INTO" in mock_cursor.execute.call_args[0][0]
 
-    @patch("src.core.database.backup_manager.sqlite3.connect")
-    @patch("src.core.database.backup_manager.shutil.copy2")
+    @patch("src.application.services.database.backup_manager.sqlite3.connect")
+    @patch("src.application.services.database.backup_manager.shutil.copy2")
     def test_safe_copy_fallback_shutil(self, mock_copy, mock_conn):
         src = Path("/src.db")
         dst = Path("/dst.db")
@@ -71,8 +71,8 @@ class TestDatabaseBackupManager:
         assert mock_copy.called
         mock_copy.assert_called_with(src, dst)
 
-    @patch("src.core.database.backup_manager.sqlite3.connect")
-    @patch("src.core.database.backup_manager.shutil.copy2")
+    @patch("src.application.services.database.backup_manager.sqlite3.connect")
+    @patch("src.application.services.database.backup_manager.shutil.copy2")
     def test_safe_copy_total_failure(self, mock_copy, mock_conn):
         src = Path("/src.db")
         dst = Path("/dst.db")

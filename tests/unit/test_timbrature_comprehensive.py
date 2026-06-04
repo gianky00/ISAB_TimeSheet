@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from src.bots.portale_fornitori.timbrature.bot import TimbratureBot
+from src.infrastructure.bots.portale_fornitori.timbrature.bot import TimbratureBot
 
 
 class TestTimbratureBotComprehensive:
@@ -12,8 +12,8 @@ class TestTimbratureBotComprehensive:
         assert bot.username == "u"
         assert bot.name == "timbrature"
 
-    @patch("src.bots.portale_fornitori.timbrature.bot.TimbraturePage")
-    @patch("src.bots.portale_fornitori.timbrature.bot.TimbratureStorage")
+    @patch("src.infrastructure.bots.portale_fornitori.timbrature.bot.TimbraturePage")
+    @patch("src.infrastructure.bots.portale_fornitori.timbrature.bot.TimbratureStorage")
     def test_run_success(self, mock_storage_class, mock_page_class):
         bot = TimbratureBot("u", "p")
         bot.driver = MagicMock()
@@ -23,7 +23,7 @@ class TestTimbratureBotComprehensive:
         mock_storage = mock_storage_class.return_value
         mock_storage.import_excel.return_value = True
 
-        with patch("src.bots.portale_fornitori.timbrature.bot.Path") as mock_path:
+        with patch("src.infrastructure.bots.portale_fornitori.timbrature.bot.Path") as mock_path:
             mock_path.return_value.name = "file.xlsx"
             res = bot.run([])
             assert res is True
@@ -31,7 +31,7 @@ class TestTimbratureBotComprehensive:
 
 class TestTimbratureStorageComprehensive:
     def test_import_excel_data_flow(self, tmp_path, mocker):
-        from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
+        from src.infrastructure.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
         db = tmp_path / "test_import_final_round20.db"
 
@@ -53,11 +53,11 @@ class TestTimbratureStorageComprehensive:
 
         # 2. Mocking pandas per evitare I/O reale
         mock_df = pd.DataFrame([{"Data Timbratura": "2024-01-01", "Cognome Risorsa": "Rossi"}])
-        mocker.patch("src.bots.portale_fornitori.timbrature.storage.pd.read_excel", return_value=mock_df)
+        mocker.patch("src.infrastructure.bots.portale_fornitori.timbrature.storage.pd.read_excel", return_value=mock_df)
 
         # Mocking db_manager per la connessione
         mocker.patch(
-            "src.bots.portale_fornitori.timbrature.storage.db_manager.get_connection",
+            "src.infrastructure.bots.portale_fornitori.timbrature.storage.db_manager.get_connection",
             side_effect=lambda p, **kw: sqlite3.connect(p),
         )
 

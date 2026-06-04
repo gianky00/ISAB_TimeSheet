@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from src.core.importers.giornaliere import GiornaliereImporter
+from src.application.services.importers.giornaliere import GiornaliereImporter
 
 
 class TestGiornaliereImporter:
@@ -33,12 +33,12 @@ class TestGiornaliereImporter:
 
     def test_normalize_giornaliera_columns(self):
         """Verifica mappatura e validazione (mockata)."""
-        from src.core.processing.giornaliere.steps import NormalizeGiornalieraStep
+        from src.application.services.processing.giornaliere.steps import NormalizeGiornalieraStep
 
         df = pd.DataFrame(columns=["DATA", "PERSONALE", "ORE", "N° PDL"])
         context = {"success": True, "df": df}
 
-        with patch("src.core.processing.giornaliere.steps.validate_giornaliere", side_effect=lambda x: x):
+        with patch("src.application.services.processing.giornaliere.steps.validate_giornaliere", side_effect=lambda x: x):
             NormalizeGiornalieraStep().execute(context)
             assert context.get("success") is False or "df" in context
 
@@ -53,7 +53,7 @@ class TestGiornaliereImporter:
 
     def test_clean_giornaliera_data_removes_totals(self):
         """Verifica rimozione riga totali e righe contenenti 'Totale'."""
-        from src.core.processing.giornaliere.steps import NormalizeGiornalieraStep
+        from src.application.services.processing.giornaliere.steps import NormalizeGiornalieraStep
 
         data = {
             "data": ["2025-01-01", "2025-01-02", "TOTALE GENERALE"],
@@ -73,7 +73,7 @@ class TestGiornaliereImporter:
         """Verifica estrazione ODC da descrizione e mapping."""
         from pathlib import Path
 
-        from src.core.processing.giornaliere.steps import EnrichGiornalieraStep
+        from src.application.services.processing.giornaliere.steps import EnrichGiornalieraStep
 
         df = pd.DataFrame(
             {
@@ -124,7 +124,7 @@ class TestGiornaliereImporter:
         # 3. 54001234 pulito da stringa sporca
         assert df_out.loc[2, "odc"] == "54001234"
 
-    @patch("src.core.importers.giornaliere.ProcessPoolExecutor")
+    @patch("src.application.services.importers.giornaliere.ProcessPoolExecutor")
     def test_import_giornaliere_no_tasks(self, mock_executor, tmp_path):
         """Verifica comportamento se non ci sono file da processare."""
         success, msg, rows, _years = GiornaliereImporter.import_giornaliere(str(tmp_path), {})

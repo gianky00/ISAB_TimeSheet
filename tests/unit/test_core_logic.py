@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, patch
 
-from src.core.stats_manager import StatsManager
-from src.core.time_manager import get_network_time, get_trusted_time
+from src.application.services.stats_manager import StatsManager
+from src.application.services.time_manager import get_network_time, get_trusted_time
 
 
 class TestCoreLogic:
@@ -10,8 +10,8 @@ class TestCoreLogic:
         s2 = StatsManager()
         assert s1 is s2
 
-    @patch("src.core.config_manager.set_config_value")
-    @patch("src.core.config_manager.load_config", return_value={})
+    @patch("src.application.services.config_manager.set_config_value")
+    @patch("src.application.services.config_manager.load_config", return_value={})
     def test_stats_increment(self, mock_load, mock_set):
         mgr = StatsManager()
         mgr.stats = {}  # Clean state
@@ -32,7 +32,7 @@ class TestCoreLogic:
         assert dt.year == 2015
         assert dt.month == 10
 
-    @patch("src.core.time_manager.get_network_time", return_value=None)
+    @patch("src.application.services.time_manager.get_network_time", return_value=None)
     def test_trusted_time_fallback(self, mock_net):
         dt, trusted = get_trusted_time()
         assert trusted is False

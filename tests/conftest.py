@@ -140,15 +140,15 @@ def _isolate_config(tmp_path, monkeypatch):
     """Global isolation for configuration and data.
     Ensures NO test ever writes to real user directories.
     """
-    from src.core import (
+    from src.application.services import (
         config_manager,
         paths,
     )
-    from src.core.audit_manager import AuditManager
-    from src.core.database.manager import DatabaseManager
-    from src.core.secrets_manager import SecretsManager
-    from src.core.stats_manager import StatsManager
-    from src.utils.security import password_manager
+    from src.application.services.audit_manager import AuditManager
+    from src.application.services.database.manager import DatabaseManager
+    from src.application.services.secrets_manager import SecretsManager
+    from src.application.services.stats_manager import StatsManager
+    from src.infrastructure.utils.security import password_manager
 
     # 1. Setup fake paths
     fake_dir = tmp_path / "syncrojob_test_env"
@@ -163,13 +163,13 @@ def _isolate_config(tmp_path, monkeypatch):
 
     # 3. Apply patches to global path constants
     with (
-        patch("src.core.paths.CONFIG_DIR", fake_dir),
-        patch("src.core.paths.CONFIG_FILE", fake_file),
-        patch("src.core.paths.DB_DIR", fake_dir / "data"),
-        patch("src.core.paths.LOGS_DIR", fake_dir / "logs"),
-        patch("src.core.config_manager.CONFIG_DIR", fake_dir),
-        patch("src.core.config_manager.CONFIG_FILE", fake_file),
-        patch("src.core.config_manager.check_and_migrate_local_config", return_value=False),
+        patch("src.application.services.paths.CONFIG_DIR", fake_dir),
+        patch("src.application.services.paths.CONFIG_FILE", fake_file),
+        patch("src.application.services.paths.DB_DIR", fake_dir / "data"),
+        patch("src.application.services.paths.LOGS_DIR", fake_dir / "logs"),
+        patch("src.application.services.config_manager.CONFIG_DIR", fake_dir),
+        patch("src.application.services.config_manager.CONFIG_FILE", fake_file),
+        patch("src.application.services.config_manager.check_and_migrate_local_config", return_value=False),
     ):
         # 4. Reset Singletons to use new paths
         config_manager._config_cache = None
@@ -216,12 +216,12 @@ def cleanup_widgets():
 def mock_ui_dependencies(mocker):
     """Mock massive UI dependencies."""
     mock_db = MagicMock()
-    mocker.patch("src.core.database.db_manager", mock_db)
+    mocker.patch("src.application.services.database.db_manager", mock_db)
 
-    mock_contabilita_class = mocker.patch("src.core.contabilita_manager.ContabilitaManager")
+    mock_contabilita_class = mocker.patch("src.application.services.contabilita_manager.ContabilitaManager")
     mock_contabilita_class.get_available_years.return_value = [2024, 2025]
 
-    mocker.patch("src.core.telegram_manager.TelegramService", return_value=MagicMock())
-    mocker.patch("src.core.config_manager.save_config")
+    mocker.patch("src.application.services.telegram_manager.TelegramService", return_value=MagicMock())
+    mocker.patch("src.application.services.config_manager.save_config")
 
     return {"db": mock_db}

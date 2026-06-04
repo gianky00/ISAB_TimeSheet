@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from src.core.stats.stats_service import StatsService
+from src.application.services.stats.stats_service import StatsService
 
 
 class TestStatsService:

@@ -3,8 +3,8 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.constants import Icons
-from src.core.contabilita.certificati_engine import CertificatiEngine
+from src.application.services.constants import Icons
+from src.application.services.contabilita.certificati_engine import CertificatiEngine
 from src.gui.dialogs.certificati_analysis_dialog import ScadenzeAnalysisDialog
 from src.gui.widgets.contabilita.certificati_tab import (
     CertificatiCampioneTab,
@@ -28,7 +28,7 @@ class TestCertificatiGUI:
     @pytest.fixture
     def cert_tab(self):
         with patch(
-            "src.core.contabilita_manager.ContabilitaManager.get_certificati_campione_data"
+            "src.application.services.contabilita_manager.ContabilitaManager.get_certificati_campione_data"
         ) as mock_data:
             mock_data.return_value = []
             tab = CertificatiCampioneTab()
@@ -36,7 +36,7 @@ class TestCertificatiGUI:
             return tab
 
     def test_calculate_days_and_status_logic(self):
-        with patch("src.core.contabilita.certificati_engine.datetime") as mock_dt:
+        with patch("src.application.services.contabilita.certificati_engine.datetime") as mock_dt:
             mock_dt.now.return_value = datetime(2024, 1, 1, tzinfo=UTC)
             mock_dt.strptime = datetime.strptime
 
@@ -50,7 +50,7 @@ class TestCertificatiGUI:
 
     def test_exclusions_engine_io(self, tmp_path):
         test_file = tmp_path / "exclusions.json"
-        with patch("src.core.contabilita.certificati_engine.CertificatiEngine.exclusions_file", test_file):
+        with patch("src.application.services.contabilita.certificati_engine.CertificatiEngine.exclusions_file", test_file):
             engine = CertificatiEngine()
             engine.save_exclusions({"MAT-001"})
             assert test_file.exists()

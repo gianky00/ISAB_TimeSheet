@@ -3,13 +3,13 @@ from unittest.mock import MagicMock
 import pytest
 from PySide6.QtWidgets import QStackedWidget, QWidget
 
-from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
-from src.core.contabilita.scarico_ore.controller import ScaricoOreController
-from src.core.dipendenti.anagrafica_controller import AnagraficaController
-from src.core.oda.oda_controller import ODAController
+from src.application.services.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
+from src.application.services.contabilita.scarico_ore.controller import ScaricoOreController
+from src.application.services.dipendenti.anagrafica_controller import AnagraficaController
+from src.application.services.oda.oda_controller import ODAController
 
 # Importiamo i Controller del Core che ci aspettiamo di trovare
-from src.core.pdl.pdl_controller import PDLController
+from src.application.services.pdl.pdl_controller import PDLController
 
 # Importiamo il controller principale che funge da DI Container
 from src.gui.controllers.navigation_controller import NavigationController

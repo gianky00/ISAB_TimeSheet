@@ -1,7 +1,7 @@
 from datetime import datetime
 from unittest.mock import patch
 
-from src.utils.helpers import (
+from src.infrastructure.utils.helpers import (
     format_timestamp,
     get_asset_path,
     get_months_list,
@@ -16,7 +16,7 @@ from src.utils.helpers import (
 class TestHelpers:
     def test_get_asset_path(self):
         # Test wrapper logic
-        with patch("src.utils.resource_manager.ResourceManager.get_asset_path") as mock_mgr:
+        with patch("src.infrastructure.utils.resource_manager.ResourceManager.get_asset_path") as mock_mgr:
             mock_asset = "C:\\Fake\\assets\\test.txt"
             mock_mgr.return_value = mock_asset
 

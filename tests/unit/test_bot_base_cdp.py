@@ -6,8 +6,8 @@ from unittest.mock import MagicMock
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 
-from src.bots.base.selenium_base_bot import SeleniumBaseBot
-from src.bots.base.selenium_bot_config import SeleniumBotConfig
+from src.infrastructure.bots.base.selenium_base_bot import SeleniumBaseBot
+from src.infrastructure.bots.base.selenium_bot_config import SeleniumBotConfig
 
 
 class ConcreteBot(SeleniumBaseBot):

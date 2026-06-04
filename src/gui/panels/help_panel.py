@@ -16,12 +16,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons
-from src.core.version import __version__ as VERSION  # noqa: N812
+from src.application.services.constants import Icons
+from src.application.services.version import __version__ as VERSION  # noqa: N812
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import SearchInput, StandardListWidget
 from src.gui.workers.help_worker import HelpWorker
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 
 class HelpPanel(QWidget):

@@ -3,7 +3,7 @@ import threading
 
 import pytest
 
-from src.core.database import DatabaseManager
+from src.application.services.database import DatabaseManager
 
 
 class TestDatabaseAdvanced:

@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.config_manager import (
+from src.application.services.config_manager import (
     DEFAULT_CONFIG,
     _reset_configuration_for_testing,
     add_account,
@@ -21,8 +21,8 @@ class TestConfigManager:
         # Reset cache before each test
         _reset_configuration_for_testing()
         # Mock paths
-        mocker.patch("src.core.config_manager.CONFIG_DIR", tmp_path)
-        mocker.patch("src.core.config_manager.CONFIG_FILE", tmp_path / "config.json")
+        mocker.patch("src.application.services.config_manager.CONFIG_DIR", tmp_path)
+        mocker.patch("src.application.services.config_manager.CONFIG_FILE", tmp_path / "config.json")
         yield
 
     def test_load_default_config(self):
@@ -46,13 +46,13 @@ class TestConfigManager:
 
     def test_add_remove_account(self, mocker):
         # Mock SecretsManager to avoid keyring issues
-        mocker.patch("src.core.config.account_manager.SecretsManager.is_available", return_value=False)
+        mocker.patch("src.application.services.config.account_manager.SecretsManager.is_available", return_value=False)
         mocker.patch(
-            "src.utils.security.password_manager.encrypt",
+            "src.infrastructure.utils.security.password_manager.encrypt",
             side_effect=lambda x: f"enc_{x}",
         )
         mocker.patch(
-            "src.utils.security.password_manager.decrypt",
+            "src.infrastructure.utils.security.password_manager.decrypt",
             side_effect=lambda x: x.replace("enc_", ""),
         )
 
@@ -89,7 +89,7 @@ class TestConfigManager:
         assert config["accounts"][0]["default"] is True
 
     def test_atomic_write_failure_cleanup(self, tmp_path, mocker):
-        from src.core.config_manager import _atomic_write_json
+        from src.application.services.config_manager import _atomic_write_json
 
         target = tmp_path / "fail.json"
 

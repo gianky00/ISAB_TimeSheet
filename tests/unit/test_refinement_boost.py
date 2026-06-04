@@ -2,15 +2,15 @@ from unittest.mock import patch
 
 import requests
 
-from src.core.license_updater import run_update
-from src.core.stats_manager import StatsManager
+from src.application.services.license_updater import run_update
+from src.application.services.stats_manager import StatsManager
 from src.gui.toast import ToastOverlay
 from src.gui.widgets.status_indicator import StatusIndicator
 
 
 class TestRefinementBoost:
     def test_stats_manager_reset(self, tmp_path):
-        with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
+        with patch("src.application.services.config_manager.CONFIG_DIR", tmp_path):
             # Force singleton reset for test isolation
             StatsManager._instance = None
             sm = StatsManager()
@@ -35,7 +35,7 @@ class TestRefinementBoost:
         toast.hide_toast()
         assert toast.anim.startValue() == 1
 
-    @patch("src.core.license_validator.get_hardware_id", return_value="ID123")
+    @patch("src.application.services.license_validator.get_hardware_id", return_value="ID123")
     @patch("requests.get")
     def test_license_run_update_fail(self, mock_get, mock_hwid):
         # Test failure in update network call

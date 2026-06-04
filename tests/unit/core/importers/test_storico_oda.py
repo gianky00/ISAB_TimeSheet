@@ -3,11 +3,11 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from src.core.importers.storico_oda import StoricoOdaImporter
+from src.application.services.importers.storico_oda import StoricoOdaImporter
 
 
 class TestStoricoOdaImporter:
-    @patch("src.core.importers.storico_oda.Path")
+    @patch("src.application.services.importers.storico_oda.Path")
     def test_import_storico_oda_not_found(self, mock_path):
         """Testa import_storico_oda con file inesistente."""
         mock_path.return_value.exists.return_value = False
@@ -15,8 +15,8 @@ class TestStoricoOdaImporter:
         assert success is False
         assert "File non trovato" in msg
 
-    @patch("src.core.importers.storico_oda.StoricoOdaImporter._read_storico_oda_excel")
-    @patch("src.core.importers.storico_oda.Path")
+    @patch("src.application.services.importers.storico_oda.StoricoOdaImporter._read_storico_oda_excel")
+    @patch("src.application.services.importers.storico_oda.Path")
     def test_import_storico_oda_empty_sheet(self, mock_path, mock_read):
         """Testa import_storico_oda con foglio vuoto."""
         mock_path.return_value.exists.return_value = True
@@ -43,7 +43,7 @@ class TestStoricoOdaImporter:
         assert StoricoOdaImporter._clean_euro_num("") == 0.0
         assert StoricoOdaImporter._clean_euro_num("ABC") == 0.0
 
-    @patch("src.core.importers.storico_oda.StoricoOdaImporter._get_pd")
+    @patch("src.application.services.importers.storico_oda.StoricoOdaImporter._get_pd")
     def test_read_storico_oda_excel_success(self, mock_get_pd):
         """Testa la lettura excel con successo su foglio specifico."""
         mock_pd = mock_get_pd.return_value
@@ -54,7 +54,7 @@ class TestStoricoOdaImporter:
         assert mock_pd.read_excel.called
         assert mock_pd.read_excel.call_args[1]["sheet_name"] == "Formato PF"
 
-    @patch("src.core.importers.storico_oda.StoricoOdaImporter._get_pd")
+    @patch("src.application.services.importers.storico_oda.StoricoOdaImporter._get_pd")
     def test_read_storico_oda_excel_fallback(self, mock_get_pd):
         """Testa il fallback sul primo foglio (indice 0)."""
         mock_pd = mock_get_pd.return_value

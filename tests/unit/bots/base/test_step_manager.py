@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from src.bots.base.step_manager import BotStepManager, StepStatus
+from src.infrastructure.bots.base.step_manager import BotStepManager, StepStatus
 
 
 class TestBotStepManager:

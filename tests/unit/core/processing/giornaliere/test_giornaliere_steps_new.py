@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from src.core.processing.giornaliere.steps import (
+from src.application.services.processing.giornaliere.steps import (
     EnrichGiornalieraStep,
     NormalizeGiornalieraStep,
     ReadGiornalieraStep,
@@ -12,7 +12,7 @@ from src.core.processing.giornaliere.steps import (
 
 
 class TestGiornaliereProcessingSteps:
-    @patch("src.core.processing.giornaliere.steps.pd.read_excel")
+    @patch("src.application.services.processing.giornaliere.steps.pd.read_excel")
     def test_read_giornaliera_step_success(self, mock_read, fs):
         fs.create_file("giorn.xlsx")
         mock_read.return_value = pd.DataFrame({"A": [1]})
@@ -24,7 +24,7 @@ class TestGiornaliereProcessingSteps:
         assert ctx["success"] is True
         assert "df" in ctx
 
-    @patch("src.core.processing.giornaliere.steps.pd.read_excel", side_effect=ValueError("Fail"))
+    @patch("src.application.services.processing.giornaliere.steps.pd.read_excel", side_effect=ValueError("Fail"))
     def test_read_giornaliera_step_failure(self, mock_read, fs):
         fs.create_file("fail.xlsx")
         step = ReadGiornalieraStep()
@@ -34,7 +34,7 @@ class TestGiornaliereProcessingSteps:
         assert ctx["success"] is False
         assert "Impossibile leggere" in ctx["message"]
 
-    @patch("src.core.processing.giornaliere.steps.validate_giornaliere", side_effect=lambda df: df)
+    @patch("src.application.services.processing.giornaliere.steps.validate_giornaliere", side_effect=lambda df: df)
     def test_normalize_giornaliera_step(self, mock_val):
         df = pd.DataFrame(
             {
@@ -108,7 +108,7 @@ class TestGiornaliereProcessingSteps:
 
         assert ctx["rows"][0][5] == "24/456"
 
-    @patch("src.core.data_synchronizer.DataSynchronizer.sync_giornaliere")
+    @patch("src.application.services.data_synchronizer.DataSynchronizer.sync_giornaliere")
     def test_sync_giornaliere_step(self, mock_sync):
         mock_sync.return_value = (10, 0)
         step = SyncGiornaliereStep()

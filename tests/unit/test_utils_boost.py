@@ -1,5 +1,5 @@
-from src.utils.parsing import parse_currency
-from src.utils.validators import InputValidator
+from src.infrastructure.utils.parsing import parse_currency
+from src.infrastructure.utils.validators import InputValidator
 
 
 class TestValidatorsAndParsingDeep:

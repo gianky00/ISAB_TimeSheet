@@ -7,11 +7,11 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.design.colors import get_palette
 from src.gui.styles import COLORS
 from src.gui.widgets.modern_card import ModernCard
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 
 class StatusCard(ModernCard):

@@ -10,14 +10,14 @@ from typing import TYPE_CHECKING
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 if TYPE_CHECKING:
-    from src.core.dipendenti.anagrafica_controller import AnagraficaController
+    from src.application.services.dipendenti.anagrafica_controller import AnagraficaController
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.panels.dipendenti.pages.anagrafica_page import AnagraficaPage
 from src.gui.panels.dipendenti_manager_panel import DipendentiManagerPanel
 from src.gui.styles import COLORS
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
 

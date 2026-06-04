@@ -1,15 +1,15 @@
 from pathlib import Path
 from unittest.mock import patch
 
-from src.core.timesheet.pipeline import TimesheetPipeline
-from src.core.timesheet.service import TimesheetService
+from src.application.services.timesheet.pipeline import TimesheetPipeline
+from src.application.services.timesheet.service import TimesheetService
 
 
 class TestTimesheetPipelineAndService:
-    @patch("src.core.timesheet.pipeline.LoadWorkbookStep.execute")
-    @patch("src.core.timesheet.pipeline.TransformSheetStep.execute")
-    @patch("src.core.timesheet.pipeline.SaveWorkbookStep.execute")
-    @patch("src.core.timesheet.pipeline.CleanupStep.execute")
+    @patch("src.application.services.timesheet.pipeline.LoadWorkbookStep.execute")
+    @patch("src.application.services.timesheet.pipeline.TransformSheetStep.execute")
+    @patch("src.application.services.timesheet.pipeline.SaveWorkbookStep.execute")
+    @patch("src.application.services.timesheet.pipeline.CleanupStep.execute")
     def test_pipeline_execution(self, mock_cleanup, mock_save, mock_transform, mock_load):
         # Setup context return
         def side_effect(context):
@@ -27,7 +27,7 @@ class TestTimesheetPipelineAndService:
         assert mock_save.called
         assert mock_cleanup.called
 
-    @patch("src.core.timesheet.service.TimesheetPipeline.execute_pipeline")
+    @patch("src.application.services.timesheet.service.TimesheetPipeline.execute_pipeline")
     def test_service_process_file_success(self, mock_exec):
         mock_exec.return_value = Path("/dest/file.xlsx")
 
@@ -37,7 +37,7 @@ class TestTimesheetPipelineAndService:
         assert success is True
         assert "file.xlsx" in msg
 
-    @patch("src.core.timesheet.service.TimesheetPipeline.execute_pipeline")
+    @patch("src.application.services.timesheet.service.TimesheetPipeline.execute_pipeline")
     def test_service_process_file_failure(self, mock_exec):
         mock_exec.side_effect = Exception("Crash")
 

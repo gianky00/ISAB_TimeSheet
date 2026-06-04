@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from src.core.app_initializer import AppInitializer
+from src.application.services.app_initializer import AppInitializer
 from src.gui.main_window.page_index import PageIndex
 
 
@@ -12,8 +12,8 @@ class TestAppInitializerDeep:
         # Reset state
         AppInitializer._core_initialized = True
 
-        m_log = mocker.patch("src.core.app_initializer.AppInitializer._setup_logging")
-        m_db = mocker.patch("src.core.database.db_manager.init_db")
+        m_log = mocker.patch("src.application.services.app_initializer.AppInitializer._setup_logging")
+        m_db = mocker.patch("src.application.services.database.db_manager.init_db")
 
         # Should return immediately because _core_initialized is True
         assert AppInitializer.initialize_core() is True
@@ -28,8 +28,8 @@ class TestAppInitializerDeep:
         mock_mw.navigation_controller = mock_nav
 
         # Mock config_manager
-        mocker.patch("src.core.config_manager.load_config", return_value={})
-        mocker.patch("src.core.config_manager.set_config_value")
+        mocker.patch("src.application.services.config_manager.load_config", return_value={})
+        mocker.patch("src.application.services.config_manager.set_config_value")
 
         # Create generator
         gen = AppInitializer.init_generator(mock_mw)
@@ -60,7 +60,7 @@ class TestAppInitializerDeep:
 
         mock_nav.get_panel.side_effect = side_effect
 
-        mocker.patch("src.core.config_manager.load_config", return_value={})
+        mocker.patch("src.application.services.config_manager.load_config", return_value={})
 
         gen = AppInitializer.init_generator(mock_mw)
         results = list(gen)

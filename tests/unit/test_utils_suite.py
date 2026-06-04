@@ -3,7 +3,7 @@ import logging
 import sys
 from unittest.mock import patch
 
-from src.utils.helpers import (
+from src.infrastructure.utils.helpers import (
     format_timestamp,
     get_app_icon_path,
     get_months_list,
@@ -15,8 +15,8 @@ from src.utils.helpers import (
     setup_logging,
     truncate_string,
 )
-from src.utils.parsing import parse_currency
-from src.utils.validators import InputValidator
+from src.infrastructure.utils.parsing import parse_currency
+from src.infrastructure.utils.validators import InputValidator
 
 
 class TestUtilsHelpers:
@@ -35,7 +35,7 @@ class TestUtilsHelpers:
 
     def test_get_app_icon_path(self):
         with (
-            patch("src.utils.helpers.Path.exists", return_value=True),
+            patch("src.infrastructure.utils.helpers.Path.exists", return_value=True),
             patch("sys.frozen", False, create=True),
         ):
             path = get_app_icon_path()
@@ -43,7 +43,7 @@ class TestUtilsHelpers:
             assert "assets" in path
             assert "app.ico" in path
 
-        with patch("src.utils.helpers.Path.exists", return_value=False):
+        with patch("src.infrastructure.utils.helpers.Path.exists", return_value=False):
             assert get_app_icon_path() is None
 
     def test_setup_logging(self):

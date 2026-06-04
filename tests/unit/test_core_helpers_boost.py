@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.data_synchronizer import DataSynchronizer
+from src.application.services.data_synchronizer import DataSynchronizer
 
 
 class TestCoreHelpersBoost:
@@ -20,7 +20,7 @@ class TestCoreHelpersBoost:
         new_data = [(2024, "01/01/2024", "100/24")]
         years = [2024]
 
-        with patch("src.core.sync.contabilita_sync.ContabilitaSyncEngine.sync_partitioned_data") as mock_sync:
+        with patch("src.application.services.sync.contabilita_sync.ContabilitaSyncEngine.sync_partitioned_data") as mock_sync:
             mock_sync.return_value = (1, 0)
             added, _removed = DataSynchronizer.sync_contabilita(db, new_data, years)
             assert added == 1

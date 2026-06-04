@@ -8,8 +8,8 @@ import logging
 
 from PySide6.QtCore import QThread, Signal
 
-from src.core.contabilita.certificati_engine import CertificatiEngine
-from src.core.contabilita_manager import ContabilitaManager
+from src.application.services.contabilita.certificati_engine import CertificatiEngine
+from src.application.services.contabilita_manager import ContabilitaManager
 
 logger = logging.getLogger(__name__)
 

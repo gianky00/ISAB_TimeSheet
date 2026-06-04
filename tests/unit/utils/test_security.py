@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.utils.security import PasswordManager
+from src.infrastructure.utils.security import PasswordManager
 
 
 class TestSecurity:
@@ -14,7 +14,7 @@ class TestSecurity:
         fs.create_dir(str(self.security_dir))
 
         # Patch SECURITY_DIR in paths used by PasswordManager
-        with patch("src.utils.security.SECURITY_DIR", self.security_dir):
+        with patch("src.infrastructure.utils.security.SECURITY_DIR", self.security_dir):
             # Reset singleton for each test to use the new security_dir
             PasswordManager._instance = None
             self.pm = PasswordManager()
@@ -67,8 +67,8 @@ class TestSecurity:
     def test_invalid_decryption(self):
         assert self.pm.decrypt("ENC:v2:invalid_data") == ""
 
-    @patch("src.utils.security.platform.node", return_value="node1")
-    @patch("src.utils.security.uuid.getnode", return_value=12345)
+    @patch("src.infrastructure.utils.security.platform.node", return_value="node1")
+    @patch("src.infrastructure.utils.security.uuid.getnode", return_value=12345)
     def test_machine_entropy(self, mock_node, mock_uuid):
         entropy = self.pm._get_machine_entropy()
         assert b"node1" in entropy

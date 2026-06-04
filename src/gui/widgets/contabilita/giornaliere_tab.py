@@ -18,15 +18,15 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core import config_manager
-from src.core.constants import Icons
-from src.core.utils.formatters import format_date_it
+from src.application.services import config_manager
+from src.application.services.constants import Icons
+from src.application.services.utils.formatters import format_date_it
 from src.gui.formatters import format_number_smart
 from src.gui.styles import COLORS
 from src.gui.widgets import ExcelTableWidget
 from src.gui.widgets.core_widgets import SortableTableWidgetItem
 from src.gui.workers.contabilita_data_worker import ContabilitaDataWorker
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 if TYPE_CHECKING:
     from PySide6.QtCore import QPoint

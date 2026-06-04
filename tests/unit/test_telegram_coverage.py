@@ -2,14 +2,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.core.telegram_bridge import TelegramUIBridge
-from src.core.telegram_manager import TelegramService
+from src.api.telegram_manager import TelegramService
+from src.application.services.telegram_bridge import TelegramUIBridge
 
 
 class TestTelegramCoverage:
     @pytest.fixture
     def service(self, mocker):
-        mocker.patch("src.core.config_manager.load_config", return_value={"telegram_token": "TOKEN"})
+        mocker.patch("src.application.services.config_manager.load_config", return_value={"telegram_token": "TOKEN"})
         return TelegramService()
 
     @pytest.mark.asyncio
@@ -42,7 +42,7 @@ class TestTelegramBridge:
         mw.pdl_panel = MagicMock()
         mw.scarico_panel = MagicMock()
         # Patch QObject.__init__ per evitare inizializzazione Qt reale
-        with patch("src.core.telegram_bridge.QObject.__init__"):
+        with patch("src.application.services.telegram_bridge.QObject.__init__"):
             return TelegramUIBridge(mw)
 
     def test_handle_command_run_ts(self, bridge):

@@ -17,24 +17,24 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.bots import BOT_REGISTRY
-from src.core import config_manager
-from src.core.audit_manager import AuditManager
-from src.core.logging import get_logger
-from src.core.stats_manager import StatsManager
-from src.core.sync_tracker import SyncTracker
+from src.application.services import config_manager
+from src.application.services.audit_manager import AuditManager
+from src.application.services.logging import get_logger
+from src.application.services.stats_manager import StatsManager
+from src.application.services.sync_tracker import SyncTracker
 from src.gui.design.spacing import Spacing
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.dialogs.standard_input_dialog import StandardInputDialog
 from src.gui.panels.bot_components import BotControlComponent, BotLogComponent, BotTimelineComponent
 from src.gui.styles import STATUS_COLORS
 from src.gui.widgets.status_card import StatusCard
+from src.infrastructure.bots import BOT_REGISTRY
 
 if TYPE_CHECKING:
     import threading
 
-    from src.bots.base.base_bot import BaseBot
     from src.gui.controllers.bot_worker import BotWorker
+    from src.infrastructure.bots.base.base_bot import BaseBot
 
 
 class BaseBotPanel(QWidget):

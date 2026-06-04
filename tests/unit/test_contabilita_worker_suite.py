@@ -1,11 +1,11 @@
 from unittest.mock import MagicMock, patch
 
-from src.core.contabilita_worker import ContabilitaWorker
+from src.application.services.contabilita_worker import ContabilitaWorker
 
 
 class TestContabilitaWorkerLogic:
-    @patch("src.core.contabilita_worker.ContabilitaManager")
-    @patch("src.core.contabilita_worker.Path.exists", return_value=True)
+    @patch("src.application.services.contabilita_worker.ContabilitaManager")
+    @patch("src.application.services.contabilita_worker.Path.exists", return_value=True)
     def test_worker_run_sequence(self, mock_exists, mock_manager, qtbot):
         worker = ContabilitaWorker("f.xlsx", "g_path", "a.xlsx", "c.xlsx")
 
@@ -29,8 +29,8 @@ class TestContabilitaWorkerLogic:
         assert "Giornaliere: OK" in args[1]
         assert args[2] == 37  # 10+20+5+2
 
-    @patch("src.core.contabilita_worker.ContabilitaManager")
-    @patch("src.core.contabilita_worker.Path.exists", return_value=True)
+    @patch("src.application.services.contabilita_worker.ContabilitaManager")
+    @patch("src.application.services.contabilita_worker.Path.exists", return_value=True)
     def test_worker_error_handling(self, mock_exists, mock_manager):
         worker = ContabilitaWorker("f.xlsx")
         mock_manager.scan_workload.side_effect = Exception("Crash")

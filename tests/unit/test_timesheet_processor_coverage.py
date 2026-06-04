@@ -3,11 +3,11 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from src.core.timesheet_processor import TimesheetProcessor
+from src.application.services.timesheet_processor import TimesheetProcessor
 
 
 class TestTimesheetProcessorCoverage:
-    """Test suite for src/core/timesheet_processor.py"""
+    """Test suite for src/application/services/timesheet_processor.py"""
 
     @pytest.fixture
     def sample_df(self):

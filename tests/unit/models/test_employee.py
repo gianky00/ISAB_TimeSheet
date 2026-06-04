@@ -1,4 +1,4 @@
-from src.models.employee import EmployeeRecord
+from src.domain.employee import EmployeeRecord
 
 
 class TestEmployeeModels:

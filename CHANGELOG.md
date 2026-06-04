@@ -4,7 +4,7 @@
 
 - **pdl**: prevent silent UI crashes by casting imported dataframe to strings
 - **ci**: esegui generate_ci_context.py all'interno dell'ambiente virtuale di poetry per risolvere ModuleNotFoundError
-- **ci**: aggiornato il percorso dello script generate_ci_context.py (da scripts/ a tools/)
+- **ci**: aggiornato il percorso dello script generate_ci_context.py (da devtools/maintenance/ a devtools/cli/)
 - **ci**: aggiunti campi mancanti in tool.poetry per correggere l'errore di poetry install
 
 ### Refactor

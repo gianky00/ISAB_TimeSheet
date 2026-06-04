@@ -85,7 +85,7 @@ def test_import_excel_manually_success(timbrature_db_panel, qtbot, mocker):
     panel.storage.import_excel.return_value = True
 
     with (
-        patch("src.core.audit_manager.AuditManager"),
+        patch("src.application.services.audit_manager.AuditManager"),
         patch("src.gui.widgets.toast.ToastManager.instance") as mock_toast,
     ):
         panel._import_excel_manually()

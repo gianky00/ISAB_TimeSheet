@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from src.utils.document_processor import DocumentProcessor
+from src.infrastructure.utils.document_processor import DocumentProcessor
 
 
 class TestUtilsDeep:
@@ -16,7 +16,7 @@ class TestUtilsDeep:
         mock_doc.__iter__.return_value = [mock_page]
         mock_page.get_text.return_value = "Contenuto PDF"
 
-        with patch("src.utils.document_processor.fitz.open", return_value=mock_doc):
+        with patch("src.infrastructure.utils.document_processor.fitz.open", return_value=mock_doc):
             text = DocumentProcessor.extract_text(pdf_path)
             assert text == "Contenuto PDF"
             # In use as context manager, __exit__ is called instead of close() directly
@@ -33,11 +33,11 @@ class TestUtilsDeep:
         mock_doc.__iter__.return_value = [mock_page]
         mock_page.get_text.return_value = "  found text  "
 
-        with patch("src.utils.document_processor.fitz.open", return_value=mock_doc):
+        with patch("src.infrastructure.utils.document_processor.fitz.open", return_value=mock_doc):
             assert DocumentProcessor.is_pdf_searchable(pdf_path) is True
 
     def test_document_processor_no_fitz(self, tmp_path):
         """Test: Ritorna stringa vuota se fitz non è installato."""
-        with patch("src.utils.document_processor.fitz", None):
+        with patch("src.infrastructure.utils.document_processor.fitz", None):
             text = DocumentProcessor.extract_text(tmp_path / "any.pdf")
             assert text == ""

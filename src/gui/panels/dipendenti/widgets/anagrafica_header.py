@@ -8,12 +8,12 @@ import logging
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.panels.dipendenti.shared import InteractiveStatusCard
 from src.gui.styles import COLORS, LABEL_MUTED, LINEEDIT_STYLE
 from src.gui.widgets.core_widgets import SearchInput
 from src.gui.widgets.modern_button import ModernButton
-from src.utils.helpers import get_asset_path
+from src.infrastructure.utils.helpers import get_asset_path
 
 logger = logging.getLogger(__name__)
 

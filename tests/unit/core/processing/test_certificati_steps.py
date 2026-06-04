@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from src.core.processing.certificati.steps import (
+from src.application.services.processing.certificati.steps import (
     FormatCertificatiStep,
     NormalizeCertificatiStep,
     ReadCertificatiExcelStep,
@@ -11,8 +11,8 @@ from src.core.processing.certificati.steps import (
 
 
 class TestCertificatiSteps:
-    @patch("src.core.processing.certificati.steps.pd.ExcelFile")
-    @patch("src.core.processing.certificati.steps.pd.read_excel")
+    @patch("src.application.services.processing.certificati.steps.pd.ExcelFile")
+    @patch("src.application.services.processing.certificati.steps.pd.read_excel")
     def test_read_certificati_excel_step(self, mock_read, mock_xls, fs):
         fs.create_file("cert.xlsx")
         mock_xls.return_value.sheet_names = ["Strumenti Campione"]
@@ -75,7 +75,7 @@ class TestCertificatiSteps:
         assert formatted_df.iloc[0]["stato"] == "Scade tra 10 giorni"
         assert formatted_df.iloc[0]["errore_max"] == "0,5%"
 
-    @patch("src.core.data_synchronizer.DataSynchronizer.sync_certificati_campione")
+    @patch("src.application.services.data_synchronizer.DataSynchronizer.sync_certificati_campione")
     def test_sync_certificati_step(self, mock_sync):
         mock_sync.return_value = (5, 2)
         step = SyncCertificatiStep()

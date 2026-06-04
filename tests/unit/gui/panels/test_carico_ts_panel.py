@@ -12,14 +12,14 @@ from src.gui.panels.carico_ts import CaricoTSPanel
 @pytest.fixture
 def mock_config(mocker):
     """Fixture per mockare config_manager."""
-    mock_load = mocker.patch("src.core.config_manager.load_config")
+    mock_load = mocker.patch("src.application.services.config_manager.load_config")
     # Colonne corrette per CaricoTSBot: numero_oda, posizione_oda
     mock_load.return_value = {
         "last_carico_ts_data": [{"numero_oda": "123", "posizione_oda": "10"}],
         "browser_headless": True,
         "browser_timeout": 30,
     }
-    mocker.patch("src.core.config_manager.set_config_value")
+    mocker.patch("src.application.services.config_manager.set_config_value")
     return mock_load
 
 
@@ -103,7 +103,7 @@ class TestCaricoTSPanel:
 
     def test_save_data_on_change(self, qtbot, panel, mocker):
         """Verifica che la modifica della tabella triggeri il salvataggio."""
-        mock_set_cfg = mocker.patch("src.core.config_manager.set_config_value")
+        mock_set_cfg = mocker.patch("src.application.services.config_manager.set_config_value")
 
         # Simuliamo modifica dati
         panel.data_table.set_data([{"numero_oda": "val"}])

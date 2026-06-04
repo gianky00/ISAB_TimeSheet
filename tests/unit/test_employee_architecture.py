@@ -2,8 +2,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.core.database.repositories.employee_repository import EmployeeRepository
-from src.models import EmployeeRecord
+from src.application.services.database.repositories.employee_repository import EmployeeRepository
+from src.domain import EmployeeRecord
 
 
 class TestEmployeeArchitecture:

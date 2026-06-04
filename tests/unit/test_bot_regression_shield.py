@@ -7,8 +7,8 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
-from src.bots.safework.pdl.bot import SafeWorkPDLBot
+from src.infrastructure.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
+from src.infrastructure.bots.safework.pdl.bot import SafeWorkPDLBot
 
 
 class TestBotRegressionShield:
@@ -16,7 +16,7 @@ class TestBotRegressionShield:
     def mock_driver_env(self, mocker):
         """Mocka l'ambiente driver completo per BaseBot."""
         # Patch specifically where it's used to avoid batch run interference
-        m_chrome = mocker.patch("src.bots.base.selenium_base_bot.webdriver.Chrome")
+        m_chrome = mocker.patch("src.infrastructure.bots.base.selenium_base_bot.webdriver.Chrome")
         mocker.patch("webdriver_manager.chrome.ChromeDriverManager.install", return_value="chromedriver.exe")
         return m_chrome.return_value
 
@@ -68,7 +68,7 @@ class TestBotRegressionShield:
         """Verifica che il bot programmazione fallisca se gli indici Excel cambiano (Regression Shield)."""
         import pandas as pd
 
-        from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
+        from src.infrastructure.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
 
         bot = SafeWorkProgrammazioneBot("u", "p")
         bot.log = MagicMock()
@@ -105,7 +105,7 @@ class TestBotRegressionShield:
 
     def test_document_processor_crash_protection(self):
         """Verifica che il merge dei PDF non crashi l'app se fitz fallisce (Regression Shield)."""
-        from src.utils.document_processor import DocumentProcessor
+        from src.infrastructure.utils.document_processor import DocumentProcessor
 
         with patch("fitz.open", side_effect=Exception("Corrupted PDF")):
             # Non deve sollevare eccezione ma ritornare False

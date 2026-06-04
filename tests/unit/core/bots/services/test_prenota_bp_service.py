@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.bots.services.prenota_bp_service import PrenotaBPService
+from src.application.services.bots.services.prenota_bp_service import PrenotaBPService
 
 
 class TestPrenotaBPService:
@@ -11,7 +11,7 @@ class TestPrenotaBPService:
         return PrenotaBPService()
 
     def test_load_config(self, service):
-        with patch("src.core.config_manager.load_config") as mock_load:
+        with patch("src.application.services.config_manager.load_config") as mock_load:
             mock_load.return_value = {
                 "last_prenota_societa": "TEST_SOC",
                 "last_prenota_bp_fornitore": "TEST_FORN",
@@ -27,7 +27,7 @@ class TestPrenotaBPService:
             assert config["data"] == [{"id": 1}]
 
     def test_load_config_defaults(self, service):
-        with patch("src.core.config_manager.load_config") as mock_load:
+        with patch("src.application.services.config_manager.load_config") as mock_load:
             mock_load.return_value = {}  # Empty config
             config = service.load_config()
             assert config["societa"] == "ISAB"
@@ -35,7 +35,7 @@ class TestPrenotaBPService:
             assert "01.01." in config["data_da"]
 
     def test_save_config(self, service):
-        with patch("src.core.config_manager.set_config_values") as mock_set:
+        with patch("src.application.services.config_manager.set_config_values") as mock_set:
             params = {"societa": "S1", "fornitore": "F1", "data_da": "D1", "data_a": "D2"}
             data = [{"row": 1}]
             service.save_config(params, data)
@@ -50,8 +50,8 @@ class TestPrenotaBPService:
         params = {"societa": "S1", "fornitore": "F1", "data_da": "D1", "data_a": "D2"}
         data = [{"id": 100}]
 
-        with patch("src.core.config_manager.load_config", return_value={"browser_headless": True}):
-            with patch("src.core.config_manager.get_download_path", return_value="/tmp"):
+        with patch("src.application.services.config_manager.load_config", return_value={"browser_headless": True}):
+            with patch("src.application.services.config_manager.get_download_path", return_value="/tmp"):
                 bot_params, bot_data = service.prepare_payload(creds, params, data)
 
                 assert bot_params["username"] == "user"
@@ -69,7 +69,7 @@ class TestPrenotaBPService:
             "single_item": {"id": 999},
         }
 
-        with patch("src.core.config_manager.load_config", return_value={}):
+        with patch("src.application.services.config_manager.load_config", return_value={}):
             _, bot_data = service.prepare_payload(creds, params, [], overrides=overrides)
             assert bot_data["company"] == "NEW"
             assert bot_data["fornitore"] == "FORN_NEW"

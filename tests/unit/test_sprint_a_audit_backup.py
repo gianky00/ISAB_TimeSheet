@@ -6,9 +6,9 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.audit_manager import AuditManager
-from src.core.backup.archive_rotator import ArchiveRotator
-from src.core.backup_manager import BackupManager
+from src.application.services.audit_manager import AuditManager
+from src.application.services.backup.archive_rotator import ArchiveRotator
+from src.application.services.backup_manager import BackupManager
 
 
 class TestSprintAAuditBackup:
@@ -16,9 +16,9 @@ class TestSprintAAuditBackup:
     def isolate_audit_db(self, tmp_path, mocker):
         """Isolamento totale del database audit per evitare collisioni di hash."""
         db_path = tmp_path / "audit_sprint_test.db"
-        mocker.patch("src.core.database.db_manager.DB_AUDIT", db_path)
-        mocker.patch("src.core.audit.database.db_manager.DB_AUDIT", db_path)
-        mocker.patch("src.core.audit.manager.AuditSignals.instance")
+        mocker.patch("src.application.services.database.db_manager.DB_AUDIT", db_path)
+        mocker.patch("src.application.services.audit.database.db_manager.DB_AUDIT", db_path)
+        mocker.patch("src.application.services.audit.manager.AuditSignals.instance")
 
         AuditManager._instance = None
         yield
@@ -61,8 +61,8 @@ class TestSprintAAuditBackup:
         assert "Old" not in actions
 
     def test_backup_creation_and_filtering(self, tmp_path, mocker):
-        mocker.patch("src.core.backup_manager.CONFIG_DIR", tmp_path)
-        mocker.patch("src.core.backup_manager.load_config", return_value={})
+        mocker.patch("src.application.services.backup_manager.CONFIG_DIR", tmp_path)
+        mocker.patch("src.application.services.backup_manager.load_config", return_value={})
         (tmp_path / "data").mkdir()
         (tmp_path / "data" / "db.db").write_text("db")
         (tmp_path / "config.json").write_text("{}")
@@ -70,7 +70,7 @@ class TestSprintAAuditBackup:
         backup_dir = tmp_path / "Backups"
         backup_dir.mkdir()
 
-        with patch("src.core.backup_manager.BackupManager.get_backup_dir", return_value=backup_dir):
+        with patch("src.application.services.backup_manager.BackupManager.get_backup_dir", return_value=backup_dir):
             success, zip_path = BackupManager.create_backup()
             assert success is True
             assert Path(zip_path).exists()

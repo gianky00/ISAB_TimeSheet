@@ -3,11 +3,11 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.notification_manager import NotificationManager
+from src.application.services.notification_manager import NotificationManager
 
 
 class TestNotificationCoverage:
-    """Test suite per src/core/notification_manager.py"""
+    """Test suite per src/application/services/notification_manager.py"""
 
     @pytest.fixture(autouse=True)
     def setup_manager(self, tmp_path, qapp):  # qapp fixture from pytest-qt needed for signals
@@ -18,7 +18,7 @@ class TestNotificationCoverage:
         # Mock del file path
         self.fake_file = tmp_path / "notifications.json"
 
-        with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
+        with patch("src.application.services.config_manager.CONFIG_DIR", tmp_path):
             self.manager = NotificationManager.instance()
             # Assicuriamoci che punti al file giusto
             self.manager.notifications_file = self.fake_file

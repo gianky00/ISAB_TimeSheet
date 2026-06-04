@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
-from src.core.auth_monitor import (
+from src.application.services.auth_monitor import (
     _build_access_maps,
     _normalize,
     check_expiring_isab_authorizations,
@@ -18,7 +18,7 @@ class TestAuthMonitor:
         from datetime import UTC
 
         fixed_now = datetime(2026, 3, 21, 12, 0, 0, tzinfo=UTC)
-        mock_dt = mocker.patch("src.core.auth_monitor.datetime")
+        mock_dt = mocker.patch("src.application.services.auth_monitor.datetime")
         mock_dt.now.return_value = fixed_now
         mock_dt.strptime = datetime.strptime
 
@@ -46,13 +46,13 @@ class TestAuthMonitor:
         # VERDI should be ignored due to invalid date
         assert "VRDNNA90" not in last_by_cf
 
-    @patch("src.core.auth_monitor.db_manager")
+    @patch("src.application.services.auth_monitor.db_manager")
     def test_check_expiring_authorizations(self, mock_db, mocker):
         from datetime import UTC
 
         # Mocking datetime.now(UTC)
         fixed_now = datetime(2026, 3, 21, 12, 0, 0, tzinfo=UTC)
-        mock_dt = mocker.patch("src.core.auth_monitor.datetime")
+        mock_dt = mocker.patch("src.application.services.auth_monitor.datetime")
         mock_dt.now.return_value = fixed_now
         mock_dt.strptime = datetime.strptime  # Preserve strptime
 
@@ -101,7 +101,7 @@ class TestAuthMonitor:
         assert neri["cf_mancante"] is True
         assert neri["stato"] == "SCADUTA"
 
-    @patch("src.core.auth_monitor.db_manager")
+    @patch("src.application.services.auth_monitor.db_manager")
     def test_check_expiring_error_handling(self, mock_db):
         mock_db.execute_query.side_effect = Exception("DB Error")
         results = check_expiring_isab_authorizations()

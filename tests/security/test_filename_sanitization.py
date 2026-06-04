@@ -5,7 +5,7 @@ import unittest
 # Ensure src can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-from src.utils.helpers import sanitize_filename
+from src.infrastructure.utils.helpers import sanitize_filename
 
 
 class TestFilenameSanitization(unittest.TestCase):

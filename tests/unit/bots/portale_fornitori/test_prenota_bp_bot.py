@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from src.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot
+from src.infrastructure.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot
 
 
 class TestPrenotaBPBot:
@@ -15,7 +15,7 @@ class TestPrenotaBPBot:
         valid, _msg = bot.validate_data([{"numero_bp": "BP001"}])
         assert valid is True
 
-    @patch("src.bots.portale_fornitori.prenota_bp.bot.PrenotaBPPage")
+    @patch("src.infrastructure.bots.portale_fornitori.prenota_bp.bot.PrenotaBPPage")
     def test_run_success_flow(self, mock_page_class):
         bot = PrenotaBPBot(username="u", password="p")
         bot.update_step = MagicMock()
@@ -33,7 +33,7 @@ class TestPrenotaBPBot:
         assert mock_page.apri_dettagli_bp.called
         assert mock_page.gestisci_creazione_richiesta.called
 
-    @patch("src.bots.portale_fornitori.prenota_bp.bot.PrenotaBPPage")
+    @patch("src.infrastructure.bots.portale_fornitori.prenota_bp.bot.PrenotaBPPage")
     def test_run_navigation_fail(self, mock_page_class):
         bot = PrenotaBPBot(username="u", password="p")
         mock_page = mock_page_class.return_value

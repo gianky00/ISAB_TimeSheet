@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.utils.resource_manager import ResourceManager
+from src.infrastructure.utils.resource_manager import ResourceManager
 
 
 class TestResourceManager:
@@ -54,7 +54,7 @@ class TestResourceManager:
         assert tmp.name == "test.tmp"
         assert tmp.parent == ResourceManager.TEMP_DIR
 
-    @patch("src.utils.resource_manager.shutil.copy2")
+    @patch("src.infrastructure.utils.resource_manager.shutil.copy2")
     @patch("webdriver_manager.chrome.ChromeDriverManager.install")
     def test_ensure_automation_driver_download(self, mock_install, mock_copy, fs):
         # Driver non esistente

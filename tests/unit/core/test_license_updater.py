@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from cryptography.fernet import Fernet
 
-from src.core.exceptions import LicenseError
-from src.core.license_updater import (
+from src.application.services.exceptions import LicenseError
+from src.application.services.license_updater import (
     check_emergency_grace_period,
     check_grace_period,
     get_license_dir,
@@ -14,7 +14,7 @@ from src.core.license_updater import (
     run_update,
     update_grace_timestamp,
 )
-from src.core.license_validator import LicenseStatus
+from src.application.services.license_validator import LicenseStatus
 
 
 class TestLicenseUpdater:
@@ -29,8 +29,8 @@ class TestLicenseUpdater:
         self.grace_key = Fernet.generate_key()
         self.license_key = Fernet.generate_key()
 
-    @patch("src.core.time_manager.get_trusted_time")
-    @patch("src.core.secrets_manager.SecretsManager.get_grace_period_key")
+    @patch("src.application.services.time_manager.get_trusted_time")
+    @patch("src.application.services.secrets_manager.SecretsManager.get_grace_period_key")
     def test_update_grace_timestamp(self, mock_key, mock_time, fs):
         mock_key.return_value = self.grace_key
         fixed_now = datetime(2026, 5, 23, 10, 0, 0, tzinfo=UTC)
@@ -43,8 +43,8 @@ class TestLicenseUpdater:
         decrypted = cipher.decrypt(self.v_token.read_bytes()).decode()
         assert decrypted == fixed_now.isoformat()
 
-    @patch("src.core.time_manager.get_trusted_time")
-    @patch("src.core.secrets_manager.SecretsManager.get_grace_period_key")
+    @patch("src.application.services.time_manager.get_trusted_time")
+    @patch("src.application.services.secrets_manager.SecretsManager.get_grace_period_key")
     def test_check_grace_period_valid(self, mock_key, mock_time, fs):
         mock_key.return_value = self.grace_key
         last_online = datetime(2026, 5, 20, 10, 0, 0, tzinfo=UTC)
@@ -57,8 +57,8 @@ class TestLicenseUpdater:
 
         assert check_grace_period() is True
 
-    @patch("src.core.time_manager.get_trusted_time")
-    @patch("src.core.secrets_manager.SecretsManager.get_grace_period_key")
+    @patch("src.application.services.time_manager.get_trusted_time")
+    @patch("src.application.services.secrets_manager.SecretsManager.get_grace_period_key")
     def test_check_grace_period_expired(self, mock_key, mock_time, fs):
         mock_key.return_value = self.grace_key
         last_online = datetime(2026, 5, 10, 10, 0, 0, tzinfo=UTC)
@@ -71,8 +71,8 @@ class TestLicenseUpdater:
         with pytest.raises(LicenseError, match="SCADUTO"):
             check_grace_period()
 
-    @patch("src.core.time_manager.get_trusted_time")
-    @patch("src.core.secrets_manager.SecretsManager.get_grace_period_key")
+    @patch("src.application.services.time_manager.get_trusted_time")
+    @patch("src.application.services.secrets_manager.SecretsManager.get_grace_period_key")
     def test_check_emergency_grace_period_activation(self, mock_key, mock_time, fs):
         mock_key.return_value = self.grace_key
         mock_time.return_value = (datetime(2026, 1, 1), True)
@@ -88,11 +88,11 @@ class TestLicenseUpdater:
         fs.create_file(str(self.license_dir / "manifest.json"))
         assert is_license_folder_empty() is False
 
-    @patch("src.core.license_updater.requests.get")
-    @patch("src.core.license_validator.get_hardware_id", return_value="HW123")
-    @patch("src.core.secrets_manager.SecretsManager.get_github_token", return_value="TOKEN")
-    @patch("src.core.secrets_manager.SecretsManager.get_license_key")
-    @patch("src.core.license_validator.get_detailed_license_status")
+    @patch("src.application.services.license_updater.requests.get")
+    @patch("src.application.services.license_validator.get_hardware_id", return_value="HW123")
+    @patch("src.application.services.secrets_manager.SecretsManager.get_github_token", return_value="TOKEN")
+    @patch("src.application.services.secrets_manager.SecretsManager.get_license_key")
+    @patch("src.application.services.license_validator.get_detailed_license_status")
     def test_run_update_revoked(self, mock_status, mock_lic_key, mock_gh, mock_hwid, mock_get, fs):  # noqa: PLR0913
         # Simula 404 sul server (Cartella non trovata -> Revoca)
         mock_res = MagicMock()
@@ -106,12 +106,12 @@ class TestLicenseUpdater:
 
         assert not (self.license_dir / "config.dat").exists()
 
-    @patch("src.core.license_updater.requests.get")
-    @patch("src.core.license_validator.get_hardware_id", return_value="HW123")
-    @patch("src.core.secrets_manager.SecretsManager.get_github_token", return_value="TOKEN")
-    @patch("src.core.secrets_manager.SecretsManager.get_license_key")
-    @patch("src.core.license_validator.get_detailed_license_status")
-    @patch("src.core.license_validator._calculate_sha256", return_value="old_hash")
+    @patch("src.application.services.license_updater.requests.get")
+    @patch("src.application.services.license_validator.get_hardware_id", return_value="HW123")
+    @patch("src.application.services.secrets_manager.SecretsManager.get_github_token", return_value="TOKEN")
+    @patch("src.application.services.secrets_manager.SecretsManager.get_license_key")
+    @patch("src.application.services.license_validator.get_detailed_license_status")
+    @patch("src.application.services.license_validator._calculate_sha256", return_value="old_hash")
     def test_run_update_download_success(  # noqa: PLR0913
         self, mock_sha, mock_status, mock_lic_key, mock_gh, mock_hwid, mock_get, fs
     ):
@@ -129,14 +129,14 @@ class TestLicenseUpdater:
 
         mock_get.side_effect = [res_dir, res_man, res_conf]
 
-        with patch("src.core.license_updater.update_grace_timestamp"):
+        with patch("src.application.services.license_updater.update_grace_timestamp"):
             success = run_update()
             assert success is True
             assert (self.license_dir / "config.dat").exists()
             assert (self.license_dir / "manifest.json").exists()
 
-    @patch("src.core.license_updater.requests.get")
-    @patch("src.core.license_validator.get_hardware_id", return_value="HW123")
+    @patch("src.application.services.license_updater.requests.get")
+    @patch("src.application.services.license_validator.get_hardware_id", return_value="HW123")
     def test_run_update_hwid_mismatch(self, mock_hwid, mock_get, fs):
         # Download di una licenza con HWID diverso
         res_dir = MagicMock(status_code=200)
@@ -148,9 +148,9 @@ class TestLicenseUpdater:
 
         mock_get.side_effect = [res_dir, res_man, res_conf]
 
-        with patch("src.core.secrets_manager.SecretsManager.get_license_key", return_value=self.license_key):
+        with patch("src.application.services.secrets_manager.SecretsManager.get_license_key", return_value=self.license_key):
             with patch(
-                "src.core.license_validator.get_detailed_license_status",
+                "src.application.services.license_validator.get_detailed_license_status",
                 return_value=(LicenseStatus.INVALID, ""),
             ):
                 success = run_update()

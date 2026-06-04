@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from src.core.importers.giornaliere import GiornaliereImporter
+from src.application.services.importers.giornaliere import GiornaliereImporter
 
 
 class TestExcelImporterComprehensive:
@@ -53,9 +53,9 @@ class TestExcelImporterComprehensive:
         ]
         df = pd.DataFrame(data, columns=cols)
 
-        with patch("src.core.processing.giornaliere.steps.pd.read_excel", return_value=df):
+        with patch("src.application.services.processing.giornaliere.steps.pd.read_excel", return_value=df):
             with patch(
-                "src.core.processing.giornaliere.steps.SyncGiornaliereStep.execute", return_value=None
+                "src.application.services.processing.giornaliere.steps.SyncGiornaliereStep.execute", return_value=None
             ):
                 # Using dict() to avoid tool interpolation issues with {}
                 _year, rows, err = GiornaliereImporter._process_single_giornaliera((2024, Path(file1), {}))

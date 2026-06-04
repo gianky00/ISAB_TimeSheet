@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.core.telegram_manager import TelegramService
+from src.api.telegram_manager import TelegramService
 
 
 class TestTelegramServiceUltraFixed:
@@ -12,7 +12,7 @@ class TestTelegramServiceUltraFixed:
 
     @pytest.mark.asyncio
     async def test_handle_text_input_states(self, service):
-        from src.core.telegram.handlers.messages import handle_text_input
+        from src.api.telegram.handlers.messages import handle_text_input
 
         # Create a proper Update mock with effective_user
         mock_update = MagicMock()

@@ -2,9 +2,9 @@ import sqlite3
 
 import pytest
 
-from src.core.exceptions import ValidationError
-from src.core.sync.base import BaseSyncEngine, SyncTarget
-from src.core.sync.smart_sync import SmartSyncEngine
+from src.application.services.exceptions import ValidationError
+from src.application.services.sync.base import BaseSyncEngine, SyncTarget
+from src.application.services.sync.smart_sync import SmartSyncEngine
 
 
 class TestDataSynchronizerSmart:
@@ -23,7 +23,7 @@ class TestDataSynchronizerSmart:
     def test_sync_upsert_smart_calculation(self, db_path, mocker):
         """Verifica che vengano contati solo i record effettivamente diversi."""
         mocker.patch(
-            "src.core.sync.smart_sync.db_manager.get_connection", return_value=sqlite3.connect(db_path)
+            "src.application.services.sync.smart_sync.db_manager.get_connection", return_value=sqlite3.connect(db_path)
         )
         new_data = [("1", "new", "10.5"), ("2", "same", "20.0"), ("3", "fresh", "30.0")]
         columns = ["id", "val", "num"]
@@ -44,7 +44,7 @@ class TestDataSynchronizerSmart:
 
     def test_sync_upsert_smart_empty(self, db_path, mocker):
         mocker.patch(
-            "src.core.sync.smart_sync.db_manager.get_connection", return_value=sqlite3.connect(db_path)
+            "src.application.services.sync.smart_sync.db_manager.get_connection", return_value=sqlite3.connect(db_path)
         )
         target = SyncTarget(db_path=db_path, table_name="test_table", columns=["id"])
         added, removed = SmartSyncEngine.sync_upsert_smart(target, [])
@@ -67,7 +67,7 @@ class TestDataSynchronizerSmart:
         conn.close()
 
         mocker.patch(
-            "src.core.sync.smart_sync.db_manager.get_connection", return_value=sqlite3.connect(db_path)
+            "src.application.services.sync.smart_sync.db_manager.get_connection", return_value=sqlite3.connect(db_path)
         )
 
         new_data = [("1", "new")]

@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.employees import EmployeeManager
+from src.application.services.employees import EmployeeManager
 
 
 class TestEmployeeManager:
@@ -64,8 +64,8 @@ class TestEmployeeManager:
         # Align with current implementation (no normalization in update)
         assert args.cognome == "Nuovo"
 
-    @patch("src.core.processing.base.Pipeline")
-    @patch("src.core.employees.SyncTracker.update_status")
+    @patch("src.application.services.processing.base.Pipeline")
+    @patch("src.application.services.employees.SyncTracker.update_status")
     def test_import_from_csv_success(self, mock_sync, mock_pipeline_class, manager):
         mock_p = MagicMock()
         mock_p.run.return_value = {"success": True, "added_count": 5, "total_processed": 10}

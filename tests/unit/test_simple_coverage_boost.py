@@ -1,5 +1,5 @@
 from src.gui.styles.constants import COLORS, FONT_SIZES, UI_SIZES
-from src.utils.log_humanizer import SmartLogTranslator
+from src.infrastructure.utils.log_humanizer import SmartLogTranslator
 
 
 class TestSimpleCoverage:

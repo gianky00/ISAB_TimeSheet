@@ -10,7 +10,7 @@ from src.gui.widgets.dashboard.weather_widget import HseMetricBar, MiniRadialGau
 @pytest.fixture
 def mock_weather_service(mocker):
     """Fixture per mockare WeatherService."""
-    mock_instance = mocker.patch("src.core.weather_service.WeatherService.instance")
+    mock_instance = mocker.patch("src.application.services.weather_service.WeatherService.instance")
     service = MagicMock()
     mock_instance.return_value = service
     return service

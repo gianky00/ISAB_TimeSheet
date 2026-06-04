@@ -3,8 +3,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from telegram import CallbackQuery, Chat, Message, Update, User
 
-from src.core.telegram.handlers import callbacks, messages
-from src.core.telegram_manager import TelegramService
+from src.api.telegram.handlers import callbacks, messages
+from src.api.telegram_manager import TelegramService
 
 
 class TestTelegramManagerCoverage:
@@ -21,13 +21,13 @@ class TestTelegramManagerCoverage:
         self.service.intent_received = MagicMock()
         self.service.photo_received = MagicMock()
 
-    @patch("src.core.telegram.service.config_manager.load_config")
+    @patch("src.api.telegram.service.config_manager.load_config")
     def test_start_service_no_token(self, mock_load):
         mock_load.return_value = {"telegram_token": ""}
         self.service.start_service()
         assert self.service.log_signal.emit.called
 
-    @patch("src.core.telegram.service.config_manager.load_config")
+    @patch("src.api.telegram.service.config_manager.load_config")
     @patch("threading.Thread")
     def test_start_service_success(self, mock_thread, mock_load):
         mock_load.return_value = {

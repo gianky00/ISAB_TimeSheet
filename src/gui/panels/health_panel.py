@@ -20,14 +20,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons
-from src.core.logging.alert_manager import get_alert_manager
-from src.core.logging.analytics import Anomaly, generate_analytics_report
-from src.core.notification_manager import NotificationManager
+from src.application.services.constants import Icons
+from src.application.services.logging.alert_manager import get_alert_manager
+from src.application.services.logging.analytics import Anomaly, generate_analytics_report
+from src.application.services.notification_manager import NotificationManager
 from src.gui.styles import COLORS
 from src.gui.widgets import ModernButton, ModernCard
 from src.gui.workers.health_worker import HealthWorker
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 
 class HealthScoreBadge(QWidget):

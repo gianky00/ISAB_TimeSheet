@@ -2,8 +2,8 @@ from unittest.mock import PropertyMock, patch
 
 import pytest
 
-from src.core.contabilita_manager import ContabilitaManager
-from src.core.database import DatabaseManager
+from src.application.services.contabilita_manager import ContabilitaManager
+from src.application.services.database import DatabaseManager
 
 
 class TestContabilitaManagerBoost:
@@ -12,7 +12,7 @@ class TestContabilitaManagerBoost:
         db_path = tmp_path / "contabilita.db"
         # Patch DatabaseManager properties on the CLASS
         mocker.patch(
-            "src.core.database.manager.DatabaseManager.DB_CONTABILITA",
+            "src.application.services.database.manager.DatabaseManager.DB_CONTABILITA",
             new_callable=PropertyMock,
             return_value=db_path,
         )
@@ -47,7 +47,7 @@ class TestContabilitaManagerBoost:
             "File.xlsx",
         )
 
-        m_import = mocker.patch("src.core.excel_importer.ExcelImporter.import_giornaliere")
+        m_import = mocker.patch("src.application.services.excel_importer.ExcelImporter.import_giornaliere")
         m_import.return_value = (True, "OK", [mock_row], [2024])
 
         # Esegui import
@@ -62,14 +62,14 @@ class TestContabilitaManagerBoost:
 
         # L'importazione attiva il cleanup per gli anni incontrati
         with patch(
-            "src.core.excel_importer.ExcelImporter.import_giornaliere",
+            "src.application.services.excel_importer.ExcelImporter.import_giornaliere",
             return_value=(True, "OK", [], [2030, 2031]),
         ):
             ContabilitaManager.import_giornaliere(str(db_path.parent))
 
         # Eseguiamo anche un'importazione dati (anche vuota) per gli stessi anni per pulire 'contabilita'
         with patch(
-            "src.core.excel_importer.ExcelImporter.import_contabilita_dati",
+            "src.application.services.excel_importer.ExcelImporter.import_contabilita_dati",
             return_value=(True, "OK", [], [2030, 2031]),
         ):
             ContabilitaManager.import_data_from_excel("fake.xlsx")
@@ -86,7 +86,7 @@ class TestContabilitaManagerBoost:
 
     def test_import_data_from_excel_failure_handling(self, db_setup, mocker):
         """Verifica gestione fallimento dell'importer Excel."""
-        m_import = mocker.patch("src.core.excel_importer.ExcelImporter.import_contabilita_dati")
+        m_import = mocker.patch("src.application.services.excel_importer.ExcelImporter.import_contabilita_dati")
         m_import.return_value = (False, "File Corrotto", [], [])
 
         success, msg, _a, _r = ContabilitaManager.import_data_from_excel("fake.xlsx")

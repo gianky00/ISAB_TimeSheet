@@ -7,7 +7,7 @@ import logging
 
 from PySide6.QtCore import QThread, Signal
 
-from src.core.license_updater import run_update
+from src.application.services.license_updater import run_update
 
 logger = logging.getLogger(__name__)
 

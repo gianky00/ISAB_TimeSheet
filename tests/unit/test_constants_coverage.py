@@ -1,8 +1,8 @@
-from src.core import constants
+from src.application.services import constants
 
 
 class TestConstantsCoverage:
-    """Test suite per src/core/constants.py"""
+    """Test suite per src/application/services/constants.py"""
 
     def test_urls(self):
         """Test URL constants."""

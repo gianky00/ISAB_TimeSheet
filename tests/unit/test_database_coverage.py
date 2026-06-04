@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.database import DatabaseManager
+from src.application.services.database import DatabaseManager
 
 
 class TestDatabaseManager:
@@ -63,7 +63,7 @@ class TestDatabaseManager:
         real_conn.row_factory = sqlite3.Row
 
         with patch(
-            "src.core.database.manager.sqlite3.connect",
+            "src.application.services.database.manager.sqlite3.connect",
             side_effect=[
                 sqlite3.OperationalError("database is locked"),
                 real_conn,

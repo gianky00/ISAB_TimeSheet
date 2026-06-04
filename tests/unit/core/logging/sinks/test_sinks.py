@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.core.logging.sinks import BotLogSink, MetricsRotatingSink
+from src.application.services.logging.sinks import BotLogSink, MetricsRotatingSink
 
 
 @pytest.fixture

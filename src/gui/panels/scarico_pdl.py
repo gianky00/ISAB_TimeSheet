@@ -18,8 +18,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core import config_manager
-from src.core.constants import Icons
+from src.application.services import config_manager
+from src.application.services.constants import Icons
 from src.gui.controllers.bot_worker import BotWorker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel
@@ -33,8 +33,8 @@ from src.gui.widgets.core_widgets import (
 )
 from src.gui.widgets.safework.status_list import StatusListWidget
 from src.gui.widgets.toast import ToastManager
-from src.utils.helpers import get_asset_path, get_colored_icon, safe_open
-from src.utils.printing import get_installed_printers
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon, safe_open
+from src.infrastructure.utils.printing import get_installed_printers
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         Returns:
             Type[SafeWorkPDLBot]: La classe per l'automazione PDL.
         """
-        from src.bots.safework.pdl.bot import SafeWorkPDLBot
+        from src.infrastructure.bots.safework.pdl.bot import SafeWorkPDLBot
 
         return SafeWorkPDLBot
 
@@ -219,7 +219,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         if not hasattr(self, "data_table") or not hasattr(self, "check_stampa"):
             return
 
-        from src.core.bots.services import ScaricoPDLService
+        from src.application.services.bots.services import ScaricoPDLService
 
         service = ScaricoPDLService()
         params = {
@@ -264,7 +264,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         """Ripristina i dati e i parametri dell'ultima sessione dalla configurazione locale."""
         self._is_loading = True
         try:
-            from src.core.bots.services import ScaricoPDLService
+            from src.application.services.bots.services import ScaricoPDLService
 
             service = ScaricoPDLService()
             cfg = service.load_config()
@@ -339,7 +339,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-        from src.core.bots.services import ScaricoPDLService
+        from src.application.services.bots.services import ScaricoPDLService
 
         service = ScaricoPDLService()
 
@@ -390,7 +390,7 @@ class ScaricoPDLPanel(BaseBotPanel):
                 main_win = self.window()
                 tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-                from src.core.bots.services import ScaricoPDLService
+                from src.application.services.bots.services import ScaricoPDLService
 
                 service = ScaricoPDLService()
                 service.handle_post_execution(success, bot_instance, tg_service)

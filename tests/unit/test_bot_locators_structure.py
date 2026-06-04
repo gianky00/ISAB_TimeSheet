@@ -1,7 +1,7 @@
 from selenium.webdriver.common.by import By
 
-from src.bots.portale_fornitori.common.locators import CommonLocators, LoginLocators
-from src.bots.portale_fornitori.scarico_ts.locators import ScaricoTSLocators
+from src.infrastructure.bots.portale_fornitori.common.locators import CommonLocators, LoginLocators
+from src.infrastructure.bots.portale_fornitori.scarico_ts.locators import ScaricoTSLocators
 
 
 class TestBotLocators:

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.core.processing.certificati.steps import (
+from src.application.services.processing.certificati.steps import (
     FormatCertificatiStep,
     NormalizeCertificatiStep,
     ReadCertificatiExcelStep,

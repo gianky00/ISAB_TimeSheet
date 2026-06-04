@@ -14,9 +14,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.dipendenti.anagrafica_controller import AnagraficaController
-from src.core.dipendenti.data_helpers import format_db_date
-from src.core.sync_tracker import SyncTracker
+from src.application.services.dipendenti.anagrafica_controller import AnagraficaController
+from src.application.services.dipendenti.data_helpers import format_db_date
+from src.application.services.sync_tracker import SyncTracker
 from src.gui.formatters import FastTableModel
 from src.gui.panels.dipendenti.utils.report_generator import ReportGenerator
 from src.gui.widgets.toast import ToastManager

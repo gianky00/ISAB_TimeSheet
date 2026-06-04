@@ -2,8 +2,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from src.core.dipendenti.anagrafica_controller import AnagraficaController
-from src.models.employee import EmployeeRecord
+from src.application.services.dipendenti.anagrafica_controller import AnagraficaController
+from src.domain.employee import EmployeeRecord
 
 
 class TestAnagraficaController:
@@ -91,12 +91,12 @@ class TestAnagraficaController:
         assert dtos[0].id_risorsa == "2"
 
     def test_get_last_isab_access_success(self, controller, mocker):
-        mocker.patch("src.core.database.db_manager.execute_query", return_value=[("2026-05-20 10:00:00",)])
+        mocker.patch("src.application.services.database.db_manager.execute_query", return_value=[("2026-05-20 10:00:00",)])
 
         # Fixed "now" for test
         mock_now = datetime(2026, 5, 25, 12, 0, tzinfo=UTC)
-        mocker.patch("src.core.dipendenti.anagrafica_controller.datetime", mocker.Mock(wraps=datetime))
-        import src.core.dipendenti.anagrafica_controller as ac
+        mocker.patch("src.application.services.dipendenti.anagrafica_controller.datetime", mocker.Mock(wraps=datetime))
+        import src.application.services.dipendenti.anagrafica_controller as ac
 
         ac.datetime.now.return_value = mock_now
         ac.datetime.strptime = datetime.strptime
@@ -108,7 +108,7 @@ class TestAnagraficaController:
         assert color == "#198754"  # success_dark
 
     def test_get_last_isab_access_never(self, controller, mocker):
-        mocker.patch("src.core.database.db_manager.execute_query", return_value=[])
+        mocker.patch("src.application.services.database.db_manager.execute_query", return_value=[])
         text, delta, _ = controller.get_last_isab_access("X", "Y")
         assert "Mai effettuato" in text
         assert delta == -1

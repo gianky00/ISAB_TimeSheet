@@ -14,14 +14,14 @@ class TestVersion:
 
     def test_version_exists(self):
         """Version string should exist."""
-        from src.core.version import __version__
+        from src.application.services.version import __version__
 
         assert __version__ is not None
         assert isinstance(__version__, str)
 
     def test_version_format(self):
         """Version should be in semver format."""
-        from src.core.version import __version__
+        from src.application.services.version import __version__
 
         parts = __version__.split(".")
         assert len(parts) == 3
@@ -29,7 +29,7 @@ class TestVersion:
 
     def test_update_url_exists(self):
         """Update URL should be configured."""
-        from src.core.version import UPDATE_URL
+        from src.application.services.version import UPDATE_URL
 
         assert UPDATE_URL is not None
         assert UPDATE_URL.startswith("https://")
@@ -40,7 +40,7 @@ class TestConfigManager:
 
     def test_default_config_exists(self):
         """Default config should have required keys."""
-        from src.core.config_manager import DEFAULT_CONFIG
+        from src.application.services.config_manager import DEFAULT_CONFIG
 
         required_keys = [
             "download_path",
@@ -54,7 +54,7 @@ class TestConfigManager:
 
     def test_get_data_path(self):
         """Data path should be a valid directory path."""
-        from src.core.paths import get_data_path
+        from src.application.services.paths import get_data_path
 
         path = get_data_path()
         assert path is not None
@@ -67,7 +67,7 @@ class TestLicenseValidator:
 
     def test_get_hardware_id(self):
         """Hardware ID should be retrievable."""
-        from src.core.license_validator import get_hardware_id
+        from src.application.services.license_validator import get_hardware_id
 
         hw_id = get_hardware_id()
         assert hw_id is not None
@@ -81,32 +81,32 @@ class TestBotRegistry:
 
     def test_registry_exists(self):
         """Bot registry should exist."""
-        from src.bots import BOT_REGISTRY
+        from src.infrastructure.bots import BOT_REGISTRY
 
         assert BOT_REGISTRY is not None
         assert isinstance(BOT_REGISTRY, dict)
 
     def test_scarico_ts_registered(self):
         """Scarico TS bot should be registered."""
-        from src.bots import BOT_REGISTRY
+        from src.infrastructure.bots import BOT_REGISTRY
 
         assert "scarico_ts" in BOT_REGISTRY
 
     def test_dettagli_oda_registered(self):
         """Dettagli OdA bot should be registered."""
-        from src.bots import BOT_REGISTRY
+        from src.infrastructure.bots import BOT_REGISTRY
 
         assert "dettagli_oda" in BOT_REGISTRY
 
     def test_carico_ts_registered(self):
         """Carico TS bot should be registered."""
-        from src.bots import BOT_REGISTRY
+        from src.infrastructure.bots import BOT_REGISTRY
 
         assert "carico_ts" in BOT_REGISTRY
 
     def test_get_available_bots(self):
         """Should return dict of available bots."""
-        from src.bots import get_available_bots
+        from src.infrastructure.bots import get_available_bots
 
         bots = get_available_bots()
         assert isinstance(bots, dict)
@@ -118,7 +118,7 @@ class TestBaseBot:
 
     def test_bot_status_enum(self):
         """BotStatus enum should have expected values."""
-        from src.bots.base import BotStatus
+        from src.infrastructure.bots.base import BotStatus
 
         assert hasattr(BotStatus, "IDLE")
         assert hasattr(BotStatus, "RUNNING")
@@ -132,7 +132,7 @@ class TestScaricaTSBot:
 
     def test_bot_columns(self):
         """Should have correct column configuration."""
-        from src.bots.portale_fornitori.scarico_ts import ScaricaTSBot
+        from src.infrastructure.bots.portale_fornitori.scarico_ts import ScaricaTSBot
 
         columns = ScaricaTSBot.get_columns()
         assert len(columns) == 2
@@ -143,7 +143,7 @@ class TestScaricaTSBot:
 
     def test_bot_metadata(self):
         """Should have correct metadata."""
-        from src.bots.portale_fornitori.scarico_ts import ScaricaTSBot
+        from src.infrastructure.bots.portale_fornitori.scarico_ts import ScaricaTSBot
 
         assert ScaricaTSBot.get_name() == "Scarico TS"
         assert ScaricaTSBot.get_description() is not None
@@ -154,7 +154,7 @@ class TestDettagliOdABot:
 
     def test_bot_columns(self):
         """Should have correct column configuration."""
-        from src.bots.portale_fornitori.dettagli_oda import DettagliOdABot
+        from src.infrastructure.bots.portale_fornitori.dettagli_oda import DettagliOdABot
 
         columns = DettagliOdABot.get_columns()
         assert len(columns) == 2
@@ -165,7 +165,7 @@ class TestDettagliOdABot:
 
     def test_bot_metadata(self):
         """Should have correct metadata."""
-        from src.bots.portale_fornitori.dettagli_oda import DettagliOdABot
+        from src.infrastructure.bots.portale_fornitori.dettagli_oda import DettagliOdABot
 
         assert DettagliOdABot.get_name() == "Dettagli OdA"
         assert DettagliOdABot.get_description() is not None
@@ -176,7 +176,7 @@ class TestCaricoTSBot:
 
     def test_bot_columns(self):
         """Should have correct column configuration."""
-        from src.bots.portale_fornitori.carico_ts import CaricoTSBot
+        from src.infrastructure.bots.portale_fornitori.carico_ts import CaricoTSBot
 
         columns = CaricoTSBot.get_columns()
         assert len(columns) == 16
@@ -188,7 +188,7 @@ class TestCaricoTSBot:
 
     def test_bot_metadata(self):
         """Should have correct metadata."""
-        from src.bots.portale_fornitori.carico_ts import CaricoTSBot
+        from src.infrastructure.bots.portale_fornitori.carico_ts import CaricoTSBot
 
         assert CaricoTSBot.get_name() == "Carico TS"
         assert CaricoTSBot.get_description() is not None

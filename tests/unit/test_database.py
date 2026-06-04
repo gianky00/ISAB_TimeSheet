@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.database import DatabaseManager
+from src.application.services.database import DatabaseManager
 
 
 class TestDatabaseManager:
@@ -26,7 +26,7 @@ class TestDatabaseManager:
 
     def test_init_db(self, manager, tmp_path):
         # Patch DB_DIR nel modulo manager per usare tmp_path
-        with patch("src.core.database.manager.DB_DIR", tmp_path):
+        with patch("src.application.services.database.manager.DB_DIR", tmp_path):
             test_db_cont = manager.DB_CONTABILITA
             test_db_timb = manager.DB_TIMBRATURE
 

@@ -18,10 +18,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.styles import COLORS
-from src.utils.helpers import get_asset_path, get_colored_icon
-from src.utils.log_humanizer import friendly_time_delta
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.log_humanizer import friendly_time_delta
 
 if TYPE_CHECKING:
     from PySide6.QtGui import QShowEvent
@@ -188,7 +188,7 @@ class ActivityFeed(QWidget):
         self._setup_ui()
 
         # Connetti al segnale dell'AuditManager per aggiornamenti in tempo reale
-        from src.core.audit_manager import AuditManager
+        from src.application.services.audit_manager import AuditManager
 
         AuditManager.instance().signals.log_added.connect(self._on_new_log_added)
 
@@ -275,7 +275,7 @@ class ActivityFeed(QWidget):
                         widget.deleteLater()
 
             # Limit to 10 latest
-            from src.core.audit_manager import AuditManager
+            from src.application.services.audit_manager import AuditManager
 
             logs = AuditManager.instance().get_logs(limit=10)
 

@@ -11,9 +11,9 @@ from typing import Any, ClassVar
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, QPersistentModelIndex, Qt
 from PySide6.QtGui import QColor, QFont, QIcon
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.styles import COLORS
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 
 class AuditTableModel(QAbstractTableModel):

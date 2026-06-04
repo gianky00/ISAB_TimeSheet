@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from src.core.logging.viewer import LogQuery
+from src.application.services.logging.viewer import LogQuery
 
 
 @pytest.fixture

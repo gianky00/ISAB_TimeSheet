@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 from PySide6.QtCore import QDate, QObject
 
-from src.core.telegram.bridge.ui_commands import TelegramUICommands
+from src.api.telegram.bridge.ui_commands import TelegramUICommands
 
 
 class TestTelegramUICommands:

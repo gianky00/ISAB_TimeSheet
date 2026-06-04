@@ -7,7 +7,7 @@ from typing import Any
 
 from PySide6.QtCore import QObject, QThread, Signal
 
-from src.utils.parsing import parse_currency
+from src.infrastructure.utils.parsing import parse_currency
 
 # Costanti per indici di colonna e lunghezze attese
 CACHE_FIELDS_COUNT = 5

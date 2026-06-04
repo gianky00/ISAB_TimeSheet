@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.utils.browser_diagnostics import (
+from src.infrastructure.utils.browser_diagnostics import (
     _check_filesystem,
     _check_processes,
     emergency_profile_reset,
@@ -20,7 +20,7 @@ class TestBrowserDiagnostics:
         # Patch CONFIG_DIR per salvataggio report
         self.config_dir = Path("/config")
         fs.create_dir(str(self.config_dir))
-        with patch("src.core.config_manager.CONFIG_DIR", self.config_dir):
+        with patch("src.application.services.config_manager.CONFIG_DIR", self.config_dir):
             yield
 
     def test_check_filesystem_success(self, fs):
@@ -42,7 +42,7 @@ class TestBrowserDiagnostics:
         res = _check_filesystem(self.user_data_dir)
         assert any("SingletonLock" in d for d in res["details"])
 
-    @patch("src.utils.browser_diagnostics.psutil.process_iter")
+    @patch("src.infrastructure.utils.browser_diagnostics.psutil.process_iter")
     def test_check_processes(self, mock_iter):
         mock_proc = MagicMock()
         # Assicuriamoci che il cmdline contenga il percorso della directory come stringa
@@ -55,9 +55,9 @@ class TestBrowserDiagnostics:
         assert res["status"] == "WARNING"
         assert "PID: 123" in res["details"][0]
 
-    @patch("src.utils.browser_diagnostics.sync_playwright")
-    @patch("src.utils.browser_diagnostics._check_processes")
-    @patch("src.utils.browser_diagnostics._check_filesystem")
+    @patch("src.infrastructure.utils.browser_diagnostics.sync_playwright")
+    @patch("src.infrastructure.utils.browser_diagnostics._check_processes")
+    @patch("src.infrastructure.utils.browser_diagnostics._check_filesystem")
     def test_run_browser_diagnostic(self, mock_fs, mock_proc, mock_pw, fs):
         mock_fs.return_value = {"status": "PASS", "details": []}
         mock_proc.return_value = {"status": "PASS", "details": []}
@@ -71,8 +71,8 @@ class TestBrowserDiagnostics:
         assert report["overall_status"] == "PASS"
         assert (self.config_dir / "logs" / "browser_debug.json").exists()
 
-    @patch("src.utils.browser_diagnostics.cleanup_bot_processes")
-    @patch("src.utils.browser_diagnostics.shutil.move")
+    @patch("src.infrastructure.utils.browser_diagnostics.cleanup_bot_processes")
+    @patch("src.infrastructure.utils.browser_diagnostics.shutil.move")
     def test_emergency_profile_reset(self, mock_move, mock_cleanup, fs):
         assert emergency_profile_reset(self.user_data_dir) is True
         assert mock_cleanup.called

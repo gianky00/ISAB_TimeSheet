@@ -19,9 +19,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.audit_manager import AuditManager
-from src.core.employees import employee_manager
-from src.core.sync_tracker import SyncTracker
+from src.application.services.audit_manager import AuditManager
+from src.application.services.employees import employee_manager
+from src.application.services.sync_tracker import SyncTracker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import COLORS, LABEL_MUTED, LINEEDIT_STYLE
 from src.gui.widgets.core_widgets import SearchInput, StandardInput, StandardTable

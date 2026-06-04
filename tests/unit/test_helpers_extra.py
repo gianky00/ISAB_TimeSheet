@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from src.utils.helpers import (
+from src.infrastructure.utils.helpers import (
     _kill_automation_browsers,
     _remove_profile_locks,
     cleanup_chrome_temp_files,
@@ -19,8 +19,8 @@ def test_safe_open_darwin(tmp_path, mocker):
     good_file = tmp_path / "test.txt"
     good_file.write_text("dummy")
 
-    mocker.patch("src.utils.helpers.sys.platform", "darwin")
-    mock_run = mocker.patch("src.utils.helpers.subprocess.run")
+    mocker.patch("src.infrastructure.utils.helpers.sys.platform", "darwin")
+    mock_run = mocker.patch("src.infrastructure.utils.helpers.subprocess.run")
     assert safe_open(good_file) is True
     mock_run.assert_called_once()
 
@@ -29,8 +29,8 @@ def test_safe_open_linux(tmp_path, mocker):
     good_file = tmp_path / "test.txt"
     good_file.write_text("dummy")
 
-    mocker.patch("src.utils.helpers.sys.platform", "linux")
-    mock_run = mocker.patch("src.utils.helpers.subprocess.run")
+    mocker.patch("src.infrastructure.utils.helpers.sys.platform", "linux")
+    mock_run = mocker.patch("src.infrastructure.utils.helpers.subprocess.run")
     assert safe_open(good_file) is True
     mock_run.assert_called_once()
 
@@ -57,7 +57,7 @@ def test_cleanup_chrome_temp_files_exception(tmp_path, mocker):
 
 
 def test_remove_profile_locks(tmp_path, mocker):
-    mocker.patch("src.utils.helpers.CONFIG_DIR", tmp_path)
+    mocker.patch("src.infrastructure.utils.helpers.CONFIG_DIR", tmp_path)
     profile_dir = tmp_path / "data" / "chrome_profile"
     profile_dir.mkdir(parents=True, exist_ok=True)
     (profile_dir / "Lock").touch()
@@ -75,7 +75,7 @@ def test_kill_automation_browsers(mocker):
     logger = MagicMock()
     mock_proc = MagicMock()
     mock_proc.info = {"name": "chrome.exe", "cmdline": ["--remote-debugging-port=9222"]}
-    mocker.patch("src.utils.helpers.psutil.process_iter", return_value=[mock_proc])
+    mocker.patch("src.infrastructure.utils.helpers.psutil.process_iter", return_value=[mock_proc])
     _kill_automation_browsers(logger)
     mock_proc.kill.assert_called_once()
 

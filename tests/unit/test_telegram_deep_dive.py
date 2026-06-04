@@ -2,8 +2,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.core.telegram.handlers import callbacks
-from src.core.telegram_manager import TelegramService
+from src.api.telegram.handlers import callbacks
+from src.api.telegram_manager import TelegramService
 
 
 class TestTelegramDeepDive:
@@ -36,7 +36,7 @@ class TestTelegramDeepDive:
 
         # Test year selection for strumentale
         with patch(
-            "src.core.contabilita_manager.ContabilitaManager.get_available_years",
+            "src.application.services.contabilita_manager.ContabilitaManager.get_available_years",
             return_value=[2023, 2024],
         ):
             await callbacks._handle_db_actions(service, "db_select_year_strumentale", mock_query, "123")
@@ -68,6 +68,6 @@ class TestTelegramDeepDive:
         await callbacks._handle_utility_actions(service, "menu_power", mock_query, "123")
         assert "Manutenzione" in mock_query.edit_message_text.call_args[0][0]
 
-        with patch("src.core.config_manager.load_config", return_value={"fornitori": ["F1"]}):
+        with patch("src.application.services.config_manager.load_config", return_value={"fornitori": ["F1"]}):
             await callbacks._handle_utility_actions(service, "menu_settings", mock_query, "123")
             assert "Impostazioni" in mock_query.edit_message_text.call_args[0][0]

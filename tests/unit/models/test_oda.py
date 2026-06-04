@@ -1,4 +1,4 @@
-from src.models.oda import OdaRecord
+from src.domain.oda import OdaRecord
 
 
 class TestOdaModels:

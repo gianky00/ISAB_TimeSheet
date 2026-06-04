@@ -1,8 +1,8 @@
 from datetime import UTC, datetime
 from unittest.mock import patch
 
-from src.core import auth_monitor
-from src.core.auth_monitor import _build_access_maps, _normalize
+from src.application.services import auth_monitor
+from src.application.services.auth_monitor import _build_access_maps, _normalize
 
 
 class TestAuthMonitorRobust:
@@ -24,7 +24,7 @@ class TestAuthMonitorRobust:
         # Mock datetime.now -> 2024-01-10 (9 giorni dopo)
         mock_now = datetime(2024, 1, 10, tzinfo=UTC)
 
-        with patch("src.core.auth_monitor.datetime") as mock_dt:
+        with patch("src.application.services.auth_monitor.datetime") as mock_dt:
             mock_dt.now.return_value = mock_now
             mock_dt.strptime.side_effect = datetime.strptime  # Usa reale per parsing
             mock_dt.UTC = UTC
@@ -47,7 +47,7 @@ class TestAuthMonitorRobust:
         ]
 
         mock_now = datetime(2024, 1, 10, tzinfo=UTC)
-        with patch("src.core.auth_monitor.datetime") as mock_dt:
+        with patch("src.application.services.auth_monitor.datetime") as mock_dt:
             mock_dt.now.return_value = mock_now
             mock_dt.strptime.side_effect = datetime.strptime
             mock_dt.UTC = UTC
@@ -56,7 +56,7 @@ class TestAuthMonitorRobust:
 
             assert last_by_cf["CF1"][0] == 5  # 5 giorni (il più recente)
 
-    @patch("src.core.database.db_manager.execute_query")
+    @patch("src.application.services.database.db_manager.execute_query")
     def test_check_expiring_authorizations_logic(self, mock_query):
         """Test logica business (soglie e fallback)."""
         # 1. Dipendenti
@@ -90,7 +90,7 @@ class TestAuthMonitorRobust:
         mock_query.side_effect = [dipendenti, accessi, accessi]
 
         mock_now = datetime(2024, 2, 1, tzinfo=UTC)
-        with patch("src.core.auth_monitor.datetime") as mock_dt:
+        with patch("src.application.services.auth_monitor.datetime") as mock_dt:
             mock_dt.now.return_value = mock_now
             mock_dt.strptime.side_effect = datetime.strptime
             mock_dt.UTC = UTC
@@ -115,7 +115,7 @@ class TestAuthMonitorRobust:
             assert res_map["E"]["stato"] == "SCADUTA"
             assert res_map["E"]["cf_mancante"] is True
 
-    @patch("src.core.database.db_manager.execute_query")
+    @patch("src.application.services.database.db_manager.execute_query")
     def test_check_expiring_authorizations_error(self, mock_query):
         """Test gestione errore DB."""
         mock_query.side_effect = Exception("DB Error")

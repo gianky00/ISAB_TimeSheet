@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.database.repositories.pdl_repository import PdlRepository
-from src.models import PdlProgrammazioneRecord
+from src.application.services.database.repositories.pdl_repository import PdlRepository
+from src.domain import PdlProgrammazioneRecord
 
 
 class TestPdlRepository:
@@ -43,7 +43,7 @@ class TestPdlRepository:
         query = mock_db.execute_query.call_args[0][1]
         assert "ORDER BY substr(data_creazione, 7, 4)" in query
 
-    @patch("src.core.database.repositories.pdl_repository.dict", side_effect=lambda x: x)
+    @patch("src.application.services.database.repositories.pdl_repository.dict", side_effect=lambda x: x)
     def test_get_filtered_objects(self, mock_dict, repo, mock_db):
         row = dict.fromkeys(repo.columns, "")
         row["n_pdl"] = "100"
@@ -58,7 +58,7 @@ class TestPdlRepository:
         res = repo.get_unique_requesters()
         assert res == ["Luigi Verdi", "Mario Rossi"]
 
-    @patch("src.core.database.repositories.pdl_repository.dict", side_effect=lambda x: x)
+    @patch("src.application.services.database.repositories.pdl_repository.dict", side_effect=lambda x: x)
     def test_get_programming_by_week(self, mock_dict, repo, mock_db):
         row = dict.fromkeys(PdlProgrammazioneRecord.__dataclass_fields__, "")
         row["id"] = 1
@@ -113,7 +113,7 @@ class TestPdlRepository:
         mock_cursor.fetchall.return_value = [mock_row]
 
         # Patching dict in the repository module to handle sqlite3.Row conversion
-        with patch("src.core.database.repositories.pdl_repository.dict", side_effect=lambda x: x):
+        with patch("src.application.services.database.repositories.pdl_repository.dict", side_effect=lambda x: x):
             res = repo.get_interventions("123", "ext.db")
             assert len(res) == 1
             assert res[0]["tecnico"] == "T1"

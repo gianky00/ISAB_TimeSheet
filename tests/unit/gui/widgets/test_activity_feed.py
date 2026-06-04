@@ -29,7 +29,7 @@ def test_activity_item_init(qtbot):
 
 def test_activity_feed_init(qtbot):
     # Avoid real signals from AuditManager
-    with patch("src.core.audit_manager.AuditManager"):
+    with patch("src.application.services.audit_manager.AuditManager"):
         feed = ActivityFeed()
         qtbot.addWidget(feed)
         feed.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen)
@@ -41,7 +41,7 @@ def test_activity_feed_init(qtbot):
 
 def test_activity_feed_refresh(qtbot):
     # Avoid real signals from AuditManager
-    with patch("src.core.audit_manager.AuditManager") as mock_audit_cls:
+    with patch("src.application.services.audit_manager.AuditManager") as mock_audit_cls:
         mock_audit = MagicMock()
         mock_audit.get_logs.return_value = [
             {"status": "success", "message": "Log 1"},

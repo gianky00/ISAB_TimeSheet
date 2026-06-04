@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.app_initializer import AppInitializer
+from src.application.services.app_initializer import AppInitializer
 
 
 class TestAppInitializerCoverage:
@@ -19,17 +19,17 @@ class TestAppInitializerCoverage:
         """Mock per le dipendenze SRP di initialize_core."""
         return {
             "license_verify": mocker.patch(
-                "src.core.initialization.license_verifier.LicenseVerifier.verify_license"
+                "src.application.services.initialization.license_verifier.LicenseVerifier.verify_license"
             ),
             "db_init": mocker.patch(
-                "src.core.initialization.migration_engine.DatabaseMigrationEngine.initialize_database"
+                "src.application.services.initialization.migration_engine.DatabaseMigrationEngine.initialize_database"
             ),
             "setup_logging": mocker.patch.object(AppInitializer, "_setup_logging"),
             "ensure_driver": mocker.patch(
-                "src.utils.resource_manager.ResourceManager.ensure_automation_driver"
+                "src.infrastructure.utils.resource_manager.ResourceManager.ensure_automation_driver"
             ),
             "preload": mocker.patch.object(AppInitializer, "_preload_heavy_modules"),
-            "get_bots": mocker.patch("src.core.app_initializer.get_available_bots", return_value=[]),
+            "get_bots": mocker.patch("src.application.services.app_initializer.get_available_bots", return_value=[]),
         }
 
     def test_initialize_core_success(self, mock_core_deps):
@@ -53,7 +53,7 @@ class TestAppInitializerCoverage:
         """Test: Gestione eccezioni wrappate in StartupError."""
         mock_core_deps["db_init"].side_effect = Exception("DB Crash")
 
-        from src.core.exceptions import StartupError
+        from src.application.services.exceptions import StartupError
 
         with pytest.raises(StartupError, match="DB Crash"):
             AppInitializer.initialize_core()
@@ -64,7 +64,7 @@ class TestAppInitializerCoverage:
         """Test: Il generatore produce gli step attesi per la GUI."""
         mock_mw = MagicMock()
         mocker.patch.object(mock_mw.navigation_controller, "get_panel", return_value=MagicMock())
-        mocker.patch("src.core.config_manager.load_config", return_value={})
+        mocker.patch("src.application.services.config_manager.load_config", return_value={})
 
         gen = AppInitializer.init_generator(mock_mw)
 
@@ -73,7 +73,7 @@ class TestAppInitializerCoverage:
         assert steps[-1][1] == 100
         assert "Sistema Pronto" in steps[-1][0]
 
-    @patch("src.core.app_initializer.configure_logging")
+    @patch("src.application.services.app_initializer.configure_logging")
     def test_setup_logging(self, mock_conf):
         AppInitializer._setup_logging()
         mock_conf.assert_called_once()

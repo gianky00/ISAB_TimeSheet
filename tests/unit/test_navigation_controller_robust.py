@@ -32,11 +32,11 @@ def mock_mw(qapp):
 
 @pytest.fixture
 def nav_controller(mock_mw, mocker):
-    mocker.patch("src.core.oda.oda_controller.ODAController")
-    mocker.patch("src.core.dipendenti.anagrafica_controller.AnagraficaController")
-    mocker.patch("src.core.pdl.pdl_controller.PDLController")
-    mocker.patch("src.core.contabilita.scarico_ore.controller.ScaricoOreController")
-    mocker.patch("src.core.contabilita.consuntivo.consuntivo_controller.ConsuntivoController")
+    mocker.patch("src.application.services.oda.oda_controller.ODAController")
+    mocker.patch("src.application.services.dipendenti.anagrafica_controller.AnagraficaController")
+    mocker.patch("src.application.services.pdl.pdl_controller.PDLController")
+    mocker.patch("src.application.services.contabilita.scarico_ore.controller.ScaricoOreController")
+    mocker.patch("src.application.services.contabilita.consuntivo.consuntivo_controller.ConsuntivoController")
     return NavigationController(mock_mw)
 
 

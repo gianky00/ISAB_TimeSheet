@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.bots.base.selenium_base_bot import SeleniumBaseBot
-from src.core.constants import BotStatus, Timeouts
+from src.application.services.constants import BotStatus, Timeouts
+from src.infrastructure.bots.base.selenium_base_bot import SeleniumBaseBot
 
 
 # Classe concreta per testare SeleniumBaseBot
@@ -31,24 +31,24 @@ class ConcreteBot(SeleniumBaseBot):
 class TestBaseBotRobust:
     @pytest.fixture
     def mock_driver_cls(self):
-        with patch("src.bots.base.selenium_base_bot.webdriver.Chrome") as mock:
+        with patch("src.infrastructure.bots.base.selenium_base_bot.webdriver.Chrome") as mock:
             yield mock
 
     @pytest.fixture
     def mock_service(self):
-        with patch("src.bots.base.selenium_base_bot.Service") as mock:
+        with patch("src.infrastructure.bots.base.selenium_base_bot.Service") as mock:
             yield mock
 
     @pytest.fixture
     def mock_options(self):
-        with patch("src.bots.base.selenium_base_bot.Options") as mock:
+        with patch("src.infrastructure.bots.base.selenium_base_bot.Options") as mock:
             yield mock
 
     @pytest.fixture
     def mock_chrome_manager(self):
         with (
             patch("webdriver_manager.chrome.ChromeDriverManager") as mock,
-            patch("src.bots.base.selenium_base_bot.Path.exists", return_value=False),
+            patch("src.infrastructure.bots.base.selenium_base_bot.Path.exists", return_value=False),
         ):
             mock.return_value.install.return_value = "/path/to/chromedriver.exe"
             yield mock
@@ -97,7 +97,7 @@ class TestBaseBotRobust:
     def test_get_chrome_options_headless(self, bot, mock_options):
         """Test _get_chrome_options logica headless."""
         bot.headless = True
-        with patch("src.core.config_manager.load_config", return_value={}):
+        with patch("src.application.services.config_manager.load_config", return_value={}):
             bot._get_chrome_options()
             # Verifica che headless sia stato aggiunto
             mock_options.return_value.add_argument.assert_any_call("--headless=new")
@@ -111,8 +111,8 @@ class TestBaseBotRobust:
 
     # --- Execution Flow Tests ---
 
-    @patch("src.bots.base.execution_guard.ExecutionGuard.check_environment", return_value=(True, ""))
-    @patch("src.bots.base.selenium_base_bot.LoginPage")
+    @patch("src.infrastructure.bots.base.execution_guard.ExecutionGuard.check_environment", return_value=(True, ""))
+    @patch("src.infrastructure.bots.base.selenium_base_bot.LoginPage")
     def test_execute_success(self, mock_login_page_cls, mock_guard, bot):
         """Test flusso execute completo con successo."""
         # Setup mocks

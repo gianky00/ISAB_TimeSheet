@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.stats_manager import StatsManager
-from src.core.time_manager import get_network_time, get_trusted_time
+from src.application.services.stats_manager import StatsManager
+from src.application.services.time_manager import get_network_time, get_trusted_time
 
 
 class TestStatsManager:
@@ -13,13 +13,13 @@ class TestStatsManager:
         # Reset singleton
         StatsManager._instance = None
         # Mock load_config to return empty dict
-        with patch("src.core.config_manager.load_config", return_value={}):
+        with patch("src.application.services.config_manager.load_config", return_value={}):
             mgr = StatsManager()
             # Ensure clean state
             mgr.stats = {}
             return mgr
 
-    @patch("src.core.config_manager.set_config_value")
+    @patch("src.application.services.config_manager.set_config_value")
     def test_increment_usage(self, mock_save, manager):
         manager.increment_usage("bot_test")
 
@@ -34,7 +34,7 @@ class TestStatsManager:
 
         mock_save.assert_called()
 
-    @patch("src.core.config_manager.set_config_value")
+    @patch("src.application.services.config_manager.set_config_value")
     def test_increment_error(self, mock_save, manager):
         manager.increment_error("bot_test")
 
@@ -50,7 +50,7 @@ class TestStatsManager:
 
 
 class TestTimeManager:
-    @patch("src.core.time_manager.requests.head")
+    @patch("src.application.services.time_manager.requests.head")
     def test_get_network_time_success(self, mock_head):
         # Mock response
         mock_resp = MagicMock()
@@ -65,14 +65,14 @@ class TestTimeManager:
         assert dt.day == 21
         assert dt.tzinfo == UTC
 
-    @patch("src.core.time_manager.requests.head")
+    @patch("src.application.services.time_manager.requests.head")
     def test_get_network_time_fail(self, mock_head):
         mock_head.side_effect = Exception("Timeout")
 
         dt = get_network_time()
         assert dt is None
 
-    @patch("src.core.time_manager.get_network_time")
+    @patch("src.application.services.time_manager.get_network_time")
     def test_get_trusted_time_fallback(self, mock_net):
         mock_net.return_value = None
 

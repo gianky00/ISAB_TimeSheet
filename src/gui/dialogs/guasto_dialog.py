@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import TipoAnomalia
+from src.application.services.constants import TipoAnomalia
 from src.gui.styles import COLORS
 from src.gui.widgets.calendar_date_edit import CalendarDateEdit
 from src.gui.widgets.core_widgets import PrimaryButton

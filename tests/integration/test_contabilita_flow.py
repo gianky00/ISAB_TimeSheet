@@ -3,9 +3,9 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.contabilita_manager import ContabilitaManager
-from src.core.database.manager import db_manager
-from src.core.sync_tracker import SyncTracker
+from src.application.services.contabilita_manager import ContabilitaManager
+from src.application.services.database.manager import db_manager
+from src.application.services.sync_tracker import SyncTracker
 
 
 class TestContabilitaIntegration:
@@ -16,11 +16,11 @@ class TestContabilitaIntegration:
         self.db_path = tmp_path / "test_contabilita.db"
 
         # Monkeypatch globale dei path per tutti i moduli
-        monkeypatch.setattr("src.core.database.db_manager.DB_CONTABILITA", self.db_path)
+        monkeypatch.setattr("src.application.services.database.db_manager.DB_CONTABILITA", self.db_path)
         # Consolidiamo tutto su test_contabilita.db come fa il service
-        monkeypatch.setattr("src.core.database.db_manager.DB_GIORNALIERE", self.db_path)
-        monkeypatch.setattr("src.core.paths.DB_DIR", tmp_path)
-        monkeypatch.setattr("src.core.sync_tracker.DB_DIR", tmp_path)
+        monkeypatch.setattr("src.application.services.database.db_manager.DB_GIORNALIERE", self.db_path)
+        monkeypatch.setattr("src.application.services.paths.DB_DIR", tmp_path)
+        monkeypatch.setattr("src.application.services.sync_tracker.DB_DIR", tmp_path)
 
         # Reset tracker
         SyncTracker._loaded = False
@@ -30,7 +30,7 @@ class TestContabilitaIntegration:
         db_manager.init_db()
         yield
 
-    @patch("src.core.importers.ExcelImporter.import_contabilita_dati")
+    @patch("src.application.services.importers.ExcelImporter.import_contabilita_dati")
     def test_full_import_sync_flow(self, mock_import):
         """Testa il flusso completo: Import Excel -> Sincronizzazione DB -> Status Tracker."""
         # 1. Mock dati in ingresso da Excel (year as first column)
@@ -84,7 +84,7 @@ class TestContabilitaIntegration:
             count = conn.execute("SELECT COUNT(*) FROM contabilita WHERE year = 2024").fetchone()[0]
             assert count == 2
 
-    @patch("src.core.importers.ExcelImporter.import_giornaliere")
+    @patch("src.application.services.importers.ExcelImporter.import_giornaliere")
     def test_giornaliere_import_sync_flow(self, mock_import_g):
         """Testa il flusso di importazione delle giornaliere."""
         # Setup dati base nel DB Contabilita per il lookup ODC
@@ -115,7 +115,7 @@ class TestContabilitaIntegration:
 
         # Esecuzione
         # Mock folder exists
-        with patch("src.core.importers.giornaliere.Path.exists", return_value=True):
+        with patch("src.application.services.importers.giornaliere.Path.exists", return_value=True):
             success, msg, added, _removed = ContabilitaManager.import_giornaliere("fake_giornaliere")
 
         assert success is True, f"Import failed: {msg}"

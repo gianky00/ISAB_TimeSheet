@@ -1,6 +1,6 @@
 from datetime import UTC, datetime, timedelta
 
-from src.utils.log_humanizer import SmartLogTranslator, friendly_time_delta
+from src.infrastructure.utils.log_humanizer import SmartLogTranslator, friendly_time_delta
 
 
 class TestLogHumanizer:

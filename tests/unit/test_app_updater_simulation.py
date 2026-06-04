@@ -2,8 +2,8 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core import version
-from src.core.app_updater import check_for_updates
+from src.application.services import version
+from src.application.services.app_updater import check_for_updates
 
 
 class TestAppUpdaterSimulation:
@@ -18,7 +18,7 @@ class TestAppUpdaterSimulation:
     def mock_ui(self, mocker):
         self.mock_msgbox = mocker.patch("src.gui.dialogs.updater_dialog.QMessageBox")
         mocker.patch("src.gui.widgets.toast.ToastManager.instance")
-        mocker.patch("src.core.updater.engine.requests")
+        mocker.patch("src.application.services.updater.engine.requests")
 
         from PySide6.QtCore import QObject, Signal
 

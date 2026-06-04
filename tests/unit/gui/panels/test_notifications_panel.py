@@ -6,7 +6,7 @@ import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
-from src.core.notification_manager import NotificationManager
+from src.application.services.notification_manager import NotificationManager
 from src.gui.panels.notifications_panel import NotificationsPanel
 
 

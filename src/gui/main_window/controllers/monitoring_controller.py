@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QObject, QTimer
 
-from src.core.auth_monitor import check_expiring_isab_authorizations
-from src.core.constants import Icons
-from src.core.logging import get_logger
+from src.application.services.auth_monitor import check_expiring_isab_authorizations
+from src.application.services.constants import Icons
+from src.application.services.logging import get_logger
 from src.gui.styles.constants import ANIMATION_TIMINGS
 from src.gui.widgets.toast import ToastManager
-from src.utils.helpers import get_asset_path
+from src.infrastructure.utils.helpers import get_asset_path
 
 if TYPE_CHECKING:
     from src.gui.main_window.main import MainWindow

@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from src.core.app_updater import (
+from src.application.services.app_updater import (
     get_local_setup_path,
     get_pending_installer_path,
     has_pending_update,

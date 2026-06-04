@@ -8,7 +8,7 @@ import logging
 
 from PySide6.QtCore import QThread, Signal
 
-from src.core.oda.oda_controller import ODAController
+from src.application.services.oda.oda_controller import ODAController
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.logging.analytics import (
+from src.application.services.logging.analytics import (
     Anomaly,
     AnomalyDetector,
     HealthScorer,
@@ -70,7 +70,7 @@ class TestAnalytics:
         # Bot failure: (100 - 80) / 2 = 10 -> 100 - 10 = 90
         assert scorer.calculate(anomalies=[], error_rate=0, bot_success_rate=80) == 90
 
-    @patch("src.core.logging.analytics.LogViewer")
+    @patch("src.application.services.logging.analytics.LogViewer")
     def test_generate_analytics_report_integration(self, mock_viewer_class):
         mock_v = MagicMock()
         mock_viewer_class.return_value = mock_v

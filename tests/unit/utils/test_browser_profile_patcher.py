@@ -1,7 +1,11 @@
 import json
 from pathlib import Path
 
-from src.utils.browser_profile_patcher import _patch_file, _set_nested_value, patch_browser_profile
+from src.infrastructure.utils.browser_profile_patcher import (
+    _patch_file,
+    _set_nested_value,
+    patch_browser_profile,
+)
 
 
 class TestBrowserProfilePatcher:

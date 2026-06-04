@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.core.telegram.handlers.callbacks import handle_button
+from src.api.telegram.handlers.callbacks import handle_button
 
 
 class TestTelegramCallbacks:
@@ -35,7 +35,7 @@ class TestTelegramCallbacks:
     async def test_handle_button_db_select_year(self, service, update):
         update.callback_query.data = "db_select_year_strumentale"
         with patch(
-            "src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024]
+            "src.application.services.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024]
         ):
             await handle_button(service, update, MagicMock())
             assert "Seleziona Anno" in update.callback_query.edit_message_text.call_args[0][0]

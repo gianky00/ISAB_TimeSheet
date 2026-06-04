@@ -6,14 +6,14 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.notification_manager import NotificationManager
+from src.application.services.notification_manager import NotificationManager
 
 
 class TestNotificationManagerThreadSafe:
     @pytest.fixture
     def manager(self, tmp_path):
         """Fixture per un manager isolato."""
-        with patch("src.core.notification_manager.CONFIG_DIR", tmp_path):
+        with patch("src.application.services.notification_manager.CONFIG_DIR", tmp_path):
             NotificationManager._instance = None  # Reset singleton
             return NotificationManager.instance()
 

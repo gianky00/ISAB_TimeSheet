@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.bots.base.base_bot import BaseBot
+from src.infrastructure.bots.base.base_bot import BaseBot
 
 
 class ConcreteDummyBot(BaseBot):

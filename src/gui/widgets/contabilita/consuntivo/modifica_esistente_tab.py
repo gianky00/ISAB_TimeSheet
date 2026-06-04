@@ -21,8 +21,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core import config_manager
-from src.core.preventivi_manager import MacroWorker
+from src.application.services import config_manager
+from src.application.services.preventivi_manager import MacroWorker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import COLORS
 from src.gui.widgets.contabilita.consuntivo.log_widget import OperationLogWidget

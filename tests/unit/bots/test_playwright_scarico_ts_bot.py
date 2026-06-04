@@ -3,9 +3,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.bots.base import StepStatus
-from src.bots.base.selenium_bot_config import SeleniumBotConfig
-from src.bots.portale_fornitori.scarico_ts.playwright_bot import PlaywrightScaricaTSBot
+from src.infrastructure.bots.base import StepStatus
+from src.infrastructure.bots.base.selenium_bot_config import SeleniumBotConfig
+from src.infrastructure.bots.portale_fornitori.scarico_ts.playwright_bot import PlaywrightScaricaTSBot
 
 
 class TestPlaywrightScaricaTSBot:
@@ -43,7 +43,7 @@ class TestPlaywrightScaricaTSBot:
         assert valid is False
         assert "Nessun OdA" in msg
 
-    @patch("src.bots.base.playwright_base_bot.sync_playwright")
+    @patch("src.infrastructure.bots.base.playwright_base_bot.sync_playwright")
     def test_run_success(self, mock_sync, bot):
         # Setup mocks per Playwright
         mock_pw = MagicMock()
@@ -64,7 +64,7 @@ class TestPlaywrightScaricaTSBot:
                     # Verifica lo stato dello step 'download' (indice 3)
                     assert bot.step_manager._states[3] == StepStatus.COMPLETED
 
-    @patch("src.bots.base.playwright_base_bot.sync_playwright")
+    @patch("src.infrastructure.bots.base.playwright_base_bot.sync_playwright")
     def test_run_failure_nav(self, mock_sync, bot):
         mock_pw = MagicMock()
         mock_sync.return_value.start.return_value = mock_pw
@@ -115,7 +115,7 @@ class TestPlaywrightScaricaTSBot:
 
         assert bot._search_oda("123", "10") is False
 
-    @patch("src.core.timesheet_processor.TimesheetProcessor.process_and_move")
+    @patch("src.application.services.timesheet_processor.TimesheetProcessor.process_and_move")
     def test_run_vba_processing(self, mock_vba, bot):
         mock_vba.return_value = (True, "OK")
         bot._run_vba_processing(["file1.xlsx", "file2.xlsx"], Path("/dest"))

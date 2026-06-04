@@ -8,7 +8,7 @@ con colori "operativi" Bootstrap-like usati nei widget.
 
 from typing import Final
 
-from src.utils.date_utils import MONTHS_IT, MONTHS_IT_FULL
+from src.infrastructure.utils.date_utils import MONTHS_IT, MONTHS_IT_FULL
 
 # Re-export per retrocompatibilità
 
@@ -151,7 +151,7 @@ ANIMATION_TIMINGS: Final[dict[str, int]] = {
 # MESI ITALIANI (re-export per retrocompatibilit )
 # =============================================================================
 
-# Le costanti sono importate al top del file da src.utils.date_utils
+# Le costanti sono importate al top del file da src.infrastructure.utils.date_utils
 
 
 # =============================================================================

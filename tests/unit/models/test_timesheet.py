@@ -1,6 +1,6 @@
 import pytest
 
-from src.models.timesheet import TimesheetMetadata, TimesheetRecord
+from src.domain.timesheet import TimesheetMetadata, TimesheetRecord
 
 
 class TestTimesheetModels:

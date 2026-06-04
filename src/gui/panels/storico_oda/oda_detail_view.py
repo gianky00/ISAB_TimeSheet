@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.utils.formatters import format_date_it
+from src.application.services.utils.formatters import format_date_it
 from src.gui.formatters import format_currency_smart
 from src.gui.styles import COLORS
 

@@ -2,7 +2,7 @@ import pandas as pd
 import pandera as pa
 import pytest
 
-from src.core.schemas import validate_contabilita, validate_dipendenti, validate_giornaliere
+from src.application.services.schemas import validate_contabilita, validate_dipendenti, validate_giornaliere
 
 
 class TestSchemas:

@@ -10,7 +10,7 @@ from src.gui.widgets.audit_log_widget import AuditLogWidget
 @pytest.fixture
 def mock_audit_manager(mocker):
     """Fixture per mockare AuditManager."""
-    mock_mgr = mocker.patch("src.core.audit_manager.AuditManager.instance")
+    mock_mgr = mocker.patch("src.application.services.audit_manager.AuditManager.instance")
     instance = MagicMock()
     instance.get_categories.return_value = ["CAT1", "CAT2"]
     instance.get_filtered_logs.return_value = (

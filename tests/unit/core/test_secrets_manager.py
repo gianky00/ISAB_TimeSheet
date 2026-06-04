@@ -2,23 +2,23 @@ import os
 from pathlib import Path
 from unittest.mock import patch
 
-from src.core.secrets_manager import SecretsManager
+from src.application.services.secrets_manager import SecretsManager
 
 
 class TestSecretsManager:
-    @patch("src.core.secrets_manager.keyring.get_password")
+    @patch("src.application.services.secrets_manager.keyring.get_password")
     def test_get_github_token_stored(self, mock_get):
         mock_get.return_value = "stored_token"
         assert SecretsManager.get_github_token() == "stored_token"
 
-    @patch("src.core.secrets_manager.keyring.get_password", return_value=None)
+    @patch("src.application.services.secrets_manager.keyring.get_password", return_value=None)
     def test_get_github_token_reconstruction(self, mock_get):
         # Deve ricostruire il token hhp_...
         token = SecretsManager.get_github_token()
         assert token.startswith("ghp_")
         assert len(token) == 40
 
-    @patch("src.core.secrets_manager.get_hardware_id", return_value="HW123")
+    @patch("src.application.services.secrets_manager.get_hardware_id", return_value="HW123")
     def test_get_grace_period_key(self, mock_hwid):
         key = SecretsManager.get_grace_period_key()
         assert isinstance(key, bytes)
@@ -35,29 +35,29 @@ class TestSecretsManager:
             with patch.dict(os.environ, {"SYNCROJOB_LICENSE_KEY": ""}, clear=True):
                 assert SecretsManager.get_license_key() == b"file_key"
 
-    @patch("src.core.secrets_manager.keyring.get_password")
+    @patch("src.application.services.secrets_manager.keyring.get_password")
     def test_get_license_key_keyring(self, mock_get):
         mock_get.return_value = "keyring_key"
         with patch.dict(os.environ, {}, clear=True):
             with patch.object(SecretsManager, "_get_key_from_env_file", return_value=None):
                 assert SecretsManager.get_license_key() == b"keyring_key"
 
-    @patch("src.core.secrets_manager.keyring.get_password", side_effect=Exception("Failed"))
+    @patch("src.application.services.secrets_manager.keyring.get_password", side_effect=Exception("Failed"))
     def test_is_available_false(self, mock_get):
         SecretsManager._keyring_available = None  # Reset cache
         assert SecretsManager.is_available() is False
 
-    @patch("src.core.secrets_manager.keyring.set_password")
+    @patch("src.application.services.secrets_manager.keyring.set_password")
     def test_store_credential(self, mock_set):
         SecretsManager.store_credential("srv", "user", "pass")
         mock_set.assert_called_with("SyncroJob_srv", "user", "pass")
 
-    @patch("src.core.secrets_manager.keyring.get_password")
+    @patch("src.application.services.secrets_manager.keyring.get_password")
     def test_get_credential(self, mock_get):
         mock_get.return_value = "secret"
         assert SecretsManager.get_credential("srv", "user") == "secret"
 
-    @patch("src.core.secrets_manager.keyring.delete_password")
+    @patch("src.application.services.secrets_manager.keyring.delete_password")
     def test_delete_credential(self, mock_delete):
         SecretsManager.delete_credential("srv", "user")
         assert mock_delete.called

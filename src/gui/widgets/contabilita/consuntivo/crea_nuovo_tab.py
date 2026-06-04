@@ -19,9 +19,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
-from src.core.contabilita.consuntivo.consuntivo_dto import ConsuntivoDataDTO
-from src.core.preventivi_manager import GeneratoreWorker, MacroWorker
+from src.application.services.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
+from src.application.services.contabilita.consuntivo.consuntivo_dto import ConsuntivoDataDTO
+from src.application.services.preventivi_manager import GeneratoreWorker, MacroWorker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import COLORS
 from src.gui.widgets.contabilita.consuntivo.log_widget import OperationLogWidget

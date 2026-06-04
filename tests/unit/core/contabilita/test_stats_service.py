@@ -1,11 +1,11 @@
 from pathlib import Path
 from unittest.mock import patch
 
-from src.core.contabilita.stats_service import ContabilitaStats
+from src.application.services.contabilita.stats_service import ContabilitaStats
 
 
 class TestContabilitaStats:
-    @patch("src.core.contabilita.stats_service.ContabilitaQueries")
+    @patch("src.application.services.contabilita.stats_service.ContabilitaQueries")
     def test_get_year_stats_empty(self, mock_queries):
         mock_queries.get_data_by_year.return_value = []
         mock_queries.get_giornaliere_by_year.return_value = []
@@ -16,7 +16,7 @@ class TestContabilitaStats:
         assert stats["count_total"] == 0
         assert stats["top_commesse"] == []
 
-    @patch("src.core.contabilita.stats_service.ContabilitaQueries")
+    @patch("src.application.services.contabilita.stats_service.ContabilitaQueries")
     def test_get_year_stats_full_flow(self, mock_queries):
         # target columns for data: ..., n_prev (idx 2), v_prev (idx 3), attivita (idx 4), status (idx 7), v_ore (idx 9)
         mock_data = [

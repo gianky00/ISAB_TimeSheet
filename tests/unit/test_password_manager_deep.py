@@ -1,4 +1,4 @@
-from src.utils.security import PasswordManager
+from src.infrastructure.utils.security import PasswordManager
 
 
 class TestPasswordManagerDeep:

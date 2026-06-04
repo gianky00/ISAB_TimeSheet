@@ -9,8 +9,8 @@ from datetime import UTC, datetime
 
 from PySide6.QtCore import QThread, Signal
 
-from src.core.logging.analytics import generate_analytics_report
-from src.core.logging.viewer import LogViewer
+from src.application.services.logging.analytics import generate_analytics_report
+from src.application.services.logging.viewer import LogViewer
 
 logger = logging.getLogger(__name__)
 

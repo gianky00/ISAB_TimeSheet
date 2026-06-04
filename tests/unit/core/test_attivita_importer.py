@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.core.importers.attivita import AttivitaImporter
+from src.application.services.importers.attivita import AttivitaImporter
 
 
 class TestAttivitaImporter:

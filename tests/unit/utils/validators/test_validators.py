@@ -1,4 +1,4 @@
-from src.utils.validators import InputValidator
+from src.infrastructure.utils.validators import InputValidator
 
 
 def test_validate_pdl():

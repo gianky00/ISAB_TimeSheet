@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any
 from PySide6.QtCore import QDate, QTimer, Signal
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
-from src.core import config_manager
+from src.application.services import config_manager
 from src.gui.controllers.bot_worker import BotWorker
 from src.gui.panels.base import BaseBotPanel
 from src.gui.styles import STATUS_COLORS
@@ -19,7 +19,7 @@ from src.gui.widgets import BotParametersWidget
 from src.gui.widgets.toast import ToastManager
 
 if TYPE_CHECKING:
-    from src.bots.base.base_bot import BaseBot
+    from src.infrastructure.bots.base.base_bot import BaseBot
 
 
 class TimbratureBotPanel(BaseBotPanel):
@@ -66,7 +66,7 @@ class TimbratureBotPanel(BaseBotPanel):
 
     def get_bot_class(self) -> type["BaseBot"]:
         """Restituisce la classe bot specifica per la gestione delle timbrature."""
-        from src.bots.portale_fornitori.timbrature.bot import TimbratureBot
+        from src.infrastructure.bots.portale_fornitori.timbrature.bot import TimbratureBot
 
         return TimbratureBot
 
@@ -193,7 +193,7 @@ class TimbratureBotPanel(BaseBotPanel):
         if not params_override:
             self._save_data()
 
-        from src.core.config_manager import load_config
+        from src.application.services.config_manager import load_config
 
         config = load_config()
 

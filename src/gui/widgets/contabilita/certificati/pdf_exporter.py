@@ -10,9 +10,9 @@ from PySide6.QtCore import QMarginsF, QRectF, Qt
 from PySide6.QtGui import QPageLayout, QPageSize, QPainter, QPdfWriter, QTextDocument
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
-from src.core.constants import StatoCertificatoLabel, UbicazioneStrumenti
-from src.core.contabilita.certificati_engine import CertificatiEngine
-from src.core.version import __version__
+from src.application.services.constants import StatoCertificatoLabel, UbicazioneStrumenti
+from src.application.services.contabilita.certificati_engine import CertificatiEngine
+from src.application.services.version import __version__
 
 
 class CertificatiPdfExporter:
@@ -100,7 +100,7 @@ class CertificatiPdfExporter:
         if not cert_name or cert_name.upper() in ("N/D", "NESSUNO"):
             return ""
 
-        from src.core.config_manager import get_config_value
+        from src.application.services.config_manager import get_config_value
 
         base_path_str = str(
             get_config_value(

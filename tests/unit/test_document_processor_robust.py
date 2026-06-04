@@ -4,20 +4,20 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.utils.document_processor import DocumentProcessor
+from src.infrastructure.utils.document_processor import DocumentProcessor
 
 
 class TestDocumentProcessorRobust:
     @pytest.fixture
     def mock_fitz(self, mocker):
         mock = MagicMock()
-        mocker.patch("src.utils.document_processor.fitz", mock)
+        mocker.patch("src.infrastructure.utils.document_processor.fitz", mock)
         return mock
 
     @pytest.fixture
     def mock_path(self, mocker):
         # Patch the Path class within the module to avoid global pollution
-        return mocker.patch("src.utils.document_processor.Path")
+        return mocker.patch("src.infrastructure.utils.document_processor.Path")
 
     def test_merge_pdfs_all_valid(self, mock_fitz, mock_path):
         """Test merge standard con file validi."""

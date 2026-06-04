@@ -43,9 +43,9 @@ def mock_tabs(mocker):
 @pytest.fixture
 def mock_config(mocker):
     """Mock config_manager."""
-    mocker.patch("src.core.config_manager.load_config", return_value={"theme": "dark"})
-    mocker.patch("src.core.config_manager.save_config")
-    mocker.patch("src.core.config_manager.reset_to_defaults")
+    mocker.patch("src.application.services.config_manager.load_config", return_value={"theme": "dark"})
+    mocker.patch("src.application.services.config_manager.save_config")
+    mocker.patch("src.application.services.config_manager.reset_to_defaults")
 
 
 @pytest.fixture
@@ -97,7 +97,7 @@ class TestSettingsPanel:
         from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 
         mocker.patch.object(ConfirmationDialog, "confirm", return_value=True)
-        mock_reset = mocker.patch("src.core.config_manager.reset_to_defaults")
+        mock_reset = mocker.patch("src.application.services.config_manager.reset_to_defaults")
 
         qtbot.mouseClick(panel.btn_reset, Qt.MouseButton.LeftButton)
         assert mock_reset.called
@@ -108,7 +108,7 @@ class TestSettingsPanel:
             "PySide6.QtWidgets.QFileDialog.getSaveFileName", return_value=("/mock/backup.json", "JSON")
         )
         mock_shutil = mocker.patch("shutil.copy")
-        mocker.patch("src.core.config_manager.CONFIG_FILE", "/path/to/cfg")
+        mocker.patch("src.application.services.config_manager.CONFIG_FILE", "/path/to/cfg")
 
         qtbot.mouseClick(panel.btn_export, Qt.MouseButton.LeftButton)
         assert mock_shutil.called
@@ -118,7 +118,7 @@ class TestConfigSaveWorker:
     """Test suite per ConfigSaveWorker."""
 
     def test_run_success(self, qtbot, mocker):
-        mocker.patch("src.core.config_manager.save_config")
+        mocker.patch("src.application.services.config_manager.save_config")
         worker = ConfigSaveWorker({"test": 1})
 
         with qtbot.waitSignal(worker.finished) as blocker:
@@ -127,7 +127,7 @@ class TestConfigSaveWorker:
         assert blocker.args == [True, ""]
 
     def test_run_failure(self, qtbot, mocker):
-        mocker.patch("src.core.config_manager.save_config", side_effect=Exception("Disk Full"))
+        mocker.patch("src.application.services.config_manager.save_config", side_effect=Exception("Disk Full"))
         worker = ConfigSaveWorker({})
 
         with qtbot.waitSignal(worker.finished) as blocker:

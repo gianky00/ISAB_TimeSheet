@@ -3,14 +3,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.utils.document_processor import DocumentProcessor
+from src.infrastructure.utils.document_processor import DocumentProcessor
 
 
 class TestDocumentProcessorAdvanced:
     @pytest.fixture
     def mock_fitz(self, mocker):
         """Mock globale per fitz (PyMuPDF)."""
-        return mocker.patch("src.utils.document_processor.fitz")
+        return mocker.patch("src.infrastructure.utils.document_processor.fitz")
 
     def test_extract_text_success(self, mock_fitz):
         """Test: Estrazione testo corretta da più pagine."""
@@ -58,7 +58,7 @@ class TestDocumentProcessorAdvanced:
     def test_merge_pdfs_logic(self, mock_fitz, mocker):
         """Test: Logica di unione PDF."""
         # Mock Path.exists() e Path.stat() per simulare file esistenti
-        mock_path = mocker.patch("src.utils.document_processor.Path", wraps=Path)
+        mock_path = mocker.patch("src.infrastructure.utils.document_processor.Path", wraps=Path)
         mock_instance = MagicMock()
         mock_instance.exists.return_value = True
         mock_stat = MagicMock()

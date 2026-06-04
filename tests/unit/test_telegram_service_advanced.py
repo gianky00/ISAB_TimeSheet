@@ -4,15 +4,15 @@ import pytest
 from telegram import Chat, Message, Update, User
 from telegram.ext import ContextTypes
 
-from src.core.telegram.handlers import commands, messages
-from src.core.telegram.service import TelegramService
+from src.api.telegram.handlers import commands, messages
+from src.api.telegram.service import TelegramService
 
 
 class TestTelegramServiceAdvanced:
     @pytest.fixture
     def service(self, qtbot):
         # Patching QObject.__init__ to avoid event loop issues in pure unit tests
-        with patch("src.core.telegram.service.QObject.__init__"):
+        with patch("src.api.telegram.service.QObject.__init__"):
             svc = TelegramService()
             svc.log_signal = MagicMock()
             svc.command_received = MagicMock()
@@ -47,8 +47,8 @@ class TestTelegramServiceAdvanced:
         mock_context.args = ["999888"]
 
         with (
-            patch("src.core.config_manager.load_config", return_value=mock_config),
-            patch("src.core.config_manager.set_config_value") as mock_set,
+            patch("src.application.services.config_manager.load_config", return_value=mock_config),
+            patch("src.application.services.config_manager.set_config_value") as mock_set,
         ):
             await commands.cmd_start(service, mock_update, mock_context)
 
@@ -67,7 +67,7 @@ class TestTelegramServiceAdvanced:
         mock_config = {"telegram_chat_id": "", "telegram_pairing_code": "999888"}
         mock_context.args = ["wrong"]
 
-        with patch("src.core.config_manager.load_config", return_value=mock_config):
+        with patch("src.application.services.config_manager.load_config", return_value=mock_config):
             await commands.cmd_start(service, mock_update, mock_context)
 
             assert service.connected_chat_id is None

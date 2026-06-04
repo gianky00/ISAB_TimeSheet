@@ -12,10 +12,10 @@ from src.gui.main_window.page_index import PageIndex
 @pytest.fixture
 def mock_all_services(mocker):
     """Mock di tutti i servizi esterni e worker per isolare MainWindow."""
-    mocker.patch("src.core.audit_manager.AuditManager.instance")
-    mocker.patch("src.core.telegram_manager.TelegramService")
-    mocker.patch("src.core.config_manager.get_config_value", return_value="light")
-    mocker.patch("src.core.config_manager.load_config", return_value={})
+    mocker.patch("src.application.services.audit_manager.AuditManager.instance")
+    mocker.patch("src.application.services.telegram_manager.TelegramService")
+    mocker.patch("src.application.services.config_manager.get_config_value", return_value="light")
+    mocker.patch("src.application.services.config_manager.load_config", return_value={})
     mocker.patch("src.gui.styles.apply_theme")
     mocker.patch("src.gui.workers.license_worker.LicenseWorker")
     mocker.patch.object(QSystemTrayIcon, "isSystemTrayAvailable", return_value=True)
@@ -76,7 +76,7 @@ class TestMainWindow:
 
     def test_close_event_minimize_to_tray(self, qtbot, mock_all_services, mocker):
         """Verifica la riduzione a tray alla chiusura se abilitata."""
-        mocker.patch("src.core.config_manager.get_config_value", return_value=True)
+        mocker.patch("src.application.services.config_manager.get_config_value", return_value=True)
         window = MainWindow()
         qtbot.addWidget(window)
         window.show()
@@ -87,7 +87,7 @@ class TestMainWindow:
 
     def test_close_event_actual_exit(self, qtbot, mock_all_services, mocker):
         """Verifica lbl'uscita reale con conferma."""
-        mocker.patch("src.core.config_manager.get_config_value", return_value=False)
+        mocker.patch("src.application.services.config_manager.get_config_value", return_value=False)
         mocker.patch("src.gui.dialogs.confirmation_dialog.ConfirmationDialog.confirm", return_value=True)
         window = MainWindow()
         qtbot.addWidget(window)

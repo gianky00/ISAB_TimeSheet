@@ -13,10 +13,10 @@ if TYPE_CHECKING:
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.styles import COLORS
 from src.gui.widgets.sidebar_button import SidebarButton
-from src.utils.helpers import get_asset_path
+from src.infrastructure.utils.helpers import get_asset_path
 
 
 class SidebarChildButton(SidebarButton):
@@ -151,7 +151,7 @@ class SidebarGroup(QWidget):
 
     def _set_arrow_icon(self, expanded: bool) -> None:
         """Imposta l'icona della freccia (espansa/contratta)."""
-        from src.utils.helpers import get_colored_icon
+        from src.infrastructure.utils.helpers import get_colored_icon
 
         icon_enum = Icons.CHEVRON_DOWN if expanded else Icons.CHEVRON_RIGHT
         icon = get_colored_icon(get_asset_path(icon_enum), COLORS["bg_white"])

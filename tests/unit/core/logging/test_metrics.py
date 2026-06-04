@@ -1,7 +1,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from src.core.logging.metrics import MetricsSink, PerformanceMetric, PerformanceTracker
+from src.application.services.logging.metrics import MetricsSink, PerformanceMetric, PerformanceTracker
 
 
 class TestMetrics:
@@ -43,7 +43,7 @@ class TestMetrics:
         t2 = PerformanceTracker.instance()
         assert t1 is t2
 
-    @patch("src.core.logging.metrics.MetricsSink.write_metric")
+    @patch("src.application.services.logging.metrics.MetricsSink.write_metric")
     def test_tracker_track_and_stats(self, mock_write):
         tracker = PerformanceTracker()
         tracker._in_memory_metrics.clear()

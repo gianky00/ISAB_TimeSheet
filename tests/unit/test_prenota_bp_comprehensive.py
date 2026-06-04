@@ -4,9 +4,9 @@ from unittest.mock import MagicMock, patch
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 
-from src.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot
-from src.bots.portale_fornitori.prenota_bp.locators import PrenotaBPLocators
-from src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page import PrenotaBPPage
+from src.infrastructure.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot
+from src.infrastructure.bots.portale_fornitori.prenota_bp.locators import PrenotaBPLocators
+from src.infrastructure.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page import PrenotaBPPage
 
 
 class TestPrenotaBPBotComprehensive(unittest.TestCase):
@@ -34,7 +34,7 @@ class TestPrenotaBPBotComprehensive(unittest.TestCase):
         self.assertEqual(self.bot._get_row_value(row, "note_di_ritiro"), "Test Note")
         self.assertEqual(self.bot._get_row_value(row, "Inesistente"), "")
 
-    @patch("src.bots.portale_fornitori.prenota_bp.bot.PrenotaBPPage")
+    @patch("src.infrastructure.bots.portale_fornitori.prenota_bp.bot.PrenotaBPPage")
     def test_run_success(self, mock_page_class):
         """Test di esecuzione completata con successo."""
         mock_page = mock_page_class.return_value
@@ -49,7 +49,7 @@ class TestPrenotaBPBotComprehensive(unittest.TestCase):
         mock_page.gestisci_creazione_richiesta.assert_called_with("Nota 1")
         self.assertEqual(len(self.bot.results), 0)  # bot.results viene riempito da logica esterna non qui
 
-    @patch("src.bots.portale_fornitori.prenota_bp.bot.PrenotaBPPage")
+    @patch("src.infrastructure.bots.portale_fornitori.prenota_bp.bot.PrenotaBPPage")
     def test_run_stop_requested(self, mock_page_class):
         """Verifica che il bot si fermi se richiesto dall'utente."""
         self.bot._stop_requested = True
@@ -70,7 +70,7 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
 
         # Patch WebDriverWait in __init__
         with patch(
-            "src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait"
+            "src.infrastructure.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait"
         ) as mock_wait_class:
             self.mock_wait = MagicMock()
             self.mock_short_wait = MagicMock()
@@ -78,11 +78,11 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
             mock_wait_class.side_effect = [self.mock_wait, self.mock_short_wait]
             self.page = PrenotaBPPage(self.mock_driver, self.mock_log)
 
-    @patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
+    @patch("src.infrastructure.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
     def test_wait_and_click_retry_logic(self, mock_ec):
         """Verifica la logica di retry di wait_and_click."""
         with patch(
-            "src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait"
+            "src.infrastructure.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait"
         ) as mock_local_wait_class:
             mock_local_wait = MagicMock()
             mock_local_wait_class.return_value = mock_local_wait
@@ -101,11 +101,11 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
             self.assertEqual(mock_local_wait.until.call_count, 2)
             mock_el.click.assert_called_once()
 
-    @patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
+    @patch("src.infrastructure.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
     def test_wait_and_click_js_fallback(self, mock_ec):
         """Verifica il fallback JS se il click standard fallisce."""
         with patch(
-            "src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait"
+            "src.infrastructure.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait"
         ) as mock_local_wait_class:
             mock_local_wait = MagicMock()
             mock_local_wait_class.return_value = mock_local_wait
@@ -120,7 +120,7 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
 
             self.mock_driver.execute_script.assert_any_call("arguments[0].click();", mock_el)
 
-    @patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
+    @patch("src.infrastructure.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
     def test_navigate_to_gestione_bp_expansion(self, mock_ec):
         """Verifica l'espansione del menu se il sottomenu non è subito visibile."""
         self.mock_driver.find_elements.return_value = []
@@ -155,8 +155,8 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
 
         self.mock_driver.execute_script.assert_any_call("arguments[0].click();", mock_submenu)
 
-    @patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
-    @patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.ActionChains")
+    @patch("src.infrastructure.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
+    @patch("src.infrastructure.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.ActionChains")
     def test_filtra_buoni_prelievo_vendor_selection(self, mock_action_class, mock_ec):
         """Verifica la selezione del fornitore tramite freccia e lista."""
         mock_arrow = MagicMock()
@@ -176,7 +176,7 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
         self.mock_wait.until.side_effect = [mock_arrow, mock_input, mock_input, mock_input, MagicMock()]
 
         with patch(
-            "src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait"
+            "src.infrastructure.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait"
         ) as mock_local_wait_class:
             mock_local_wait = MagicMock()
             mock_local_wait_class.return_value = mock_local_wait
@@ -192,7 +192,7 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
         self.mock_driver.execute_script.assert_any_call("arguments[0].click();", mock_option)
         self.assertEqual(mock_input.clear.call_count, 3)
 
-    @patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
+    @patch("src.infrastructure.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
     def test_gestisci_creazione_richiesta_select_all(self, mock_ec):
         """Test del flusso di creazione richiesta con selezione 'Tutti i materiali'."""
         mock_row = MagicMock()
@@ -210,7 +210,7 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
                 mock_wc.assert_any_call(PrenotaBPLocators.BT_CREA_RICHIESTA)
                 mock_wc.assert_any_call(PrenotaBPLocators.BT_SALVA)
 
-    @patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
+    @patch("src.infrastructure.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
     def test_gestisci_creazione_richiesta_partial_selection(self, mock_ec):
         """Test della selezione puntuale se solo alcuni materiali sono disponibili."""
         mock_row_ok = MagicMock()

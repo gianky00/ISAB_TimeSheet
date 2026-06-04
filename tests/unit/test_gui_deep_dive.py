@@ -7,7 +7,7 @@ from src.gui.panels.settings.main_panel import SettingsPanel
 
 class TestGUIMajorPanels:
     @patch(
-        "src.core.config_manager.load_config",
+        "src.application.services.config_manager.load_config",
         return_value={"last_carico_ts_data": []},
     )
     def test_carico_ts_panel_deep(self, mock_conf, qapp, qtbot):
@@ -27,7 +27,7 @@ class TestGUIMajorPanels:
             assert mock_start.called
 
     @patch(
-        "src.core.bots.services.ScaricoTSService.load_config",
+        "src.application.services.bots.services.ScaricoTSService.load_config",
         return_value={"societa": "", "fornitore": "", "dest_path": "", "elabora_ts": False, "data": []},
     )
     def test_scarica_ts_panel_logic(self, mock_conf, qapp, qtbot):
@@ -44,7 +44,7 @@ class TestGUIMajorPanels:
 
     def test_settings_panel_tabs(self, qapp, qtbot):
         with patch(
-            "src.core.config_manager.load_config",
+            "src.application.services.config_manager.load_config",
             return_value={},
         ):
             panel = SettingsPanel()

@@ -15,10 +15,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core import config_manager
+from src.application.services import config_manager
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import StandardCheckBox, StandardSpinBox
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 
 class BotVisualInfo(TypedDict):
@@ -135,7 +135,7 @@ class AutopilotConfigCard(QFrame):
       QCheckBox::indicator:checked {{
         background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS["primary_blue"]}, stop:1 {COLORS["primary_dark"]});
         border-color: {COLORS["primary_dark"]};
-        image: url(assets/icons/check.svg);
+        image: url(assets/ui/icons/check.svg);
       }}
     """
         )
@@ -306,7 +306,7 @@ class AutopilotConfigCardWithInterval(QFrame):
       QCheckBox::indicator:checked {{
         background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS["primary_blue"]}, stop:1 {COLORS["primary_dark"]});
         border-color: {COLORS["primary_dark"]};
-        image: url(assets/icons/check.svg);
+        image: url(assets/ui/icons/check.svg);
       }}
     """
         )

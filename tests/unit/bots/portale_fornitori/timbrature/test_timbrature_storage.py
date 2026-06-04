@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 
-from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
+from src.infrastructure.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
 
 class TestTimbratureStorage:
@@ -57,7 +57,7 @@ class TestTimbratureStorage:
 
         assert storage.search_employees("x") == []  # Too short
 
-    @patch("src.core.config_manager.load_config")
+    @patch("src.application.services.config_manager.load_config")
     def test_get_employees_with_mappings(self, mock_load, db_conn):
         mock_load.return_value = {"employee_mappings": {"Mario|Rossi": {"reparto": "R1", "cantiere": "C1"}}}
         storage = TimbratureStorage(db_path=db_conn)
@@ -71,8 +71,8 @@ class TestTimbratureStorage:
         assert len(emps) == 1
         assert emps[0]["reparto"] == "R1"
 
-    @patch("src.core.config_manager.set_config_value")
-    @patch("src.core.config_manager.load_config")
+    @patch("src.application.services.config_manager.set_config_value")
+    @patch("src.application.services.config_manager.load_config")
     def test_update_employee_details(self, mock_load, mock_set, db_conn):
         mock_load.return_value = {"employee_mappings": {}}
         storage = TimbratureStorage(db_path=db_conn)
@@ -90,7 +90,7 @@ class TestTimbratureStorage:
         assert storage._normalize_search_date("15/10") == "-10-15"
         assert storage._normalize_search_date("abc") == "abc"
 
-    @patch("src.core.config_manager.load_config")
+    @patch("src.application.services.config_manager.load_config")
     def test_get_timbrature_with_reparto(self, mock_load, db_conn):
         mock_load.return_value = {"employee_mappings": {"Mario|Rossi": {"reparto": "TEST"}}}
         storage = TimbratureStorage(db_path=db_conn)
@@ -107,7 +107,7 @@ class TestTimbratureStorage:
         assert res[0][3] == "Mario"
         assert res[0][-2] == "TEST"  # Reparto enriched
 
-    @patch("src.core.sync_tracker.SyncTracker.update_status")
+    @patch("src.application.services.sync_tracker.SyncTracker.update_status")
     @patch("pandas.read_excel")
     def test_import_excel(self, mock_read, mock_sync, db_conn):
         storage = TimbratureStorage(db_path=db_conn)

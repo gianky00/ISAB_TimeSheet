@@ -4,7 +4,7 @@ import pytest
 from PySide6.QtCore import QItemSelectionModel, Qt
 from PySide6.QtGui import QStandardItem
 
-from src.core.oda.oda_controller import ODAController
+from src.application.services.oda.oda_controller import ODAController
 from src.gui.panels.storico_oda.oda_panel import StoricoOdaPanel
 
 
@@ -27,7 +27,7 @@ class TestStoricoOdaPanel:
     @pytest.fixture
     def panel(self, controller, qtbot):
         with (
-            patch("src.core.sync_tracker.SyncTracker.get_formatted_status", return_value="N/D"),
+            patch("src.application.services.sync_tracker.SyncTracker.get_formatted_status", return_value="N/D"),
             patch("src.gui.styles.ui_effects.UIEffectsManager.apply_shadow"),
             patch("src.gui.styles.ui_effects.UIEffectsManager.animate_fade"),
         ):

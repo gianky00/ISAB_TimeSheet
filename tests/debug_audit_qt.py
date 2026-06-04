@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QApplication
 src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
-from src.core.audit_manager import AuditManager  # noqa: E402
+from src.application.services.audit_manager import AuditManager  # noqa: E402
 
 print("1. Import PySide6...")
 print("2. Create QApplication...")

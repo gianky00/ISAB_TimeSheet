@@ -4,14 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from src.core.report_history import ReportHistory
+from src.application.services.report_history import ReportHistory
 
 
 class TestReportHistory:
     @pytest.fixture(autouse=True)
     def setup_history(self, fs):
         # Mocking DB_DIR via local variable patch in ReportHistory
-        # DB_DIR è importato da src.core.paths
+        # DB_DIR è importato da src.application.services.paths
         # Usiamo pyfakefs per gestire il file
         fs.create_dir("/data")
         self.test_file = Path("/data/report_history.json")

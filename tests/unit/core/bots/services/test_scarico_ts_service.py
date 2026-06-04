@@ -1,6 +1,6 @@
 import pytest
 
-from src.core.bots.services.scarico_ts_service import ScaricoTSService
+from src.application.services.bots.services.scarico_ts_service import ScaricoTSService
 
 
 class TestScaricoTSService:
@@ -10,7 +10,7 @@ class TestScaricoTSService:
 
     def test_load_config(self, service, mocker):
         mocker.patch(
-            "src.core.config_manager.load_config",
+            "src.application.services.config_manager.load_config",
             return_value={
                 "last_scarico_ts_societa": "ISAB_TEST",
                 "last_scarico_ts_fornitore": "FOO",
@@ -28,7 +28,7 @@ class TestScaricoTSService:
         assert len(cfg["data"]) == 1
 
     def test_save_config(self, service, mocker):
-        mock_set = mocker.patch("src.core.config_manager.set_config_value")
+        mock_set = mocker.patch("src.application.services.config_manager.set_config_value")
         params = {"societa": "S", "fornitore": "F", "dest_path": "/D", "elabora_ts": True}
         data = []
 
@@ -46,7 +46,7 @@ class TestScaricoTSService:
         }
         data = [{"id": 1}]
 
-        mocker.patch("src.core.config_manager.load_config", return_value={})
+        mocker.patch("src.application.services.config_manager.load_config", return_value={})
 
         bot_params, bot_data = service.prepare_payload(creds, params, data)
 
@@ -60,8 +60,8 @@ class TestScaricoTSService:
         params = {"data_da": "OLD"}
         overrides = {"data_da": "NEW", "single_item": {"id": 2}}
 
-        mocker.patch("src.core.config_manager.load_config", return_value={})
-        mocker.patch("src.core.config_manager.get_download_path", return_value="/tmp")
+        mocker.patch("src.application.services.config_manager.load_config", return_value={})
+        mocker.patch("src.application.services.config_manager.get_download_path", return_value="/tmp")
 
         _, bot_data = service.prepare_payload(creds, params, [], overrides=overrides)
         assert bot_data["data_da"] == "NEW"

@@ -28,13 +28,8 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: 2.3.4
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-        installer-parallel: true
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
 
     - name: Configure Resilience
       run: |
@@ -43,10 +38,10 @@ jobs:
         poetry config installer.max-workers 2
 
     - name: Install dependencies
-      run: poetry install --no-interaction --no-root
+      run: uv sync
 
     - name: Install project
-      run: poetry install --no-interaction
+      run: uv sync
 
     # CI Context Generation (Combines Ruff, Mypy and Tests)
     - name: Run Full CI Suite (Ruff, Mypy, Robust Tests)
@@ -55,6 +50,6 @@ jobs:
         QT_QPA_PLATFORM: "offscreen"
         PYTEST_ADDOPTS: "-m 'not slow and not integration'"
       run: |
-        poetry run python tools/generate_ci_context.py
+        uv run python devtools/cli/generate_ci_context.py
 
 

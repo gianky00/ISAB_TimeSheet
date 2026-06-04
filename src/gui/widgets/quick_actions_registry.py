@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.styles import COLORS
 
 # Registry of all available actions with 3-level hierarchy

@@ -26,7 +26,7 @@ class TestSignalConnector:
         connector = SignalConnector(mw)
         assert connector.main_window == mw
 
-    @patch("src.core.notification_manager.NotificationManager.instance")
+    @patch("src.application.services.notification_manager.NotificationManager.instance")
     def test_connect_global_signals(self, mock_notif, mw):
         mock_instance = MagicMock()
         mock_notif.return_value = mock_instance

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.updater.engine import (
+from src.application.services.updater.engine import (
     DownloadWorker,
     get_local_setup_path,
     get_network_update_info,
@@ -30,7 +30,7 @@ class TestUpdaterEngine:
         path = get_local_setup_path(path_net)
         assert path.endswith("update_setup.exe")
 
-    @patch("src.core.updater.engine.requests.get")
+    @patch("src.application.services.updater.engine.requests.get")
     def test_run_http_download_success(self, mock_get, fs):
         setup_path = "/tmp/setup.exe"
         fs.create_dir("/tmp")
@@ -44,7 +44,7 @@ class TestUpdaterEngine:
         mock_get.return_value = mock_res
 
         worker = DownloadWorker("http://test.com/s.exe")
-        with patch("src.core.updater.engine.get_local_setup_path", return_value=setup_path):
+        with patch("src.application.services.updater.engine.get_local_setup_path", return_value=setup_path):
             # Invece di _run_http_download che ha il loop di retry, testiamo lo stream
             # Ma vogliamo testare che il loop finisca.
             # Assicuriamoci che total_size e downloaded coincidano.
@@ -64,9 +64,9 @@ class TestUpdaterEngine:
 
         assert Path(dst).read_bytes() == b"NET_DATA"
 
-    @patch("src.core.updater.engine.requests.get")
+    @patch("src.application.services.updater.engine.requests.get")
     def test_get_web_update_info(self, mock_get):
-        with patch("src.core.version.UPDATE_URL", "http://up.it"):
+        with patch("src.application.services.version.UPDATE_URL", "http://up.it"):
             mock_res = MagicMock()
             mock_res.status_code = 200
             mock_res.json.return_value = {"version": "2.0"}
@@ -80,7 +80,7 @@ class TestUpdaterEngine:
         fs.create_dir(net_dir)
         fs.create_file(net_dir + "/version.json", contents=json.dumps({"version": "3.0", "url": "setup.exe"}))
 
-        with patch("src.core.version.NETWORK_UPDATE_PATH", net_dir):
+        with patch("src.application.services.version.NETWORK_UPDATE_PATH", net_dir):
             info = get_network_update_info()
             assert info["version"] == "3.0"
             assert "setup.exe" in info["url"]
@@ -97,8 +97,8 @@ class TestUpdaterEngine:
         # ma assicuriamoci di pulire
         assert has_pending_update() is False
 
-    @patch("src.core.updater.engine.subprocess.Popen")
-    @patch("src.core.updater.engine.sys.exit")
+    @patch("src.application.services.updater.engine.subprocess.Popen")
+    @patch("src.application.services.updater.engine.sys.exit")
     def test_run_installer_and_exit(self, mock_exit, mock_popen, fs):
         setup = "/tmp/inst.exe"
         fs.create_file(setup)

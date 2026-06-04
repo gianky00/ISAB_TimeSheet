@@ -11,7 +11,7 @@ from typing import Any
 import pandas as pd
 from PySide6.QtCore import QObject, QThread, Signal
 
-from src.core.oda_manager import OdaManager
+from src.application.services.oda_manager import OdaManager
 
 logger = logging.getLogger(__name__)
 

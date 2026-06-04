@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from src.core.logging.sampling import ContextAwareSampler, get_sampler, should_log
+from src.application.services.logging.sampling import ContextAwareSampler, get_sampler, should_log
 
 
 class TestSampling:
@@ -64,7 +64,7 @@ class TestSampling:
 
     def test_should_log_helper(self):
         # should_log usa il singleton. Per il test lo resettiamo o patchiamo
-        with patch("src.core.logging.sampling.get_sampler") as mock_get:
+        with patch("src.application.services.logging.sampling.get_sampler") as mock_get:
             mock_get.return_value.should_log.return_value = True
             assert should_log("INFO") is True
             mock_get.return_value.should_log.assert_called_with("INFO", None, None)

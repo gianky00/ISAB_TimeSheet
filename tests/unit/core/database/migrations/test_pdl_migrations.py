@@ -2,7 +2,13 @@ import sqlite3
 
 import pytest
 
-from src.core.database.migrations.pdl import mig_pdl_v1, mig_pdl_v2, mig_pdl_v3, mig_pdl_v4, mig_pdl_v5
+from src.application.services.database.migrations.pdl import (
+    mig_pdl_v1,
+    mig_pdl_v2,
+    mig_pdl_v3,
+    mig_pdl_v4,
+    mig_pdl_v5,
+)
 
 
 class TestPdlMigrations:

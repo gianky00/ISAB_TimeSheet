@@ -24,8 +24,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-from src.core import version
-from src.core.updater.engine import (
+from src.application.services import version
+from src.application.services.updater.engine import (
     DownloadWorker,
     run_installer_and_exit,
     set_pending_installer,

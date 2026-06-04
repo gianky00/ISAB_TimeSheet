@@ -10,10 +10,10 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from PySide6.QtCore import QObject, QThread, Signal
 
-from src.core.logging import get_logger
+from src.application.services.logging import get_logger
 
 if TYPE_CHECKING:
-    from src.core.pdl.pdl_dto import PdlRowDTO
+    from src.application.services.pdl.pdl_dto import PdlRowDTO
 
 logger = get_logger(__name__)
 

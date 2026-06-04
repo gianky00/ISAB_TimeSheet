@@ -1,4 +1,4 @@
-from src.utils.parsing import parse_currency
+from src.infrastructure.utils.parsing import parse_currency
 
 
 class TestParsingSuite:

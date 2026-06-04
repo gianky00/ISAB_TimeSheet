@@ -1,10 +1,10 @@
 import pytest
 
-from src.utils.security import PasswordManager
+from src.infrastructure.utils.security import PasswordManager
 
 
 class TestSecuritySuite:
-    """Test suite per src/utils/security.py"""
+    """Test suite per src/infrastructure/utils/security.py"""
 
     @pytest.fixture(autouse=True)
     def setup_security(self, tmp_path, mocker):
@@ -14,7 +14,7 @@ class TestSecuritySuite:
 
         # Patch paths via the module-level SECURITY_DIR
         fake_key_dir = tmp_path / "security"
-        mocker.patch("src.utils.security.SECURITY_DIR", fake_key_dir)
+        mocker.patch("src.infrastructure.utils.security.SECURITY_DIR", fake_key_dir)
 
         self.pm = PasswordManager()
         yield
@@ -68,7 +68,7 @@ class TestSecuritySuite:
         PasswordManager._instance = None
 
         # Riapplichiamo il patch per il nuovo setup
-        mocker.patch("src.utils.security.SECURITY_DIR", tmp_path / "security")
+        mocker.patch("src.infrastructure.utils.security.SECURITY_DIR", tmp_path / "security")
 
         # Re-inizializzazione
         new_pm = PasswordManager()

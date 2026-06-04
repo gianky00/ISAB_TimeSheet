@@ -15,9 +15,9 @@ import pythoncom
 import win32com.client
 from PySide6.QtCore import QThread, Signal
 
-from src.core.constants import Emails
-from src.core.dipendenti.report_service import ReportService
-from src.core.report_history import ReportHistory
+from src.application.services.constants import Emails
+from src.application.services.dipendenti.report_service import ReportService
+from src.application.services.report_history import ReportHistory
 
 if TYPE_CHECKING:
     from pathlib import Path

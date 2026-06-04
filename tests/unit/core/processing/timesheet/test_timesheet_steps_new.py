@@ -1,17 +1,17 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from src.core.processing.timesheet.steps import (
+from src.application.services.processing.timesheet.steps import (
     ExtractMetadataStep,
     LoadWorkbookStep,
     SaveWorkbookStep,
     TransformSheetStep,
 )
-from src.models.timesheet import TimesheetMetadata
+from src.domain.timesheet import TimesheetMetadata
 
 
 class TestTimesheetProcessingSteps:
-    @patch("src.core.processing.timesheet.steps.openpyxl.load_workbook")
+    @patch("src.application.services.processing.timesheet.steps.openpyxl.load_workbook")
     def test_load_workbook_step(self, mock_load, fs):
         fs.create_file("test.xlsx")
         mock_wb = MagicMock()

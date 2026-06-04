@@ -1,14 +1,14 @@
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
-from src.core.auth_monitor import (
+from src.application.services.auth_monitor import (
     _build_access_maps,
     _normalize,
     _parse_date,
     _process_employee_match,
     check_expiring_isab_authorizations,
 )
-from src.core.constants import THRESHOLD_DAYS
+from src.application.services.constants import THRESHOLD_DAYS
 
 
 class TestAuthMonitor:
@@ -69,7 +69,7 @@ class TestAuthMonitor:
         assert res["stato"] == "SCADUTA"
         assert res["cf_mancante"] is True
 
-    @patch("src.core.auth_monitor.db_manager.execute_query")
+    @patch("src.application.services.auth_monitor.db_manager.execute_query")
     def test_check_expiring_isab_authorizations_integration(self, mock_query):
         # Mock 1: Dipendenti
         # Mock 2: Timbrature

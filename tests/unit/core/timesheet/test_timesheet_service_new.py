@@ -1,12 +1,12 @@
 from pathlib import Path
 from unittest.mock import patch
 
-from src.core.timesheet.pipeline import TimesheetPipeline
-from src.core.timesheet.service import TimesheetService
+from src.application.services.timesheet.pipeline import TimesheetPipeline
+from src.application.services.timesheet.service import TimesheetService
 
 
 class TestTimesheetService:
-    @patch("src.core.timesheet.service.TimesheetPipeline.execute_pipeline")
+    @patch("src.application.services.timesheet.service.TimesheetPipeline.execute_pipeline")
     def test_process_file_success(self, mock_exec):
         mock_exec.return_value = Path("/dest/processed.xlsx")
         service = TimesheetService()
@@ -17,7 +17,7 @@ class TestTimesheetService:
         assert "processed.xlsx" in msg
 
     @patch(
-        "src.core.timesheet.service.TimesheetPipeline.execute_pipeline",
+        "src.application.services.timesheet.service.TimesheetPipeline.execute_pipeline",
         side_effect=ValueError("Invalid file"),
     )
     def test_process_file_error(self, mock_exec):
@@ -29,10 +29,10 @@ class TestTimesheetService:
 
 
 class TestTimesheetPipeline:
-    @patch("src.core.timesheet.pipeline.LoadWorkbookStep")
-    @patch("src.core.timesheet.pipeline.TransformSheetStep")
-    @patch("src.core.timesheet.pipeline.SaveWorkbookStep")
-    @patch("src.core.timesheet.pipeline.CleanupStep")
+    @patch("src.application.services.timesheet.pipeline.LoadWorkbookStep")
+    @patch("src.application.services.timesheet.pipeline.TransformSheetStep")
+    @patch("src.application.services.timesheet.pipeline.SaveWorkbookStep")
+    @patch("src.application.services.timesheet.pipeline.CleanupStep")
     def test_execute_pipeline(self, mock_clean, mock_save, mock_trans, mock_load):
         # Setup mock steps
         def mock_save_exec(ctx):

@@ -1,4 +1,4 @@
-from src.models.contabilita import (
+from src.domain.contabilita import (
     AttivitaProgrammataRecord,
     CertificatoCampioneRecord,
     ContabilitaRecord,

@@ -9,18 +9,18 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from src.core.excel_importer import ExcelImporter
-from src.core.importers.contabilita import ContabilitaImporter
-from src.core.importers.giornaliere import GiornaliereImporter
+from src.application.services.excel_importer import ExcelImporter
+from src.application.services.importers.contabilita import ContabilitaImporter
+from src.application.services.importers.giornaliere import GiornaliereImporter
 
 
 # Mock DataSynchronizer per tutti i test degli importer
 @pytest.fixture(autouse=True)
 def mock_data_synchronizer():
     with (
-        patch("src.core.data_synchronizer.DataSynchronizer.sync_certificati_campione", return_value=(1, 0)),
-        patch("src.core.data_synchronizer.DataSynchronizer.sync_scarico_ore", return_value=(1, 0)),
-        patch("src.core.data_synchronizer.DataSynchronizer.sync_giornaliere", return_value=(1, 0)),
+        patch("src.application.services.data_synchronizer.DataSynchronizer.sync_certificati_campione", return_value=(1, 0)),
+        patch("src.application.services.data_synchronizer.DataSynchronizer.sync_scarico_ore", return_value=(1, 0)),
+        patch("src.application.services.data_synchronizer.DataSynchronizer.sync_giornaliere", return_value=(1, 0)),
     ):
         yield
 
@@ -100,8 +100,8 @@ def test_import_contabilita_dati_empty_sheet(tmp_path):
 
 def test_import_contabilita_dati_critical_error():
     with (
-        patch("src.core.importers.contabilita.pd.ExcelFile", side_effect=Exception("Critical")),
-        patch("src.core.importers.contabilita.Path.exists", return_value=True),
+        patch("src.application.services.importers.contabilita.pd.ExcelFile", side_effect=Exception("Critical")),
+        patch("src.application.services.importers.contabilita.Path.exists", return_value=True),
     ):
         success, msg, _rows, _years = ExcelImporter.import_contabilita_dati("dummy.xlsx")
         assert success is False
@@ -111,7 +111,7 @@ def test_import_contabilita_dati_critical_error():
 def test_find_header_row_coverage(mock_xls_file):
     xls = pd.ExcelFile(mock_xls_file)
     with patch(
-        "src.core.importers.contabilita.pd.read_excel",
+        "src.application.services.importers.contabilita.pd.read_excel",
         return_value=pd.DataFrame({"A": [1]}),
     ):
         idx = ContabilitaImporter._find_header_row(xls, "2025")
@@ -157,9 +157,9 @@ def test_import_giornaliere_success(tmp_path):
 
     # Mocking extraction logic to return valid tuples directly
     with (
-        patch("src.core.importers.giornaliere.GiornaliereImporter._process_single_giornaliera") as mock_proc,
+        patch("src.application.services.importers.giornaliere.GiornaliereImporter._process_single_giornaliera") as mock_proc,
         patch("src.gui.main_window.page_index.PageIndex") as mock_page_index,
-        patch("src.core.importers.giornaliere.ProcessPoolExecutor") as mock_pool,
+        patch("src.application.services.importers.giornaliere.ProcessPoolExecutor") as mock_pool,
     ):
         mock_page_index.DASHBOARD = 0
         mock_proc.return_value = (
@@ -250,7 +250,7 @@ def test_process_single_giornaliera_extraction_logic(tmp_path):
     ]
 
     with patch(
-        "src.core.importers.giornaliere.GiornaliereImporter._process_single_giornaliera",
+        "src.application.services.importers.giornaliere.GiornaliereImporter._process_single_giornaliera",
         return_value=(2025, mock_rows, None),
     ):
         args = (2025, Path("test.xlsx"), {})
@@ -348,7 +348,7 @@ def test_import_scarico_ore_missing_sheet(tmp_path):
 
 def test_process_scarico_ore_row_validation():
     """Test casi limite validazione riga scarico ore."""
-    from src.core.processing.scarico_ore.steps import ProcessScaricoOreRowsStep
+    from src.application.services.processing.scarico_ore.steps import ProcessScaricoOreRowsStep
 
     step = ProcessScaricoOreRowsStep()
 

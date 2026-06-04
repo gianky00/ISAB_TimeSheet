@@ -1,9 +1,9 @@
-from src.core.config_manager import _reset_configuration_for_testing, load_config, save_config
+from src.application.services.config_manager import _reset_configuration_for_testing, load_config, save_config
 
 
 def test_load_config_defaults(tmp_path, mocker):
     _reset_configuration_for_testing()
-    mocker.patch("src.core.config_manager.CONFIG_FILE", tmp_path / "config.json")
+    mocker.patch("src.application.services.config_manager.CONFIG_FILE", tmp_path / "config.json")
     config = load_config()
     assert isinstance(config, dict)
     assert "browser_timeout" in config
@@ -12,8 +12,8 @@ def test_load_config_defaults(tmp_path, mocker):
 def test_save_and_load_config(tmp_path, mocker):
     _reset_configuration_for_testing()
     config_file = tmp_path / "config_save.json"
-    mocker.patch("src.core.config_manager.CONFIG_FILE", config_file)
-    mocker.patch("src.core.config_manager.CONFIG_DIR", tmp_path)
+    mocker.patch("src.application.services.config_manager.CONFIG_FILE", config_file)
+    mocker.patch("src.application.services.config_manager.CONFIG_DIR", tmp_path)
 
     config = load_config()
     config["test_val"] = 123

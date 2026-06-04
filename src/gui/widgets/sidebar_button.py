@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QPushButton, QWidget
 
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
-from src.utils.helpers import get_colored_icon
+from src.infrastructure.utils.helpers import get_colored_icon
 
 
 class SidebarButton(QPushButton):

@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.sync_tracker import SyncTracker
+from src.application.services.sync_tracker import SyncTracker
 
 
 class TestSyncTracker:
@@ -42,7 +42,7 @@ class TestSyncTracker:
 
     def test_save_error_logs(self, fs):
         # Usiamo un approccio diverso: patchiamo l'intero modulo logger per catturare la chiamata
-        with patch("src.core.sync_tracker.logger") as mock_logger:
+        with patch("src.application.services.sync_tracker.logger") as mock_logger:
             # Forziamo l'errore tramite un parametro non serializzabile in json.dumps
             SyncTracker._cache = {"invalid": object()}
             SyncTracker._save()

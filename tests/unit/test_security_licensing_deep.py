@@ -1,13 +1,13 @@
 import base64
 from unittest.mock import MagicMock, patch
 
-from src.core.license_hwid import _get_windows_hardware_id, get_hardware_id
-from src.core.license_validator import (
+from src.application.services.license_hwid import _get_windows_hardware_id, get_hardware_id
+from src.application.services.license_validator import (
     LicenseStatus,
     _calculate_sha256,
     get_detailed_license_status,
 )
-from src.core.secrets_manager import SecretsManager
+from src.application.services.secrets_manager import SecretsManager
 
 
 class TestSecretsManagerDeep:
@@ -17,7 +17,7 @@ class TestSecretsManagerDeep:
             res = SecretsManager.get_license_key()
             assert res == val.encode("utf-8")
 
-    @patch("src.core.secrets_manager.keyring.get_password")
+    @patch("src.application.services.secrets_manager.keyring.get_password")
     def test_get_license_key_priority_keyring(self, mock_keyring):
         val = base64.urlsafe_b64encode(b"keyring_key").decode()
         # Env empty, check keyring
@@ -37,7 +37,7 @@ class TestSecretsManagerDeep:
         assert key1 == key2
         assert len(base64.urlsafe_b64decode(key1)) == 32  # 256 bits
 
-    @patch("src.core.secrets_manager.keyring.set_password")
+    @patch("src.application.services.secrets_manager.keyring.set_password")
     def test_store_credential(self, mock_set):
         SecretsManager.store_credential("isab", "admin", "secret")
         mock_set.assert_called_with(f"{SecretsManager.APP_NAME}_isab", "admin", "secret")
@@ -46,7 +46,7 @@ class TestSecretsManagerDeep:
 class TestHardwareFingerprinting:
     @patch("platform.system", return_value="Windows")
     @patch(
-        "src.core.license_hwid._get_windows_hardware_id",
+        "src.application.services.license_hwid._get_windows_hardware_id",
         return_value="WIN-SERIAL-123",
     )
     def test_get_hardware_id_windows(self, mock_win, mock_sys):
@@ -70,8 +70,8 @@ class TestLicenseIntegrity:
         h = _calculate_sha256(f)
         assert len(h) == 64  # Hex SHA256 len
 
-    @patch("src.core.license_validator._get_license_paths")
-    @patch("src.core.license_validator._calculate_sha256")
+    @patch("src.application.services.license_validator._get_license_paths")
+    @patch("src.application.services.license_validator._calculate_sha256")
     def test_detailed_status_invalid_integrity(self, mock_sha, mock_paths, tmp_path):
         config = tmp_path / "config.dat"
         manifest = tmp_path / "manifest.json"
@@ -89,10 +89,10 @@ class TestLicenseIntegrity:
         assert status == LicenseStatus.INVALID
         assert "Integrità" in msg
 
-    @patch("src.core.license_validator._get_license_paths")
-    @patch("src.core.license_validator.get_license_info")
-    @patch("src.core.license_validator.get_hardware_id")
-    @patch("src.core.license_validator._check_integrity_with_manifest")
+    @patch("src.application.services.license_validator._get_license_paths")
+    @patch("src.application.services.license_validator.get_license_info")
+    @patch("src.application.services.license_validator.get_hardware_id")
+    @patch("src.application.services.license_validator._check_integrity_with_manifest")
     def test_detailed_status_hw_mismatch(self, mock_integrity, mock_hw, mock_info, mock_paths):
         mock_paths.return_value = {
             "config": MagicMock(exists=lambda: True),

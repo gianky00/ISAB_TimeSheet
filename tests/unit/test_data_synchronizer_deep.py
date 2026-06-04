@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.data_synchronizer import DataSynchronizer
+from src.application.services.data_synchronizer import DataSynchronizer
 
 
 class TestDataSynchronizerDeep:
@@ -25,7 +25,7 @@ class TestDataSynchronizerDeep:
             """)
         return db
 
-    @patch("src.core.sync.contabilita_sync.ContabilitaSyncEngine.sync_contabilita")
+    @patch("src.application.services.sync.contabilita_sync.ContabilitaSyncEngine.sync_contabilita")
     def test_sync_contabilita_dati_incremental(self, mock_sync, db_path):
         """Test alias e delega sync contabilità."""
         mock_sync.return_value = (10, 0)
@@ -36,7 +36,7 @@ class TestDataSynchronizerDeep:
         assert added == 10
         assert mock_sync.called
 
-    @patch("src.core.sync.contabilita_sync.ContabilitaSyncEngine.sync_giornaliere")
+    @patch("src.application.services.sync.contabilita_sync.ContabilitaSyncEngine.sync_giornaliere")
     def test_sync_giornaliere_by_year_isolation(self, mock_sync, db_path):
         """Test isolamento annuale sync giornaliere."""
         mock_sync.return_value = (5, 2)

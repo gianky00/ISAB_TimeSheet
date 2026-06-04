@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtWidgets import QTabWidget, QVBoxLayout, QWidget
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.panels import (
     CaricoTSPanel,
@@ -22,7 +22,7 @@ from src.gui.panels import (
     TimbratureBotPanel,
 )
 from src.gui.styles import COLORS
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 if TYPE_CHECKING:
     from src.gui.main_window.main import MainWindow

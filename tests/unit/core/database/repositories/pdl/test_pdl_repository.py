@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.core.database.repositories.pdl_repository import PdlRepository
+from src.application.services.database.repositories.pdl_repository import PdlRepository
 
 
 @pytest.fixture

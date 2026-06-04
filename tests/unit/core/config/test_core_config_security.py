@@ -1,11 +1,11 @@
 from unittest.mock import patch
 
-from src.core.config.security import decrypt_all_credentials, encrypt_all_credentials
+from src.application.services.config.security import decrypt_all_credentials, encrypt_all_credentials
 
 
 class TestConfigSecurity:
-    @patch("src.core.secrets_manager.SecretsManager.get_credential")
-    @patch("src.utils.security.password_manager.decrypt")
+    @patch("src.application.services.secrets_manager.SecretsManager.get_credential")
+    @patch("src.infrastructure.utils.security.password_manager.decrypt")
     def test_decrypt_all_credentials(self, mock_decrypt, mock_get_cred):
         """Testa la decrittazione delle credenziali."""
         config = {
@@ -26,9 +26,9 @@ class TestConfigSecurity:
         assert config["accounts"][1]["password"] == "clear_pass"  # Invariata
         assert config["safework_accounts"][0]["password"] == "keyring_pass"
 
-    @patch("src.core.secrets_manager.SecretsManager.is_available")
-    @patch("src.core.secrets_manager.SecretsManager.store_credential")
-    @patch("src.utils.security.password_manager.encrypt")
+    @patch("src.application.services.secrets_manager.SecretsManager.is_available")
+    @patch("src.application.services.secrets_manager.SecretsManager.store_credential")
+    @patch("src.infrastructure.utils.security.password_manager.encrypt")
     def test_encrypt_all_credentials(self, mock_encrypt, mock_store, mock_avail):
         """Testa la protezione delle credenziali."""
         config = {
@@ -45,8 +45,8 @@ class TestConfigSecurity:
         assert "password" not in config["accounts"][0]
         assert "password" not in config["safework_accounts"][0]
 
-    @patch("src.core.secrets_manager.SecretsManager.is_available")
-    @patch("src.utils.security.password_manager.encrypt")
+    @patch("src.application.services.secrets_manager.SecretsManager.is_available")
+    @patch("src.infrastructure.utils.security.password_manager.encrypt")
     def test_encrypt_all_credentials_no_keyring(self, mock_encrypt, mock_avail):
         """Testa il fallback su crittografia locale se keyring non c'è."""
         config = {"accounts": [{"username": "user1", "password": "pass1"}]}

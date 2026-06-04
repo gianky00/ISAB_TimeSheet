@@ -3,10 +3,10 @@ import pytest
 
 class TestFinalSimpleBoost:
     def test_contabilita_queries_exceptions(self, mocker):
-        from src.core.contabilita_queries import ContabilitaQueries
+        from src.application.services.contabilita_queries import ContabilitaQueries
 
         # Patch repository
-        m_repo = mocker.patch("src.core.contabilita_queries.ContabilitaQueries._repo")
+        m_repo = mocker.patch("src.application.services.contabilita_queries.ContabilitaQueries._repo")
         m_repo.get_available_years.side_effect = Exception("DB Crash")
 
         # In V9.4 get_available_years potrebbe non catturare l'eccezione volutamente

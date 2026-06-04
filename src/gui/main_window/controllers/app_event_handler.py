@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import QObject
 
-from src.core import config_manager
-from src.core.backup_manager import BackupManager
+from src.application.services import config_manager
+from src.application.services.backup_manager import BackupManager
 
 if TYPE_CHECKING:
     from src.gui.main_window.main import MainWindow
@@ -47,7 +47,7 @@ class AppEventHandler(QObject):
         Args:
             event: QCloseEvent intercettato dalla MainWindow.
         """
-        from src.core.app_updater import has_pending_update, run_pending_installer
+        from src.application.services.app_updater import has_pending_update, run_pending_installer
 
         # Se c'è un aggiornamento programmato e l'utente clicca la 'X'
         if not self._force_quit and has_pending_update():

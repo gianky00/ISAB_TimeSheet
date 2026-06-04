@@ -9,7 +9,7 @@ from src.gui.panels.pdl.programmazione_tab import ProgrammazioneTab
 
 @pytest.fixture
 def mock_pdl_service(mocker):
-    mocker.patch("src.core.pdl.pdl_service.PDLService.get_unique_requesters", return_value=["REQ1", "REQ2"])
+    mocker.patch("src.application.services.pdl.pdl_service.PDLService.get_unique_requesters", return_value=["REQ1", "REQ2"])
 
     # Mock data con la chiave 'programmazione' richiesta dalla tabella
     # Ogni entry in programmazione è un dict con 'tcl' e 'tgo' (bool)
@@ -29,18 +29,18 @@ def mock_pdl_service(mocker):
             "programmazione": [{"tcl": False, "tgo": True} for _ in range(7)],
         },
     ]
-    mocker.patch("src.core.pdl.pdl_service.PDLService.get_programming_results_by_week", return_value=results)
+    mocker.patch("src.application.services.pdl.pdl_service.PDLService.get_programming_results_by_week", return_value=results)
     return mocker
 
 
 @pytest.fixture
 def mock_period_manager(mocker):
     mocker.patch(
-        "src.core.pdl.period_manager.PDLPeriodManager.get_week_range",
+        "src.application.services.pdl.period_manager.PDLPeriodManager.get_week_range",
         return_value=("01.01.2026", "07.01.2026", MagicMock()),
     )
     mocker.patch(
-        "src.core.pdl.period_manager.PDLPeriodManager.get_table_headers",
+        "src.application.services.pdl.period_manager.PDLPeriodManager.get_table_headers",
         return_value=["H1", "H2", "H3", "H4", "H5", "D1", "D2", "D3", "D4", "D5", "D6", "D7"],
     )
     return mocker
@@ -51,7 +51,7 @@ class TestProgrammazioneTab:
 
     def test_initialization(self, qtbot, mock_pdl_service, mock_period_manager, mocker):
         """Verifica lbl'inizializzazione del tab."""
-        mocker.patch("src.core.config_manager.get_config_value", return_value=[])
+        mocker.patch("src.application.services.config_manager.get_config_value", return_value=[])
 
         widget = ProgrammazioneTab()
         qtbot.addWidget(widget)
@@ -132,7 +132,7 @@ class TestProgrammazioneTab:
         widget = ProgrammazioneTab()
         qtbot.addWidget(widget)
 
-        mock_save = mocker.patch("src.core.pdl.pdl_service.PDLService.save_programming_results")
+        mock_save = mocker.patch("src.application.services.pdl.pdl_service.PDLService.save_programming_results")
 
         widget.worker = MagicMock()
         widget.worker.bot = MagicMock()

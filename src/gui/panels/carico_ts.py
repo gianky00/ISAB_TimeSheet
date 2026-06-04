@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING, Any
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
-from src.core import config_manager
-from src.core.constants import Icons
+from src.application.services import config_manager
+from src.application.services.constants import Icons
 from src.gui.controllers.bot_worker import BotWorker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel
@@ -20,10 +20,10 @@ from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
-from src.utils.helpers import get_asset_path
+from src.infrastructure.utils.helpers import get_asset_path
 
 if TYPE_CHECKING:
-    from src.bots.base.base_bot import BaseBot
+    from src.infrastructure.bots.base.base_bot import BaseBot
 
 
 class CaricoTSPanel(BaseBotPanel):
@@ -61,7 +61,7 @@ class CaricoTSPanel(BaseBotPanel):
 
     def get_bot_class(self) -> type[BaseBot]:
         """Restituisce la classe CaricoTSBot associata."""
-        from src.bots.portale_fornitori.carico_ts.bot import CaricoTSBot
+        from src.infrastructure.bots.portale_fornitori.carico_ts.bot import CaricoTSBot
 
         return CaricoTSBot
 
@@ -175,7 +175,7 @@ class CaricoTSPanel(BaseBotPanel):
         if not params_override:
             self._save_data()
 
-        from src.core.config_manager import load_config
+        from src.application.services.config_manager import load_config
 
         config = load_config()
 

@@ -5,14 +5,14 @@ from unittest.mock import MagicMock
 import pytest
 from PySide6.QtCore import QPropertyAnimation
 
-from src.core.mascot.don_ciro_engine import DonState, WeatherCond
+from src.application.services.mascot.don_ciro_engine import DonState, WeatherCond
 from src.gui.widgets.dashboard.don_ciro_widget import DonCiroWidget
 
 
 @pytest.fixture
 def mock_weather_service(mocker):
     """Fixture per mockare WeatherService."""
-    mock_instance = mocker.patch("src.core.weather_service.WeatherService.instance")
+    mock_instance = mocker.patch("src.application.services.weather_service.WeatherService.instance")
     service = MagicMock()
     mock_instance.return_value = service
     return service

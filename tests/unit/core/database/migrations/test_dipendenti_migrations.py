@@ -2,7 +2,11 @@ import sqlite3
 
 import pytest
 
-from src.core.database.migrations.dipendenti import mig_dipendenti_v1, mig_dipendenti_v2, mig_dipendenti_v3
+from src.application.services.database.migrations.dipendenti import (
+    mig_dipendenti_v1,
+    mig_dipendenti_v2,
+    mig_dipendenti_v3,
+)
 
 
 class TestDipendentiMigrations:

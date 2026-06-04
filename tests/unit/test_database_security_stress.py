@@ -5,15 +5,15 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.database import DatabaseManager
-from src.utils.security import PasswordManager
+from src.application.services.database import DatabaseManager
+from src.infrastructure.utils.security import PasswordManager
 
 
 class TestDatabaseSecurityStress:
     @pytest.fixture
     def db_mgr(self, tmp_path, mocker):
         # Patch DB_DIR per usare tmp_path
-        mocker.patch("src.core.database.manager.DB_DIR", tmp_path)
+        mocker.patch("src.application.services.database.manager.DB_DIR", tmp_path)
         return DatabaseManager()
 
     def test_database_wal_mode_concurrency(self, db_mgr, tmp_path):
@@ -80,10 +80,10 @@ class TestDatabaseSecurityStress:
     def test_password_manager_encryption_flow(self, tmp_path, mocker):
         """Verifica il ciclo completo di sicurezza delle password."""
         # Patch SECURITY_DIR nel modulo security
-        mocker.patch("src.utils.security.SECURITY_DIR", tmp_path / "security")
+        mocker.patch("src.infrastructure.utils.security.SECURITY_DIR", tmp_path / "security")
 
         # Re-inizializzazione per il test
-        with patch("src.utils.security.PasswordManager._instance", None):
+        with patch("src.infrastructure.utils.security.PasswordManager._instance", None):
             pm = PasswordManager()
             plaintext = "SuperSecret123!"
             encrypted = pm.encrypt(plaintext)
@@ -97,17 +97,17 @@ class TestDatabaseSecurityStress:
         sec_dir.mkdir(parents=True, exist_ok=True)
 
         # Patching SECURITY_DIR
-        mocker.patch("src.utils.security.SECURITY_DIR", sec_dir)
+        mocker.patch("src.infrastructure.utils.security.SECURITY_DIR", sec_dir)
 
         # 1. Primo avvio
-        with patch("src.utils.security.PasswordManager._instance", None):
+        with patch("src.infrastructure.utils.security.PasswordManager._instance", None):
             pm1 = PasswordManager()
             key1 = pm1._key
 
         assert (sec_dir / "secret.key").exists()
 
         # 2. Secondo avvio (caricamento da file)
-        with patch("src.utils.security.PasswordManager._instance", None):
+        with patch("src.infrastructure.utils.security.PasswordManager._instance", None):
             pm2 = PasswordManager()
             key2 = pm2._key
 

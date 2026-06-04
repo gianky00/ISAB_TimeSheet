@@ -12,9 +12,9 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import QEasingCurve, QObject, QPropertyAnimation, QSize, Qt, QTimer
 from PySide6.QtWidgets import QGraphicsOpacityEffect, QStatusBar
 
-from src.core import config_manager
-from src.core.constants import Icons
-from src.core.license_validator import get_license_info
+from src.application.services import config_manager
+from src.application.services.constants import Icons
+from src.application.services.license_validator import get_license_info
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import (
     IconButton,
@@ -26,7 +26,7 @@ from src.gui.widgets.footer import (
     StartupConsole,
 )
 from src.gui.widgets.status_card import StatusCard
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 if TYPE_CHECKING:
     from src.gui.main_window.main import MainWindow

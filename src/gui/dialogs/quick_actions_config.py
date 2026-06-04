@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.config_manager import get_config_value, set_config_value
+from src.application.services.config_manager import get_config_value, set_config_value
 from src.gui.design.colors import get_palette
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import StandardTreeWidget

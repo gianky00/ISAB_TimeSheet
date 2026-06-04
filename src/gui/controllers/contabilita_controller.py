@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QObject, Signal
 
-from src.core.contabilita_worker import ContabilitaWorker
-from src.core.database.repositories import ContabilitaRepository
+from src.application.services.contabilita_worker import ContabilitaWorker
+from src.application.services.database.repositories import ContabilitaRepository
 
 if TYPE_CHECKING:
     from src.gui.panels.contabilita_panel import ContabilitaPanel
@@ -51,7 +51,7 @@ class ContabilitaController(QObject):
             logger.warning("Importazione già in corso.")
             return
 
-        from src.core.config_manager import get_config_value
+        from src.application.services.config_manager import get_config_value
 
         # Recupero path da config
         path_contabilita = get_config_value("contabilita_path", "")

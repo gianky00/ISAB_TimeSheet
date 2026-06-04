@@ -1,8 +1,8 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from src.bots.base import StepStatus
-from src.bots.portale_fornitori.timbrature.bot import TimbratureBot
+from src.infrastructure.bots.base import StepStatus
+from src.infrastructure.bots.portale_fornitori.timbrature.bot import TimbratureBot
 
 
 class TestTimbratureBot:
@@ -12,8 +12,8 @@ class TestTimbratureBot:
         assert "01.01." in bot.data_da
         assert "31.12." in bot.data_a
 
-    @patch("src.bots.portale_fornitori.timbrature.bot.TimbraturePage")
-    @patch("src.bots.portale_fornitori.timbrature.bot.TimbratureStorage")
+    @patch("src.infrastructure.bots.portale_fornitori.timbrature.bot.TimbraturePage")
+    @patch("src.infrastructure.bots.portale_fornitori.timbrature.bot.TimbratureStorage")
     def test_run_success_flow(self, mock_storage_class, mock_page_class):
         bot = TimbratureBot(username="u", password="p")
         bot.update_step = MagicMock()
@@ -30,7 +30,7 @@ class TestTimbratureBot:
         mock_storage.import_excel.return_value = True
 
         # Mock file unlink
-        with patch("src.bots.portale_fornitori.timbrature.bot.Path") as mock_path:
+        with patch("src.infrastructure.bots.portale_fornitori.timbrature.bot.Path") as mock_path:
             mock_path.return_value.name = "report.xlsx"
             res = bot.run([])
             assert res is True
@@ -41,7 +41,7 @@ class TestTimbratureBot:
         assert mock_storage.import_excel.called
         bot.update_step.assert_any_call("import", StepStatus.COMPLETED)
 
-    @patch("src.bots.portale_fornitori.timbrature.bot.TimbraturePage")
+    @patch("src.infrastructure.bots.portale_fornitori.timbrature.bot.TimbraturePage")
     def test_run_navigation_fail(self, mock_page_class):
         bot = TimbratureBot(username="u", password="p")
         bot.driver = MagicMock()
@@ -52,7 +52,7 @@ class TestTimbratureBot:
         res = bot.run([])
         assert res is False
 
-    @patch("src.bots.portale_fornitori.timbrature.bot.TimbratureStorage")
+    @patch("src.infrastructure.bots.portale_fornitori.timbrature.bot.TimbratureStorage")
     def test_import_to_db_static(self, mock_storage_class):
         mock_storage = mock_storage_class.return_value
         mock_storage.import_excel.return_value = True

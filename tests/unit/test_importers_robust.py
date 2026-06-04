@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from openpyxl.styles import Font
 
-from src.core.importers.scarico_ore import ScaricoOreImporter
+from src.application.services.importers.scarico_ore import ScaricoOreImporter
 
 
 class TestImportersRobust:
@@ -31,8 +31,8 @@ class TestImportersRobust:
 
     def test_process_single_giornaliera_success(self, mock_giornaliera_df, tmp_path):
         """Test processamento completo singola giornaliera usando la pipeline."""
-        from src.core.processing.base import Pipeline
-        from src.core.processing.giornaliere.steps import (
+        from src.application.services.processing.base import Pipeline
+        from src.application.services.processing.giornaliere.steps import (
             EnrichGiornalieraStep,
             ReadGiornalieraStep,
         )
@@ -73,7 +73,7 @@ class TestImportersRobust:
 
     def test_giornaliera_normalize_columns(self):
         """Test normalizzazione nomi colonne tramite step dedicato."""
-        from src.core.processing.giornaliere.steps import NormalizeGiornalieraStep
+        from src.application.services.processing.giornaliere.steps import NormalizeGiornalieraStep
 
         df = pd.DataFrame({"  Data  ": [], "Personale": [], "Unknown": []})
         context = {"df": df, "success": True}
@@ -87,7 +87,7 @@ class TestImportersRobust:
 
     def test_giornaliera_clean_data(self, mock_giornaliera_df):
         """Test pulizia dati (rimozione totali) tramite step dedicato."""
-        from src.core.processing.giornaliere.steps import NormalizeGiornalieraStep
+        from src.application.services.processing.giornaliere.steps import NormalizeGiornalieraStep
 
         # Aggiungiamo una riga "Totale" esplicita al DF normalizzato per verificare la rimozione
         df_con_totali = pd.concat(
@@ -184,10 +184,10 @@ class TestImportersRobust:
         assert success is False
         assert "non trovato" in msg
 
-    @patch("src.core.importers.scarico_ore.msoffcrypto")
+    @patch("src.application.services.importers.scarico_ore.msoffcrypto")
     def test_scan_encrypted_file(self, mock_crypto, tmp_path):
         """Test scansione file cifrato."""
-        from src.core.constants import Business
+        from src.application.services.constants import Business
 
         path = tmp_path / "protected.xlsx"
         path.touch()

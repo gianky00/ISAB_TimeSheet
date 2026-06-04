@@ -1,29 +1,29 @@
 import pytest
 
-from src.utils.resource_manager import ResourceManager
+from src.infrastructure.utils.resource_manager import ResourceManager
 
 
 class TestResourceManager:
     @pytest.fixture(autouse=True)
     def setup_test(self, tmp_path, mocker):
         # Mock PROJECT_ROOT
-        mocker.patch("src.utils.resource_manager.ResourceManager.PROJECT_ROOT", tmp_path)
+        mocker.patch("src.infrastructure.utils.resource_manager.ResourceManager.PROJECT_ROOT", tmp_path)
         # Mock _get_config_dir to return our tmp config path
         mocker.patch(
-            "src.utils.resource_manager.ResourceManager._get_config_dir",
+            "src.infrastructure.utils.resource_manager.ResourceManager._get_config_dir",
             return_value=tmp_path / "config",
         )
         # Update other class attrs derived from PROJECT_ROOT
-        mocker.patch("src.utils.resource_manager.ResourceManager.ASSETS_DIR", tmp_path / "assets")
+        mocker.patch("src.infrastructure.utils.resource_manager.ResourceManager.ASSETS_DIR", tmp_path / "assets")
         mocker.patch(
-            "src.utils.resource_manager.ResourceManager.ICONS_DIR",
+            "src.infrastructure.utils.resource_manager.ResourceManager.ICONS_DIR",
             tmp_path / "assets" / "icons",
         )
         mocker.patch(
-            "src.utils.resource_manager.ResourceManager.STYLES_DIR",
+            "src.infrastructure.utils.resource_manager.ResourceManager.STYLES_DIR",
             tmp_path / "assets" / "styles",
         )
-        mocker.patch("src.utils.resource_manager.ResourceManager.TEMP_DIR", tmp_path / "temp")
+        mocker.patch("src.infrastructure.utils.resource_manager.ResourceManager.TEMP_DIR", tmp_path / "temp")
         yield
 
     def test_ensure_structure(self, tmp_path):

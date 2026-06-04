@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.core.stats.roi_engine import ROIMetrics
+from src.application.services.stats.roi_engine import ROIMetrics
 from src.gui.widgets.dashboard.roi_widget import BotSavingsWidget
 
 

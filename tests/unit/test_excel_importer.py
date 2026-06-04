@@ -5,25 +5,25 @@ import pandas as pd
 # Mock DataSynchronizer per tutti i test degli importer
 import pytest
 
-from src.core.excel_importer import ExcelImporter
+from src.application.services.excel_importer import ExcelImporter
 
 
 @pytest.fixture(autouse=True)
 def mock_data_synchronizer():
     with (
-        patch("src.core.data_synchronizer.DataSynchronizer.sync_certificati_campione", return_value=(1, 0)),
-        patch("src.core.data_synchronizer.DataSynchronizer.sync_scarico_ore", return_value=(1, 0)),
-        patch("src.core.data_synchronizer.DataSynchronizer.sync_giornaliere", return_value=(1, 0)),
+        patch("src.application.services.data_synchronizer.DataSynchronizer.sync_certificati_campione", return_value=(1, 0)),
+        patch("src.application.services.data_synchronizer.DataSynchronizer.sync_scarico_ore", return_value=(1, 0)),
+        patch("src.application.services.data_synchronizer.DataSynchronizer.sync_giornaliere", return_value=(1, 0)),
     ):
         yield
 
 
 class TestExcelImporter:
     # --- Contabilita Dati ---
-    @patch("src.core.importers.contabilita.validate_contabilita", side_effect=lambda x: x)
-    @patch("src.core.importers.contabilita.ContabilitaImporter._get_excel_file")
-    @patch("src.core.importers.base.BaseImporter._decrypt_if_encrypted")
-    @patch("src.core.importers.contabilita.Path.exists", return_value=True)
+    @patch("src.application.services.importers.contabilita.validate_contabilita", side_effect=lambda x: x)
+    @patch("src.application.services.importers.contabilita.ContabilitaImporter._get_excel_file")
+    @patch("src.application.services.importers.base.BaseImporter._decrypt_if_encrypted")
+    @patch("src.application.services.importers.contabilita.Path.exists", return_value=True)
     @patch("pandas.read_excel")
     def test_import_contabilita_dati_success(
         self,
@@ -75,7 +75,7 @@ class TestExcelImporter:
         assert len(rows) > 0
         assert 2024 in years
 
-    @patch("src.core.importers.contabilita.Path.exists", return_value=False)
+    @patch("src.application.services.importers.contabilita.Path.exists", return_value=False)
     def test_import_contabilita_dati_file_not_found(self, mock_exists):
         success, msg, _rows, _years = ExcelImporter.import_contabilita_dati("missing.xlsx")
         assert not success
@@ -113,10 +113,10 @@ class TestExcelImporter:
 
         with (
             patch(
-                "src.core.importers.giornaliere.GiornaliereImporter._process_single_giornaliera"
+                "src.application.services.importers.giornaliere.GiornaliereImporter._process_single_giornaliera"
             ) as mock_proc,
             patch("src.gui.main_window.page_index.PageIndex") as mock_page_index,
-            patch("src.core.importers.giornaliere.ProcessPoolExecutor") as mock_pool,
+            patch("src.application.services.importers.giornaliere.ProcessPoolExecutor") as mock_pool,
         ):
             mock_page_index.DASHBOARD = 0
             mock_proc.return_value = (
@@ -154,7 +154,7 @@ class TestExcelImporter:
 
     # --- Storico OdA ---
     @patch("pandas.read_excel")
-    @patch("src.core.importers.storico_oda.Path.exists", return_value=True)
+    @patch("src.application.services.importers.storico_oda.Path.exists", return_value=True)
     def test_import_storico_oda(self, mock_exists, mock_read):
         # Mock columns matching STORICO_ODA_MAPPING
         data = {
@@ -186,7 +186,7 @@ class TestExcelImporter:
 
     # --- Attivita Programmate ---
     @patch("pandas.read_excel")
-    @patch("src.core.importers.attivita.Path.exists", return_value=True)
+    @patch("src.application.services.importers.attivita.Path.exists", return_value=True)
     def test_import_attivita_programmate(self, mock_exists, mock_read):
         # Mapping: PS, AREA, PdL, IMP., DESCRIZIONE ATTIVITA', ...
         data = {
@@ -207,8 +207,8 @@ class TestExcelImporter:
         assert rows[0][-1] == ""  # styles
 
     # --- Scarico Ore (OpenPyXL) ---
-    @patch("src.core.processing.scarico_ore.steps.LoadScaricoOreStep._load_scarico_workbook")
-    @patch("src.core.importers.scarico_ore.Path.exists", return_value=True)
+    @patch("src.application.services.processing.scarico_ore.steps.LoadScaricoOreStep._load_scarico_workbook")
+    @patch("src.application.services.importers.scarico_ore.Path.exists", return_value=True)
     def test_import_scarico_ore_with_styles(self, mock_exists, mock_load_wb):
         # Mock Workbook and Worksheet
         wb = MagicMock()
@@ -274,9 +274,9 @@ class TestExcelImporter:
         assert styles["commessa"]["bg"] == "#00FF00"
 
     # --- Certificati Campione ---
-    @patch("src.core.processing.certificati.steps.pd.read_excel")
-    @patch("src.core.processing.certificati.steps.pd.ExcelFile")
-    @patch("src.core.importers.certificati.Path.exists", return_value=True)
+    @patch("src.application.services.processing.certificati.steps.pd.read_excel")
+    @patch("src.application.services.processing.certificati.steps.pd.ExcelFile")
+    @patch("src.application.services.importers.certificati.Path.exists", return_value=True)
     def test_import_certificati_campione(self, mock_exists, mock_excel_file, mock_read):
         # Mock ExcelFile to return sheet names
         mock_excel = MagicMock()
@@ -302,8 +302,8 @@ class TestExcelImporter:
         assert "Scade tra 10 giorni" in rows[0]
 
     # --- Scan Methods ---
-    @patch("src.core.importers.scarico_ore.zipfile.ZipFile")
-    @patch("src.core.importers.scarico_ore.Path.exists", return_value=True)
+    @patch("src.application.services.importers.scarico_ore.zipfile.ZipFile")
+    @patch("src.application.services.importers.scarico_ore.Path.exists", return_value=True)
     def test_scan_scarico_ore_rows(self, mock_exists, mock_zip):
         # Mock ZipFile context manager
         z = MagicMock()
@@ -319,10 +319,10 @@ class TestExcelImporter:
         assert rows == 100
 
     @patch(
-        "src.core.importers.contabilita.ContabilitaImporter.scan_sheets",
+        "src.application.services.importers.contabilita.ContabilitaImporter.scan_sheets",
         return_value=["S1", "S2"],
     )
-    @patch("src.core.importers.giornaliere.GiornaliereImporter.scan_files", return_value=3)
+    @patch("src.application.services.importers.giornaliere.GiornaliereImporter.scan_files", return_value=3)
     def test_scan_workload(self, mock_scan_files, mock_scan_sheets):
         sheets, files = ExcelImporter.scan_workload("cont.xlsx", "root_giornaliere")
         # Returns (list, count) or (list, list)?

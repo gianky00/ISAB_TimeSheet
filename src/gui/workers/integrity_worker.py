@@ -7,7 +7,7 @@ import logging
 
 from PySide6.QtCore import QObject, QRunnable, Signal
 
-from src.core.audit_manager import AuditManager
+from src.application.services.audit_manager import AuditManager
 
 logger = logging.getLogger(__name__)
 

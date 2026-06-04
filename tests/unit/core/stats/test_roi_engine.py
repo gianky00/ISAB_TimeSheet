@@ -2,13 +2,13 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from src.core.stats.roi_engine import ROIEngine
+from src.application.services.stats.roi_engine import ROIEngine
 
 
 class TestROIEngine:
     @pytest.fixture
     def mock_db(self, mocker):
-        return mocker.patch("src.core.database.db_manager.execute_query")
+        return mocker.patch("src.application.services.database.db_manager.execute_query")
 
     def test_calculate_savings_empty(self, mock_db):
         mock_db.return_value = []
@@ -22,18 +22,18 @@ class TestROIEngine:
         ts1 = (now - timedelta(days=5)).strftime("%Y-%m-%d %H:%M:%S")
         ts2 = now.strftime("%Y-%m-%d %H:%M:%S")
 
-        # Check src/core/stats/roi_engine.py logic:
+        # Check src/application/services/stats/roi_engine.py logic:
         rows = [
             ("Completamento Scarico TS", "entity", "success", "info", ts1, 60000),
             ("Completamento Carico TS", "entity", "success", "info", ts2, 120000),
             ("Bot Fallito", "entity", "error", "critical", ts2, 0),
         ]
         mock_db.return_value = rows
-        mocker.patch("src.core.config_manager.get_config_value", side_effect=lambda k, d: d)
+        mocker.patch("src.application.services.config_manager.get_config_value", side_effect=lambda k, d: d)
 
         # Mock datetime.now inside ROIEngine
-        mocker.patch("src.core.stats.roi_engine.datetime", mocker.Mock(wraps=datetime))
-        import src.core.stats.roi_engine as roi_mod
+        mocker.patch("src.application.services.stats.roi_engine.datetime", mocker.Mock(wraps=datetime))
+        import src.application.services.stats.roi_engine as roi_mod
 
         roi_mod.datetime.now.return_value = now
         roi_mod.datetime.fromisoformat = datetime.fromisoformat

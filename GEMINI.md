@@ -38,7 +38,7 @@ Prima di ogni commit o conclusione di task, devono essere superati i seguenti co
 - **Tipizzazione Semantica (typing.Annotated):** Arricchisci le firme dei metodi usando `Annotated` per associare metadati semantici o di validazione di business (es. `Annotated[str, Field(pattern="^[A-Z0-9]{16}$")]` per Codici Fiscali).
 
 ## 📂 STRUTTURA DOCUMENTALE
-- `.ai-context.json`: **Fonte di verità architetturale** machine-readable (versione, layout, DB, bot, regole). Generato da `tools/generate_ai_context.py`.
+- `.ai-context.json`: **Fonte di verità architetturale** machine-readable (versione, layout, DB, bot, regole). Generato da `devtools/cli/generate_ai_context.py` e situato in `docs/resources/.ai-context.json`.
 - `CLAUDE.md`: Guida rapida operativa — comandi, pattern di codice, pitfall comuni.
 - `PYSIDE6_OPTIMIZATION.md`: Best practices per le performance e signal safety in PySide6.
 - `docs/`: Documentazione tecnica, schemi JSON, piani di refactoring.

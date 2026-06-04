@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.bots.base.selenium_bot_config import SeleniumBotConfig
-from src.bots.safework.pdl.bot import SafeWorkPDLBot
+from src.infrastructure.bots.base.selenium_bot_config import SeleniumBotConfig
+from src.infrastructure.bots.safework.pdl.bot import SafeWorkPDLBot
 
 
 class TestSafeWorkPDLBot:
@@ -24,8 +24,8 @@ class TestSafeWorkPDLBot:
         valid, _msg = bot.validate_data(data)
         assert valid is True
 
-    @patch("src.bots.safework.pdl.bot.SafeWorkPDLBot._process_pdl_pipeline")
-    @patch("src.bots.safework.pdl.bot.SafeWorkPDLBot._handle_session_merge")
+    @patch("src.infrastructure.bots.safework.pdl.bot.SafeWorkPDLBot._process_pdl_pipeline")
+    @patch("src.infrastructure.bots.safework.pdl.bot.SafeWorkPDLBot._handle_session_merge")
     def test_run_success(self, mock_merge, mock_pipeline, bot):
         mock_pipeline.return_value = True
         data = {"rows": [{"numero_pdl": "123456"}]}
@@ -42,8 +42,8 @@ class TestSafeWorkPDLBot:
                     res = bot._esegui_ricerca_pdl("123456/S")
                     assert res is True
 
-    @patch("src.bots.safework.pdl.bot.poll_for_new_file")
-    @patch("src.bots.safework.pdl.bot.fitz.open")
+    @patch("src.infrastructure.bots.safework.pdl.bot.poll_for_new_file")
+    @patch("src.infrastructure.bots.safework.pdl.bot.fitz.open")
     def test_scarica_parte_prima_success(self, mock_fitz, mock_poll, bot, fs):
         bot.driver = MagicMock()
         bot.wait = MagicMock()
@@ -80,8 +80,8 @@ class TestSafeWorkPDLBot:
             assert bot._espandi_parte_seconda() is True
             assert mock_btn.click.called
 
-    @patch("src.utils.document_processor.DocumentProcessor.merge_pdfs")
-    @patch("src.bots.safework.pdl.bot.print_pdf")
+    @patch("src.infrastructure.utils.document_processor.DocumentProcessor.merge_pdfs")
+    @patch("src.infrastructure.bots.safework.pdl.bot.print_pdf")
     def test_unisci_e_stampa(self, mock_print, mock_merge, bot):
         mock_merge.return_value = True
         bot.download_path = "/downloads"

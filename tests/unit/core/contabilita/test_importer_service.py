@@ -1,16 +1,16 @@
 import pytest
 
-from src.core.contabilita.importer_service import ContabilitaImporterService
+from src.application.services.contabilita.importer_service import ContabilitaImporterService
 
 
 class TestContabilitaImporterService:
     @pytest.fixture
     def mock_importer(self, mocker):
-        return mocker.patch("src.core.contabilita.importer_service.ExcelImporter")
+        return mocker.patch("src.application.services.contabilita.importer_service.ExcelImporter")
 
     @pytest.fixture
     def mock_sync(self, mocker):
-        return mocker.patch("src.core.contabilita.importer_service.DataSynchronizer")
+        return mocker.patch("src.application.services.contabilita.importer_service.DataSynchronizer")
 
     def test_scan_workload(self, mock_importer):
         mock_importer.scan_workload.return_value = (10, 20)
@@ -19,7 +19,7 @@ class TestContabilitaImporterService:
 
     def test_import_main_data_success(self, mocker):
         # We need to mock the Pipeline behavior
-        mock_pipeline = mocker.patch("src.core.contabilita.importer_service.Pipeline")
+        mock_pipeline = mocker.patch("src.application.services.contabilita.importer_service.Pipeline")
         mock_pipeline.return_value.run.return_value = {
             "success": True,
             "message": "OK",
@@ -33,7 +33,7 @@ class TestContabilitaImporterService:
         assert removed == 2
 
     def test_import_main_data_failure(self, mocker):
-        mock_pipeline = mocker.patch("src.core.contabilita.importer_service.Pipeline")
+        mock_pipeline = mocker.patch("src.application.services.contabilita.importer_service.Pipeline")
         mock_pipeline.return_value.run.side_effect = Exception("Crash")
 
         success, msg, _, _ = ContabilitaImporterService.import_main_data("path")
@@ -74,7 +74,7 @@ class TestContabilitaImporterService:
         assert added == 20
 
     def test_import_certificati_campione(self, mock_sync, mocker):
-        mock_imp = mocker.patch("src.core.importers.certificati.CertificatiImporter")
+        mock_imp = mocker.patch("src.application.services.importers.certificati.CertificatiImporter")
         mock_imp.import_certificati_campione.return_value = (True, "OK", [1, 2, 3])
         mock_sync.sync_certificati_campione.return_value = (3, 0)
 

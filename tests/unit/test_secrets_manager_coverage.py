@@ -6,7 +6,7 @@ from unittest.mock import patch
 import keyring
 import pytest
 
-from src.core.secrets_manager import SecretsManager
+from src.application.services.secrets_manager import SecretsManager
 
 
 class TestSecretsManager:

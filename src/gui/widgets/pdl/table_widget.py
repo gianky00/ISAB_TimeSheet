@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.pdl.pdl_service import PDLService
+from src.application.services.pdl.pdl_service import PDLService
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import StandardTable
 from src.gui.widgets.pdl.status_bar_widget import ProgrammingStatusWidget

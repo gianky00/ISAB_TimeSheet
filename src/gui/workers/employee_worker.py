@@ -8,7 +8,7 @@ import logging
 
 from PySide6.QtCore import QThread, Signal
 
-from src.core.dipendenti.anagrafica_controller import AnagraficaController
+from src.application.services.dipendenti.anagrafica_controller import AnagraficaController
 
 logger = logging.getLogger(__name__)
 

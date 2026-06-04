@@ -39,7 +39,7 @@ nav:
   - Home: README.md
   - Contribuire: CONTRIBUTING.md
   - Guide per IA:
-      - 'Contesto Architetturale (Machine-Readable)': ../.ai-context.json
+      - 'Contesto Architetturale (Machine-Readable)': resources/.ai-context.json
       - 'Guida Operativa (CLAUDE)': CLAUDE.md
       - 'Linee Guida Qualità (GEMINI)': GEMINI.md
       - 'Ottimizzazione PySide6': PYSIDE6_OPTIMIZATION.md

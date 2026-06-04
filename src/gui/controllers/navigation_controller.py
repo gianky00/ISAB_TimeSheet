@@ -19,11 +19,11 @@ from src.gui.controllers.panel_factory import PanelFactory
 from src.gui.main_window.page_index import PageIndex
 
 if TYPE_CHECKING:
-    from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
-    from src.core.contabilita.scarico_ore.controller import ScaricoOreController
-    from src.core.dipendenti.anagrafica_controller import AnagraficaController
-    from src.core.oda.oda_controller import ODAController
-    from src.core.pdl.pdl_controller import PDLController
+    from src.application.services.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
+    from src.application.services.contabilita.scarico_ore.controller import ScaricoOreController
+    from src.application.services.dipendenti.anagrafica_controller import AnagraficaController
+    from src.application.services.oda.oda_controller import ODAController
+    from src.application.services.pdl.pdl_controller import PDLController
     from src.gui.main_window.main import MainWindow
 
 logger = logging.getLogger(__name__)
@@ -72,13 +72,13 @@ class NavigationController(QObject):
 
     def _init_core_controllers(self) -> None:
         """Inizializza i controller core per i dati."""
-        from src.core.contabilita.consuntivo.consuntivo_controller import (
+        from src.application.services.contabilita.consuntivo.consuntivo_controller import (
             ConsuntivoController,
         )
-        from src.core.contabilita.scarico_ore.controller import ScaricoOreController
-        from src.core.dipendenti.anagrafica_controller import AnagraficaController
-        from src.core.oda.oda_controller import ODAController
-        from src.core.pdl.pdl_controller import PDLController
+        from src.application.services.contabilita.scarico_ore.controller import ScaricoOreController
+        from src.application.services.dipendenti.anagrafica_controller import AnagraficaController
+        from src.application.services.oda.oda_controller import ODAController
+        from src.application.services.pdl.pdl_controller import PDLController
 
         self.oda_controller = ODAController()
         self.anagrafica_controller = AnagraficaController()

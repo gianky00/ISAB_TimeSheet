@@ -2,9 +2,9 @@ from unittest.mock import MagicMock, patch
 
 from selenium.webdriver.common.by import By
 
-from src.bots.base.playwright_base_bot import PlaywrightBaseBot
-from src.bots.base.playwright_utils import get_playwright_selector
-from src.bots.base.selenium_bot_config import SeleniumBotConfig
+from src.infrastructure.bots.base.playwright_base_bot import PlaywrightBaseBot
+from src.infrastructure.bots.base.playwright_utils import get_playwright_selector
+from src.infrastructure.bots.base.selenium_bot_config import SeleniumBotConfig
 
 
 class ConcretePlaywrightBot(PlaywrightBaseBot):
@@ -35,8 +35,8 @@ def test_get_playwright_selector():
     assert get_playwright_selector((By.ID, "(//div)[1]")) == "xpath=(//div)[1]"
 
 
-@patch("src.bots.base.playwright_base_bot.sync_playwright")
-@patch("src.utils.helpers.cleanup_bot_processes")
+@patch("src.infrastructure.bots.base.playwright_base_bot.sync_playwright")
+@patch("src.infrastructure.utils.helpers.cleanup_bot_processes")
 def test_playwright_base_bot_init(mock_cleanup, mock_sync):
     """Verifica l'inizializzazione del driver Playwright."""
     config = SeleniumBotConfig(username="user", password="pass", headless=True)

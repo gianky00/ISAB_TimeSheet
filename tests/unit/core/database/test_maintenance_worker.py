@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.database.maintenance_worker import DatabaseMaintenanceWorker
+from src.application.services.database.maintenance_worker import DatabaseMaintenanceWorker
 
 
 class TestDatabaseMaintenanceWorker:
@@ -19,7 +19,7 @@ class TestDatabaseMaintenanceWorker:
         assert worker.daemon is True
         assert len(worker.databases) > 0
 
-    @patch("src.core.database.maintenance_worker.db_manager.get_write_connection")
+    @patch("src.application.services.database.maintenance_worker.db_manager.get_write_connection")
     def test_optimize_db_success(self, mock_conn, worker):
         mock_cursor = MagicMock()
         mock_conn.return_value.__enter__.return_value = mock_cursor
@@ -30,8 +30,8 @@ class TestDatabaseMaintenanceWorker:
         mock_cursor.execute.assert_any_call("ANALYZE")
         mock_cursor.execute.assert_any_call("VACUUM")
 
-    @patch("src.core.database.maintenance_worker.DatabaseMaintenanceWorker._optimize_db")
-    @patch("src.core.database.maintenance_worker.DatabaseMaintenanceWorker._clean_logs")
+    @patch("src.application.services.database.maintenance_worker.DatabaseMaintenanceWorker._optimize_db")
+    @patch("src.application.services.database.maintenance_worker.DatabaseMaintenanceWorker._clean_logs")
     def test_run_success(self, mock_clean, mock_opt, worker, fs):
         # Simula presenza db
         test_db = Path("test1.db")
@@ -44,8 +44,8 @@ class TestDatabaseMaintenanceWorker:
         mock_opt.assert_called_with(test_db)
         assert mock_clean.called
 
-    @patch("src.core.database.maintenance_worker.DatabaseMaintenanceWorker._optimize_db")
-    @patch("src.core.database.maintenance_worker.DatabaseMaintenanceWorker._clean_logs")
+    @patch("src.application.services.database.maintenance_worker.DatabaseMaintenanceWorker._optimize_db")
+    @patch("src.application.services.database.maintenance_worker.DatabaseMaintenanceWorker._clean_logs")
     def test_run_db_not_exists(self, mock_clean, mock_opt, worker):
         # Non crea il db
         test_db = Path("missing.db")
@@ -56,8 +56,8 @@ class TestDatabaseMaintenanceWorker:
         assert not mock_opt.called
         assert mock_clean.called
 
-    @patch("src.core.database.maintenance_worker.DatabaseMaintenanceWorker._optimize_db")
-    @patch("src.core.database.maintenance_worker.DatabaseMaintenanceWorker._clean_logs")
+    @patch("src.application.services.database.maintenance_worker.DatabaseMaintenanceWorker._optimize_db")
+    @patch("src.application.services.database.maintenance_worker.DatabaseMaintenanceWorker._clean_logs")
     def test_run_db_exception(self, mock_clean, mock_opt, worker, fs):
         test_db = Path("error.db")
         fs.create_file(str(test_db))
@@ -72,7 +72,7 @@ class TestDatabaseMaintenanceWorker:
         assert mock_clean.called
 
     def test_clean_logs(self, worker, fs):
-        with patch("src.core.database.maintenance_worker.LOGS_DIR", Path("/logs")):
+        with patch("src.application.services.database.maintenance_worker.LOGS_DIR", Path("/logs")):
             fs.create_dir("/logs")
 
             # File vecchi di 40 e 20 giorni
@@ -94,6 +94,6 @@ class TestDatabaseMaintenanceWorker:
             assert recent_file.exists()
 
     def test_clean_logs_no_dir(self, worker, fs):
-        with patch("src.core.database.maintenance_worker.LOGS_DIR", Path("/missing_logs")):
+        with patch("src.application.services.database.maintenance_worker.LOGS_DIR", Path("/missing_logs")):
             # Se la dir non c'è, torna subito senza crash
             worker._clean_logs(30)

@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.core.telegram_bridge import TelegramUIBridge
+from src.application.services.telegram_bridge import TelegramUIBridge
 
 
 class TestTelegramUIBridgeRobust:
@@ -15,10 +15,10 @@ class TestTelegramUIBridgeRobust:
     @pytest.fixture
     def bridge(self, mock_mw, mocker):
         mocker.patch("src.gui.main_window.telegram_bridge.TelegramGUIBridge")
-        mocker.patch("src.core.telegram_bridge.TelegramUICommands")
-        mocker.patch("src.core.telegram_bridge.TelegramDataProcessor")
-        mocker.patch("src.core.telegram_bridge.TelegramSystemHandler")
-        mocker.patch("src.core.telegram_bridge.TelegramIntentHandler")
+        mocker.patch("src.application.services.telegram_bridge.TelegramUICommands")
+        mocker.patch("src.application.services.telegram_bridge.TelegramDataProcessor")
+        mocker.patch("src.application.services.telegram_bridge.TelegramSystemHandler")
+        mocker.patch("src.application.services.telegram_bridge.TelegramIntentHandler")
         return TelegramUIBridge(mock_mw)
 
     def test_handle_intent_add_pdl(self, bridge):

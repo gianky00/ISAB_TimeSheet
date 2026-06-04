@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from unittest.mock import patch
 
-from src.utils import date_utils
+from src.infrastructure.utils import date_utils
 
 
 class TestDateUtilsRobust:
@@ -59,7 +59,7 @@ class TestDateUtilsRobust:
 
         # Test con oggi (mockato)
         # Mocking datetime.now(UTC).date()
-        with patch("src.utils.date_utils.datetime") as mock_dt:
+        with patch("src.infrastructure.utils.date_utils.datetime") as mock_dt:
             # Setup mock_dt.now(UTC).date() -> d_ref
             mock_dt.now.return_value.date.return_value = d_ref
 

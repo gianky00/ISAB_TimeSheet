@@ -5,16 +5,16 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.backup_manager import BackupManager
+from src.application.services.backup_manager import BackupManager
 
 
 class TestBackupManager:
     @pytest.fixture
     def manager(self, tmp_path, mocker):
         # Mock CONFIG_DIR
-        mocker.patch("src.core.backup_manager.CONFIG_DIR", tmp_path)
+        mocker.patch("src.application.services.backup_manager.CONFIG_DIR", tmp_path)
         # Mock load_config
-        mocker.patch("src.core.backup_manager.load_config", return_value={})
+        mocker.patch("src.application.services.backup_manager.load_config", return_value={})
         return BackupManager
 
     def test_detect_cloud_paths(self, manager, tmp_path):
@@ -38,7 +38,7 @@ class TestBackupManager:
         (data_dir / "test.db").write_text("dummy db content")
 
         # Mock AuditManager
-        mock_audit = mocker.patch("src.core.backup_manager.AuditManager")
+        mock_audit = mocker.patch("src.application.services.backup_manager.AuditManager")
         mock_audit.instance.return_value = mock_audit.return_value
 
         # Set backup dir to a subdirectory
@@ -90,7 +90,7 @@ class TestBackupManager:
             # Set mtime to ensure sorting
             os.utime(p, (i * 100, i * 100))
 
-        from src.core.backup.archive_rotator import ArchiveRotator
+        from src.application.services.backup.archive_rotator import ArchiveRotator
 
         ArchiveRotator.rotate_backups(tmp_path, prefix="SyncroJob_Backup_", keep=5)
 

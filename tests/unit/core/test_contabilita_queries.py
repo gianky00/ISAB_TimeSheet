@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.contabilita_queries import ContabilitaQueries
+from src.application.services.contabilita_queries import ContabilitaQueries
 
 
 class TestContabilitaQueries:

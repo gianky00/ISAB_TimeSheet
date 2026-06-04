@@ -7,8 +7,8 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core import config_manager
-from src.core.config_manager import (
+from src.application.services import config_manager
+from src.application.services.config_manager import (
     DEFAULT_CONFIG,
     _reset_configuration_for_testing,
     load_config,
@@ -29,8 +29,8 @@ def clean_config_env(tmp_path):
     mock_dir.mkdir(parents=True, exist_ok=True)
 
     with (
-        patch("src.core.config_manager.CONFIG_DIR", mock_dir),
-        patch("src.core.config_manager.CONFIG_FILE", mock_file),
+        patch("src.application.services.config_manager.CONFIG_DIR", mock_dir),
+        patch("src.application.services.config_manager.CONFIG_FILE", mock_file),
     ):
         yield mock_dir, mock_file
 
@@ -74,7 +74,7 @@ def test_load_config_with_credentials_keyring(clean_config_env):
     }
     mock_file.write_text(json.dumps(data), encoding="utf-8")
 
-    with patch("src.core.secrets_manager.SecretsManager.get_credential") as mock_get:
+    with patch("src.application.services.secrets_manager.SecretsManager.get_credential") as mock_get:
 
         def side_effect(service, username):
             if service == "isab_portal" and username == "user1":
@@ -100,8 +100,8 @@ def test_load_config_with_credentials_fallback(clean_config_env):
     mock_file.write_text(json.dumps(data), encoding="utf-8")
 
     with (
-        patch("src.core.secrets_manager.SecretsManager.get_credential", return_value=None),
-        patch("src.utils.security.password_manager.decrypt") as mock_decrypt,
+        patch("src.application.services.secrets_manager.SecretsManager.get_credential", return_value=None),
+        patch("src.infrastructure.utils.security.password_manager.decrypt") as mock_decrypt,
     ):
         mock_decrypt.side_effect = lambda x: f"decrypted_{x}"
 
@@ -115,7 +115,7 @@ def test_load_config_legacy_migration(clean_config_env):
     data = {"isab_username": "legacy_user", "isab_password": "legacy_password"}
     mock_file.write_text(json.dumps(data), encoding="utf-8")
 
-    with patch("src.core.config_manager.save_config") as mock_save:
+    with patch("src.application.services.config_manager.save_config") as mock_save:
         config = load_config()
         assert "isab_username" not in config
         assert any(a["username"] == "legacy_user" for a in config["accounts"])
@@ -131,8 +131,8 @@ def test_save_config_with_keyring(clean_config_env):
     }
 
     with (
-        patch("src.core.secrets_manager.SecretsManager.is_available", return_value=True),
-        patch("src.core.secrets_manager.SecretsManager.store_credential") as mock_store,
+        patch("src.application.services.secrets_manager.SecretsManager.is_available", return_value=True),
+        patch("src.application.services.secrets_manager.SecretsManager.store_credential") as mock_store,
     ):
         save_config(config, async_save=False)
 
@@ -152,8 +152,8 @@ def test_save_config_fallback_encryption(clean_config_env):
     config = {"accounts": [{"username": "user1", "password": "plain_password"}]}
 
     with (
-        patch("src.core.secrets_manager.SecretsManager.is_available", return_value=False),
-        patch("src.utils.security.password_manager.encrypt", return_value="encrypted_val"),
+        patch("src.application.services.secrets_manager.SecretsManager.is_available", return_value=False),
+        patch("src.infrastructure.utils.security.password_manager.encrypt", return_value="encrypted_val"),
     ):
         save_config(config, async_save=False)
 
@@ -171,7 +171,7 @@ def test_save_config_io_error(clean_config_env):
 def test_save_config_critical_exception(clean_config_env):
     """Test handling of unexpected exceptions during save."""
     config = {"test": "data"}
-    with patch("src.core.config_manager.json.dump", side_effect=Exception("Critical Failure")):
+    with patch("src.application.services.config_manager.json.dump", side_effect=Exception("Critical Failure")):
         save_config(config, async_save=False)
 
 

@@ -215,7 +215,7 @@ class FilterComboBox(QComboBox):
         width: 20px;
       }}
       QComboBox::down-arrow {{
-        image: url(assets/icons/chevron-down.svg);
+        image: url(assets/ui/icons/chevron-down.svg);
         width: 12px;
         height: 12px;
       }}

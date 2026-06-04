@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from src.core.contabilita.stats_service import ContabilitaStats
+from src.application.services.contabilita.stats_service import ContabilitaStats
 
 
 class TestContabilitaStatsDeep:
@@ -62,11 +62,11 @@ class TestContabilitaStatsDeep:
         ]
 
         mocker.patch(
-            "src.core.contabilita_queries.ContabilitaQueries.get_data_by_year",
+            "src.application.services.contabilita_queries.ContabilitaQueries.get_data_by_year",
             return_value=mock_data,
         )
         mocker.patch(
-            "src.core.contabilita_queries.ContabilitaQueries.get_giornaliere_by_year",
+            "src.application.services.contabilita_queries.ContabilitaQueries.get_giornaliere_by_year",
             return_value=[],
         )
 
@@ -100,11 +100,11 @@ class TestContabilitaStatsDeep:
             for i in range(1, 10)  # 9 commesse da 100 a 900
         ]
         mocker.patch(
-            "src.core.contabilita_queries.ContabilitaQueries.get_data_by_year",
+            "src.application.services.contabilita_queries.ContabilitaQueries.get_data_by_year",
             return_value=mock_data,
         )
         mocker.patch(
-            "src.core.contabilita_queries.ContabilitaQueries.get_giornaliere_by_year",
+            "src.application.services.contabilita_queries.ContabilitaQueries.get_giornaliere_by_year",
             return_value=[],
         )
 
@@ -175,11 +175,11 @@ class TestContabilitaStatsDeep:
         ]
 
         mocker.patch(
-            "src.core.contabilita_queries.ContabilitaQueries.get_data_by_year",
+            "src.application.services.contabilita_queries.ContabilitaQueries.get_data_by_year",
             return_value=[],
         )
         mocker.patch(
-            "src.core.contabilita_queries.ContabilitaQueries.get_giornaliere_by_year",
+            "src.application.services.contabilita_queries.ContabilitaQueries.get_giornaliere_by_year",
             return_value=mock_giornaliere,
         )
 

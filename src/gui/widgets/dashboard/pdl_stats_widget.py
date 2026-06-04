@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.stats.pdl_stats_engine import PDLMetrics
+from src.application.services.stats.pdl_stats_engine import PDLMetrics
 from src.gui.styles import COLORS
 from src.gui.widgets.modern_card import ModernCard
 from src.gui.workers.pdl_stats_worker import PDLStatsWorker

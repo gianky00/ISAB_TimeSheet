@@ -3,16 +3,16 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import DettagliOdAPage
-from src.bots.portale_fornitori.dettagli_oda.playwright_page import DettagliOdABot
-from src.bots.portale_fornitori.prenota_bp.playwright_page import PrenotaBPBot
-from src.bots.portale_fornitori.scarico_ts.playwright_bot import ScaricoTSBot
-from src.bots.portale_fornitori.timbrature.pages.timbrature_page import TimbraturePage
-from src.bots.portale_fornitori.timbrature.playwright_page import TimbratureBot
-from src.bots.safework.pdl.playwright_bot import SafeWorkPDLBot
-from src.bots.safework.pdl.playwright_search_bot import SafeWorkPDLPlaywrightSearchBot
-from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
-from src.bots.safework.programmazione.playwright_bot import ProgrammazionePDLBot
+from src.infrastructure.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import DettagliOdAPage
+from src.infrastructure.bots.portale_fornitori.dettagli_oda.playwright_page import DettagliOdABot
+from src.infrastructure.bots.portale_fornitori.prenota_bp.playwright_page import PrenotaBPBot
+from src.infrastructure.bots.portale_fornitori.scarico_ts.playwright_bot import ScaricoTSBot
+from src.infrastructure.bots.portale_fornitori.timbrature.pages.timbrature_page import TimbraturePage
+from src.infrastructure.bots.portale_fornitori.timbrature.playwright_page import TimbratureBot
+from src.infrastructure.bots.safework.pdl.playwright_bot import SafeWorkPDLBot
+from src.infrastructure.bots.safework.pdl.playwright_search_bot import SafeWorkPDLPlaywrightSearchBot
+from src.infrastructure.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
+from src.infrastructure.bots.safework.programmazione.playwright_bot import ProgrammazionePDLBot
 
 
 @pytest.fixture

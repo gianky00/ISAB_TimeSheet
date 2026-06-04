@@ -1,4 +1,4 @@
-from src.utils.validators import InputValidator
+from src.infrastructure.utils.validators import InputValidator
 
 
 class TestValidatorsExtended:

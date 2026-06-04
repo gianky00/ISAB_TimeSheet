@@ -3,10 +3,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import PropertyMock, patch
 
-from src.core.contabilita_manager import ContabilitaManager
-from src.core.data_synchronizer import DataSynchronizer
-from src.core.database import db_manager
-from src.core.database.manager import DatabaseManager
+from src.application.services.contabilita_manager import ContabilitaManager
+from src.application.services.data_synchronizer import DataSynchronizer
+from src.application.services.database import db_manager
+from src.application.services.database.manager import DatabaseManager
 
 
 class TestSyncFlowHardened(unittest.TestCase):
@@ -35,7 +35,7 @@ class TestSyncFlowHardened(unittest.TestCase):
         for p in self.patchers:
             p.stop()
         if self.test_db.exists():
-            with patch("src.core.database.manager.db_manager.get_connection"):  # Evita lock
+            with patch("src.application.services.database.manager.db_manager.get_connection"):  # Evita lock
                 with contextlib.suppress(Exception):
                     self.test_db.unlink()
 
@@ -118,7 +118,7 @@ class TestSyncFlowHardened(unittest.TestCase):
 
         # Il synchronizer dovrebbe aver aggiunto 1 riga (quella nuova per MAT-100)
         # Nota: a seconda della logica di sync_certificati_campione, potrebbe aggiungere tutto lo storico o fare upsert
-        # Leggendo src/core/data_synchronizer.py (che non ho letto interamente ma deduco),
+        # Leggendo src/application/services/data_synchronizer.py (che non ho letto interamente ma deduco),
         # solitamente aggiunge se non esiste o aggiorna se la chiave primaria (matricola+certificato?) combacia.
 
         final_data = ContabilitaManager.get_certificati_campione_data()

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.logging.viewer import LogQuery, LogViewer
+from src.application.services.logging.viewer import LogQuery, LogViewer
 
 
 class TestLogViewer:
@@ -81,7 +81,7 @@ class TestLogViewer:
         with pytest.raises(ValueError, match="Unknown log_type"):
             viewer.query("invalid")
 
-    @patch("src.core.logging.viewer.LogViewer.query")
+    @patch("src.application.services.logging.viewer.LogViewer.query")
     def test_get_level_stats(self, mock_query, log_file):
         mock_exec = MagicMock()
         mock_exec.execute.return_value = [{"level": "INFO"}, {"level": "INFO"}, {"level": "ERROR"}]
@@ -92,7 +92,7 @@ class TestLogViewer:
         assert stats["INFO"] == 2
         assert stats["ERROR"] == 1
 
-    @patch("src.core.logging.viewer.LogViewer.query")
+    @patch("src.application.services.logging.viewer.LogViewer.query")
     def test_generate_health_report(self, mock_query):
         # Simula esecuzione bot riuscita e una fallita
         mock_exec = MagicMock()

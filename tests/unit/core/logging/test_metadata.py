@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.logging.metadata import MetadataEnricher, enrich_entry, get_enricher
+from src.application.services.logging.metadata import MetadataEnricher, enrich_entry, get_enricher
 
 
 class TestMetadataEnricher:
@@ -13,7 +13,7 @@ class TestMetadataEnricher:
         MetadataEnricher._instance = None
         MetadataEnricher._cache = None
         # Remove unused global declaration
-        import src.core.logging.metadata as md
+        import src.application.services.logging.metadata as md
 
         md._enricher = None
 
@@ -40,8 +40,8 @@ class TestMetadataEnricher:
         assert "platform" in static
         assert "user" in static
 
-    @patch("src.core.logging.metadata.socket.gethostname", side_effect=Exception("Net Error"))
-    @patch("src.core.logging.metadata.os.getlogin", side_effect=Exception("User Error"))
+    @patch("src.application.services.logging.metadata.socket.gethostname", side_effect=Exception("Net Error"))
+    @patch("src.application.services.logging.metadata.os.getlogin", side_effect=Exception("User Error"))
     def test_build_static_metadata_errors(self, mock_getlogin, mock_hostname):
         with patch.dict(os.environ, {"USERNAME": "test_user"}):
             enricher = MetadataEnricher()
@@ -62,7 +62,7 @@ class TestMetadataEnricher:
         with patch.dict(os.environ, {"SYNCROJOB_ENV": "test"}):
             assert enricher._detect_environment() == "test"
 
-    @patch("src.core.logging.metadata.sys")
+    @patch("src.application.services.logging.metadata.sys")
     def test_detect_environment_frozen(self, mock_sys):
         # Simula assenza env vars
         with patch.dict(os.environ, clear=True):
@@ -81,7 +81,7 @@ class TestMetadataEnricher:
         assert "parent_process_id" in dynamic
         assert "working_directory" in dynamic
 
-    @patch("src.core.logging.metadata.Path.cwd", side_effect=Exception("CWD Error"))
+    @patch("src.application.services.logging.metadata.Path.cwd", side_effect=Exception("CWD Error"))
     def test_get_dynamic_metadata_error(self, mock_cwd):
         enricher = MetadataEnricher()
         dynamic = enricher.get_dynamic_metadata()

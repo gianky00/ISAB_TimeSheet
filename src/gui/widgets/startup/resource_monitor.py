@@ -14,7 +14,7 @@ from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
-from src.utils.system_telemetry import FILETIME, get_current_process_ram_mb
+from src.infrastructure.utils.system_telemetry import FILETIME, get_current_process_ram_mb
 
 
 class ResourceMonitor(QWidget):

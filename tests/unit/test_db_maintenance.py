@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.database.maintenance_worker import DatabaseMaintenanceWorker
+from src.application.services.database.maintenance_worker import DatabaseMaintenanceWorker
 
 
 class TestMaintenanceWorker:
@@ -18,7 +18,7 @@ class TestMaintenanceWorker:
         self.log_dir.mkdir()
 
         # Patching path constants
-        with patch("src.core.database.maintenance_worker.LOGS_DIR", self.log_dir):
+        with patch("src.application.services.database.maintenance_worker.LOGS_DIR", self.log_dir):
             yield
 
     def test_optimize_db(self, tmp_path):
@@ -29,7 +29,7 @@ class TestMaintenanceWorker:
 
         worker = DatabaseMaintenanceWorker()
         # Mock connection manager
-        with patch("src.core.database.db_manager.get_write_connection") as mock_conn:
+        with patch("src.application.services.database.db_manager.get_write_connection") as mock_conn:
             mock_c = mock_conn.return_value.__enter__.return_value
             worker._optimize_db(db_path)
 
@@ -55,8 +55,8 @@ class TestMaintenanceWorker:
         assert not old_log.exists()
         assert new_log.exists()
 
-    @patch("src.core.database.maintenance_worker.DatabaseMaintenanceWorker._optimize_db")
-    @patch("src.core.database.maintenance_worker.DatabaseMaintenanceWorker._clean_logs")
+    @patch("src.application.services.database.maintenance_worker.DatabaseMaintenanceWorker._optimize_db")
+    @patch("src.application.services.database.maintenance_worker.DatabaseMaintenanceWorker._clean_logs")
     def test_run_flow(self, mock_clean, mock_opt):
         db1 = self.db_dir / "db1.db"
         db1.touch()

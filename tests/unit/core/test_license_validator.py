@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 from cryptography.fernet import Fernet
 
-from src.core.license_validator import (
+from src.application.services.license_validator import (
     LicenseStatus,
     _calculate_sha256,
     _check_and_migrate_local_license,
@@ -31,8 +31,8 @@ class TestLicenseValidator:
         self.test_key = Fernet.generate_key()
         self.cipher = Fernet(self.test_key)
 
-        with patch("src.core.license_validator.get_data_path", return_value=str(self.data_dir)):
-            with patch("src.core.secrets_manager.SecretsManager.get_license_key", return_value=self.test_key):
+        with patch("src.application.services.license_validator.get_data_path", return_value=str(self.data_dir)):
+            with patch("src.application.services.secrets_manager.SecretsManager.get_license_key", return_value=self.test_key):
                 yield
 
     def _create_valid_license(self, hwid="HWID_TEST", expiry="01/01/2050"):
@@ -63,8 +63,8 @@ class TestLicenseValidator:
             assert self.config_path.exists()
             assert self.manifest_path.exists()
 
-    @patch("src.core.license_validator.get_hardware_id", return_value="HWID_TEST")
-    @patch("src.core.license_validator.get_trusted_time")
+    @patch("src.application.services.license_validator.get_hardware_id", return_value="HWID_TEST")
+    @patch("src.application.services.license_validator.get_trusted_time")
     def test_get_detailed_license_status_valid(self, mock_time, mock_hwid):
         mock_time.return_value = (datetime.now(UTC), True)
         self._create_valid_license()
@@ -77,8 +77,8 @@ class TestLicenseValidator:
         status, _msg = get_detailed_license_status()
         assert status == LicenseStatus.MISSING
 
-    @patch("src.core.license_validator.get_hardware_id", return_value="HWID_TEST")
-    @patch("src.core.license_validator.get_trusted_time")
+    @patch("src.application.services.license_validator.get_hardware_id", return_value="HWID_TEST")
+    @patch("src.application.services.license_validator.get_trusted_time")
     def test_get_detailed_license_status_expired(self, mock_time, mock_hwid):
         # Data nel passato
         past_date = datetime.now(UTC) - timedelta(days=10)
@@ -90,8 +90,8 @@ class TestLicenseValidator:
         status, _msg = get_detailed_license_status()
         assert status == LicenseStatus.EXPIRED
 
-    @patch("src.core.license_validator.get_hardware_id", return_value="HWID_DIFFERENT")
-    @patch("src.core.license_validator.get_trusted_time")
+    @patch("src.application.services.license_validator.get_hardware_id", return_value="HWID_DIFFERENT")
+    @patch("src.application.services.license_validator.get_trusted_time")
     def test_get_detailed_license_status_hwid_mismatch(self, mock_time, mock_hwid):
         mock_time.return_value = (datetime.now(UTC), True)
         self._create_valid_license(hwid="HWID_EXPECTED")
@@ -100,7 +100,7 @@ class TestLicenseValidator:
         assert status == LicenseStatus.INVALID
         assert "Hardware ID" in msg
 
-    @patch("src.core.license_validator.get_hardware_id", return_value="HWID_TEST")
+    @patch("src.application.services.license_validator.get_hardware_id", return_value="HWID_TEST")
     def test_get_detailed_license_status_corrupted_hash(self, mock_hwid):
         self._create_valid_license()
         # Modifica il file config.dat senza aggiornare il manifest
@@ -111,7 +111,7 @@ class TestLicenseValidator:
         assert "Integrità" in msg
 
     def test_verify_license_wrapper(self):
-        with patch("src.core.license_validator.get_detailed_license_status") as mock_det:
+        with patch("src.application.services.license_validator.get_detailed_license_status") as mock_det:
             mock_det.return_value = (LicenseStatus.VALID, "OK")
             assert verify_license() == (True, "OK")
 

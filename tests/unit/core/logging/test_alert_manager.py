@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.logging.alert_manager import AlertManager, Anomaly
+from src.application.services.logging.alert_manager import AlertManager, Anomaly
 
 
 class TestAlertManager:
@@ -44,7 +44,7 @@ class TestAlertManager:
         assert self.manager._should_alert(anomaly) is False
 
         # Dopo cooldown -> True
-        with patch("src.core.logging.alert_manager.datetime") as mock_dt:
+        with patch("src.application.services.logging.alert_manager.datetime") as mock_dt:
             # Shift 31 minuti nel futuro
             future = datetime.now(UTC) + timedelta(minutes=31)
             mock_dt.now.return_value = future
@@ -71,7 +71,7 @@ class TestAlertManager:
         assert "Title" in args
         assert "⚠️" in args
 
-    @patch("src.core.logging.alert_manager.get_anomalies")
+    @patch("src.application.services.logging.alert_manager.get_anomalies")
     def test_check_and_alert(self, mock_get):
         a1 = Anomaly(type="t1", severity="high", message="m1")
         a2 = Anomaly(type="t2", severity="low", message="m2")  # Sotto soglia

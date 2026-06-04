@@ -2,7 +2,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from src.utils.parsing import parse_currency
+from src.infrastructure.utils.parsing import parse_currency
 
 
 def test_parse_currency_basics():

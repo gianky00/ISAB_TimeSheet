@@ -13,7 +13,7 @@ class TestDipendentiPanel:
             patch(
                 "src.gui.panels.dipendenti_manager_panel.employee_manager.get_all_employees", return_value=[]
             ),
-            patch("src.core.sync_tracker.SyncTracker.get_formatted_status", return_value="N/D"),
+            patch("src.application.services.sync_tracker.SyncTracker.get_formatted_status", return_value="N/D"),
             patch("src.gui.panels.dipendenti_manager_panel.AuditManager.instance"),
         ):
             p = DipendentiManagerPanel()
@@ -44,7 +44,7 @@ class TestDipendentiPanel:
                 "data_assunzione": "01/01/2021",
             },
         ]
-        with patch("src.core.employees.employee_manager.get_all_employees", return_value=mock_employees):
+        with patch("src.application.services.employees.employee_manager.get_all_employees", return_value=mock_employees):
             panel.refresh_data()
             assert panel.table.rowCount() == 2
             assert "2 Dipendenti" in panel.lbl_count.text()
@@ -68,7 +68,7 @@ class TestDipendentiPanel:
         assert not panel.table.isRowHidden(1)
 
     @patch("src.gui.panels.dipendenti_manager_panel.QFileDialog.getOpenFileName")
-    @patch("src.core.employees.employee_manager.import_from_csv")
+    @patch("src.application.services.employees.employee_manager.import_from_csv")
     def test_sync_from_csv(self, mock_import, mock_file, panel):
         mock_file.return_value = ("/fake/file.csv", "")
         mock_import.return_value = 5
@@ -81,7 +81,7 @@ class TestDipendentiPanel:
 
     @patch("src.gui.panels.dipendenti_manager_panel.EmployeeEditorDialog.exec")
     @patch("src.gui.panels.dipendenti_manager_panel.EmployeeEditorDialog.get_data")
-    @patch("src.core.employees.employee_manager.add_employee")
+    @patch("src.application.services.employees.employee_manager.add_employee")
     def test_add_employee_success(self, mock_add, mock_data, mock_exec, panel):
         mock_exec.return_value = QDialog.DialogCode.Accepted
         mock_data.return_value = {"badge": "B3"}
@@ -93,7 +93,7 @@ class TestDipendentiPanel:
     @patch("src.gui.panels.dipendenti_manager_panel.ConfirmationDialog.show_warning")
     @patch("src.gui.panels.dipendenti_manager_panel.EmployeeEditorDialog.exec")
     @patch("src.gui.panels.dipendenti_manager_panel.EmployeeEditorDialog.get_data")
-    @patch("src.core.employees.employee_manager.add_employee")
+    @patch("src.application.services.employees.employee_manager.add_employee")
     def test_add_employee_fail(self, mock_add, mock_data, mock_exec, mock_warn, panel):
         mock_exec.return_value = QDialog.DialogCode.Accepted
         mock_data.return_value = {"badge": "B3"}
@@ -105,7 +105,7 @@ class TestDipendentiPanel:
 
     @patch("src.gui.panels.dipendenti_manager_panel.EmployeeEditorDialog.exec")
     @patch("src.gui.panels.dipendenti_manager_panel.EmployeeEditorDialog.get_data")
-    @patch("src.core.employees.employee_manager.update_employee")
+    @patch("src.application.services.employees.employee_manager.update_employee")
     def test_edit_selected_success(self, mock_update, mock_data, mock_exec, panel):
         # Setup selection
         from PySide6.QtWidgets import QTableWidgetItem

@@ -1,4 +1,4 @@
-from src.core.config.migration import deep_update_paths, migrate_legacy_keys
+from src.application.services.config.migration import deep_update_paths, migrate_legacy_keys
 
 
 class TestConfigMigration:

@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> **Nota**: Per il contesto architetturale completo in formato machine-readable, vedi [`.ai-context.json`](./.ai-context.json).
+> **Nota**: Per il contesto architetturale completo in formato machine-readable, vedi [`.ai-context.json`](./docs/resources/.ai-context.json).
 
 ## Project Overview
 
@@ -14,10 +14,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Installazione dipendenze e venv
-poetry install
+uv sync
 
 # Attivazione venv
-poetry shell
+uv venv
 ```
 
 ### Testing
@@ -37,35 +37,35 @@ python -m tests.run_robust_test tests/unit/test_audit_manager_coverage.py
 
 ```bash
 # Linting + autofix
-poetry run ruff check --fix
+uv run ruff check --fix
 
 # Formattazione
-poetry run ruff format
+uv run ruff format
 
 # Type checking strict
-poetry run mypy --strict src/
+uv run mypy --strict src/
 
 # Docstring coverage >= 99%
-poetry run interrogate src/
+uv run interrogate src/
 
 # Complessità ciclomatica (max B)
-poetry run xenon src/ --max-absolute B --max-modules B --max-average A
+uv run xenon src/ --max-absolute B --max-modules B --max-average A
 
 # Coesione SRP / LCOM (script con filtri anti-falsi positivi)
-poetry run python scripts/check_cohesion.py
+uv run python devtools/maintenance/check_cohesion.py
 
 # Tutto in una volta
-poetry run pre-commit run --all-files
+uv run pre-commit run --all-files
 ```
 
 ### Building
 
 ```bash
 # Build standard (PyInstaller)
-python "admin/Crea Setup/build_dist.py"
+python "devtools/gui/Crea Setup/build_dist.py"
 
 # Build Nuitka (Standalone)
-python "admin/Crea Setup/build_dist.py" --use-nuitka
+python "devtools/gui/Crea Setup/build_dist.py" --use-nuitka
 ```
 
 ### Versioning
@@ -73,30 +73,34 @@ python "admin/Crea Setup/build_dist.py" --use-nuitka
 ```bash
 # MAI modificare manualmente version.py o pyproject.toml
 # Usa commitizen:
-poetry run cz bump
+uv run cz bump
 ```
 
 ### Generatori AI
 
 ```bash
 # Aggiorna .ai-context.json (eseguito automaticamente dal pre-commit)
-poetry run python tools/generate_ai_context.py
+uv run python devtools/cli/generate_ai_context.py
 
 # Aggiorna docs/schemas/config.schema.json
-poetry run python tools/generate_schemas.py
+uv run python devtools/cli/generate_schemas.py
 ```
 
 ## Architecture
 
-### Core Layout
+### Layered Layout
 
 ```
 src/
-├── core/          # Business logic, Services, Repositories — NESSUNA GUI
-├── gui/           # Widget, Panel, Dialog PySide6 — NESSUNA logica di business
-├── bots/          # Automazione Selenium/Playwright — NO import da src/gui/
-├── models/        # Modelli Pydantic e DTO di scambio dati
-└── utils/         # Utility pure (stateless) senza side-effect
+├── domain/         # Business logic pura, Modelli Pydantic — NESSUNA dipendenza esterna
+├── application/    # Services e Orchestration — Coordina domain e infrastructure
+│   └── services/   # Implementazioni concrete dei servizi core
+├── infrastructure/ # Implementazioni tecniche (Bot, DB, Utils, Network)
+│   ├── bots/       # Automazione Selenium/Playwright
+│   ├── database/   # Persistenza dati
+│   └── utils/      # Utility di sistema e helper
+├── gui/            # Widget, Panel, Dialog PySide6 — NESSUNA logica di business
+└── api/            # Interfacce verso l'esterno (Telegram Bridge)
 ```
 
 ### Entry Point
@@ -107,7 +111,7 @@ src/
 
 ```python
 # CORRETTO — usa sempre il Singleton pre-caricato
-from src.core.config.settings import settings
+from src.application.services.config.settings import settings
 value = settings.browser_headless
 
 # SBAGLIATO — non istanziare direttamente
@@ -117,7 +121,7 @@ s = SyncroJobSettings()  # NO!
 ### Formal Contracts (typing.Protocol)
 
 ```python
-# src/core/interfaces.py
+# src/application/services/interfaces.py
 class BotProtocol(Protocol):
     def run(self, *args, **kwargs) -> bool: ...
     def force_stop(self) -> None: ...
@@ -138,7 +142,7 @@ class DataImporterProtocol(Protocol):
 Tutti i bot ereditano da `BaseBot` o `SeleniumBaseBot` / `PlaywrightBaseBot`:
 
 ```
-src/bots/
+src/infrastructure/bots/
 ├── base/
 │   ├── base_bot.py              # Classe astratta base + macchina a stati
 │   ├── selenium_base_bot.py     # Specializzazione Selenium
@@ -216,10 +220,10 @@ class MyPanel(QWidget):
         data = self._service.get_data()  # OK
 ```
 
-## Exception Hierarchy
+### Exception Hierarchy
 
 ```
-SyncroJobError (src/core/exceptions.py)
+SyncroJobError (src/application/services/exceptions.py)
 ├── StartupError
 ├── LicenseError
 ├── DatabaseError
@@ -242,7 +246,7 @@ SyncroJobError (src/core/exceptions.py)
 | `scarico_ore.db` | Ore scaricate da DataEase (ERP) |
 | `audit_log.db` | Registro audit immutabile (SHA-256) |
 
-Tutti i DB risiedono in `%APPDATA%/SyncroJob/data/` (determinato da `src/core/paths.py`).
+Tutti i DB risiedono in `%APPDATA%/SyncroJob/data/` (determinato da `src/application/services/paths.py`).
 
 ## Localization
 

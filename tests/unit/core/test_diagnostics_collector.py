@@ -2,12 +2,12 @@
 
 from unittest.mock import MagicMock, patch
 
-from src.core.diagnostics.diagnostics_collector import DiagnosticsCollector
+from src.application.services.diagnostics.diagnostics_collector import DiagnosticsCollector
 
 
 def test_collect_system_info_basic() -> None:
     """Verifica che collect_system_info restituisca le informazioni di sistema base."""
-    with patch("src.core.diagnostics.diagnostics_collector.get_version", return_value="1.2.3"):
+    with patch("src.application.services.diagnostics.diagnostics_collector.get_version", return_value="1.2.3"):
         info = DiagnosticsCollector.collect_system_info()
 
         # Controlliamo la presenza delle chiavi fondamentali di sistema
@@ -65,7 +65,7 @@ def test_collect_system_info_psutil_metrics() -> None:
     mock_disk.percent = 50.0
 
     with (
-        patch("src.core.diagnostics.diagnostics_collector.PSUTIL_AVAILABLE", True),
+        patch("src.application.services.diagnostics.diagnostics_collector.PSUTIL_AVAILABLE", True),
         patch("psutil.virtual_memory", return_value=mock_mem),
         patch("psutil.cpu_count", return_value=8),
         patch("psutil.cpu_percent", return_value=12.5),
@@ -91,7 +91,7 @@ def test_collect_system_info_psutil_metrics() -> None:
 
 def test_collect_system_info_psutil_unavailable() -> None:
     """Verifica il comportamento del raccoglitore quando psutil non è disponibile."""
-    with patch("src.core.diagnostics.diagnostics_collector.PSUTIL_AVAILABLE", False):
+    with patch("src.application.services.diagnostics.diagnostics_collector.PSUTIL_AVAILABLE", False):
         info = DiagnosticsCollector.collect_system_info()
 
         assert info["memory"] == "psutil not installed"

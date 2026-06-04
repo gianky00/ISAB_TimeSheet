@@ -9,12 +9,12 @@ from __future__ import annotations
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QHBoxLayout, QWidget
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.components.activity_timeline import ActivityTimelineWidget
 from src.gui.design.spacing import Spacing
 from src.gui.widgets import TimelineWidget
 from src.gui.widgets.modern_button import ModernButton
-from src.utils.helpers import get_asset_path
+from src.infrastructure.utils.helpers import get_asset_path
 
 
 class BotControlComponent(QWidget):

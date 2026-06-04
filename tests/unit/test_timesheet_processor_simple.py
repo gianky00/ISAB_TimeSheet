@@ -1,12 +1,12 @@
 from unittest.mock import patch
 
-from src.core.timesheet_processor import TimesheetProcessor
+from src.application.services.timesheet_processor import TimesheetProcessor
 
 
 class TestTimesheetProcessorSimple:
     """Test suite per TimesheetProcessor (VBA Replacement)."""
 
-    @patch("src.core.timesheet_processor.TimesheetProcessingPipeline")
+    @patch("src.application.services.timesheet_processor.TimesheetProcessingPipeline")
     def test_process_file_logic(self, mock_pipeline_class, tmp_path):
         # Create a real file on disk
         file_path = tmp_path / "fake.xlsx"

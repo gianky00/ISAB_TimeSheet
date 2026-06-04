@@ -19,7 +19,7 @@ class TestAppStatusController:
     """Test suite per AppStatusController."""
 
     def test_rotate_account_success(self, mock_main_window, mocker):
-        mocker.patch("src.core.config_manager.switch_default_account", return_value=True)
+        mocker.patch("src.application.services.config_manager.switch_default_account", return_value=True)
         mock_toast = mocker.patch("src.gui.widgets.toast.ToastManager.instance")
 
         ctrl = AppStatusController(mock_main_window)
@@ -31,7 +31,7 @@ class TestAppStatusController:
         assert "isab" in mock_toast.return_value.show.call_args[0][0].lower()
 
     def test_rotate_account_failure(self, mock_main_window, mocker):
-        mocker.patch("src.core.config_manager.switch_default_account", return_value=False)
+        mocker.patch("src.application.services.config_manager.switch_default_account", return_value=False)
         mock_toast = mocker.patch("src.gui.widgets.toast.ToastManager.instance")
 
         ctrl = AppStatusController(mock_main_window)
@@ -41,8 +41,8 @@ class TestAppStatusController:
         assert mock_toast.return_value.show.call_args[0][1] == "warning"
 
     def test_switch_engine(self, mock_main_window, mocker):
-        mocker.patch("src.core.config_manager.get_config_value", return_value="selenium")
-        mock_set = mocker.patch("src.core.config_manager.set_config_value", return_value=True)
+        mocker.patch("src.application.services.config_manager.get_config_value", return_value="selenium")
+        mock_set = mocker.patch("src.application.services.config_manager.set_config_value", return_value=True)
         mock_toast = mocker.patch("src.gui.widgets.toast.ToastManager.instance")
 
         ctrl = AppStatusController(mock_main_window)
@@ -52,8 +52,8 @@ class TestAppStatusController:
         assert mock_toast.return_value.show.called
 
     def test_switch_headless(self, mock_main_window, mocker):
-        mocker.patch("src.core.config_manager.get_config_value", return_value=False)  # Visibile
-        mock_set = mocker.patch("src.core.config_manager.set_config_value", return_value=True)
+        mocker.patch("src.application.services.config_manager.get_config_value", return_value=False)  # Visibile
+        mock_set = mocker.patch("src.application.services.config_manager.set_config_value", return_value=True)
         mock_toast = mocker.patch("src.gui.widgets.toast.ToastManager.instance")
 
         ctrl = AppStatusController(mock_main_window)

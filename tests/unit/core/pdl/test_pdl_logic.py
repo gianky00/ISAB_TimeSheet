@@ -2,15 +2,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.pdl.pdl_controller import PDLController
-from src.core.pdl.pdl_dto import PdlRowDTO
-from src.core.pdl.pdl_service import PDLService
+from src.application.services.pdl.pdl_controller import PDLController
+from src.application.services.pdl.pdl_dto import PdlRowDTO
+from src.application.services.pdl.pdl_service import PDLService
 
 
 class TestPDLLogic:
     @pytest.fixture
     def mock_repo(self):
-        with patch("src.core.pdl.pdl_controller.PdlRepository") as mock:
+        with patch("src.application.services.pdl.pdl_controller.PdlRepository") as mock:
             yield mock.return_value
 
     @pytest.fixture
@@ -71,7 +71,7 @@ class TestPDLLogic:
         assert len(master[0]) == 7
         assert master[0][2] == "123"  # n_pdl è alla terza posizione nel master_list
 
-    @patch("src.core.pdl.pdl_service.PdlRepository")
+    @patch("src.application.services.pdl.pdl_service.PdlRepository")
     def test_service_save_programming(self, mock_repo_class):
         mock_repo = mock_repo_class.return_value
         service = PDLService(repo=mock_repo)
@@ -96,9 +96,9 @@ class TestPDLLogic:
         assert records[0].lun_tcl is True
         assert records[0].mar_tcl is False
 
-    @patch("src.core.pdl.pdl_service.PdlRepository")
-    @patch("src.core.pdl.pdl_service.config_manager.load_config")
-    @patch("src.core.pdl.pdl_service.Path.exists")
+    @patch("src.application.services.pdl.pdl_service.PdlRepository")
+    @patch("src.application.services.pdl.pdl_service.config_manager.load_config")
+    @patch("src.application.services.pdl.pdl_service.Path.exists")
     def test_service_get_interventions_missing_db(self, mock_exists, mock_config, mock_repo_class):
         mock_exists.return_value = False
         mock_config.return_value = {"activity_db_path": "/non/existent.db"}

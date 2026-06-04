@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.database.backup_manager import DatabaseBackupManager
+from src.application.services.database.backup_manager import DatabaseBackupManager
 
 
 class TestBackupManager:
@@ -16,7 +16,7 @@ class TestBackupManager:
         self.backup_dir = self.db_dir / "backups"
 
         # Patching constants in the module
-        with patch("src.core.database.backup_manager.DB_DIR", self.db_dir):
+        with patch("src.application.services.database.backup_manager.DB_DIR", self.db_dir):
             DatabaseBackupManager.BACKUP_DIR = self.backup_dir
             yield
 
@@ -24,7 +24,7 @@ class TestBackupManager:
         # Nessun file .db in db_dir
         assert DatabaseBackupManager.execute_backup() is False
 
-    @patch("src.core.audit_manager.AuditManager.instance")
+    @patch("src.application.services.audit_manager.AuditManager.instance")
     def test_execute_backup_success(self, mock_audit, tmp_path):
         # Crea un DB fittizio
         db1 = self.db_dir / "test.db"

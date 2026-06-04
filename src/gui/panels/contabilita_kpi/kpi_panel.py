@@ -21,12 +21,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Business, Icons
-from src.core.contabilita_manager import ContabilitaManager
+from src.application.services.constants import Business, Icons
+from src.application.services.contabilita_manager import ContabilitaManager
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import FilterComboBox
 from src.gui.workers.kpi_worker import KPIWorker
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 from .cards_row import KPICardsRow
 from .charts import ChartContainer, KPIChartsManager

@@ -7,8 +7,8 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 # Aggiungi root al path
 sys.path.insert(0, os.getcwd())
 
-from src.core import version
-from src.core.app_updater import check_for_updates
+from src.application.services import version
+from src.application.services.app_updater import check_for_updates
 
 
 def debug_test():
@@ -21,16 +21,16 @@ def debug_test():
     # Mocking version
     version.__version__ = "1.0.0"
 
-    with patch("src.core.updater.gui.get_web_update_info") as mock_web:
-        with patch("src.core.updater.gui.get_network_update_info") as mock_net:
-            with patch("src.core.updater.gui.QMessageBox") as mock_msg:
+    with patch("src.application.services.updater.gui.get_web_update_info") as mock_web:
+        with patch("src.application.services.updater.gui.get_network_update_info") as mock_net:
+            with patch("src.application.services.updater.gui.QMessageBox") as mock_msg:
                 mock_web.return_value = {"version": "1.1.0", "url": "http://download.url"}
                 mock_net.return_value = None
                 mock_msg.question.return_value = QMessageBox.StandardButton.Yes
                 mock_msg.StandardButton = QMessageBox.StandardButton
 
                 # Mock HEAD request
-                with patch("src.core.updater.gui.requests.head") as mock_head:
+                with patch("src.application.services.updater.gui.requests.head") as mock_head:
                     mock_resp = MagicMock()
                     mock_resp.headers = {"content-length": "1000000"}
                     mock_head.return_value = mock_resp

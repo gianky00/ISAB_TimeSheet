@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.bots.safework.pdl.bot import SafeWorkPDLBot
+from src.infrastructure.bots.safework.pdl.bot import SafeWorkPDLBot
 
 
 class TestSafeWorkPDLIntegration:
@@ -10,10 +10,10 @@ class TestSafeWorkPDLIntegration:
     def mock_license(self, mocker):
         # Mock globale per evitare InvalidToken in integrazione
         mocker.patch(
-            "src.core.initialization.license_verifier.LicenseVerifier.verify_license", return_value=True
+            "src.application.services.initialization.license_verifier.LicenseVerifier.verify_license", return_value=True
         )
         mocker.patch(
-            "src.bots.base.execution_guard.ExecutionGuard.check_environment", return_value=(True, "")
+            "src.infrastructure.bots.base.execution_guard.ExecutionGuard.check_environment", return_value=(True, "")
         )
 
     def test_full_pdl_flow_simulation(self, mocker):

@@ -5,7 +5,7 @@ Definisce le palette colori, i gradienti e le icone per i diversi livelli di not
 
 from typing import Any
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.styles import COLORS
 
 # Stili per livello di notifica

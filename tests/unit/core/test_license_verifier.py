@@ -2,15 +2,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.exceptions import LicenseError
-from src.core.initialization.license_verifier import LicenseVerifier
-from src.core.license_validator import LicenseStatus
+from src.application.services.exceptions import LicenseError
+from src.application.services.initialization.license_verifier import LicenseVerifier
+from src.application.services.license_validator import LicenseStatus
 
 
 class TestLicenseVerifier:
-    @patch("src.core.initialization.license_verifier.get_detailed_license_status")
-    @patch("src.core.initialization.license_verifier.get_hardware_id")
-    @patch("src.core.initialization.license_verifier.run_update")
+    @patch("src.application.services.initialization.license_verifier.get_detailed_license_status")
+    @patch("src.application.services.initialization.license_verifier.get_hardware_id")
+    @patch("src.application.services.initialization.license_verifier.run_update")
     def test_verify_license_valid(self, mock_update, mock_hwid, mock_status):
         mock_status.return_value = (LicenseStatus.VALID, "OK")
         step = MagicMock()
@@ -20,9 +20,9 @@ class TestLicenseVerifier:
         assert mock_status.called
         assert step.call_count == 3
 
-    @patch("src.core.initialization.license_verifier.get_detailed_license_status")
-    @patch("src.core.initialization.license_verifier.get_hardware_id")
-    @patch("src.core.initialization.license_verifier.run_update")
+    @patch("src.application.services.initialization.license_verifier.get_detailed_license_status")
+    @patch("src.application.services.initialization.license_verifier.get_hardware_id")
+    @patch("src.application.services.initialization.license_verifier.run_update")
     def test_verify_license_invalid(self, mock_update, mock_hwid, mock_status):
         mock_status.return_value = (LicenseStatus.INVALID, "Wrong HWID")
         step = MagicMock()
@@ -30,8 +30,8 @@ class TestLicenseVerifier:
         with pytest.raises(LicenseError, match="Licenza non valida: Wrong HWID"):
             LicenseVerifier.verify_license(step)
 
-    @patch("src.core.initialization.license_verifier.run_update")
-    @patch("src.core.initialization.license_verifier.LicenseVerifier._trigger_revocation_shutdown")
+    @patch("src.application.services.initialization.license_verifier.run_update")
+    @patch("src.application.services.initialization.license_verifier.LicenseVerifier._trigger_revocation_shutdown")
     def test_async_handshake_revocation(self, mock_shutdown, mock_update):
         # Testiamo la logica interna di _async_handshake
         mock_update.side_effect = Exception("REVOCATA")
@@ -45,7 +45,7 @@ class TestLicenseVerifier:
         with patch("threading.Thread") as mock_thread:
             # Eseguiamo verify_license per far spawnare il thread
             with patch(
-                "src.core.initialization.license_verifier.get_detailed_license_status",
+                "src.application.services.initialization.license_verifier.get_detailed_license_status",
                 return_value=(LicenseStatus.VALID, ""),
             ):
                 LicenseVerifier.verify_license(MagicMock())
@@ -56,14 +56,14 @@ class TestLicenseVerifier:
 
             assert mock_shutdown.called
 
-    @patch("src.core.initialization.license_verifier.run_update")
-    @patch("src.core.initialization.license_verifier.logger")
+    @patch("src.application.services.initialization.license_verifier.run_update")
+    @patch("src.application.services.initialization.license_verifier.logger")
     def test_async_handshake_generic_error(self, mock_logger, mock_update):
         mock_update.side_effect = Exception("Network timeout")
 
         with patch("threading.Thread") as mock_thread:
             with patch(
-                "src.core.initialization.license_verifier.get_detailed_license_status",
+                "src.application.services.initialization.license_verifier.get_detailed_license_status",
                 return_value=(LicenseStatus.VALID, ""),
             ):
                 LicenseVerifier.verify_license(MagicMock())
@@ -73,9 +73,9 @@ class TestLicenseVerifier:
 
             assert mock_logger.warning.called
 
-    @patch("src.core.initialization.license_verifier.QApplication")
-    @patch("src.core.initialization.license_verifier.QTimer")
-    @patch("src.core.initialization.license_verifier.sys.exit")
+    @patch("src.application.services.initialization.license_verifier.QApplication")
+    @patch("src.application.services.initialization.license_verifier.QTimer")
+    @patch("src.application.services.initialization.license_verifier.sys.exit")
     def test_trigger_revocation_shutdown(self, mock_exit, mock_timer, mock_qapp):
         mock_qapp.instance.return_value = MagicMock()
 

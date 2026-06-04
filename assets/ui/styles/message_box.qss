@@ -1,0 +1,59 @@
+/* assets/ui/styles/message_box.qss */
+
+QMessageBox {
+    background-color: #ffffff;
+    color: #212529;
+}
+
+QMessageBox QLabel {
+    color: #212529;
+    font-size: 14px;
+}
+
+QMessageBox QPushButton {
+    min-width: 100px;
+    min-height: 32px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    background-color: #f8f9fa;
+    color: #212529;
+    border: 1px solid #ced4da;
+}
+
+QMessageBox QPushButton:hover {
+    background-color: #e9ecef;
+    border: 1px solid #adb5bd;
+}
+
+QMessageBox QPushButton:pressed {
+    background-color: #dee2e6;
+}
+
+/* Evidenzia il pulsante predefinito o di conferma */
+QMessageBox QPushButton:default,
+QMessageBox QPushButton#qt_msgbox_buttonbox_yes,
+QMessageBox QPushButton[text="Installa Ora"],
+QMessageBox QPushButton[text="Scarica ora"] {
+    background-color: #0d6efd;
+    color: #ffffff;
+    border: 1px solid #0d6efd;
+}
+
+QMessageBox QPushButton:default:hover,
+QMessageBox QPushButton#qt_msgbox_buttonbox_yes:hover {
+    background-color: #0b5ed7;
+    border: 1px solid #0a58ca;
+}
+
+/* Pulsanti stile secondario */
+QMessageBox QPushButton#qt_msgbox_buttonbox_no {
+    background-color: #6c757d;
+    color: #ffffff;
+    border: 1px solid #6c757d;
+}
+
+QMessageBox QPushButton#qt_msgbox_buttonbox_no:hover {
+    background-color: #5c636a;
+}

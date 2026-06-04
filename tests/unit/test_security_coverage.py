@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.utils.security import PasswordManager
+from src.infrastructure.utils.security import PasswordManager
 
 
 class TestSecurity:
@@ -13,7 +13,7 @@ class TestSecurity:
 
         # Patch paths via the module-level SECURITY_DIR
         fake_key_dir = tmp_path / "security"
-        mocker.patch("src.utils.security.SECURITY_DIR", fake_key_dir)
+        mocker.patch("src.infrastructure.utils.security.SECURITY_DIR", fake_key_dir)
 
         return PasswordManager()
 

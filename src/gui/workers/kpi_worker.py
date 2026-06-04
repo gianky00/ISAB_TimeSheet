@@ -9,8 +9,8 @@ import logging
 import pandas as pd
 from PySide6.QtCore import QThread, Signal
 
-from src.core.contabilita_manager import ContabilitaManager
-from src.core.stats.stats_service import StatsService
+from src.application.services.contabilita_manager import ContabilitaManager
+from src.application.services.stats.stats_service import StatsService
 
 logger = logging.getLogger(__name__)
 

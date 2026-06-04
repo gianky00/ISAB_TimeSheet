@@ -1,4 +1,4 @@
-from src.utils.parsing import parse_currency
+from src.infrastructure.utils.parsing import parse_currency
 
 
 def test_parse_currency_basics():
@@ -32,7 +32,7 @@ def test_parse_currency_negatives():
 
 
 def test_is_value_negative_extended():
-    from src.utils.parsing import _is_value_negative
+    from src.infrastructure.utils.parsing import _is_value_negative
 
     assert _is_value_negative("100") is False
     assert _is_value_negative("-100") is True

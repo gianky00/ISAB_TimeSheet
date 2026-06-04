@@ -2,7 +2,7 @@
 Aims for 100% coverage and functional parity.
 """
 
-from src.utils.parsing import parse_currency
+from src.infrastructure.utils.parsing import parse_currency
 
 
 def test_parse_currency_basics():

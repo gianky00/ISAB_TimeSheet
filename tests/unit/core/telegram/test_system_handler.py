@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.telegram.bridge.system_handler import TelegramSystemHandler
+from src.api.telegram.bridge.system_handler import TelegramSystemHandler
 
 
 class TestTelegramSystemHandler:
@@ -48,9 +48,9 @@ class TestTelegramSystemHandler:
         handler.handle_screenshot(mode="desktop")
         mock_service.send_photo_sync.assert_called_with(b"DSK_SC", caption="   **Screenshot: Desktop**")
 
-    @patch("src.core.telegram.bridge.system_handler.ContabilitaManager.search_extended")
-    @patch("src.core.telegram.bridge.system_handler.generate_pdf_from_html")
-    @patch("src.core.telegram.bridge.system_handler.config_manager.CONFIG_DIR", Path("/config"))
+    @patch("src.api.telegram.bridge.system_handler.ContabilitaManager.search_extended")
+    @patch("src.api.telegram.bridge.system_handler.generate_pdf_from_html")
+    @patch("src.api.telegram.bridge.system_handler.config_manager.CONFIG_DIR", Path("/config"))
     def test_handle_search_db_pdf_strumentale(self, mock_gen, mock_search, handler, mock_service, fs):
         fs.create_dir("/config/temp")
         mock_search.return_value = {
@@ -65,6 +65,8 @@ class TestTelegramSystemHandler:
         mock_gen.side_effect = side_effect_gen
 
         handler.handle_search_db_pdf({"db": "strumentale", "query": "test"})
+
+        print(f"DEBUG MOCK SERVICE: {mock_service.send_message_sync.call_args_list}")
 
         assert mock_search.called
         assert mock_gen.called

@@ -1,11 +1,11 @@
 from pathlib import Path
 from unittest.mock import patch
 
-from src.core.timesheet_processor import TimesheetProcessor
+from src.application.services.timesheet_processor import TimesheetProcessor
 
 
 class TestTimesheetProcessor:
-    @patch("src.core.timesheet_processor.TimesheetProcessingPipeline")
+    @patch("src.application.services.timesheet_processor.TimesheetProcessingPipeline")
     def test_process_and_move_success(self, mock_pipeline_class, fs):
         src = Path("/src/test.xlsx")
         dest_dir = Path("/dest")
@@ -25,7 +25,7 @@ class TestTimesheetProcessor:
         assert "processed.xlsx" in msg
         assert not src.exists()  # Verifichiamo il cleanup
 
-    @patch("src.core.timesheet_processor.TimesheetProcessingPipeline")
+    @patch("src.application.services.timesheet_processor.TimesheetProcessingPipeline")
     def test_process_and_move_empty(self, mock_pipeline_class, fs):
         src = Path("/src/empty.xlsx")
         fs.create_file(str(src))

@@ -4,9 +4,9 @@ import pytest
 from telegram import CallbackQuery, Chat, Message, Update, User
 from telegram.ext import ContextTypes
 
-from src.core.telegram.handlers.callbacks import handle_button
-from src.core.telegram.handlers.commands import cmd_start, cmd_status, cmd_stop
-from src.core.telegram.handlers.messages import (
+from src.api.telegram.handlers.callbacks import handle_button
+from src.api.telegram.handlers.commands import cmd_start, cmd_status, cmd_stop
+from src.api.telegram.handlers.messages import (
     handle_photo,
     handle_text_input,
     handle_voice,
@@ -59,8 +59,8 @@ class TestTelegramHandlers:
         return service
 
     # --- Commands ---
-    @patch("src.core.config_manager.load_config")
-    @patch("src.core.config_manager.set_config_value")
+    @patch("src.application.services.config_manager.load_config")
+    @patch("src.application.services.config_manager.set_config_value")
     @pytest.mark.asyncio
     async def test_cmd_start_new_pairing(self, mock_set, mock_load, mock_service, mock_update, mock_context):
         # Case: No saved ID, pairing code matches
@@ -75,7 +75,7 @@ class TestTelegramHandlers:
         mock_update.message.reply_text.assert_called()
         assert mock_service.connected_chat_id == "67890"  # effective_chat.id
 
-    @patch("src.core.config_manager.load_config")
+    @patch("src.application.services.config_manager.load_config")
     @pytest.mark.asyncio
     async def test_cmd_start_already_paired(self, mock_load, mock_service, mock_update, mock_context):
         # Case: Saved ID matches

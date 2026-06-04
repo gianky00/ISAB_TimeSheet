@@ -17,11 +17,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons, UbicazioneStrumenti
+from src.application.services.constants import Icons, UbicazioneStrumenti
 from src.gui.styles import COLORS
 from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
 from src.gui.widgets.core_widgets import StandardTreeWidget
-from src.utils.helpers import get_asset_path
+from src.infrastructure.utils.helpers import get_asset_path
 
 
 class UbicazioneDelegate(QStyledItemDelegate):

@@ -5,7 +5,7 @@ Worker per operazioni asincrone nel modulo Consuntivi.
 
 from PySide6.QtCore import QThread, Signal
 
-from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
+from src.application.services.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
 
 
 class ProgWorker(QThread):

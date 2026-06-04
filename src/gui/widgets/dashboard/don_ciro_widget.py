@@ -25,8 +25,8 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import QWidget
 
-from src.core.mascot.don_ciro_engine import DonCiroEngine, DonState, WeatherCond
-from src.core.weather_service import WeatherService
+from src.application.services.mascot.don_ciro_engine import DonCiroEngine, DonState, WeatherCond
+from src.application.services.weather_service import WeatherService
 from src.gui.widgets.dashboard.don_ciro_renderer import DonCiroRenderer
 
 logger = logging.getLogger(__name__)

@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from src.utils.printing import (
+from src.infrastructure.utils.printing import (
     _run_powershell,
     _set_printer_duplex_powershell,
     get_installed_printers,
@@ -9,13 +9,13 @@ from src.utils.printing import (
 
 
 class TestPrinting:
-    @patch("src.utils.printing.win32print.EnumPrinters")
+    @patch("src.infrastructure.utils.printing.win32print.EnumPrinters")
     def test_get_installed_printers(self, mock_enum):
         mock_enum.return_value = [(None, None, "Printer1", None), (None, None, "Printer2", None)]
         res = get_installed_printers()
         assert res == ["Printer1", "Printer2"]
 
-    @patch("src.utils.printing.subprocess.run")
+    @patch("src.infrastructure.utils.printing.subprocess.run")
     def test_run_powershell_success(self, mock_run):
         mock_res = MagicMock()
         mock_res.returncode = 0
@@ -25,17 +25,17 @@ class TestPrinting:
         assert res is not None
         assert mock_run.called
 
-    @patch("src.utils.printing._run_powershell")
+    @patch("src.infrastructure.utils.printing._run_powershell")
     def test_set_printer_duplex_powershell(self, mock_ps):
         res = _set_printer_duplex_powershell("PRN1", "OneSided")
         assert res is True
         assert "Set-PrintConfiguration" in mock_ps.call_args[0][0]
 
-    @patch("src.utils.printing.win32print.GetDefaultPrinter", return_value="DEFAULT")
-    @patch("src.utils.printing.fitz.open")
-    @patch("src.utils.printing.win32ui")
-    @patch("src.utils.printing.Image")
-    @patch("src.utils.printing.ImageWin")
+    @patch("src.infrastructure.utils.printing.win32print.GetDefaultPrinter", return_value="DEFAULT")
+    @patch("src.infrastructure.utils.printing.fitz.open")
+    @patch("src.infrastructure.utils.printing.win32ui")
+    @patch("src.infrastructure.utils.printing.Image")
+    @patch("src.infrastructure.utils.printing.ImageWin")
     def test_print_pdf_success(self, mock_imgwin, mock_img, mock_ui, mock_fitz, mock_def, fs):  # noqa: PLR0913
         fs.create_file("test.pdf", contents=b"pdf")
 
@@ -56,11 +56,11 @@ class TestPrinting:
         assert mock_hdc.StartDoc.called
         assert mock_hdc.EndDoc.called
 
-    @patch("src.utils.printing.os.startfile")
+    @patch("src.infrastructure.utils.printing.os.startfile")
     def test_print_pdf_fallback(self, mock_start, fs):
         fs.create_file("test.pdf")
         # Forziamo errore nel blocco principale simulando win32ui None
-        with patch("src.utils.printing.win32ui", None):
+        with patch("src.infrastructure.utils.printing.win32ui", None):
             res = print_pdf("test.pdf", "PRN1")
             assert res is True
             assert mock_start.called

@@ -1,8 +1,8 @@
 from unittest.mock import MagicMock, patch
 
-from src.bots.base.playwright_base_page import PlaywrightBasePage
-from src.bots.base.playwright_login_page import PlaywrightLoginPage
-from src.bots.portale_fornitori.common.locators import LoginLocators
+from src.infrastructure.bots.base.playwright_base_page import PlaywrightBasePage
+from src.infrastructure.bots.base.playwright_login_page import PlaywrightLoginPage
+from src.infrastructure.bots.portale_fornitori.common.locators import LoginLocators
 
 
 class TestPlaywrightBasePage:

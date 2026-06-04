@@ -12,7 +12,7 @@ from src.gui.panels.prenota_bp import PrenotaBPPanel
 @pytest.fixture
 def mock_config(mocker):
     """Fixture per mockare config_manager."""
-    mock = mocker.patch("src.core.config_manager.load_config")
+    mock = mocker.patch("src.application.services.config_manager.load_config")
     # Configurazione con fornitore atteso
     mock.return_value = {
         "fornitori": ["COEMI", "ALTRO"],
@@ -25,7 +25,7 @@ def mock_config(mocker):
 @pytest.fixture
 def mock_service(mocker):
     """Fixture per mockare PrenotaBPService."""
-    mock_cls = mocker.patch("src.core.bots.services.PrenotaBPService")
+    mock_cls = mocker.patch("src.application.services.bots.services.PrenotaBPService")
     instance = MagicMock()
 
     instance.load_config.return_value = {

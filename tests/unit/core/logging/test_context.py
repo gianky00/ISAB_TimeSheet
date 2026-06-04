@@ -1,6 +1,6 @@
 import threading
 
-from src.core.logging.context import (
+from src.application.services.logging.context import (
     generate_span_id,
     generate_trace_id,
     get_context,

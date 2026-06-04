@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.notification_item import NotificationItem
 from src.gui.widgets.status_indicator import StatusIndicator
-from src.utils.secure_logger import get_secure_logger
+from src.infrastructure.utils.secure_logger import get_secure_logger
 
 
 class TestSmallComponentsBoost:

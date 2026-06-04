@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from src.core import config_manager
+from src.application.services import config_manager
 from src.gui.widgets.toast import ToastManager
 
 if TYPE_CHECKING:

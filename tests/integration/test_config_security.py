@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from src.core import config_manager
+from src.application.services import config_manager
 
 
 class TestConfigSecurity:
@@ -13,19 +13,19 @@ class TestConfigSecurity:
         config_file = env_dir / "config.json"
 
         config_manager._config_cache = None
-        mocker.patch("src.core.config_manager.CONFIG_DIR", env_dir)
-        mocker.patch("src.core.config_manager.CONFIG_FILE", config_file)
-        mocker.patch("src.core.paths.CONFIG_DIR", env_dir)
-        mocker.patch("src.core.paths.CONFIG_FILE", config_file)
+        mocker.patch("src.application.services.config_manager.CONFIG_DIR", env_dir)
+        mocker.patch("src.application.services.config_manager.CONFIG_FILE", config_file)
+        mocker.patch("src.application.services.paths.CONFIG_DIR", env_dir)
+        mocker.patch("src.application.services.paths.CONFIG_FILE", config_file)
 
         original_save = config_manager.save_config
 
         def sync_save(cfg, async_save=True):
             return original_save(cfg, async_save=False)
 
-        mocker.patch("src.core.config_manager.save_config", side_effect=sync_save)
+        mocker.patch("src.application.services.config_manager.save_config", side_effect=sync_save)
 
-        mocker.patch("src.core.config.account_manager.SecretsManager.is_available", return_value=False)
+        mocker.patch("src.application.services.config.account_manager.SecretsManager.is_available", return_value=False)
 
         yield config_file
         config_manager._config_cache = None

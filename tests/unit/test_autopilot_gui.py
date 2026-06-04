@@ -4,7 +4,7 @@ import pytest
 from PySide6.QtCore import QTime
 from PySide6.QtWidgets import QLabel
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.widgets.autopilot.config_cards import (
     AutopilotConfigCard,
     AutopilotConfigCardWithInterval,
@@ -20,7 +20,7 @@ class TestAutopilotGUI:
 
     @pytest.fixture
     def autopilot(self):
-        with patch("src.core.config_manager.load_config", return_value={}):
+        with patch("src.application.services.config_manager.load_config", return_value={}):
             widget = AutopilotWidget()
             # Mostra il widget per rendere isVisible() affidabile
             widget.show()
@@ -58,7 +58,7 @@ class TestAutopilotGUI:
             "ricerca_pdl_autopilot_time": "14:00",
         }
 
-        with patch("src.core.config_manager.load_config", return_value=mock_config):
+        with patch("src.application.services.config_manager.load_config", return_value=mock_config):
             autopilot.refresh_events()
 
             # Conta le card nel view_layout
@@ -97,8 +97,8 @@ class TestAutopilotGUI:
     def test_config_card_save(self, qtbot):
         """Testa il salvataggio dei dati quando la card viene modificata."""
         with (
-            patch("src.core.config_manager.load_config", return_value={}),
-            patch("src.core.config_manager.set_config_value") as mock_set,
+            patch("src.application.services.config_manager.load_config", return_value={}),
+            patch("src.application.services.config_manager.set_config_value") as mock_set,
         ):
             card = AutopilotConfigCard("test_bot", "Test Bot", Icons.CLOCK, "#ff0000")
             qtbot.addWidget(card)
@@ -115,8 +115,8 @@ class TestAutopilotGUI:
     def test_config_card_interval_save(self, qtbot):
         """Testa il salvataggio per la card con intervallo."""
         with (
-            patch("src.core.config_manager.load_config", return_value={}),
-            patch("src.core.config_manager.set_config_value") as mock_set,
+            patch("src.application.services.config_manager.load_config", return_value={}),
+            patch("src.application.services.config_manager.set_config_value") as mock_set,
         ):
             card = AutopilotConfigCardWithInterval("report", "Report", Icons.SEND, "#00ff00")
             qtbot.addWidget(card)
@@ -126,7 +126,7 @@ class TestAutopilotGUI:
 
     def test_empty_events_placeholder(self, autopilot):
         """Verifica il placeholder quando non ci sono bot programmati."""
-        with patch("src.core.config_manager.load_config", return_value={}):
+        with patch("src.application.services.config_manager.load_config", return_value={}):
             autopilot.refresh_events()
 
             # Cerca la label di placeholder

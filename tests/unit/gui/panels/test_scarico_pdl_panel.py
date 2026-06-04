@@ -11,14 +11,14 @@ mock_bot_class.STEPS = ["start", "search"]
 mock_bot_class.get_columns.return_value = [{"name": "numero_pdl", "label": "Numero PDL", "type": "text"}]
 mock_bot_module.SafeWorkPDLBot = mock_bot_class
 
-with patch.dict("sys.modules", {"src.bots.safework.pdl.bot": mock_bot_module}):
+with patch.dict("sys.modules", {"src.infrastructure.bots.safework.pdl.bot": mock_bot_module}):
     from src.gui.panels.scarico_pdl import ScaricoPDLPanel
 
 
 @pytest.fixture
 def mock_service(mocker):
     """Fixture per mockare ScaricoPDLService."""
-    mock_cls = mocker.patch("src.core.bots.services.ScaricoPDLService")
+    mock_cls = mocker.patch("src.application.services.bots.services.ScaricoPDLService")
     instance = MagicMock()
     instance.load_config.return_value = {
         "stampa": False,
@@ -37,9 +37,9 @@ def panel(qtbot, mock_service, mocker):
     mocker.patch("PySide6.QtCore.QTimer.singleShot")
     mocker.patch("src.gui.styles.ui_effects.UIEffectsManager.apply_shadow")
     mocker.patch("src.gui.styles.ui_effects.UIEffectsManager.animate_fade")
-    mocker.patch("src.utils.printing.get_installed_printers", return_value=["Printer1", "Printer2"])
+    mocker.patch("src.infrastructure.utils.printing.get_installed_printers", return_value=["Printer1", "Printer2"])
     mocker.patch(
-        "src.core.config_manager.get_default_account", return_value={"username": "u", "password": "p"}
+        "src.application.services.config_manager.get_default_account", return_value={"username": "u", "password": "p"}
     )
 
     p = ScaricoPDLPanel()

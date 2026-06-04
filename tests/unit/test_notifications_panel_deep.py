@@ -9,7 +9,7 @@ from src.gui.widgets.audit_log_widget import AuditLogWidget
 
 class TestNotificationsPanelDeep:
     def test_refresh_notifications_with_data(self, qapp, qtbot):
-        with patch("src.core.notification_manager.NotificationManager.instance") as mock_manager:
+        with patch("src.application.services.notification_manager.NotificationManager.instance") as mock_manager:
             mock_inst = mock_manager.return_value
             data = [
                 {
@@ -55,7 +55,7 @@ class TestNotificationsPanelDeep:
         assert panel.toolbar._filter_chips["error"].isChecked() is True
 
     def test_filter_errors_logic(self, qapp, qtbot):
-        with patch("src.core.notification_manager.NotificationManager.instance") as mock_manager:
+        with patch("src.application.services.notification_manager.NotificationManager.instance") as mock_manager:
             mock_inst = mock_manager.return_value
             now_iso = datetime.now().isoformat()
             data = [
@@ -105,7 +105,7 @@ class TestNotificationsPanelDeep:
             qtbot.waitUntil(check_found, timeout=3000)
 
     def test_clear_notifications_confirm(self, qapp, qtbot):
-        with patch("src.core.notification_manager.NotificationManager.instance") as mock_manager:
+        with patch("src.application.services.notification_manager.NotificationManager.instance") as mock_manager:
             mock_inst = mock_manager.return_value
             panel = NotificationsPanel()
             qtbot.addWidget(panel)

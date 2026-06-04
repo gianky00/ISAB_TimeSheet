@@ -11,13 +11,13 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPropertyAnimation, QSize, Qt
 from PySide6.QtWidgets import QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.widgets.core_widgets import (
     SearchInput,
 )
 from src.gui.widgets.sidebar_widget import SidebarWidget
 from src.gui.widgets.update_banner import UpdateBanner
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 if TYPE_CHECKING:
     from PySide6.QtGui import QEnterEvent

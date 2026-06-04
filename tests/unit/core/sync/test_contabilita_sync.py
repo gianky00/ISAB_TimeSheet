@@ -2,12 +2,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.sync.contabilita_sync import ContabilitaSyncEngine
+from src.application.services.sync.contabilita_sync import ContabilitaSyncEngine
 
 
 class TestContabilitaSyncEngine:
-    @patch("src.core.sync.contabilita_sync.sqlite3.connect")
-    @patch("src.core.sync.contabilita_sync.ContabilitaSyncEngine.sync_partitioned_data")
+    @patch("src.application.services.sync.contabilita_sync.sqlite3.connect")
+    @patch("src.application.services.sync.contabilita_sync.ContabilitaSyncEngine.sync_partitioned_data")
     def test_sync_giornaliere_success(self, mock_sync, mock_connect):
         mock_conn = MagicMock()
         mock_connect.return_value.__enter__.return_value = mock_conn
@@ -22,8 +22,8 @@ class TestContabilitaSyncEngine:
         assert mock_conn.commit.called
         assert mock_sync.called
 
-    @patch("src.core.sync.contabilita_sync.sqlite3.connect")
-    @patch("src.core.sync.contabilita_sync.ContabilitaSyncEngine.sync_partitioned_data")
+    @patch("src.application.services.sync.contabilita_sync.sqlite3.connect")
+    @patch("src.application.services.sync.contabilita_sync.ContabilitaSyncEngine.sync_partitioned_data")
     def test_sync_giornaliere_failure(self, mock_sync, mock_connect):
         mock_conn = MagicMock()
         mock_connect.return_value.__enter__.return_value = mock_conn
@@ -34,8 +34,8 @@ class TestContabilitaSyncEngine:
 
         assert mock_conn.rollback.called
 
-    @patch("src.core.sync.contabilita_sync.sqlite3.connect")
-    @patch("src.core.sync.contabilita_sync.ContabilitaSyncEngine.sync_partitioned_data")
+    @patch("src.application.services.sync.contabilita_sync.sqlite3.connect")
+    @patch("src.application.services.sync.contabilita_sync.ContabilitaSyncEngine.sync_partitioned_data")
     def test_sync_contabilita_success(self, mock_sync, mock_connect):
         mock_conn = MagicMock()
         mock_connect.return_value.__enter__.return_value = mock_conn
@@ -49,8 +49,8 @@ class TestContabilitaSyncEngine:
         assert removed == 1
         assert mock_conn.commit.called
 
-    @patch("src.core.sync.contabilita_sync.sqlite3.connect")
-    @patch("src.core.sync.contabilita_sync.ContabilitaSyncEngine.sync_partitioned_data")
+    @patch("src.application.services.sync.contabilita_sync.sqlite3.connect")
+    @patch("src.application.services.sync.contabilita_sync.ContabilitaSyncEngine.sync_partitioned_data")
     def test_sync_contabilita_failure(self, mock_sync, mock_connect):
         mock_conn = MagicMock()
         mock_connect.return_value.__enter__.return_value = mock_conn

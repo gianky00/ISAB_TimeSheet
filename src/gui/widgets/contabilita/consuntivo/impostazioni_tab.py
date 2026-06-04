@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core import config_manager
+from src.application.services import config_manager
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import SecondaryButton, StandardListWidget
 

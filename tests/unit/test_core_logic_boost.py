@@ -1,15 +1,15 @@
 import sqlite3
 
-from src.core.audit_manager import AuditManager
-from src.core.contabilita.stats_service import ContabilitaStats
+from src.application.services.audit_manager import AuditManager
+from src.application.services.contabilita.stats_service import ContabilitaStats
 
 
 class TestCoreLogicRefined:
     def test_audit_manager_singleton_and_init(self, tmp_path, mocker):
         db_path = tmp_path / "logic_audit.db"
-        mocker.patch("src.core.database.db_manager.DB_AUDIT", db_path)
-        mocker.patch("src.core.audit.database.db_manager.DB_AUDIT", db_path)
-        mocker.patch("src.core.audit.manager.AuditSignals.instance")
+        mocker.patch("src.application.services.database.db_manager.DB_AUDIT", db_path)
+        mocker.patch("src.application.services.audit.database.db_manager.DB_AUDIT", db_path)
+        mocker.patch("src.application.services.audit.manager.AuditSignals.instance")
 
         AuditManager._instance = None
         am = AuditManager()
@@ -29,10 +29,10 @@ class TestCoreLogicRefined:
             ("01/01", "GEN", "P1", "1.000,00", "Att1", "T1", "O1", "COMPLETATO", "T", "10,0", "R", "N")
         ]
         mocker.patch(
-            "src.core.contabilita.stats_service.ContabilitaQueries.get_data_by_year", return_value=mock_data
+            "src.application.services.contabilita.stats_service.ContabilitaQueries.get_data_by_year", return_value=mock_data
         )
         mocker.patch(
-            "src.core.contabilita.stats_service.ContabilitaQueries.get_giornaliere_by_year", return_value=[]
+            "src.application.services.contabilita.stats_service.ContabilitaQueries.get_giornaliere_by_year", return_value=[]
         )
 
         stats = ContabilitaStats.get_year_stats(db_path, 2024)

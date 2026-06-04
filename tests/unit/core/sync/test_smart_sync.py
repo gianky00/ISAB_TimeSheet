@@ -4,8 +4,8 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.sync.base import SyncTarget
-from src.core.sync.smart_sync import SmartSyncEngine
+from src.application.services.sync.base import SyncTarget
+from src.application.services.sync.smart_sync import SmartSyncEngine
 
 
 class TestSmartSyncEngine:
@@ -25,7 +25,7 @@ class TestSmartSyncEngine:
         )
         return conn
 
-    @patch("src.core.sync.smart_sync.db_manager.get_connection")
+    @patch("src.application.services.sync.smart_sync.db_manager.get_connection")
     def test_sync_upsert_smart_no_conflict_cols(self, mock_conn, target):
         conn = self._setup_db(":memory:")
         mock_conn.return_value.__enter__.return_value = conn
@@ -45,7 +45,7 @@ class TestSmartSyncEngine:
         res = cursor.fetchall()
         assert res == [("1", "X"), ("2", "B"), ("3", "Y")]
 
-    @patch("src.core.sync.smart_sync.db_manager.get_connection")
+    @patch("src.application.services.sync.smart_sync.db_manager.get_connection")
     def test_sync_upsert_smart_with_conflict_and_mirror(self, mock_conn, target):
         conn = self._setup_db(":memory:")
         mock_conn.return_value.__enter__.return_value = conn
@@ -65,14 +65,14 @@ class TestSmartSyncEngine:
         res = cursor.fetchall()
         assert res == [("1", "X")]
 
-    @patch("src.core.sync.smart_sync.db_manager.get_connection")
+    @patch("src.application.services.sync.smart_sync.db_manager.get_connection")
     def test_sync_upsert_smart_empty(self, mock_conn, target):
         added, deleted = SmartSyncEngine.sync_upsert_smart(target, [])
         assert added == 0
         assert deleted == 0
         assert not mock_conn.called
 
-    @patch("src.core.sync.smart_sync.db_manager.get_connection")
+    @patch("src.application.services.sync.smart_sync.db_manager.get_connection")
     def test_sync_full_replace_with_metadata(self, mock_conn, target):
         conn = self._setup_db(":memory:")
         mock_conn.return_value.__enter__.return_value = conn

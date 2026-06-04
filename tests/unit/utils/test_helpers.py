@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from src.utils.helpers import (
+from src.infrastructure.utils.helpers import (
     cleanup_bot_processes,
     cleanup_chrome_temp_files,
     clear_icon_cache,
@@ -27,13 +27,13 @@ class TestHelpers:
         # ResourceManager è mockato internamente se necessario,
         # ma qui verifichiamo che la delega funzioni
         mocker.patch(
-            "src.utils.resource_manager.ResourceManager.get_asset_path", return_value="/mock/path/test.txt"
+            "src.infrastructure.utils.resource_manager.ResourceManager.get_asset_path", return_value="/mock/path/test.txt"
         )
         path = get_asset_path("test.txt")
         assert "/mock/path/test.txt" in path
 
     def test_get_app_icon_path(self, mocker, fs):
-        mocker.patch("src.utils.helpers.get_asset_path", return_value="/assets/app.ico")
+        mocker.patch("src.infrastructure.utils.helpers.get_asset_path", return_value="/assets/app.ico")
         fs.create_file("/assets/app.ico")
         assert get_app_icon_path() == "/assets/app.ico"
 
@@ -72,7 +72,7 @@ class TestHelpers:
     def test_os_checks(self):
         assert isinstance(is_windows(), bool)
 
-    @patch("src.utils.helpers.os.startfile", create=True)
+    @patch("src.infrastructure.utils.helpers.os.startfile", create=True)
     def test_safe_open(self, mock_start, fs, mocker):
         fs.create_file("test.txt")
         # File esistente, estensione sicura
@@ -86,7 +86,7 @@ class TestHelpers:
         assert safe_open("danger.exe") is False
 
         # Test non-windows platforms (mocking sys.platform)
-        mocker.patch("src.utils.helpers.is_windows", return_value=False)
+        mocker.patch("src.infrastructure.utils.helpers.is_windows", return_value=False)
         mocker.patch("sys.platform", "darwin")
         mock_run = mocker.patch("subprocess.run")
         assert safe_open("test.txt") is True
@@ -127,7 +127,7 @@ class TestHelpers:
         # Test non-existent dir
         assert cleanup_chrome_temp_files("/missing_dir") == []
 
-    @patch("src.utils.helpers.psutil.process_iter")
+    @patch("src.infrastructure.utils.helpers.psutil.process_iter")
     def test_cleanup_bot_processes(self, mock_iter, fs):
         # Setup mock processes
         mock_proc1 = MagicMock()
@@ -146,10 +146,10 @@ class TestHelpers:
         mock_iter.return_value = [mock_proc1, mock_proc2, mock_proc3, mock_proc4]
 
         # Patch CONFIG_DIR to avoid side effects on real files
-        with patch("src.utils.helpers.CONFIG_DIR", Path("/config")):
-            fs.create_dir("/config/data/chrome_profile/Default")
-            fs.create_file("/config/data/chrome_profile/SingletonLock")
-            fs.create_file("/config/data/chrome_profile/Default/Lock")
+        with patch("src.infrastructure.utils.helpers.CONFIG_DIR", Path("/config")):
+            fs.create_dir("/devtools/config/data/chrome_profile/Default")
+            fs.create_file("/devtools/config/data/chrome_profile/SingletonLock")
+            fs.create_file("/devtools/config/data/chrome_profile/Default/Lock")
 
             cleanup_bot_processes()
 
@@ -158,8 +158,8 @@ class TestHelpers:
             assert mock_proc4.kill.called
             assert not mock_proc3.kill.called
             # Verifica rimozione lock
-            assert not Path("/config/data/chrome_profile/SingletonLock").exists()
-            assert not Path("/config/data/chrome_profile/Default/Lock").exists()
+            assert not Path("/devtools/config/data/chrome_profile/SingletonLock").exists()
+            assert not Path("/devtools/config/data/chrome_profile/Default/Lock").exists()
 
     def test_icon_utils(self, fs):
         # Mocking for pytest environment (it returns QIcon(path) directly)

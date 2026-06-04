@@ -22,7 +22,7 @@ class TestServiceControllerCoverage:
         return ServiceController(mw, mock_tg, mock_sentinel)
 
     @patch("src.gui.controllers.service_controller.QTimer.singleShot")
-    @patch("src.core.notification_manager.NotificationManager.instance")
+    @patch("src.application.services.notification_manager.NotificationManager.instance")
     def test_start_all(self, mock_nm_cls, mock_ss, controller, mw):
         mock_nm = mock_nm_cls.return_value
         controller.start_all()
@@ -51,7 +51,7 @@ class TestServiceControllerCoverage:
         mock_panel = MagicMock()
         mw.timbrature_bot_panel = mock_panel
         with (
-            patch("src.core.config_manager.load_config") as mock_load,
+            patch("src.application.services.config_manager.load_config") as mock_load,
             patch.object(controller, "_schedule_bot_with_parallelism") as mock_sched,
         ):
             mock_load.return_value = {
@@ -74,7 +74,7 @@ class TestServiceControllerCoverage:
             "report_email_autopilot_interval_days": 7,
         }
 
-        with patch("src.core.config_manager.load_config", return_value=test_config):
+        with patch("src.application.services.config_manager.load_config", return_value=test_config):
             controller._check_scheduled_tasks()
 
         assert controller.running_bots_by_site["portale_fornitori"] == []

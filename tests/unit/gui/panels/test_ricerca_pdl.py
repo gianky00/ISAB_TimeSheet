@@ -11,8 +11,8 @@ def panel(qtbot, mocker):
     # Mock BotExecutionController per evitare thread reali
     mocker.patch("src.gui.controllers.bot_execution_controller.BotExecutionController")
     # Mock config_manager per evitare scritture su disco
-    mocker.patch("src.core.config_manager.load_config", return_value={})
-    mocker.patch("src.core.config_manager.set_config_value")
+    mocker.patch("src.application.services.config_manager.load_config", return_value={})
+    mocker.patch("src.application.services.config_manager.set_config_value")
 
     p = RicercaPDLPanel()
     qtbot.addWidget(p)
@@ -33,7 +33,7 @@ class TestRicercaPDLPanel:
     def test_load_saved_data(self, qtbot, mocker):
         """Verifica il caricamento dei dati dalla configurazione."""
         mock_config = {"pdl_search_exclude_closed": False, "pdl_search_site": "ISAB Nord"}
-        mocker.patch("src.core.config_manager.load_config", return_value=mock_config)
+        mocker.patch("src.application.services.config_manager.load_config", return_value=mock_config)
         mocker.patch("src.gui.controllers.bot_execution_controller.BotExecutionController")
 
         p = RicercaPDLPanel()
@@ -47,7 +47,7 @@ class TestRicercaPDLPanel:
 
     def test_save_data(self, panel, mocker):
         """Verifica il salvataggio dei dati in configurazione."""
-        mock_set = mocker.patch("src.core.config_manager.set_config_value")
+        mock_set = mocker.patch("src.application.services.config_manager.set_config_value")
 
         panel.exclude_closed_check.setChecked(True)
         panel.site_combo.setCurrentText("ISAB Sud")
@@ -66,7 +66,7 @@ class TestRicercaPDLPanel:
                 {"username": "user2", "password": "p2", "type": "Esecutore", "default": True},
             ]
         }
-        mocker.patch("src.core.config_manager.load_config", return_value=mock_config)
+        mocker.patch("src.application.services.config_manager.load_config", return_value=mock_config)
 
         user, pwd, acc_type = panel.get_safework_credentials()
         assert user == "user2"
@@ -78,9 +78,9 @@ class TestRicercaPDLPanel:
         mock_config = {
             "safework_accounts": [{"username": "exec_user", "password": "p_exec", "type": "Esecutore"}]
         }
-        mocker.patch("src.core.config_manager.load_config", return_value=mock_config)
+        mocker.patch("src.application.services.config_manager.load_config", return_value=mock_config)
         mocker.patch("src.gui.dialogs.confirmation_dialog.ConfirmationDialog.confirm", return_value=True)
-        mocker.patch("src.core.config_manager.set_default_account", return_value=True)
+        mocker.patch("src.application.services.config_manager.set_default_account", return_value=True)
 
         u, _p, t, ok = panel._validate_and_switch_account("isab_user", "p_isab", "ISAB")
 

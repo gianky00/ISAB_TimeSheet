@@ -13,7 +13,7 @@ from PySide6.QtCore import QObject, Signal
 from src.gui.controllers.bot_worker import BotWorker
 
 if TYPE_CHECKING:
-    from src.bots.base.base_bot import BaseBot
+    from src.infrastructure.bots.base.base_bot import BaseBot
 
 
 class BotExecutionController(QObject):

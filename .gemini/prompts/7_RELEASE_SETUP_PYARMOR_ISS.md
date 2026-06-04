@@ -105,7 +105,7 @@ FASE 4 — INNO SETUP: INSTALLER (.EXE)
 
 Crea un file `.iss` (Inno Setup Script) per generare l'installer finale.
 
-1. CREA `installer_config.iss` nella root (o admin/):
+1. CREA `installer_config.iss` nella root (o devtools/gui/):
 ```iss
 [Setup]
 AppId={{GENERA-UN-GUID-UNICO}}

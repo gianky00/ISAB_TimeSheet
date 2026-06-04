@@ -28,8 +28,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.bug_reporter import BugReporter
-from src.core.paths import get_version
+from src.application.services.bug_reporter import BugReporter
+from src.application.services.paths import get_version
 from src.gui.design.colors import get_palette
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import (
@@ -376,7 +376,7 @@ class BugReportDialog(QDialog):
             final_zip_path = self._rename_zip_with_ticket(attachment_path, metadata["full_ticket_file"])
             cliente_info = self._get_client_info()
 
-            from src.core.constants import Emails
+            from src.application.services.constants import Emails
 
             mail = outlook.CreateItem(0)
             mail.To = Emails.SUPPORT
@@ -415,7 +415,7 @@ class BugReportDialog(QDialog):
         """Recupera le informazioni sul cliente dalla licenza."""
         cliente_info = "ISAB S.R.L."
         with suppress(Exception):
-            from src.core.license_validator import get_license_info
+            from src.application.services.license_validator import get_license_info
 
             lic_data = get_license_info()
             if lic_data and "Cliente" in lic_data:

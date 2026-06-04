@@ -16,12 +16,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.bots.base.selenium_bot_config import SeleniumBotConfig
-from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
-from src.core import config_manager
-from src.core.constants import Icons
-from src.core.pdl.pdl_service import PDLService
-from src.core.pdl.period_manager import PDLPeriodManager
+from src.application.services import config_manager
+from src.application.services.constants import Icons
+from src.application.services.pdl.pdl_service import PDLService
+from src.application.services.pdl.period_manager import PDLPeriodManager
 from src.gui.controllers.bot_worker import BotWorker
 from src.gui.styles import COLORS
 from src.gui.widgets import MultiSelectFilter, TimelineWidget
@@ -30,7 +28,9 @@ from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.pdl.status_bar_widget import ProgrammingStatusWidget
 from src.gui.widgets.pdl.table_widget import ProgrammazioneTableWidget
 from src.gui.widgets.toast import ToastManager
-from src.utils.helpers import get_asset_path
+from src.infrastructure.bots.base.selenium_bot_config import SeleniumBotConfig
+from src.infrastructure.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
+from src.infrastructure.utils.helpers import get_asset_path
 
 logger = logging.getLogger(__name__)
 

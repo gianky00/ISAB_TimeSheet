@@ -2,14 +2,14 @@ from pathlib import Path
 
 import pytest
 
-from src.core.contabilita_queries import ContabilitaQueries
+from src.application.services.contabilita_queries import ContabilitaQueries
 
 
 class TestContabilitaQueriesCoverage:
     @pytest.fixture(autouse=True)
     def mock_repo(self, mocker):
         # Patch the class-level repository in ContabilitaQueries
-        return mocker.patch("src.core.contabilita_queries.ContabilitaQueries._repo")
+        return mocker.patch("src.application.services.contabilita_queries.ContabilitaQueries._repo")
 
     def test_get_available_years_logic(self, mock_repo):
         mock_repo.get_available_years.return_value = [2024, 2025]

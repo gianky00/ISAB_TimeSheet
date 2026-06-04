@@ -13,10 +13,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core import config_manager
-from src.core.constants import Icons
-from src.core.contabilita.scarico_ore.controller import ScaricoOreController
-from src.core.contabilita_manager import ContabilitaManager
+from src.application.services import config_manager
+from src.application.services.constants import Icons
+from src.application.services.contabilita.scarico_ore.controller import ScaricoOreController
+from src.application.services.contabilita_manager import ContabilitaManager
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.components.scarico_ore import ScaricoOreTableModel
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
@@ -24,7 +24,7 @@ from src.gui.panels.scarico_ore.widgets.filter_bar import ScaricoOreFilterBar
 from src.gui.panels.scarico_ore.widgets.table_view import ScaricoOreTableView
 from src.gui.styles import COLORS
 from src.gui.widgets import ShimmerSkeleton
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 
 class ScaricoOrePanel(QWidget):
@@ -149,7 +149,7 @@ class ScaricoOrePanel(QWidget):
 
     def _load_data(self) -> None:
         """Avvia il caricamento asincrono dei dati dal database o dalla cache locale."""
-        from src.core.database import db_manager
+        from src.application.services.database import db_manager
 
         if not db_manager.DB_CONTABILITA.exists():
             self.filters.status_label.setText("Database non trovato.")

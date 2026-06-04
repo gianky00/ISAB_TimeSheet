@@ -2,8 +2,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.core.employees import EmployeeManager
-from src.models import EmployeeRecord
+from src.application.services.employees import EmployeeManager
+from src.domain import EmployeeRecord
 
 
 @pytest.fixture

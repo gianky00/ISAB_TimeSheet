@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, patch
 
-from src.bots.base import StepStatus
-from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
+from src.infrastructure.bots.base import StepStatus
+from src.infrastructure.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
 
 
 class TestScaricaTSBot:
@@ -22,9 +22,9 @@ class TestScaricaTSBot:
         valid, _msg = bot.validate_data([{"numero_oda": "123"}])
         assert valid is True
 
-    @patch("src.bots.portale_fornitori.scarico_ts.bot.ScaricaTSBot._setup_timesheet_view")
-    @patch("src.bots.portale_fornitori.scarico_ts.bot.ScaricaTSBot._process_oda_rows")
-    @patch("src.bots.portale_fornitori.scarico_ts.bot.ScaricaTSBot._handle_vba_processing")
+    @patch("src.infrastructure.bots.portale_fornitori.scarico_ts.bot.ScaricaTSBot._setup_timesheet_view")
+    @patch("src.infrastructure.bots.portale_fornitori.scarico_ts.bot.ScaricaTSBot._process_oda_rows")
+    @patch("src.infrastructure.bots.portale_fornitori.scarico_ts.bot.ScaricaTSBot._handle_vba_processing")
     def test_run_success_flow(self, mock_vba, mock_process, mock_setup):
         bot = ScaricaTSBot(fornitore="COEMI", elabora_ts=True)
         bot.update_step = MagicMock()
@@ -43,7 +43,7 @@ class TestScaricaTSBot:
         bot.update_step.assert_any_call("login", StepStatus.COMPLETED)
         bot.update_step.assert_any_call("download", StepStatus.COMPLETED)
 
-    @patch("src.bots.portale_fornitori.scarico_ts.bot.ScaricaTSBot._setup_timesheet_view")
+    @patch("src.infrastructure.bots.portale_fornitori.scarico_ts.bot.ScaricaTSBot._setup_timesheet_view")
     def test_run_setup_fail(self, mock_setup):
         bot = ScaricaTSBot(fornitore="COEMI")
         mock_setup.return_value = False
@@ -74,7 +74,7 @@ class TestScaricaTSBot:
         assert dest.exists()
         assert not src.exists()
 
-    @patch("src.bots.portale_fornitori.scarico_ts.bot.TimesheetProcessor.process_and_move")
+    @patch("src.infrastructure.bots.portale_fornitori.scarico_ts.bot.TimesheetProcessor.process_and_move")
     def test_handle_vba_processing(self, mock_processor, tmp_path):
         bot = ScaricaTSBot()
         bot.update_step = MagicMock()

@@ -69,7 +69,7 @@ class ReportGenerator:
     @staticmethod
     def _fallback_browser(message: str, data: dict[str, Any]) -> None:
         """Gestisce l'apertura del report nel browser se Outlook fallisce."""
-        from src.core.dipendenti.report_service import ReportService
+        from src.application.services.dipendenti.report_service import ReportService
 
         try:
             body_html = ReportService.build_report_html(data)
@@ -81,7 +81,7 @@ class ReportGenerator:
 
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(tmp_path)))
 
-            from src.core.report_history import ReportHistory
+            from src.application.services.report_history import ReportHistory
 
             ReportHistory.save_report(data["warning_list"], data["expired_list"])
 

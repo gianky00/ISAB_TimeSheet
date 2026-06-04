@@ -1,10 +1,10 @@
-"""Comprehensive tests for src.utils package.
+"""Comprehensive tests for src.infrastructure.utils package.
 Covers: helpers, security, validators, parsing.
 """
 
 from datetime import datetime
 
-from src.utils import helpers
+from src.infrastructure.utils import helpers
 
 
 # --- HELPERS TESTS ---

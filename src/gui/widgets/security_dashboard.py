@@ -13,13 +13,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.audit_manager import AuditManager
-from src.core.constants import Icons
+from src.application.services.audit_manager import AuditManager
+from src.application.services.constants import Icons
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
 from src.gui.widgets.core_widgets import PrimaryButton
 from src.gui.workers.integrity_worker import IntegrityWorker
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 # Stile forzato per i tooltip in Light Mode
 TOOLTIP_CSS = """

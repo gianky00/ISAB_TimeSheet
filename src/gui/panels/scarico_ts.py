@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
-from src.core.constants import Icons
+from src.application.services.constants import Icons
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel
 from src.gui.widgets import BotParametersWidget, EditableDataTable
@@ -20,10 +20,10 @@ from src.gui.widgets.core_widgets import (
 )
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.safework.status_list import StatusListWidget
-from src.utils.helpers import get_asset_path
+from src.infrastructure.utils.helpers import get_asset_path
 
 if TYPE_CHECKING:
-    from src.bots.base.base_bot import BaseBot
+    from src.infrastructure.bots.base.base_bot import BaseBot
 
 
 class ScaricaTSPanel(BaseBotPanel):
@@ -56,7 +56,7 @@ class ScaricaTSPanel(BaseBotPanel):
 
         self._setup_content()
         # Forza inizializzazione timeline immediata per Scarico TS
-        from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
+        from src.infrastructure.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
 
         self.activity_timeline.set_steps(ScaricaTSBot.STEPS)
 
@@ -81,7 +81,7 @@ class ScaricaTSPanel(BaseBotPanel):
 
     def get_bot_class(self) -> type[BaseBot]:
         """Restituisce la classe ScaricaTSBot associata a questo pannello."""
-        from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
+        from src.infrastructure.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
 
         return ScaricaTSBot
 
@@ -203,7 +203,7 @@ class ScaricaTSPanel(BaseBotPanel):
         """Carica i dati salvati."""
         self._is_loading = True
         try:
-            from src.core.bots.services import ScaricoTSService
+            from src.application.services.bots.services import ScaricoTSService
 
             service = ScaricoTSService()
             cfg = service.load_config()
@@ -230,7 +230,7 @@ class ScaricaTSPanel(BaseBotPanel):
         if getattr(self, "_is_loading", False) or not hasattr(self, "params_widget"):
             return
 
-        from src.core.bots.services import ScaricoTSService
+        from src.application.services.bots.services import ScaricoTSService
 
         service = ScaricoTSService()
 
@@ -270,7 +270,7 @@ class ScaricaTSPanel(BaseBotPanel):
         if not params_override:
             self._save_data()
 
-        from src.core.bots.services import ScaricoTSService
+        from src.application.services.bots.services import ScaricoTSService
 
         service = ScaricoTSService()
 

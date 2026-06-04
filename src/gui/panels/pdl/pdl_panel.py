@@ -17,17 +17,17 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons
-from src.core.pdl.pdl_controller import PDLController
-from src.core.pdl.pdl_dto import PdlRowDTO
-from src.core.pdl.pdl_service import PDLService
-from src.core.sync_tracker import SyncTracker
+from src.application.services.constants import Icons
+from src.application.services.pdl.pdl_controller import PDLController
+from src.application.services.pdl.pdl_dto import PdlRowDTO
+from src.application.services.pdl.pdl_service import PDLService
+from src.application.services.sync_tracker import SyncTracker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.formatters import FastTableModel
 from src.gui.widgets import EmptyStateWidget
 from src.gui.workers.pdl_data_worker import PDLDataWorker
 from src.gui.workers.pdl_io_worker import PdlIOWorker
-from src.utils.helpers import safe_open
+from src.infrastructure.utils.helpers import safe_open
 
 from .pdl_detail_view import PDLDetailView
 from .pdl_filter_widget import PDLFilterWidget

@@ -1,0 +1,59 @@
+"""Passaggi di elaborazione per l'importazione dello storico OdA."""
+
+from collections.abc import Callable
+from typing import Any
+
+from src.application.services.data_synchronizer import DataSynchronizer
+from src.application.services.database import db_manager
+from src.application.services.importers.storico_oda import StoricoOdaImporter
+from src.application.services.processing.base import ProcessingStep
+
+
+class OdaExcelReadStep(ProcessingStep):
+    """Passaggio per la lettura dei dati OdA dal file Excel.
+
+    Inizializza il passaggio con i callback e l'importer specificato.
+    """
+
+    def __init__(
+        self, progress_callback: Callable[[int, int], None] | None = None, importer: Any = None
+    ) -> None:
+        self.progress_callback = progress_callback
+        self.importer = importer or StoricoOdaImporter
+
+    def execute(self, context: dict[str, Any]) -> None:
+        """Esegue la lettura del file Excel OdA."""
+        file_path = context.get("file_path")
+        if not file_path:
+            raise ValueError("file_path mancante nel contesto")
+
+        success, message, imported_rows = self.importer.import_storico_oda(file_path, self.progress_callback)
+
+        context["success"] = success
+        context["message"] = message
+        context["imported_rows"] = imported_rows
+
+
+class OdaDatabaseSyncStep(ProcessingStep):
+    """Passaggio per la sincronizzazione dei dati OdA con il database.
+
+    Inizializza il passaggio con il sincronizzatore specificato.
+    """
+
+    def __init__(self, synchronizer: Any = None) -> None:
+        self.synchronizer = synchronizer or DataSynchronizer
+
+    def execute(self, context: dict[str, Any]) -> None:
+        """Esegue la sincronizzazione degli OdA nel database."""
+        if not context.get("success"):
+            return
+
+        imported_rows = context.get("imported_rows", [])
+
+        total_added, total_removed = self.synchronizer.sync_storico_oda(
+            db_manager.DB_STORICO_ODA, imported_rows
+        )
+
+        context["total_added"] = total_added
+        context["total_removed"] = total_removed
+        context["success"] = True

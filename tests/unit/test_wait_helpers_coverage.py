@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.bots.base.wait_helpers import poll_for_file, poll_for_new_file
+from src.infrastructure.bots.base.wait_helpers import poll_for_file, poll_for_new_file
 
 
 class AutoIncrementalTime:

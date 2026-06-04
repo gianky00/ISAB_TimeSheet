@@ -1,6 +1,6 @@
 import re
 
-from src.core import version
+from src.application.services import version
 
 
 def test_version_format():

@@ -3,14 +3,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.utils.document_processor import DocumentProcessor
+from src.infrastructure.utils.document_processor import DocumentProcessor
 
 
 class TestDocumentProcessorCoverage:
     @pytest.fixture
     def mock_fitz(self, mocker):
         """Mock della libreria PyMuPDF."""
-        return mocker.patch("src.utils.document_processor.fitz")
+        return mocker.patch("src.infrastructure.utils.document_processor.fitz")
 
     def test_extract_text_success(self, mock_fitz):
         """Verifica estrazione testo da più pagine."""
@@ -55,7 +55,7 @@ class TestDocumentProcessorCoverage:
     def test_merge_pdfs_logic(self, mock_fitz, mocker):
         """Verifica la sequenza di unione dei file."""
         # Mock Path.exists() e Path.stat() per simulare file esistenti
-        mock_path = mocker.patch("src.utils.document_processor.Path", wraps=Path)
+        mock_path = mocker.patch("src.infrastructure.utils.document_processor.Path", wraps=Path)
         mock_instance = MagicMock()
         mock_instance.exists.return_value = True
         mock_stat = MagicMock()
@@ -87,6 +87,6 @@ class TestDocumentProcessorCoverage:
 
     def test_merge_pdfs_missing_fitz(self, mocker):
         """Verifica gestione errore se fitz non è installato."""
-        with patch("src.utils.document_processor.fitz", None):
+        with patch("src.infrastructure.utils.document_processor.fitz", None):
             success = DocumentProcessor.merge_pdfs(["f1.pdf"], "out.pdf")
             assert success is False

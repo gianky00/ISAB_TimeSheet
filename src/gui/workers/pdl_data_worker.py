@@ -9,7 +9,7 @@ from typing import Any
 
 from PySide6.QtCore import QThread, Signal
 
-from src.core.database import db_manager
+from src.application.services.database import db_manager
 
 logger = logging.getLogger(__name__)
 

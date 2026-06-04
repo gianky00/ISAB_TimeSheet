@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from src.core.stats_manager import StatsManager
+from src.application.services.stats_manager import StatsManager
 
 
 class TestStatsManager:
@@ -10,12 +10,12 @@ class TestStatsManager:
     def manager(self, tmp_path, mocker):
         # Mock config_manager to avoid real disk I/O
         self.mock_config = {"statistics": {}}
-        mocker.patch("src.core.config_manager.load_config", return_value=self.mock_config)
+        mocker.patch("src.application.services.config_manager.load_config", return_value=self.mock_config)
         mocker.patch(
-            "src.core.config_manager.set_config_value",
+            "src.application.services.config_manager.set_config_value",
             side_effect=lambda k, v: self.mock_config.update({k: v}),
         )
-        mocker.patch("src.core.config_manager.CONFIG_DIR", tmp_path)
+        mocker.patch("src.application.services.config_manager.CONFIG_DIR", tmp_path)
 
         # Reset singleton
         StatsManager._instance = None
@@ -47,9 +47,9 @@ class TestStatsManager:
 
         # Mock config without stats
         empty_config = {}
-        mocker.patch("src.core.config_manager.load_config", return_value=empty_config)
-        mocker.patch("src.core.config_manager.CONFIG_DIR", tmp_path)
-        mocker.patch("src.core.config_manager.set_config_value")
+        mocker.patch("src.application.services.config_manager.load_config", return_value=empty_config)
+        mocker.patch("src.application.services.config_manager.CONFIG_DIR", tmp_path)
+        mocker.patch("src.application.services.config_manager.set_config_value")
 
         StatsManager._instance = None
         manager = StatsManager()

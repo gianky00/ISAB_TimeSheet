@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.core.app_initializer import AppInitializer
+from src.application.services.app_initializer import AppInitializer
 
 
 class TestAppStartupSequence:
@@ -18,15 +18,15 @@ class TestAppStartupSequence:
     def mock_deps(self, mocker):
         return {
             "license": mocker.patch(
-                "src.core.initialization.license_verifier.LicenseVerifier.verify_license"
+                "src.application.services.initialization.license_verifier.LicenseVerifier.verify_license"
             ),
             "db": mocker.patch(
-                "src.core.initialization.migration_engine.DatabaseMigrationEngine.initialize_database"
+                "src.application.services.initialization.migration_engine.DatabaseMigrationEngine.initialize_database"
             ),
             "logging": mocker.patch.object(AppInitializer, "_setup_logging"),
-            "driver": mocker.patch("src.utils.resource_manager.ResourceManager.ensure_automation_driver"),
+            "driver": mocker.patch("src.infrastructure.utils.resource_manager.ResourceManager.ensure_automation_driver"),
             "preload": mocker.patch.object(AppInitializer, "_preload_heavy_modules"),
-            "bots": mocker.patch("src.core.app_initializer.get_available_bots", return_value=[]),
+            "bots": mocker.patch("src.application.services.app_initializer.get_available_bots", return_value=[]),
         }
 
     def test_initialize_core_idempotency(self, mock_deps):
@@ -43,7 +43,7 @@ class TestAppStartupSequence:
         """Verifica che errori critici vengano catturati e lo stato resettato."""
         mock_deps["db"].side_effect = Exception("Crash")
 
-        from src.core.exceptions import StartupError
+        from src.application.services.exceptions import StartupError
 
         with pytest.raises(StartupError):
             AppInitializer.initialize_core()
@@ -53,7 +53,7 @@ class TestAppStartupSequence:
     def test_init_generator_steps(self, mocker):
         """Verifica il flusso degli step del generatore UI."""
         mock_mw = MagicMock()
-        mocker.patch("src.core.config_manager.load_config", return_value={})
+        mocker.patch("src.application.services.config_manager.load_config", return_value={})
         mocker.patch.object(mock_mw.navigation_controller, "get_panel", return_value=MagicMock())
 
         gen = AppInitializer.init_generator(mock_mw)

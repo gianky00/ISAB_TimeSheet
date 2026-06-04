@@ -11,7 +11,7 @@ from src.gui.widgets.contabilita.consuntivo.modifica_esistente_tab import Modifi
 @pytest.fixture
 def mock_config(mocker):
     """Fixture per mockare config_manager."""
-    mock = mocker.patch("src.core.config_manager.get_config_value")
+    mock = mocker.patch("src.application.services.config_manager.get_config_value")
     mock.return_value = "/mock/network/path"
     return mock
 

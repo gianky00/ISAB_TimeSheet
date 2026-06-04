@@ -20,8 +20,8 @@ class TestGUIHeadlessHardened:
         mocker.patch("src.gui.panels.settings.main_panel.ConfigSaveWorker.start", mock_start)
 
     def test_settings_auto_save_trigger(self, qapp, mocker, qtbot):
-        mock_save = mocker.patch("src.core.config_manager.save_config")
-        mocker.patch("src.core.config_manager.load_config", return_value={})
+        mock_save = mocker.patch("src.application.services.config_manager.save_config")
+        mocker.patch("src.application.services.config_manager.load_config", return_value={})
 
         panel = SettingsPanel()
         # V9.4: Widget is inside general_page
@@ -45,9 +45,9 @@ class TestGUIHeadlessHardened:
         toast.close()
 
     def test_settings_account_addition_flow(self, qapp, mocker, qtbot):
-        mocker.patch("src.core.config_manager.add_account", return_value=True)
-        mocker.patch("src.core.config_manager.load_config", return_value={})
-        mock_save = mocker.patch("src.core.config_manager.save_config")
+        mocker.patch("src.application.services.config_manager.add_account", return_value=True)
+        mocker.patch("src.application.services.config_manager.load_config", return_value={})
+        mock_save = mocker.patch("src.application.services.config_manager.save_config")
 
         panel = SettingsPanel()
 

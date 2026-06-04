@@ -93,7 +93,7 @@ combine-as-imports = true
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["T20", "B011", "PLR2004"]
-"scripts/**/*.py" = ["T20"]
+"devtools/maintenance/**/*.py" = ["T20"]
 
 [tool.ruff.format]
 quote-style = "double"

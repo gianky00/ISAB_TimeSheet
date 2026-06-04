@@ -5,7 +5,7 @@ Verifies Excel transformation logic and robustness.
 import openpyxl
 import pytest
 
-from src.core.timesheet_processor import TimesheetProcessor
+from src.application.services.timesheet_processor import TimesheetProcessor
 
 
 class TestTimesheetProcessorHardened:

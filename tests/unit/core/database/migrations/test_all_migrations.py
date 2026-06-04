@@ -2,7 +2,7 @@ import sqlite3
 
 import pytest
 
-from src.core.database.migrations.contabilita import (
+from src.application.services.database.migrations.contabilita import (
     mig_contabilita_v1,
     mig_contabilita_v2,
     mig_contabilita_v3,
@@ -11,10 +11,20 @@ from src.core.database.migrations.contabilita import (
     mig_contabilita_v6,
     mig_contabilita_v7,
 )
-from src.core.database.migrations.dipendenti import mig_dipendenti_v1, mig_dipendenti_v2, mig_dipendenti_v3
-from src.core.database.migrations.pdl import mig_pdl_v1, mig_pdl_v2, mig_pdl_v3, mig_pdl_v4, mig_pdl_v5
-from src.core.database.migrations.storico_oda import mig_storico_oda_v1, mig_storico_oda_v2
-from src.core.database.migrations.timbrature import (
+from src.application.services.database.migrations.dipendenti import (
+    mig_dipendenti_v1,
+    mig_dipendenti_v2,
+    mig_dipendenti_v3,
+)
+from src.application.services.database.migrations.pdl import (
+    mig_pdl_v1,
+    mig_pdl_v2,
+    mig_pdl_v3,
+    mig_pdl_v4,
+    mig_pdl_v5,
+)
+from src.application.services.database.migrations.storico_oda import mig_storico_oda_v1, mig_storico_oda_v2
+from src.application.services.database.migrations.timbrature import (
     mig_timbrature_v1,
     mig_timbrature_v2,
     mig_timbrature_v3,

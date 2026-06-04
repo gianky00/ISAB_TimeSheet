@@ -2,7 +2,7 @@ import sqlite3
 
 import pytest
 
-from src.core.database.migrations.contabilita import (
+from src.application.services.database.migrations.contabilita import (
     mig_contabilita_v1,
     mig_contabilita_v2,
     mig_contabilita_v3,

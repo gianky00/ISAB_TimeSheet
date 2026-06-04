@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.config_manager import (
+from src.application.services.config_manager import (
     _reset_configuration_for_testing,
     add_account,
     ensure_config_dir,
@@ -35,8 +35,8 @@ class TestConfigManager:
         mock_config_dir = tmp_path / "config"
         mock_config_file = mock_config_dir / "config.json"
 
-        mocker.patch("src.core.config_manager.CONFIG_DIR", mock_config_dir)
-        mocker.patch("src.core.config_manager.CONFIG_FILE", mock_config_file)
+        mocker.patch("src.application.services.config_manager.CONFIG_DIR", mock_config_dir)
+        mocker.patch("src.application.services.config_manager.CONFIG_FILE", mock_config_file)
 
         return mock_config_dir, mock_config_file
 
@@ -75,7 +75,7 @@ class TestConfigManager:
     def test_reset_to_defaults(self, setup_config):
         set_config_value("browser_headless", not get_config_value("browser_headless"), async_save=False)
         reset_to_defaults(async_save=False)
-        from src.core.config.defaults import DEFAULT_CONFIG
+        from src.application.services.config.defaults import DEFAULT_CONFIG
 
         assert get_config_value("browser_headless") == DEFAULT_CONFIG["browser_headless"]
 
@@ -83,13 +83,13 @@ class TestConfigManager:
         # Case 1: Configured path exists
         mock_path = str(Path("/mock/downloads").resolve())
         # Use patch to make it "exist"
-        with patch("src.core.config_manager.Path.exists", return_value=True):
+        with patch("src.application.services.config_manager.Path.exists", return_value=True):
             set_config_value("download_path", mock_path, async_save=False)
             assert get_download_path() == mock_path
 
         # Case 2: Configured path doesn't exist -> Fallback to system Downloads
         set_config_value("download_path", "/non/existent/path", async_save=False)
-        with patch("src.core.config_manager.Path.exists", return_value=False):
+        with patch("src.application.services.config_manager.Path.exists", return_value=False):
             path = get_download_path()
             assert "Downloads" in path
 

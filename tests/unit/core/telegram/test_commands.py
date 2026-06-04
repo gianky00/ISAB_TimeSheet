@@ -2,12 +2,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.core.telegram.handlers.commands import cmd_start, cmd_status, cmd_stop
+from src.api.telegram.handlers.commands import cmd_start, cmd_status, cmd_stop
 
 
 class TestTelegramCommands:
     @pytest.mark.asyncio
-    @patch("src.core.config_manager.load_config")
+    @patch("src.application.services.config_manager.load_config")
     async def test_cmd_start_already_associated_wrong_chat(self, mock_load):
         service = MagicMock()
         update = MagicMock()
@@ -19,8 +19,8 @@ class TestTelegramCommands:
         assert "[BLOCCO]" in update.message.reply_text.call_args[0][0]
 
     @pytest.mark.asyncio
-    @patch("src.core.config_manager.set_config_value")
-    @patch("src.core.config_manager.load_config")
+    @patch("src.application.services.config_manager.set_config_value")
+    @patch("src.application.services.config_manager.load_config")
     async def test_cmd_start_pairing_success(self, mock_load, mock_set):
         service = MagicMock()
         update = MagicMock()

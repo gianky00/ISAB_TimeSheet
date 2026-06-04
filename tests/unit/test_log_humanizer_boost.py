@@ -1,4 +1,4 @@
-from src.utils.log_humanizer import SmartLogTranslator
+from src.infrastructure.utils.log_humanizer import SmartLogTranslator
 
 
 class TestLogHumanizerBoost:

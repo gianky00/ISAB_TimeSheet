@@ -20,14 +20,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core import config_manager
-from src.core.app_updater import (
+from src.application.services import config_manager
+from src.application.services.app_updater import (
     run_pending_installer,
 )
-from src.core.audit_manager import AuditManager
-from src.core.telegram_bridge import TelegramUIBridge
-from src.core.telegram_manager import TelegramService
-from src.core.version import __version__ as VERSION  # noqa: N812
+from src.application.services.audit_manager import AuditManager
+from src.application.services.telegram_bridge import TelegramUIBridge
+from src.application.services.telegram_manager import TelegramService
+from src.application.services.version import __version__ as VERSION  # noqa: N812
 from src.gui.components.animated_stack import SlidingStackedWidget
 from src.gui.controllers.app_status_controller import AppStatusController
 from src.gui.controllers.bot_controller import BotController

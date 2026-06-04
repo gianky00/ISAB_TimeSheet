@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.core.logging.analytics import PatternDetector
+from src.application.services.logging.analytics import PatternDetector
 
 
 class TestPatternDetector:

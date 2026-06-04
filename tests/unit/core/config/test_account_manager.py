@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from src.core.config.account_manager import (
+from src.application.services.config.account_manager import (
     add_account_logic,
     remove_account_logic,
     set_default_account_logic,
@@ -35,8 +35,8 @@ class TestAccountManager:
         assert "safework_accounts" in new_config
         assert new_config["safework_accounts"][0]["type"] == "Esecutore"
 
-    @patch("src.core.secrets_manager.SecretsManager.is_available", return_value=True)
-    @patch("src.core.secrets_manager.SecretsManager.delete_credential")
+    @patch("src.application.services.secrets_manager.SecretsManager.is_available", return_value=True)
+    @patch("src.application.services.secrets_manager.SecretsManager.delete_credential")
     def test_remove_account_logic(self, mock_delete, mock_avail):
         config = {
             "accounts": [{"username": "user1", "default": True}, {"username": "user2", "default": False}]

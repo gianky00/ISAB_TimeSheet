@@ -10,8 +10,8 @@ from src.gui.widgets.contabilita.consuntivo.impostazioni_tab import Impostazioni
 def mock_config(mocker):
     """Fixture per mockare config_manager."""
     config_data = {"preventivi_tcl": ["TCL1", "TCL2"], "preventivi_stati": ["Stato1"]}
-    mocker.patch("src.core.config_manager.get_config_value", side_effect=lambda k, d: config_data.get(k, d))
-    mocker.patch("src.core.config_manager.set_config_value")
+    mocker.patch("src.application.services.config_manager.get_config_value", side_effect=lambda k, d: config_data.get(k, d))
+    mocker.patch("src.application.services.config_manager.set_config_value")
     return config_data
 
 
@@ -48,7 +48,7 @@ class TestImpostazioniTab:
         mock_input.return_value = ("Nuovo Tecnico", True)
 
         # Mock salvataggio
-        mock_set = mocker.patch("src.core.config_manager.set_config_value")
+        mock_set = mocker.patch("src.application.services.config_manager.set_config_value")
 
         # Trova il bottone "Aggiungi" del primo editor
         from src.gui.widgets.core_widgets import SecondaryButton
@@ -72,7 +72,7 @@ class TestImpostazioniTab:
         lst.setCurrentRow(0)
 
         # Mock salvataggio
-        mock_set = mocker.patch("src.core.config_manager.set_config_value")
+        mock_set = mocker.patch("src.application.services.config_manager.set_config_value")
 
         # Trova bottone "Rimuovi"
         from src.gui.widgets.core_widgets import SecondaryButton

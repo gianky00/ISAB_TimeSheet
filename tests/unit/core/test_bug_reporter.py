@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.bug_reporter import BugReporter
+from src.application.services.bug_reporter import BugReporter
 
 
 class TestBugReporter:
@@ -20,12 +20,12 @@ class TestBugReporter:
         fs.create_dir(str(self.log_dir / "errors"))
 
         # Patch CONFIG_DIR in the module
-        with patch("src.core.bug_reporter.CONFIG_DIR", self.config_dir):
+        with patch("src.application.services.bug_reporter.CONFIG_DIR", self.config_dir):
             yield
 
-    @patch("src.core.bug_reporter.DiagnosticsCollector.collect_system_info")
-    @patch("src.core.bug_reporter.generate_analytics_report")
-    @patch("src.core.bug_reporter.AuditManager.instance")
+    @patch("src.application.services.bug_reporter.DiagnosticsCollector.collect_system_info")
+    @patch("src.application.services.bug_reporter.generate_analytics_report")
+    @patch("src.application.services.bug_reporter.AuditManager.instance")
     def test_collect_diagnostics_success(self, mock_audit, mock_analytics, mock_sys_info, fs):
         mock_sys_info.return_value = {"os": "linux"}
 
@@ -58,7 +58,7 @@ class TestBugReporter:
             assert "analytics_report.json" in namelist
             assert "audit_trail.json" in namelist
 
-    @patch("src.core.bug_reporter.view_trace")
+    @patch("src.application.services.bug_reporter.view_trace")
     def test_add_trace_timeline(self, mock_view_trace, fs):
         mock_view_trace.return_value = [{"event": "start"}]
         report_path = self.config_dir / "test_report.zip"

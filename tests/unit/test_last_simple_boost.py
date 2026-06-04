@@ -2,16 +2,16 @@ from unittest.mock import patch
 
 from PySide6.QtWidgets import QWidget
 
-from src.core.stats_manager import StatsManager
+from src.application.services.stats_manager import StatsManager
 from src.gui.styles import apply_theme
 from src.gui.toast import ToastOverlay
-from src.utils.printing import get_installed_printers
+from src.infrastructure.utils.printing import get_installed_printers
 
 
 class TestLastSimpleBoost:
     def test_get_printers_logic(self):
         # win32print.EnumPrinters level 2 returns tuples where index 2 is the name
-        with patch("src.utils.printing.win32print") as mock_win:
+        with patch("src.infrastructure.utils.printing.win32print") as mock_win:
             mock_win.EnumPrinters.return_value = ((None, None, "P1", None),)
             printers = get_installed_printers()
             assert "P1" in printers
@@ -28,7 +28,7 @@ class TestLastSimpleBoost:
             assert "color: red" in qapp.styleSheet()
 
     def test_stats_manager_increment(self, tmp_path):
-        with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
+        with patch("src.application.services.config_manager.CONFIG_DIR", tmp_path):
             StatsManager._instance = None
             sm = StatsManager()
             sm.increment_usage("test_bot")

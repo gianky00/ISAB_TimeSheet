@@ -33,9 +33,9 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import QGraphicsDropShadowEffect, QWidget
 
-from src.bots.base.step_manager import StepStatus
 from src.gui.styles import COLORS
 from src.gui.styles.constants import UI_SIZES
+from src.infrastructure.bots.base.step_manager import StepStatus
 
 
 class TimelineNode:

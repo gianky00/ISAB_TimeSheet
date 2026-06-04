@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from src.core import config_manager
+from src.application.services import config_manager
 
 
 class TestConfigSafeWork:
@@ -13,9 +13,9 @@ class TestConfigSafeWork:
         config_file = env_dir / "config.json"
 
         config_manager._reset_configuration_for_testing()
-        mocker.patch("src.core.config_manager.CONFIG_FILE", config_file)
-        mocker.patch("src.core.config_manager.CONFIG_DIR", env_dir)
-        mocker.patch("src.core.paths.CONFIG_FILE", config_file)
+        mocker.patch("src.application.services.config_manager.CONFIG_FILE", config_file)
+        mocker.patch("src.application.services.config_manager.CONFIG_DIR", env_dir)
+        mocker.patch("src.application.services.paths.CONFIG_FILE", config_file)
 
         # Forza salvataggio sincrono
         original_save = config_manager.save_config
@@ -23,7 +23,7 @@ class TestConfigSafeWork:
         def mock_save(cfg, async_save=True):
             return original_save(cfg, async_save=False)
 
-        mocker.patch("src.core.config_manager.save_config", side_effect=mock_save)
+        mocker.patch("src.application.services.config_manager.save_config", side_effect=mock_save)
 
         yield config_file
         config_manager._reset_configuration_for_testing()

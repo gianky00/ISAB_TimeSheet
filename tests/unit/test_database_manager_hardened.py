@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.database.manager import DatabaseManager
+from src.application.services.database.manager import DatabaseManager
 
 
 class TestDatabaseManagerHardened:
@@ -43,7 +43,7 @@ class TestDatabaseManagerHardened:
             manager, "get_connection", side_effect=sqlite3.OperationalError("database is locked")
         ):
             # Patchiamo anche sleep per non aspettare davvero
-            with patch("src.core.database.manager.time.sleep") as mock_sleep:
+            with patch("src.application.services.database.manager.time.sleep") as mock_sleep:
                 with pytest.raises(sqlite3.OperationalError):
                     manager.execute_query(db_path, "INSERT INTO test VALUES (1)", retry_count=2)
 

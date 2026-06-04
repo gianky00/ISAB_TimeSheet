@@ -13,12 +13,12 @@ from typing import Any
 
 from PySide6.QtCore import QObject, QTimer
 
-from src.core import config_manager
-from src.core.app_updater import check_for_updates
-from src.core.autopilot.cert_automation import CertCampioneAutomator
-from src.core.autopilot.scheduler import AutopilotScheduler
-from src.core.database.maintenance_worker import DatabaseMaintenanceWorker
-from src.core.notification_manager import NotificationManager
+from src.application.services import config_manager
+from src.application.services.app_updater import check_for_updates
+from src.application.services.autopilot.cert_automation import CertCampioneAutomator
+from src.application.services.autopilot.scheduler import AutopilotScheduler
+from src.application.services.database.maintenance_worker import DatabaseMaintenanceWorker
+from src.application.services.notification_manager import NotificationManager
 from src.gui.controllers.bot_queue_manager import BotQueueManager
 from src.gui.workers.autopilot_report_worker import AutopilotReportWorker
 

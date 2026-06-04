@@ -30,8 +30,8 @@ from PySide6.QtWidgets import (
 if TYPE_CHECKING:
     from PySide6.QtGui import QShowEvent
 
-from src.core.audit_manager import AuditManager
-from src.core.constants import Icons
+from src.application.services.audit_manager import AuditManager
+from src.application.services.constants import Icons
 from src.gui.dialogs.audit_detail_dialog import AuditDetailDialog
 from src.gui.models.audit_model import AuditTableModel
 from src.gui.styles import COLORS
@@ -42,7 +42,7 @@ from src.gui.widgets.core_widgets import (
 )
 from src.gui.widgets.modern_card import ModernCard
 from src.gui.workers.integrity_worker import IntegrityWorker
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
 

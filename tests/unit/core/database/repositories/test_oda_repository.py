@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.database.repositories.oda_repository import OdaRepository
-from src.models import OdaRecord
+from src.application.services.database.repositories.oda_repository import OdaRepository
+from src.domain import OdaRecord
 
 
 class TestOdaRepository:
@@ -18,7 +18,7 @@ class TestOdaRepository:
     def repo(self, mock_db):
         return OdaRepository(db_manager_instance=mock_db)
 
-    @patch("src.core.database.repositories.oda_repository.dict", side_effect=lambda x: x)
+    @patch("src.application.services.database.repositories.oda_repository.dict", side_effect=lambda x: x)
     def test_get_all_as_objects(self, mock_dict, repo, mock_db):
         mock_conn = MagicMock()
         mock_db.get_connection.return_value.__enter__.return_value = mock_conn

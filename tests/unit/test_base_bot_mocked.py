@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.bots.base.base_bot import BaseBot
-from src.core.constants import BotStatus
+from src.application.services.constants import BotStatus
+from src.infrastructure.bots.base.base_bot import BaseBot
 
 
 class ConcreteBot(BaseBot):
@@ -43,10 +43,10 @@ class ConcreteBot(BaseBot):
 @pytest.fixture
 def mock_bot_deps():
     with (
-        patch("src.bots.base.base_bot.get_logger") as mock_logger,
-        patch("src.bots.base.base_bot.generate_trace_id", return_value="test-trace"),
+        patch("src.infrastructure.bots.base.base_bot.get_logger") as mock_logger,
+        patch("src.infrastructure.bots.base.base_bot.generate_trace_id", return_value="test-trace"),
         patch(
-            "src.bots.base.execution_guard.ExecutionGuard.check_environment", return_value=(True, "")
+            "src.infrastructure.bots.base.execution_guard.ExecutionGuard.check_environment", return_value=(True, "")
         ) as mock_guard,
     ):
         yield {

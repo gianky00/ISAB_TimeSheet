@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-from src.core.secrets_manager import SecretsManager
+from src.application.services.secrets_manager import SecretsManager
 
 
 def test_get_key_from_env():

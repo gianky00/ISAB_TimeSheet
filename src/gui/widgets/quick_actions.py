@@ -13,11 +13,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.core.config_manager import get_config_value
-from src.core.constants import Icons
+from src.application.services.config_manager import get_config_value
+from src.application.services.constants import Icons
 from src.gui.dialogs.quick_actions_config import QuickActionsConfigDialog
 from src.gui.styles import COLORS
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.infrastructure.utils.helpers import get_asset_path, get_colored_icon
 
 from .quick_actions_registry import AVAILABLE_ACTIONS
 

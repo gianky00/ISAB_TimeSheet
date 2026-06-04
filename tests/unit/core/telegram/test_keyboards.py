@@ -1,6 +1,6 @@
 from telegram import InlineKeyboardMarkup
 
-from src.core.telegram.ui.keyboards import TelegramUI
+from src.api.telegram.ui.keyboards import TelegramUI
 
 
 class TestTelegramUI:
