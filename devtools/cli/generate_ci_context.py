@@ -3,6 +3,7 @@
 
 Aggrega l'output di Ruff, Mypy e dei Test in un unico file CI_CONTEXT.md
 nella root del progetto per facilitare l'analisi da parte dell'IA.
+Inoltre restituisce un exit code corretto per la pipeline CI.
 """
 
 import contextlib
@@ -19,7 +20,7 @@ if sys.stdout.encoding != "utf-8":
 
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
-PROJECT_ROOT = Path(__file__).parent.parent.resolve()
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 OUTPUT_FILE = PROJECT_ROOT / "CI_CONTEXT.md"
 TEMP_REPORT = PROJECT_ROOT / "tests" / "temp_test_report.md"
 
@@ -45,6 +46,7 @@ def run_command(cmd: Sequence[str], label: str) -> tuple[str, str, int]:
 def main() -> None:  # noqa: C901, PLR0912, PLR0915
     """Aggregatore principale del contesto CI."""
     start_time = datetime.now()
+    overall_success = True
 
     with OUTPUT_FILE.open("w", encoding="utf-8") as f:
         f.write("# CI/CD Context Report\n\n")
@@ -67,6 +69,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
         if code == 0 and not stdout:
             f.write("Ruff: No issues found.\n\n")
         else:
+            overall_success = False
             f.write("```text\n")
             if stdout:
                 f.write(stdout)
@@ -83,6 +86,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
         if code == 0:
             f.write("Mypy: No type issues found.\n\n")
         else:
+            overall_success = False
             f.write("```text\n")
             if stdout:
                 f.write(stdout)
@@ -103,21 +107,28 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
             test_cmd.extend(sys.argv[1:])
 
         print("Running Robust Tests (this may take a while)...")
-        subprocess.run(test_cmd, cwd=PROJECT_ROOT, check=False)
+        result = subprocess.run(test_cmd, cwd=PROJECT_ROOT, check=False)
+        if result.returncode != 0:
+            overall_success = False
 
         if TEMP_REPORT.exists():
             test_content = TEMP_REPORT.read_text(encoding="utf-8", errors="replace")
             # Pulizia titoli duplicati
             clean_content = test_content.replace("# Test Execution Report", "").replace(
-                "# \ud83d\udcca Test Execution Report", ""
+                "# 📊 Test Execution Report", ""
             )
             f.write(clean_content)
             with contextlib.suppress(Exception):
                 TEMP_REPORT.unlink()
         else:
             f.write("Error: Test report not generated.\n")
+            overall_success = False
 
     print("\nCI_CONTEXT.md generated successfully in the project root.")
+    
+    if not overall_success:
+        print("[ERROR] CI Pipeline failed! Exiting with code 1.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
