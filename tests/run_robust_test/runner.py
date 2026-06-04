@@ -323,3 +323,4 @@ class UltraRunner:
             finish_ai(self, total_files, AI_REPORT_FILE, ROOT_DIR, _get_system_metadata(workers))
         else:
             finish_human(self, time.time() - self.start_time, with_cov, ROOT_DIR, self.console)
+            sys.exit(1 if self.total_failed > 0 else 0)
