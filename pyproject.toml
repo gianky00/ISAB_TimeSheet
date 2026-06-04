@@ -202,6 +202,7 @@ ignore = [
     "D107",   # missing-docstring-in-method: gestito da interrogate
     "D203",   # one-blank-line-before-class: incompatibile con D211
     "D213",   # multi-line-summary-second-line: preferiamo D212
+    "PLW0108",# unnecessary-lambda: pericoloso con i segnali di PySide6 (simile a FURB111)
 ]
 
 [tool.ruff.lint.pydocstyle]

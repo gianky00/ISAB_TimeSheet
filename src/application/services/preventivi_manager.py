@@ -198,7 +198,7 @@ class PreventiviGeneratorManager:
                     vba_sheet = wb.Sheets("rif.VBA")
                     prog_val = str(vba_sheet.Range("A4").Value)
                     if "/" in prog_val:
-                        data["progressivo"] = prog_val.split("/")[0]
+                        data["progressivo"] = prog_val.split("/", maxsplit=1)[0]
                         data["anno_full"] = "20" + prog_val.split("/")[1]
 
             finally:

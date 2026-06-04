@@ -209,7 +209,7 @@ class ROIEngine:
     def _parse_timestamp(ts_str: str) -> datetime | None:
         """Parsa una stringa timestamp in datetime aware."""
         with suppress(Exception):
-            return datetime.fromisoformat(ts_str.split(".")[0].replace(" ", "T")).astimezone()
+            return datetime.fromisoformat(ts_str.split(".", maxsplit=1)[0].replace(" ", "T")).astimezone()
         return None
 
     @staticmethod
@@ -218,8 +218,8 @@ class ROIEngine:
         try:
             first_ts = str(rows[0][4])
             last_ts = str(rows[-1][4])
-            d1 = datetime.fromisoformat(first_ts.split(".")[0].replace(" ", "T"))
-            d2 = datetime.fromisoformat(last_ts.split(".")[0].replace(" ", "T"))
+            d1 = datetime.fromisoformat(first_ts.split(".", maxsplit=1)[0].replace(" ", "T"))
+            d2 = datetime.fromisoformat(last_ts.split(".", maxsplit=1)[0].replace(" ", "T"))
             return max(1, (d2 - d1).days)
         except Exception:
             return 1

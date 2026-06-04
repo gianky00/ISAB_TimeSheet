@@ -114,7 +114,7 @@ class ReportService:
                 nk = (cls._norm_text(r[0]), cls._norm_text(r[1]))
                 ncf = r[2].strip().upper() if r[2] else None
                 with suppress(Exception):
-                    dp = d_str.split(" ")[0]
+                    dp = d_str.split(" ", maxsplit=1)[0]
                     d_dt = None
                     for f in ("%Y-%m-%d", "%d/%m/%Y"):
                         with suppress(ValueError):

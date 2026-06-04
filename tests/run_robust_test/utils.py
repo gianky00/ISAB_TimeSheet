@@ -97,7 +97,7 @@ def _extract_traceback_block(lines: list[str], node_id: str) -> str:
     """Estrae il blocco di traceback rilevante per un test specifico."""
     in_block = False
     tb_lines: list[str] = []
-    test_name = node_id.split("::")[-1] if "::" in node_id else node_id
+    test_name = node_id.rsplit("::", maxsplit=1)[-1] if "::" in node_id else node_id
     for line in lines:
         if test_name in line and (re.match(r"^[_= ]{5,}", line) or "FAILED" in line):
             in_block = True

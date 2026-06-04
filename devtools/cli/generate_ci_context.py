@@ -70,6 +70,11 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
             f.write("Ruff: No issues found.\n\n")
         else:
             overall_success = False
+            print("[ERROR] Ruff issues found:")
+            if stdout:
+                print(stdout)
+            if stderr:
+                print(stderr)
             f.write("```text\n")
             if stdout:
                 f.write(stdout)
@@ -87,6 +92,11 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
             f.write("Mypy: No type issues found.\n\n")
         else:
             overall_success = False
+            print("[ERROR] Mypy issues found:")
+            if stdout:
+                print(stdout)
+            if stderr:
+                print(stderr)
             f.write("```text\n")
             if stdout:
                 f.write(stdout)

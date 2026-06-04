@@ -164,7 +164,7 @@ class AnagraficaController:
                 return "Mai effettuato", -1, COLORS["text_muted"]
 
             last_date_str = str(res[0][0])
-            date_part = last_date_str.split(" ")[0]
+            date_part = last_date_str.split(" ", maxsplit=1)[0]
             last_date = None
             for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
                 try:

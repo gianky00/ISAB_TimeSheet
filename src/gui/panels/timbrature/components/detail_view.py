@@ -128,7 +128,7 @@ class TimbratureDetailView(QWidget):
 
         with suppress(Exception):
             # Try handling datetime string or other formats
-            date_part = val_str.split(" ")[0]
+            date_part = val_str.split(" ", maxsplit=1)[0]
             # If strict, we expect only date part to be valid iso or similar?
             # Original code tried flexible parsing
             for fmt in ("%Y-%m-%d", "%d/%m/%Y"):

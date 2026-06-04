@@ -77,6 +77,7 @@ class TestMainWindow:
     def test_close_event_minimize_to_tray(self, qtbot, mock_all_services, mocker):
         """Verifica la riduzione a tray alla chiusura se abilitata."""
         mocker.patch("src.application.services.config_manager.get_config_value", return_value=True)
+        mocker.patch("src.gui.dialogs.confirmation_dialog.ConfirmationDialog.confirm", return_value=True)
         window = MainWindow()
         qtbot.addWidget(window)
         window.show()

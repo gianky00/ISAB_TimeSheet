@@ -242,7 +242,7 @@ class DashboardPanel(QWidget):
             nav.navigate_to_panel(automation_map[key])
         elif key.startswith("nav_sub_strumentale_"):
             with suppress(ValueError):
-                sub_idx = int(key.split("_")[-1])
+                sub_idx = int(key.rsplit("_", maxsplit=1)[-1])
                 nav.navigate_to(4, sub_index=sub_idx)
         elif key == "nav_page_5":
             nav.navigate_to(5)  # DataEase
@@ -256,7 +256,7 @@ class DashboardPanel(QWidget):
             nav.navigate_to(10)  # Storico OdA
         elif key.startswith("nav_sub_notifiche_"):
             with suppress(ValueError):
-                sub_idx = int(key.split("_")[-1])
+                sub_idx = int(key.rsplit("_", maxsplit=1)[-1])
                 nav.navigate_to(9, sub_index=sub_idx)
         elif key.startswith("settings_"):
             nav.navigate_to(7)

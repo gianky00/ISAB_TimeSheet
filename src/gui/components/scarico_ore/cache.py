@@ -129,7 +129,7 @@ class CacheWorker(QThread):
         try:
             if len(s_val) >= DATE_MIN_LEN and s_val[4] == s_val[7] == "-":
                 return f"{s_val[8:10]}/{s_val[5:7]}/{s_val[0:4]}"
-            parts = s_val.split(" ")[0].split("-")
+            parts = s_val.split(" ", maxsplit=1)[0].split("-")
             return f"{parts[2]}/{parts[1]}/{parts[0]}" if len(parts) == DATE_PARTS_COUNT else s_val
         except Exception:
             return s_val

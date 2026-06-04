@@ -175,10 +175,10 @@ class CertificatiEngine:
     def format_days_text_with_guasto(cls, days: int | None, guasto_tipo: str = "") -> str:
         """Ritorna rappresentazione testuale dello stato con dettaglio guasto."""
         if days == cls.FAULTY_MARKER:
-            tipo = guasto_tipo if guasto_tipo else "N/D"
+            tipo = guasto_tipo or "N/D"
             return f"❌ {StatoCertificatoLabel.GUASTO} ({tipo})"
         if days == cls.CONTROL_MARKER:
-            tipo = guasto_tipo if guasto_tipo else "N/D"
+            tipo = guasto_tipo or "N/D"
             return f"⚠️ {StatoCertificatoLabel.CONTROLLO} ({tipo})"
         return cls.format_days_text_short(days)
 

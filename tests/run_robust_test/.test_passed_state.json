@@ -339,6 +339,7 @@
     "tests/unit/gui/panels/test_dipendenti_panel.py",
     "tests/unit/test_base_bot_refined.py",
     "tests/unit/test_bot_base_cdp.py",
+    "tests/unit/test_pandera_validation.py",
     "tests/unit/gui/main_window/controllers/test_app_event_handler.py",
     "tests/unit/test_wait_helpers_coverage.py",
     "tests/unit/gui/widgets/test_empty_state.py",

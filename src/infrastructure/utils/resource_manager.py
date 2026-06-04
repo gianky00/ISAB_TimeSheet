@@ -156,7 +156,7 @@ class ResourceManager:
           str: Percorso assoluto del file icona o stringa vuota se non trovato.
         """
         if "assets/ui/icons/" in name:
-            name = name.split("/")[-1]
+            name = name.rsplit("/", maxsplit=1)[-1]
 
         if not name.endswith((".svg", ".png", ".ico")):
             name += ".svg"

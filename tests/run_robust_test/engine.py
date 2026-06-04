@@ -187,8 +187,8 @@ def _create_failure_detail(
     error_type, error_message, category = _classify_error(error_summary, full_output, node_id)
     return FailureDetail(
         node_id=node_id,
-        file=node_id.split("::")[0],
-        test_name=node_id.split("::")[-1] if "::" in node_id else node_id,
+        file=node_id.split("::", maxsplit=1)[0],
+        test_name=node_id.rsplit("::", maxsplit=1)[-1] if "::" in node_id else node_id,
         error_type=error_type,
         error_message=error_message,
         traceback=_extract_traceback_block(lines, node_id),
