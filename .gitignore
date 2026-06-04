@@ -73,6 +73,9 @@ mypy_final_report.txt
 *.db
 *.sqlite
 *.sqlite3
+*.db-shm
+*.db-wal
+temp/
 data/
 test.db
 database.db
