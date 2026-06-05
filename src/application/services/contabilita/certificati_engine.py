@@ -49,6 +49,7 @@ class CertificatiEngine:
     EXPIRING_THRESHOLD: Final[int] = 30
     FAULTY_MARKER: Final[int] = -9999
     CONTROL_MARKER: Final[int] = -8888
+    DISMISSED_MARKER: Final[int] = -7777
 
     # Indici colonne dati certificati (Allineati al TreeWidget della UI per le statistiche PDF)
     IDX_ID_COEMI: Final[int] = 0
@@ -146,10 +147,14 @@ class CertificatiEngine:
         return Icons.STATUS_DOT_GREEN
 
     @classmethod
-    def format_days_text_short(cls, days: int | None) -> str:
+    def format_days_text_short(cls, days: int | None) -> str:  # noqa: PLR0911
         """Ritorna una rappresentazione testuale breve dello stato scadenze."""
         if days == cls.FAULTY_MARKER:
             return f"❌ {StatoCertificatoLabel.GUASTO}"
+        if days == cls.CONTROL_MARKER:
+            return f"⚠️ {StatoCertificatoLabel.CONTROLLO}"
+        if days == cls.DISMISSED_MARKER:
+            return f"⚫ {StatoCertificatoLabel.DISMESSO}"
         if days is None:
             return StatoCertificatoLabel.SENZA_SCADENZA
         if days < 0:
@@ -168,7 +173,9 @@ class CertificatiEngine:
         if guasto_flag == 1:
             return cls.FAULTY_MARKER, Icons.STATUS_DOT_RED
         if guasto_flag == 2:  # noqa: PLR2004
-            return cls.CONTROL_MARKER, Icons.STATUS_DOT_ORANGE
+            return cls.CONTROL_MARKER, Icons.STATUS_DOT_PURPLE
+        if guasto_flag == 3:  # noqa: PLR2004
+            return cls.DISMISSED_MARKER, Icons.STATUS_DOT_GRAY
         return cls.calculate_days_and_status(scadenza_str)
 
     @classmethod
@@ -180,6 +187,9 @@ class CertificatiEngine:
         if days == cls.CONTROL_MARKER:
             tipo = guasto_tipo or "N/D"
             return f"⚠️ {StatoCertificatoLabel.CONTROLLO} ({tipo})"
+        if days == cls.DISMISSED_MARKER:
+            tipo = guasto_tipo or "N/D"
+            return f"⚫ {StatoCertificatoLabel.DISMESSO} ({tipo})"
         return cls.format_days_text_short(days)
 
     @classmethod
@@ -192,6 +202,7 @@ class CertificatiEngine:
             "senza_data": 0,
             "guasti": 0,
             "controlli": 0,
+            "dismessi": 0,
             "ufficio_stru": 0,
             "ufficio_cc": 0,
             "officina": 0,
@@ -232,6 +243,8 @@ class CertificatiEngine:
             stats["guasti"] += 1
         elif days == cls.CONTROL_MARKER:
             stats["controlli"] += 1
+        elif days == cls.DISMISSED_MARKER:
+            stats["dismessi"] += 1
         elif days is None:
             stats["senza_data"] += 1
         elif days < 0:
@@ -513,23 +526,27 @@ class CertificatiEngine:
 
             guasto_flag = (
                 int(latest[ContabilitaQueries.CERT_IDX_GUASTO])
-                if len(latest) > ContabilitaQueries.CERT_IDX_GUASTO and latest[ContabilitaQueries.CERT_IDX_GUASTO]
+                if len(latest) > ContabilitaQueries.CERT_IDX_GUASTO
+                and latest[ContabilitaQueries.CERT_IDX_GUASTO]
                 else 0
             )
 
             guasto_tipo = (
                 str(latest[ContabilitaQueries.CERT_IDX_GUASTO_TIPO])
-                if len(latest) > ContabilitaQueries.CERT_IDX_GUASTO_TIPO and latest[ContabilitaQueries.CERT_IDX_GUASTO_TIPO]
+                if len(latest) > ContabilitaQueries.CERT_IDX_GUASTO_TIPO
+                and latest[ContabilitaQueries.CERT_IDX_GUASTO_TIPO]
                 else ""
             )
             guasto_data = (
                 str(latest[ContabilitaQueries.CERT_IDX_GUASTO_DATA])
-                if len(latest) > ContabilitaQueries.CERT_IDX_GUASTO_DATA and latest[ContabilitaQueries.CERT_IDX_GUASTO_DATA]
+                if len(latest) > ContabilitaQueries.CERT_IDX_GUASTO_DATA
+                and latest[ContabilitaQueries.CERT_IDX_GUASTO_DATA]
                 else ""
             )
             guasto_note = (
                 str(latest[ContabilitaQueries.CERT_IDX_GUASTO_NOTE])
-                if len(latest) > ContabilitaQueries.CERT_IDX_GUASTO_NOTE and latest[ContabilitaQueries.CERT_IDX_GUASTO_NOTE]
+                if len(latest) > ContabilitaQueries.CERT_IDX_GUASTO_NOTE
+                and latest[ContabilitaQueries.CERT_IDX_GUASTO_NOTE]
                 else ""
             )
 

@@ -34,12 +34,14 @@ class TestDataSynchronizerDetailed:
                     finito TEXT, commessa TEXT, styles TEXT
                 )
             """)
-            # CERTIFICATI: 12 colonne (10 mappate + 2 metadati)
+            # CERTIFICATI: 16 colonne (10 mappate + 6 metadati)
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS certificati_campione (
                     modello TEXT, costruttore TEXT, matricola TEXT, range_strumento TEXT,
                     errore_max TEXT, certificato TEXT, scadenza TEXT, emissione TEXT,
                     id_coemi TEXT, stato TEXT, ubicazione TEXT, annotazioni TEXT,
+                    guasto INTEGER DEFAULT 0, guasto_tipo TEXT DEFAULT '',
+                    guasto_data TEXT DEFAULT '', guasto_note TEXT DEFAULT '',
                     PRIMARY KEY (matricola, certificato)
                 )
             """)

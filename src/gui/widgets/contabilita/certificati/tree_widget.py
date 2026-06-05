@@ -77,7 +77,10 @@ class AnnotazioniDelegate(QStyledItemDelegate):
         self, parent: QWidget, option: object, index: QModelIndex | QPersistentModelIndex
     ) -> QWidget:
         """Crea l'editor per la colonna Annotazioni."""
-        return QLineEdit(parent)
+        editor = QLineEdit(parent)
+        # Rimuove il padding verticale per evitare che il testo venga tagliato nelle celle basse
+        editor.setStyleSheet("QLineEdit { padding: 0px 4px; margin: 0px; border: 1px solid #3498db; }")
+        return editor
 
     def setEditorData(self, editor: QWidget, index: QModelIndex | QPersistentModelIndex) -> None:
         """Popola l'editor con i dati correnti."""
@@ -208,6 +211,18 @@ class CertificatiTreeWidget(StandardTreeWidget):
                 "GUASTO",
                 COLORS["bg_error_pastel"],
                 COLORS["error_red"],
+            )
+        elif days_to_expiry == -8888:
+            status_text, bg_color, text_color = (
+                "IN VALUTAZIONE TECNICA",
+                COLORS["bg_purple_pastel"],
+                COLORS["text_purple"],
+            )
+        elif days_to_expiry == -7777:
+            status_text, bg_color, text_color = (
+                "DISMESSO",
+                "#e2e8f0",
+                "#475569",
             )
         elif days_to_expiry < 0:
             status_text, bg_color, text_color = (

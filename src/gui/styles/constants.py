@@ -66,11 +66,13 @@ COLORS: Final[dict[str, str]] = {
     "bg_warning_pastel": "#fff7ed",
     "bg_attention_pastel": "#fefce8",
     "bg_info_pastel": "#eff6ff",
+    "bg_purple_pastel": "#f3e8ff",
     # Text
     "text_dark": "#212529",
     "text_muted": "#6c757d",
     "text_secondary": "#868e96",
     "text_light": "#adb5bd",
+    "text_purple": "#6b21a8",
     # Backgrounds
     "bg_white": "#ffffff",
     "bg_light": "#f8f9fa",

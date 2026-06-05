@@ -160,7 +160,7 @@ class NormalizeCertificatiStep(ProcessingStep):
         for c in self.CERTIFICATI_CAMPIONE_COLS:
             if c not in df.columns:
                 df[c] = ""
-        df = df[self.CERTIFICATI_CAMPIONE_COLS]
+        df = df[self.CERTIFICATI_CAMPIONE_COLS].copy()
         df.dropna(how="all", inplace=True)
 
         # Riempimento e normalizzazione testo

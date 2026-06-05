@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QTextEdit,
+    QPlainTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -34,7 +34,7 @@ class GuastoDialog(QDialog):
         current_tipo: str = "",
         current_data: str = "",
         current_note: str = "",
-        is_controllo: bool = False,
+        stato_dialog: int = 1,
     ) -> None:
         """Inizializza il dialog con i dati dello strumento.
 
@@ -46,17 +46,17 @@ class GuastoDialog(QDialog):
             current_tipo: Tipo anomalia corrente (per modifica).
             current_data: Data rilevamento corrente (per modifica).
             current_note: Note correnti (per modifica).
-            is_controllo: Flag per configurare l'interfaccia in modalità "Controllo Preventivo".
+            stato_dialog: 1 per Guasto, 2 per Controllo, 3 per Dismesso.
         """
         super().__init__(parent)
         self.id_coemi = id_coemi
         self.matricola = matricola
         self.modello = modello
-        self.is_controllo = is_controllo
+        self.stato_dialog = stato_dialog
         self._result_data: dict[str, str] = {}
         self._setup_ui(current_tipo, current_data, current_note)
 
-    def _setup_ui(self, current_tipo: str, current_data: str, current_note: str) -> None:  # noqa: PLR0915
+    def _setup_ui(self, current_tipo: str, current_data: str, current_note: str) -> None:  # noqa: PLR0915, PLR0912, C901
         """Configura l'interfaccia del dialog.
 
         Args:
@@ -64,14 +64,18 @@ class GuastoDialog(QDialog):
             current_data: Data rilevamento preimpostata.
             current_note: Note preimpostate.
         """
-        if self.is_controllo:
-            self.setWindowTitle("Richiesta Controllo Preventivo")
-            header_text = "🔍 Richiesta Controllo Preventivo"
+        if self.stato_dialog == 2:
+            self.setWindowTitle("Valutazione Tecnica")
+            header_text = "🔍 In Valutazione Tecnica"
             header_color = "#DAA520"  # GoldenRod / Orange
+        elif self.stato_dialog == 3:
+            self.setWindowTitle("Dismetti Strumento")
+            header_text = "🚫 Segnala Strumento Dismesso"
+            header_color = COLORS["text_muted"]
         else:
             self.setWindowTitle("Segnala Guasto Strumento")
             header_text = "⚠️ Segnala Guasto Strumento"
-            header_color = COLORS['error_red']
+            header_color = COLORS["error_red"]
 
         self.setMinimumWidth(480)
         self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_white']}; }}")
@@ -99,7 +103,8 @@ class GuastoDialog(QDialog):
         )
         input_style = (
             f"border: 1px solid {COLORS['border_medium']}; border-radius: 6px; "
-            f"padding: 8px; font-size: 13px; background-color: {COLORS['bg_white']};"
+            f"padding: 8px; font-size: 13px; background-color: {COLORS['bg_white']}; "
+            f"color: {COLORS['text_dark']};"
         )
 
         # Campi readonly
@@ -116,11 +121,35 @@ class GuastoDialog(QDialog):
             form.addRow(lbl, field)
 
         # Tipo anomalia / controllo
-        lbl_tipo = QLabel("Motivo Controllo" if self.is_controllo else "Tipo Anomalia")
+        lbl_tipo = QLabel(
+            "Motivo Valutazione"
+            if self.stato_dialog == 2
+            else "Motivo Dismissione"
+            if self.stato_dialog == 3
+            else "Tipo Anomalia"
+        )
         lbl_tipo.setStyleSheet(label_style)
         self.combo_tipo = QComboBox()
-        if self.is_controllo:
-            self.combo_tipo.addItems(["Verifica pre-scadenza", "Controllo visivo", "Sospetta deriva misure", "Misure instabili", "Altro"])
+        if self.stato_dialog == 2:
+            self.combo_tipo.addItems(
+                [
+                    "Verifica pre-scadenza",
+                    "Controllo visivo",
+                    "Sospetta deriva misure",
+                    "Misure instabili",
+                    "Altro",
+                ]
+            )
+        elif self.stato_dialog == 3:
+            self.combo_tipo.addItems(
+                [
+                    "Dismissione definitiva",
+                    "Furto/Smarrimento",
+                    "Dismissione per obsolescenza",
+                    "Vendita",
+                    "Altro",
+                ]
+            )
         else:
             self.combo_tipo.addItems([t.value for t in TipoAnomalia])
         self.combo_tipo.setStyleSheet(input_style)
@@ -147,9 +176,11 @@ class GuastoDialog(QDialog):
         # Note
         lbl_note = QLabel("Note")
         lbl_note.setStyleSheet(label_style)
-        self.text_note = QTextEdit()
+        self.text_note = QPlainTextEdit()
         self.text_note.setPlaceholderText("Descrivi l'anomalia riscontrata...")
-        self.text_note.setStyleSheet(input_style + " min-height: 80px;")
+        # Remove padding from CSS to prevent Qt box-sizing bugs that squish text
+        text_style = input_style.replace("padding: 8px;", "padding: 4px;")
+        self.text_note.setStyleSheet(text_style + " min-height: 80px; line-height: 1.5;")
         self.text_note.setMaximumHeight(120)
         if current_note:
             self.text_note.setPlainText(current_note)
@@ -173,7 +204,12 @@ class GuastoDialog(QDialog):
 
         btn_layout.addSpacing(10)
 
-        btn_confirm = PrimaryButton("⚠️ Conferma Guasto")
+        if self.stato_dialog == 2:
+            btn_confirm = PrimaryButton("🔍 Imposta Valutazione")
+        elif self.stato_dialog == 3:
+            btn_confirm = PrimaryButton("🚫 Conferma Dismissione")
+        else:
+            btn_confirm = PrimaryButton("⚠️ Conferma Guasto")
         btn_confirm.setStyleSheet(
             f"QPushButton {{ background-color: {COLORS['error_red']}; color: white; "
             f"border: none; border-radius: 6px; padding: 10px 25px; font-weight: bold; font-size: 13px; }}"

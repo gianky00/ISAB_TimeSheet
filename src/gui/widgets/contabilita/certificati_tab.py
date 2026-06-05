@@ -557,6 +557,7 @@ class CertificatiCampioneTab(QWidget):
                 current_note = user_data.get("guasto_note", "")
             is_guasto = days == self.engine.FAULTY_MARKER
             is_controllo = days == self.engine.CONTROL_MARKER
+            is_dismesso = days == self.engine.DISMISSED_MARKER
         else:
             # Fallback se non ci sono figli (raro)
             parsed = self.engine.parse_parent_label(item.text(0))
@@ -580,36 +581,62 @@ class CertificatiCampioneTab(QWidget):
         menu.addSeparator()
 
         # Gestione Segnalazioni
-        if is_guasto or is_controllo:
+        if is_guasto or is_controllo or is_dismesso:
             ripara_act = QAction("Annulla Segnalazione / Segna Risolto", self)
             ripara_act.setIcon(QIcon(get_asset_path(Icons.CHECK_CIRCLE)))
-            ripara_act.triggered.connect(lambda checked=False, idc=id_coemi, m=matricola: self._mark_as_repaired(idc, m))
+            ripara_act.triggered.connect(
+                lambda checked=False, idc=id_coemi, m=matricola: self._mark_as_repaired(idc, m)
+            )
             menu.addAction(ripara_act)
 
-            lbl_mod = "Modifica Dati Guasto" if is_guasto else "Modifica Dati Controllo"
+            lbl_mod = (
+                "Modifica Dati Guasto"
+                if is_guasto
+                else "Modifica Dati Valutazione Tecnica"
+                if is_controllo
+                else "Modifica Dati Dismissione"
+            )
+            st_val = 1 if is_guasto else 2 if is_controllo else 3
             mod_act = QAction(lbl_mod, self)
             mod_act.setIcon(QIcon(get_asset_path(Icons.EDIT)))
             mod_act.triggered.connect(
-                lambda checked=False, idc=id_coemi, m=matricola, mod=modello, ct=current_tipo, cd=current_data, cn=current_note, st=(1 if is_guasto else 2):
-                self._show_guasto_dialog(idc, m, mod, ct, cd, cn, st)
+                lambda checked=False,
+                idc=id_coemi,
+                m=matricola,
+                mod=modello,
+                ct=current_tipo,
+                cd=current_data,
+                cn=current_note,
+                st=st_val: self._show_guasto_dialog(idc, m, mod, ct, cd, cn, st)
             )
             menu.addAction(mod_act)
         else:
             guasto_act = QAction("Segnala Guasto", self)
             guasto_act.setIcon(QIcon(get_asset_path(Icons.ALERT)))
             guasto_act.triggered.connect(
-                lambda checked=False, idc=id_coemi, m=matricola, mod=modello:
-                self._show_guasto_dialog(idc, m, mod, stato_richiesto=1)
+                lambda checked=False, idc=id_coemi, m=matricola, mod=modello: self._show_guasto_dialog(
+                    idc, m, mod, stato_richiesto=1
+                )
             )
             menu.addAction(guasto_act)
 
-            controllo_act = QAction("Richiedi Controllo Preventivo", self)
+            controllo_act = QAction("Metti in Valutazione Tecnica", self)
             controllo_act.setIcon(QIcon(get_asset_path(Icons.CALENDAR)))
             controllo_act.triggered.connect(
-                lambda checked=False, idc=id_coemi, m=matricola, mod=modello:
-                self._show_guasto_dialog(idc, m, mod, stato_richiesto=2)
+                lambda checked=False, idc=id_coemi, m=matricola, mod=modello: self._show_guasto_dialog(
+                    idc, m, mod, stato_richiesto=2
+                )
             )
             menu.addAction(controllo_act)
+
+            dismesso_act = QAction("Segnala come Dismesso", self)
+            dismesso_act.setIcon(QIcon(get_asset_path(Icons.X_CIRCLE)))
+            dismesso_act.triggered.connect(
+                lambda checked=False, idc=id_coemi, m=matricola, mod=modello: self._show_guasto_dialog(
+                    idc, m, mod, stato_richiesto=3
+                )
+            )
+            menu.addAction(dismesso_act)
 
         menu.addSeparator()
         self._add_expansion_action(menu, item)
@@ -627,8 +654,6 @@ class CertificatiCampioneTab(QWidget):
         """Mostra il dialog per segnalare guasto o controllo."""
         from src.gui.dialogs.guasto_dialog import GuastoDialog
 
-        is_controllo = (stato_richiesto == 2)
-
         dialog = GuastoDialog(
             id_coemi=id_coemi,
             matricola=matricola,
@@ -636,8 +661,8 @@ class CertificatiCampioneTab(QWidget):
             current_tipo=current_tipo,
             current_data=current_data,
             current_note=current_note,
-            is_controllo=is_controllo,
-            parent=self
+            stato_dialog=stato_richiesto,
+            parent=self,
         )
         if dialog.exec():
             dati = dialog.get_result()
@@ -661,22 +686,33 @@ class CertificatiCampioneTab(QWidget):
                     QMessageBox.StandardButton.Yes,
                 )
                 if reply == QMessageBox.StandardButton.Yes:
-                    self._draft_guasto_email(id_coemi, matricola, modello, dati, is_controllo)
+                    self._draft_guasto_email(id_coemi, matricola, modello, dati, stato_richiesto)
             else:
                 QMessageBox.critical(self, "Errore", "Impossibile salvare i dati della segnalazione.")
 
-    def _draft_guasto_email(self, id_coemi: str, matricola: str, modello: str, dati: dict[str, str], is_controllo: bool = False) -> None:
+    def _draft_guasto_email(
+        self, id_coemi: str, matricola: str, modello: str, dati: dict[str, str], stato_richiesto: int = 1
+    ) -> None:
         """Prepara e apre la bozza dell'email per il guasto tramite il client predefinito."""
         from urllib.parse import quote
 
         from PySide6.QtCore import QUrl
         from PySide6.QtGui import QDesktopServices
 
-        prefix = "Richiesta Controllo Preventivo" if is_controllo else "Segnalazione Guasto Strumento"
-        subject = f"{prefix}: ID COEMI {id_coemi}" if id_coemi else f"{prefix}: Matricola {matricola}"
+        if stato_richiesto == 2:
+            prefix = "Richiesta Controllo Preventivo"
+            dettagli_lbl = "Motivo del Controllo:"
+            tipo_lbl = "Motivo:"
+        elif stato_richiesto == 3:
+            prefix = "Segnalazione Strumento Dismesso"
+            dettagli_lbl = "Dettagli Dismissione:"
+            tipo_lbl = "Motivo:"
+        else:
+            prefix = "Segnalazione Guasto Strumento"
+            dettagli_lbl = "Dettagli Anomalia:"
+            tipo_lbl = "Tipo:"
 
-        dettagli_lbl = "Motivo del Controllo:" if is_controllo else "Dettagli Anomalia:"
-        tipo_lbl = "Motivo:" if is_controllo else "Tipo:"
+        subject = f"{prefix}: ID COEMI {id_coemi}" if id_coemi else f"{prefix}: Matricola {matricola}"
 
         body = (
             f"Dettagli Strumento:\n"

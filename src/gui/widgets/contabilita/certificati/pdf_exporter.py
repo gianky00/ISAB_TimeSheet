@@ -179,7 +179,9 @@ class CertificatiPdfExporter:
         painter.setFont(font)
         disclaimer_rect = QRectF(15, height - 30, width - 150, 30)
         painter.drawText(
-            disclaimer_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignBottom | Qt.TextFlag.TextWordWrap, disclaimer
+            disclaimer_rect,
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignBottom | Qt.TextFlag.TextWordWrap,
+            disclaimer,
         )
 
         # Ripristina font per la numerazione
@@ -350,21 +352,42 @@ class CertificatiPdfExporter:
         row_html = f"<tr class='{row_class}'>"
         if is_current:
             annotazioni = child.text(tree_any.IDX_ANNOTAZIONI)
-            if days in (-9999, -8888):
+            if days in (-9999, -8888, -7777):
                 guasto_info = []
                 if guasto_data:
-                    guasto_info.append(f"Data: {guasto_data}")
+                    if days == -9999:
+                        guasto_info.append(
+                            f"<span style='color: #881337; font-weight: bold;'>🔧 In attesa di ripar. dal:</span> {guasto_data}"
+                        )
+                    elif days == -8888:
+                        guasto_info.append(
+                            f"<span style='color: #6b21a8; font-weight: bold;'>🛠️ In carico dal:</span> {guasto_data}"
+                        )
+                    elif days == -7777:
+                        guasto_info.append(
+                            f"<span style='color: #64748B; font-weight: bold;'>🚫 Ritirato il:</span> {guasto_data}"
+                        )
+                elif days == -9999:
+                    guasto_info.append(
+                        "<span style='color: #881337; font-weight: bold;'>🔧 In attesa di ripar.</span>"
+                    )
+                elif days == -8888:
+                    guasto_info.append("<span style='color: #6b21a8; font-weight: bold;'>🛠️ In carico</span>")
+                elif days == -7777:
+                    guasto_info.append("<span style='color: #64748B; font-weight: bold;'>🚫 Ritirato</span>")
+
                 if guasto_tipo:
-                    guasto_info.append(f"Motivo: {guasto_tipo}" if days == -8888 else f"Tipo: {guasto_tipo}")
+                    if days == -9999:
+                        guasto_info.append(f"Difetto: {guasto_tipo}")
+                    else:
+                        guasto_info.append(f"Motivo: {guasto_tipo}")
+
                 if guasto_note:
                     guasto_info.append(f"Note: {guasto_note}")
 
                 if guasto_info:
                     sep = "<br>" if annotazioni else ""
-                    if days == -9999:
-                        annotazioni += f"{sep}<span style='color: #881337; font-weight: bold;'>⚠️ GUASTO:</span> " + "<br>".join(guasto_info)
-                    else:
-                        annotazioni += f"{sep}<span style='color: #B8860B; font-weight: bold;'>🔍 CONTROLLO:</span> " + "<br>".join(guasto_info)
+                    annotazioni += f"{sep}" + "<br>".join(guasto_info)
 
             row_html += f"<td class='text-center'>{child.text(tree_any.IDX_ID_STRUMENTO)}</td>"
             row_html += f"<td>{cert_display}</td>"
@@ -405,8 +428,11 @@ class CertificatiPdfExporter:
         if days == -9999 or "GUASTO" in stato_display.upper():
             return "<span style='color: #881337; font-weight: bold;'>GUASTO</span>"
 
-        if days == -8888 or "CONTROLLARE" in stato_display.upper():
-            return "<span style='color: #B8860B; font-weight: bold;'>CONTROLLO</span>"
+        if days == -8888 or "VALUTAZIONE" in stato_display.upper():
+            return "<span style='color: #6b21a8; font-weight: bold;'>IN<br>VALUTAZIONE<br>TECNICA</span>"
+
+        if days == -7777 or "DISMESSO" in stato_display.upper():
+            return "<span style='color: #64748B; font-weight: bold;'>DISMESSO</span>"
 
         if stato_display.startswith(StatoCertificatoLabel.SCADUTO):
             return stato_display.replace(f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>").replace(
@@ -424,12 +450,14 @@ class CertificatiPdfExporter:
             return "N/D *"
         return stato_display
 
-    def _get_status_row_class(self, days: int | None) -> str:
+    def _get_status_row_class(self, days: int | None) -> str:  # noqa: PLR0911
         """Determina la classe CSS della riga basandosi sulla scadenza."""
         if days == CertificatiEngine.FAULTY_MARKER:
             return "parent-guasto"
         if days == CertificatiEngine.CONTROL_MARKER:
-            return "parent-warning"
+            return "parent-valutazione"
+        if days == getattr(CertificatiEngine, "DISMISSED_MARKER", -7777):
+            return "parent-dismesso"
         if days is None:
             return "parent-nd"
         if days < 0:
@@ -474,6 +502,8 @@ class CertificatiPdfExporter:
         .parent-warning td { background-color: #fef3c7; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
         .parent-nd td { background-color: #f1f5f9; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
         .parent-guasto td { background-color: #fecdd3; color: #881337; font-weight: bold; border-top: 1pt solid #94a3b8; } /* Rosso scuro per guasti */
+        .parent-valutazione td { background-color: #f3e8ff; color: #6b21a8; font-weight: bold; border-top: 1pt solid #94a3b8; } /* Viola chiaro per valutazione tecnica */
+        .parent-dismesso td { background-color: #e2e8f0; color: #475569; font-weight: bold; border-top: 1pt solid #94a3b8; } /* Grigio per dismessi */
         .status-yes { color: #15803d; font-weight: bold; text-align: center; }
         .status-no { color: #b91c1c; font-weight: bold; text-align: center; }
         .status-warning { color: #b45309; font-weight: bold; text-align: center; }
@@ -543,8 +573,9 @@ class CertificatiPdfExporter:
                                 <span style="color: #d97706;">&#11044;</span> In Scadenza: <b>{s["in_scadenza"]}</b><br>
                                 <span style="color: #b91c1c;">&#11044;</span> Scaduti: <b>{s["scaduti"]}</b><br>
                                 <span style="color: #64748b;">&#11044;</span> Senza Scadenza *: <b>{s["senza_data"]}</b><br>
-                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{s["guasti"]}</b><br>
-                                <span style="color: #b45309;">&#11044;</span> Controlli: <b>{s["controlli"]}</b>
+                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{s.get("guasti", 0)}</b><br>
+                                <span style="color: #6b21a8;">&#11044;</span> In Val. Tecnica: <b>{s.get("controlli", 0)}</b><br>
+                                <span style="color: #475569;">&#11044;</span> Dismessi: <b>{s.get("dismessi", 0)}</b>
                             </td>
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
                                 &#127970; {UbicazioneStrumenti.UFFICIO_STRU.value}: <b>{s["ufficio_stru"]}</b><br>

@@ -10,13 +10,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from PySide6.QtCore import QObject
+
 from src.application.services import config_manager
 from src.application.services.notification_manager import NotificationManager
 
 logger = logging.getLogger(__name__)
 
 
-class CertCampioneAutomator:
+class CertCampioneAutomator(QObject):
     """Gestore automatizzato per il monitoraggio e l'elaborazione dei certificati campione."""
 
     def __init__(self, main_window: Any) -> None:
@@ -25,6 +27,7 @@ class CertCampioneAutomator:
         Args:
             main_window: Riferimento alla MainWindow dell'applicazione.
         """
+        super().__init__()
         self.mw = main_window
         self._cert_worker: Any = None
         self._fallback_worker: Any = None
@@ -67,10 +70,14 @@ class CertCampioneAutomator:
         from src.application.services.contabilita_worker import ContabilitaWorker  # noqa: PLC0415
 
         logger.info("Autopilot Certificati: Avvio aggiornamento database...")
+        from PySide6.QtCore import Qt  # noqa: PLC0415
+
         self._cert_worker = ContabilitaWorker(
             file_path="", giornaliere_path="", attivita_path="", certificati_path=cert_path
         )
-        self._cert_worker.finished_signal.connect(self._on_worker_finished)
+        self._cert_worker.finished_signal.connect(
+            self._on_worker_finished, Qt.ConnectionType.QueuedConnection
+        )
         self._cert_worker.start()
 
     def _on_worker_finished(self, success: bool, msg: str, added: int, removed: int, duration: float) -> None:

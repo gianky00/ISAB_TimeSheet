@@ -111,6 +111,13 @@ class DataSynchronizer:
             target,
             rows,
             key_cols=["id_coemi", "certificato"],
-            metadata_cols=["annotazioni", "ubicazione"],
+            metadata_cols=[
+                "annotazioni",
+                "ubicazione",
+                "guasto",
+                "guasto_tipo",
+                "guasto_data",
+                "guasto_note",
+            ],
         )
         return int(res[0]), int(res[1])

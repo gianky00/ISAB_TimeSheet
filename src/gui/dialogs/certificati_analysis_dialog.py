@@ -54,11 +54,12 @@ class ScadenzeAnalysisDialog(QDialog):
     ) -> None:
         super().__init__(parent)
 
-        # Filtriamo gli strumenti ASSENTI immediatamente (Richiesta Utente)
+        # Filtriamo gli strumenti ASSENTI immediatamente e i guasti/controlli/dismessi
         self.certificates_data = [
             c
             for c in certificates_data
             if UbicazioneStrumenti.ASSENTE.value not in str(c.get("ubicazione", "")).upper()
+            and c.get("days") not in (-9999, -8888, -7777)
         ]
 
         self.show_excluded = show_excluded
@@ -390,10 +391,12 @@ class ScadenzeAnalysisDialog(QDialog):
     def _send_email(self) -> None:
         """Genera e invia il report via Outlook asincronamente."""
         try:
-            # 1. Cattura immagini (DEVE stare nel Main Thread)
+            # 1. Cattura immagini e PDF (DEVE stare nel Main Thread)
             image_paths = self._capture_widgets_as_images()
             if not image_paths:
                 self._raise_no_images()
+
+            pdf_path = self._generate_audit_pdf()
 
             # 2. Definiamo la logica pesante di Outlook da eseguire nel Worker
             def outlook_task() -> None:
@@ -411,7 +414,6 @@ class ScadenzeAnalysisDialog(QDialog):
                 if scaduti_count > 0:
                     mail.Importance = 2  # High
 
-                pdf_path = self._generate_audit_pdf()
                 html_body = self._build_email_body(scaduti_count)
 
                 for i, path in enumerate(image_paths):
@@ -482,7 +484,7 @@ class ScadenzeAnalysisDialog(QDialog):
                 {cta_html}
         """
 
-    def _generate_audit_pdf(self) -> str | None:
+    def _generate_audit_pdf(self) -> str | None:  # noqa: C901
         """Genera un file PDF temporaneo con lo storico ed escludendo gli ASSENTI e gli ATTIVI."""
         if not self.tree_widget or not self.engine:
             return None
@@ -498,6 +500,7 @@ class ScadenzeAnalysisDialog(QDialog):
             visibility_map[i] = not item.isHidden()
             is_absent = False
             is_active = False
+            is_special = False
             if item.childCount() > 0:
                 child = item.child(0)
                 if child:
@@ -507,7 +510,10 @@ class ScadenzeAnalysisDialog(QDialog):
                     days, _ = self.engine.calculate_days_and_status(scadenza_str)
                     if days is not None and days > THRESHOLD_ATTENTION:
                         is_active = True
-            if is_absent or is_active:
+                    user_data = item.data(0, Qt.ItemDataRole.UserRole)
+                    if user_data and user_data.get("days") in (-9999, -8888, -7777):
+                        is_special = True
+            if is_absent or is_active or is_special:
                 item.setHidden(True)
 
         # 2. Genera PDF

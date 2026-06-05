@@ -120,7 +120,8 @@ class StatoCertificatoLabel:
     ATTIVO = "Attivo"
     SENZA_SCADENZA = "N/D (Senza Scadenza)"
     GUASTO = "STRUMENTO GUASTO"
-    CONTROLLO = "DA CONTROLLARE"
+    CONTROLLO = "IN VALUTAZIONE TECNICA"
+    DISMESSO = "DISMESSO"
 
 
 class TipoAnomalia(Enum):
@@ -226,6 +227,7 @@ class Icons:
     STATUS_DOT_YELLOW = "assets/ui/icons/status_dot_yellow.svg"
     STATUS_DOT_GREEN = "assets/ui/icons/status_dot_green.svg"
     STATUS_DOT_GRAY = "assets/ui/icons/status_dot_gray.svg"
+    STATUS_DOT_PURPLE = "assets/ui/icons/status_dot_purple.svg"
 
     # UI Elements
     FLAG_TCL_ON = "assets/ui/icons/flag_tcl_on.svg"
