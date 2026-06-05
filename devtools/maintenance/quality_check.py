@@ -66,38 +66,41 @@ def main() -> None:
         (
             "RUF Linter",
             run_command(
-                "RUF Linter", "ruff check . --ignore C901,RUF100,ANN204,TRY003,PLR0913,RET505,TRY300"
+                "RUF Linter", "python -m ruff check . --ignore C901,RUF100,ANN204,TRY003,PLR0913,RET505,TRY300"
             ),
         )
     )
 
     # 2. RUFF Formatter (check only)
-    results.append(("RUF Formatter", run_command("RUF Formatter", "ruff format .")))
+    results.append(("RUF Formatter", run_command("RUF Formatter", "python -m ruff format .")))
 
     # 3. MYPY
-    results.append(("MYPY Type Check", run_command("MYPY Type Check", "mypy src")))
+    results.append(("MYPY Type Check", run_command("MYPY Type Check", "python -m mypy src")))
 
     # 4. XENON (Complexity) — soglie allineate a pyproject.toml [tool.xenon]
     results.append(
         (
             "XENON Complexity",
-            run_command("XENON Complexity", "xenon --max-absolute B --max-modules B --max-average A src"),
+            run_command("XENON Complexity", "python -m xenon --max-absolute B --max-modules B --max-average A src"),
         )
     )
 
     # 5. RADON (CC)
-    results.append(("RADON CC Analysis", run_command("RADON CC Analysis", "radon cc src -s")))
+    results.append(("RADON CC Analysis", run_command("RADON CC Analysis", "python -m radon cc src -s")))
 
     # 6. BANDIT (Security)
-    results.append(("BANDIT Security", run_command("BANDIT Security", "bandit -r src -ll")))
+    results.append(("BANDIT Security", run_command("BANDIT Security", "python -m bandit -r src -ll")))
 
-    # 7. COHESION SRP (LCOM) — usa il checker con filtri anti-falsi positivi
-    results.append(
-        (
-            "COHESION SRP",
-            run_command("COHESION SRP", "python devtools/maintenance/check_cohesion.py"),
+    # 7. SRP (Check Cohesion)
+    cohesion_path = "devtools/maintenance/check_cohesion.py"
+    import os
+    if os.path.exists(cohesion_path):
+        results.append(
+            (
+                "COHESION SRP",
+                run_command("COHESION SRP", f"python {cohesion_path}"),
+            )
         )
-    )
 
     # Tabella riepilogativa
     table = Table(title="\nReport Qualità Finale")

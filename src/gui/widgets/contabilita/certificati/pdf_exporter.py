@@ -305,7 +305,7 @@ class CertificatiPdfExporter:
         parts = re.split(r"(\d+)", id_coemi)
         return [(True, int(c)) if c.isdigit() else (False, c.lower()) for c in parts if c]
 
-    def _build_row_html(self, child: QTreeWidgetItem, is_current: bool, get_link_fn: Any) -> str:  # noqa: C901, PLR0915, PLR0912
+    def _build_row_html(self, child: QTreeWidgetItem, is_current: bool, get_link_fn: Any) -> str:
         """Costruisce l'HTML per una singola riga (corrente o storica)."""
         tree_any = self._get_tree()
         scadenza_str = child.text(tree_any.IDX_SCADENZA)
@@ -351,43 +351,7 @@ class CertificatiPdfExporter:
 
         row_html = f"<tr class='{row_class}'>"
         if is_current:
-            annotazioni = child.text(tree_any.IDX_ANNOTAZIONI)
-            if days in (-9999, -8888, -7777):
-                guasto_info = []
-                if guasto_data:
-                    if days == -9999:
-                        guasto_info.append(
-                            f"<span style='color: #881337; font-weight: bold;'>🔧 In attesa di ripar. dal:</span> {guasto_data}"
-                        )
-                    elif days == -8888:
-                        guasto_info.append(
-                            f"<span style='color: #6b21a8; font-weight: bold;'>🛠️ In carico dal:</span> {guasto_data}"
-                        )
-                    elif days == -7777:
-                        guasto_info.append(
-                            f"<span style='color: #64748B; font-weight: bold;'>🚫 Ritirato il:</span> {guasto_data}"
-                        )
-                elif days == -9999:
-                    guasto_info.append(
-                        "<span style='color: #881337; font-weight: bold;'>🔧 In attesa di ripar.</span>"
-                    )
-                elif days == -8888:
-                    guasto_info.append("<span style='color: #6b21a8; font-weight: bold;'>🛠️ In carico</span>")
-                elif days == -7777:
-                    guasto_info.append("<span style='color: #64748B; font-weight: bold;'>🚫 Ritirato</span>")
-
-                if guasto_tipo:
-                    if days == -9999:
-                        guasto_info.append(f"Difetto: {guasto_tipo}")
-                    else:
-                        guasto_info.append(f"Motivo: {guasto_tipo}")
-
-                if guasto_note:
-                    guasto_info.append(f"Note: {guasto_note}")
-
-                if guasto_info:
-                    sep = "<br>" if annotazioni else ""
-                    annotazioni += f"{sep}" + "<br>".join(guasto_info)
+            annotazioni = self._build_annotations_html(days, child.text(tree_any.IDX_ANNOTAZIONI), guasto_tipo, guasto_data, guasto_note)
 
             row_html += f"<td class='text-center'>{child.text(tree_any.IDX_ID_STRUMENTO)}</td>"
             row_html += f"<td>{cert_display}</td>"
@@ -418,6 +382,47 @@ class CertificatiPdfExporter:
         row_html += "</tr>"
         return row_html
 
+    def _get_guasto_info_with_data(self, days: int, guasto_data: str) -> str:
+        if days == -9999:
+            return f"<span style='color: #881337; font-weight: bold;'>🔧 In attesa di ripar. dal:</span> {guasto_data}"
+        if days == -8888:
+            return f"<span style='color: #6b21a8; font-weight: bold;'>🛠️ In carico dal:</span> {guasto_data}"
+        if days == -7777:
+            return f"<span style='color: #64748B; font-weight: bold;'>🚫 Ritirato il:</span> {guasto_data}"
+        return ""
+
+    def _get_guasto_info_no_data(self, days: int) -> str:
+        if days == -9999:
+            return "<span style='color: #881337; font-weight: bold;'>🔧 In attesa di ripar.</span>"
+        if days == -8888:
+            return "<span style='color: #6b21a8; font-weight: bold;'>🛠️ In carico</span>"
+        if days == -7777:
+            return "<span style='color: #64748B; font-weight: bold;'>🚫 Ritirato</span>"
+        return ""
+
+    def _build_annotations_html(self, days: int | None, annotazioni: str, guasto_tipo: str, guasto_data: str, guasto_note: str) -> str:
+        if days not in (-9999, -8888, -7777):
+            return annotazioni
+            
+        guasto_info = []
+        if guasto_data:
+            guasto_info.append(self._get_guasto_info_with_data(days, guasto_data))
+        else:
+            guasto_info.append(self._get_guasto_info_no_data(days))
+
+        if guasto_tipo:
+            prefix = "Difetto: " if days == -9999 else "Motivo: "
+            guasto_info.append(f"{prefix}{guasto_tipo}")
+
+        if guasto_note:
+            guasto_info.append(f"Note: {guasto_note}")
+
+        if guasto_info:
+            sep = "<br>" if annotazioni else ""
+            return annotazioni + sep + "<br>".join(filter(None, guasto_info))
+            
+        return annotazioni
+
     def _format_status_display(self, days: int | None, guasto_tipo: str = "") -> str:  # noqa: PLR0911
         """Formatta il testo dello stato per la visualizzazione PDF."""
         stato_display = CertificatiEngine.format_days_text_short(days)
@@ -425,27 +430,29 @@ class CertificatiPdfExporter:
             stato_display = stato_display.replace(emoji, "")
         stato_display = stato_display.strip()
 
-        if days == -9999 or "GUASTO" in stato_display.upper():
-            return "<span style='color: #881337; font-weight: bold;'>GUASTO</span>"
+        special_days = {
+            -9999: "<span style='color: #881337; font-weight: bold;'>GUASTO</span>",
+            -8888: "<span style='color: #6b21a8; font-weight: bold;'>IN<br>VALUTAZIONE<br>TECNICA</span>",
+            -7777: "<span style='color: #64748B; font-weight: bold;'>DISMESSO</span>",
+        }
+        if days in special_days:
+            return special_days[days]
+            
+        upper_display = stato_display.upper()
+        if "GUASTO" in upper_display: return special_days[-9999]
+        if "VALUTAZIONE" in upper_display: return special_days[-8888]
+        if "DISMESSO" in upper_display: return special_days[-7777]
 
-        if days == -8888 or "VALUTAZIONE" in stato_display.upper():
-            return "<span style='color: #6b21a8; font-weight: bold;'>IN<br>VALUTAZIONE<br>TECNICA</span>"
-
-        if days == -7777 or "DISMESSO" in stato_display.upper():
-            return "<span style='color: #64748B; font-weight: bold;'>DISMESSO</span>"
-
-        if stato_display.startswith(StatoCertificatoLabel.SCADUTO):
-            return stato_display.replace(f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>").replace(
-                "gg fa)", " giorni"
-            )
-        if stato_display.startswith(StatoCertificatoLabel.ATTIVO):
-            return stato_display.replace(f"{StatoCertificatoLabel.ATTIVO} (", "Attivo per<br>").replace(
-                "gg rim.)", " giorni"
-            )
-        if stato_display.startswith(StatoCertificatoLabel.IN_SCADENZA):
-            return stato_display.replace(f"{StatoCertificatoLabel.IN_SCADENZA} (", "In scadenza<br>").replace(
-                "gg)", " giorni<br>rimanenti"
-            )
+        replacements = [
+            (f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>", "gg fa)", " giorni"),
+            (f"{StatoCertificatoLabel.ATTIVO} (", "Attivo per<br>", "gg rim.)", " giorni"),
+            (f"{StatoCertificatoLabel.IN_SCADENZA} (", "In scadenza<br>", "gg)", " giorni<br>rimanenti")
+        ]
+        
+        for start_str, start_rep, end_str, end_rep in replacements:
+            if stato_display.startswith(start_str):
+                return stato_display.replace(start_str, start_rep).replace(end_str, end_rep)
+                
         if StatoCertificatoLabel.SENZA_SCADENZA in stato_display:
             return "N/D *"
         return stato_display
