@@ -66,6 +66,51 @@ def _set_printer_duplex_powershell(printer_name: str, mode: str = "OneSided") ->
         return True
 
 
+def _print_pdf_page(page_num: int, total_pages: int, doc: Any, file_path: str, target_printer: str) -> None:
+    logger.debug(f"Invio pagina {page_num + 1} di {total_pages}...")
+
+    # 1. Crea un NUOVO contesto di stampa per ogni pagina
+    hdc = cast("Any", win32ui).CreateDC()
+    hdc.CreatePrinterDC(target_printer)
+
+    # 2. Avvia un NUOVO documento (Job)
+    job_name = f"{os.path.basename(file_path)} - Pag {page_num + 1}/{total_pages}"
+    hdc.StartDoc(job_name)
+    hdc.StartPage()
+
+    # 3. Renderizza la pagina
+    try:
+        # Recupera risoluzione stampante
+        horz_res = hdc.GetDeviceCaps(win32con.HORZRES)
+        vert_res = hdc.GetDeviceCaps(win32con.VERTRES)
+
+        page = doc[page_num]
+
+        # Rendering Alta Risoluzione (~300 DPI)
+        mat = fitz.Matrix(4, 4)
+        pix = page.get_pixmap(matrix=mat)
+
+        # Conversione PIL
+        mode = "RGBA" if pix.alpha else "RGB"
+        img = Image.frombytes(mode, (pix.width, pix.height), pix.samples)
+        if mode == "RGBA":
+            img = img.convert("RGB")
+
+        # Stampa Fit-to-Page
+        dib = ImageWin.Dib(img)
+        dib.draw(hdc.GetHandleOutput(), (0, 0, horz_res, vert_res))
+
+    except Exception:
+        logger.exception(f"Errore rendering pagina {page_num + 1}")
+        hdc.AbortDoc()
+        raise
+
+    # 4. Chiudi Pagina e Documento -> FORZA ESPULSIONE FOGLIO
+    hdc.EndPage()
+    hdc.EndDoc()
+    hdc.DeleteDC()
+
+
 def print_pdf(file_path: str, printer_name: str) -> bool:
     """Stampa un PDF usando la stampante specificata.
 
@@ -92,48 +137,7 @@ def print_pdf(file_path: str, printer_name: str) -> bool:
 
             # Loop per inviare OGNI PAGINA come JOB SEPARATO
             for page_num in range(total_pages):
-                logger.debug(f"Invio pagina {page_num + 1} di {total_pages}...")
-
-                # 1. Crea un NUOVO contesto di stampa per ogni pagina
-                hdc = cast("Any", win32ui).CreateDC()
-                hdc.CreatePrinterDC(target_printer)
-
-                # 2. Avvia un NUOVO documento (Job)
-                job_name = f"{os.path.basename(file_path)} - Pag {page_num + 1}/{total_pages}"
-                hdc.StartDoc(job_name)
-                hdc.StartPage()
-
-                # 3. Renderizza la pagina
-                try:
-                    # Recupera risoluzione stampante
-                    horz_res = hdc.GetDeviceCaps(win32con.HORZRES)
-                    vert_res = hdc.GetDeviceCaps(win32con.VERTRES)
-
-                    page = doc[page_num]
-
-                    # Rendering Alta Risoluzione (~300 DPI)
-                    mat = fitz.Matrix(4, 4)
-                    pix = page.get_pixmap(matrix=mat)
-
-                    # Conversione PIL
-                    mode = "RGBA" if pix.alpha else "RGB"
-                    img = Image.frombytes(mode, (pix.width, pix.height), pix.samples)
-                    if mode == "RGBA":
-                        img = img.convert("RGB")
-
-                    # Stampa Fit-to-Page
-                    dib = ImageWin.Dib(img)
-                    dib.draw(hdc.GetHandleOutput(), (0, 0, horz_res, vert_res))
-
-                except Exception:
-                    logger.exception(f"Errore rendering pagina {page_num + 1}")
-                    hdc.AbortDoc()
-                    raise
-
-                # 4. Chiudi Pagina e Documento -> FORZA ESPULSIONE FOGLIO
-                hdc.EndPage()
-                hdc.EndDoc()
-                hdc.DeleteDC()
+                _print_pdf_page(page_num, total_pages, doc, file_path, target_printer)
 
                 # Piccola pausa per dare ordine allo spooler
                 time.sleep(0.5)

@@ -118,27 +118,22 @@ class AuditTableModel(QAbstractTableModel):
 
         return None
 
-    def _get_display_data(self, log: dict[str, Any], col: int) -> str | None:  # noqa: PLR0911
+    def _get_display_data(self, log: dict[str, Any], col: int) -> str | None:
         """Restituisce il testo da mostrare per ogni colonna."""
-        if col == self.COL_STATUS:
-            return ""
-        if col == self.COL_TIMESTAMP:
-            return self._format_timestamp(log.get("timestamp"))
-        if col == self.COL_DURATION:
-            return self._format_duration(log.get("duration_ms", 0))
-        if col == self.COL_MODULE:
-            return str(log.get("module", "-") or "-")
-        if col == self.COL_CATEGORY:
-            return str(log.get("category", "-"))
-        if col == self.COL_ACTION:
-            return str(log.get("action", "-"))
-        if col == self.COL_ENTITY:
-            # Priorità a error_code se c'è, altrimenti entity
-            err = log.get("error_code")
-            return str(err) if err else str(log.get("entity", "-"))
-        if col == self.COL_MESSAGE:
-            return self._extract_message(log)
-        return None
+        from collections.abc import Callable  # noqa: TC003
+
+        mapping: dict[int, Callable[[], str | None]] = {
+            self.COL_STATUS: lambda: "",
+            self.COL_TIMESTAMP: lambda: self._format_timestamp(log.get("timestamp")),
+            self.COL_DURATION: lambda: self._format_duration(log.get("duration_ms", 0)),
+            self.COL_MODULE: lambda: str(log.get("module", "-") or "-"),
+            self.COL_CATEGORY: lambda: str(log.get("category", "-")),
+            self.COL_ACTION: lambda: str(log.get("action", "-")),
+            self.COL_ENTITY: lambda: str(log.get("error_code") or log.get("entity", "-")),
+            self.COL_MESSAGE: lambda: self._extract_message(log),
+        }
+        handler = mapping.get(col)
+        return handler() if handler else None
 
     def _get_decoration_data(self, log: dict[str, Any], col: int) -> QIcon | None:
         """Restituisce l'icona (pallino colorato) per la colonna di stato."""

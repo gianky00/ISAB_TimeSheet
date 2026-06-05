@@ -998,8 +998,7 @@ class WeatherWidget(ModernCard):
             f"#lbl_condition {{ color: {COLORS['error_red']}; font-weight: 800; background: transparent; border: none; }}"
         )
 
-    def _determine_weather_style(self, code: int, daily: dict[str, Any]) -> str:
-        """Determina lo stile del gradiente atmosferico."""
+    def _is_night(self, daily: dict[str, Any]) -> bool:
         try:
             sunrise_raw = daily.get("sunrise", [""])[0] if "sunrise" in daily else ""
             sunset_raw = daily.get("sunset", [""])[0] if "sunset" in daily else ""
@@ -1011,12 +1010,16 @@ class WeatherWidget(ModernCard):
                 now_time = now_dt.time()
                 rise_time = s_rise_dt.time()
                 set_time = s_set_dt.time()
-                if now_time < rise_time or now_time > set_time:
-                    return "night"
+                return now_time < rise_time or now_time > set_time
         except Exception:
             h = datetime.now(UTC).hour
-            if h < 6 or h > 20:
-                return "night"
+            return h < 6 or h > 20
+        return False
+
+    def _determine_weather_style(self, code: int, daily: dict[str, Any]) -> str:
+        """Determina lo stile del gradiente atmosferico."""
+        if self._is_night(daily):
+            return "night"
 
         sunny_code = 0
         if code == sunny_code:

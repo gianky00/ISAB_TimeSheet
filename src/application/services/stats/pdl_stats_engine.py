@@ -118,6 +118,42 @@ class PDLStatsEngine:
         return cursor.fetchall()
 
     @classmethod
+    def _update_area_stats(
+        cls,
+        area: str,
+        dt_obj: datetime,
+        now: datetime,
+        last_day_prev: datetime,
+        stats_map: dict[str, dict[str, int]],
+    ) -> tuple[int, int]:
+        curr_mtd = prev_mtd = 0
+        if area not in stats_map:
+            stats_map[area] = {"curr": 0, "prev": 0}
+
+        if dt_obj.month == now.month and dt_obj.year == now.year and dt_obj.day <= now.day:
+            stats_map[area]["curr"] += 1
+            curr_mtd = 1
+        elif (
+            dt_obj.month == last_day_prev.month
+            and dt_obj.year == last_day_prev.year
+            and dt_obj.day <= now.day
+        ):
+            stats_map[area]["prev"] += 1
+            prev_mtd = 1
+        return curr_mtd, prev_mtd
+
+    @classmethod
+    def _update_weekly_stats(
+        cls, dt_obj: datetime, seven_days_ago: datetime, fourteen_days_ago: datetime
+    ) -> tuple[int, int]:
+        last_7d = prev_7d = 0
+        if dt_obj >= seven_days_ago:
+            last_7d = 1
+        elif dt_obj >= fourteen_days_ago:
+            prev_7d = 1
+        return last_7d, prev_7d
+
+    @classmethod
     def _process_pdl_rows(
         cls, rows: list[tuple[str, str]]
     ) -> tuple[int, int, int, int, dict[str, dict[str, int]]]:
@@ -134,22 +170,13 @@ class PDLStatsEngine:
             try:
                 dt_obj = datetime.strptime(date_str, "%d/%m/%Y %H:%M:%S").astimezone()
                 if area:
-                    if area not in stats_map:
-                        stats_map[area] = {"curr": 0, "prev": 0}
-                    if dt_obj.month == now.month and dt_obj.year == now.year and dt_obj.day <= now.day:
-                        stats_map[area]["curr"] += 1
-                        curr_mtd += 1
-                    elif (
-                        dt_obj.month == last_day_prev.month
-                        and dt_obj.year == last_day_prev.year
-                        and dt_obj.day <= now.day
-                    ):
-                        stats_map[area]["prev"] += 1
-                        prev_mtd += 1
-                if dt_obj >= seven_days_ago:
-                    last_7d += 1
-                elif dt_obj >= fourteen_days_ago:
-                    prev_7d += 1
+                    cm, pm = cls._update_area_stats(area, dt_obj, now, last_day_prev, stats_map)
+                    curr_mtd += cm
+                    prev_mtd += pm
+
+                l7, p7 = cls._update_weekly_stats(dt_obj, seven_days_ago, fourteen_days_ago)
+                last_7d += l7
+                prev_7d += p7
             except (ValueError, IndexError):
                 continue
         return curr_mtd, prev_mtd, last_7d, prev_7d, stats_map

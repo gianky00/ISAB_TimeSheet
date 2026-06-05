@@ -174,44 +174,47 @@ def invalidate_config_cache() -> None:
         _config_cache = None
 
 
+def _is_file_in_use_error(e: Exception) -> bool:
+    win_err_file_in_use = 32
+    return isinstance(e, PermissionError) or (
+        isinstance(e, OSError) and getattr(e, "winerror", 0) == win_err_file_in_use
+    )
+
+
+def _write_temp_and_replace(temp_path: Path, path: Path, data: dict[str, Any]) -> None:
+    ensure_config_dir()
+    with temp_path.open("w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+        f.flush()
+        os.fsync(f.fileno())
+
+    with _file_io_lock:
+        if path.exists():
+            os.replace(temp_path, path)
+        else:
+            temp_path.rename(path)
+
+
 def _atomic_write_json(path: Path, data: dict[str, Any]) -> bool:
     """Scrive un file JSON in modo atomico usando un file temporaneo con retry e lock."""
-    # Use unique temp file per thread to avoid "file in use" on the .tmp file itself during concurrent writes
     temp_path = path.parent / f"{path.name}.{threading.get_ident()}.tmp"
-
     max_retries = 5
     retry_delay = 0.1
 
-    win_err_file_in_use = 32
-
     for attempt in range(max_retries):
         try:
-            ensure_config_dir()
-            # 1. Scrittura del file temporaneo
-            with temp_path.open("w", encoding="utf-8") as f:
-                json.dump(data, f, indent=4, ensure_ascii=False)
-                f.flush()
-                os.fsync(f.fileno())
-
-            # 2. Sostituzione atomica protetta da lock globale di processo
-            with _file_io_lock:
-                if path.exists():
-                    os.replace(temp_path, path)
-                else:
-                    temp_path.rename(path)
+            _write_temp_and_replace(temp_path, path, data)
         except (PermissionError, OSError) as e:
-            # WinError 32: Il file è utilizzato da un altro processo
-            is_busy = isinstance(e, PermissionError) or (
-                isinstance(e, OSError) and getattr(e, "winerror", 0) == win_err_file_in_use
-            )
-            if is_busy and attempt < max_retries - 1:
+            if _is_file_in_use_error(e) and attempt < max_retries - 1:
+                print(
+                    f"[{threading.get_ident()}] File occupato, retry {attempt + 1}/{max_retries} per {path.name}"
+                )
                 time.sleep(retry_delay * (attempt + 1))
-                continue
-            print(f"Atomic write failed for {path} after {attempt + 1} attempts: {e}")
-            break
-        except Exception as e:
-            print(f"Atomic write critical error for {path}: {e}")
-            break
+            else:
+                print(
+                    f"[{threading.get_ident()}] Impossibile scrivere {path.name} dopo {attempt + 1} tentativi: {e}"
+                )
+                break
         else:
             return True
         finally:

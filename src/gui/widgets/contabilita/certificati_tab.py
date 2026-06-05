@@ -361,14 +361,9 @@ class CertificatiCampioneTab(QWidget):
             parent_item = self._create_parent_item(g)
             self._add_child_items(parent_item, g)
 
-    def _create_parent_item(self, g: dict[str, Any]) -> SortableTreeWidgetItem:
-        """Crea e configura l'elemento padre nell'albero."""
-        is_excluded = g["matricola"] in self.engine._exclusions
-        is_print_excluded = g["matricola"] in self.engine._print_exclusions
-        days_val: int | None = g["days"]
-        days_text = self.engine.format_days_text_with_guasto(days_val, g.get("guasto_tipo", ""))
-
-        # Recupero numero certificato più recente (il primo della lista ordinata dall'engine)
+    def _build_parent_label(
+        self, g: dict[str, Any], days_text: str, is_excluded: bool, is_print_excluded: bool
+    ) -> str:
         from src.application.services.contabilita_queries import ContabilitaQueries
 
         latest_cert_num = ""
@@ -384,10 +379,19 @@ class CertificatiCampioneTab(QWidget):
 
         id_part = f"{g['id_coemi']}  •  " if g["id_coemi"] else ""
         cert_part = f"{latest_cert_num} " if latest_cert_num else ""
-        label = (
+        return (
             f"{id_part}{g['costruttore']}  •  {g['modello']}{range_part}  •  {g['matricola']}  •  "
             f"{cert_part}{days_text}{ex_marker}{pr_marker}"
         )
+
+    def _create_parent_item(self, g: dict[str, Any]) -> SortableTreeWidgetItem:
+        """Crea e configura l'elemento padre nell'albero."""
+        is_excluded = g["matricola"] in self.engine._exclusions
+        is_print_excluded = g["matricola"] in self.engine._print_exclusions
+        days_val: int | None = g["days"]
+        days_text = self.engine.format_days_text_with_guasto(days_val, g.get("guasto_tipo", ""))
+
+        label = self._build_parent_label(g, days_text, is_excluded, is_print_excluded)
 
         parent_item = SortableTreeWidgetItem(self.tree, [label])
         parent_item.setFirstColumnSpanned(True)
@@ -531,23 +535,97 @@ class CertificatiCampioneTab(QWidget):
         if viewport := self.tree.viewport():
             menu.exec(viewport.mapToGlobal(pos))
 
-    def _add_parent_context_actions(self, menu: QMenu, item: QTreeWidgetItem) -> None:  # noqa: PLR0915
+    def _add_monitoring_actions(self, menu: QMenu, matricola: str) -> None:
+        is_ex = matricola in self.engine._exclusions
+        mon_act = QAction("Includi nel monitoraggio" if is_ex else "Escludi dal monitoraggio", self)
+        mon_act.setIcon(QIcon(get_asset_path(Icons.CHECK_CIRCLE if is_ex else Icons.X_CIRCLE)))
+        mon_act.triggered.connect(lambda checked=False, m=matricola: self._toggle_exclusion(m))
+        menu.addAction(mon_act)
+
+        is_pr_ex = matricola in self.engine._print_exclusions
+        print_act = QAction("Includi nella stampa" if is_pr_ex else "Escludi dalla stampa", self)
+        print_act.setIcon(QIcon(get_asset_path(Icons.FILE_TEXT if is_pr_ex else Icons.ALERT)))
+        print_act.triggered.connect(lambda checked=False, m=matricola: self._toggle_print_exclusion(m))
+        menu.addAction(print_act)
+
+    def _add_active_fault_actions(  # noqa: PLR0913
+        self,
+        menu: QMenu,
+        is_guasto: bool,
+        is_controllo: bool,
+        id_coemi: str,
+        matricola: str,
+        modello: str,
+        current_tipo: str,
+        current_data: str,
+        current_note: str,
+    ) -> None:
+        ripara_act = QAction("Annulla Segnalazione / Segna Risolto", self)
+        ripara_act.setIcon(QIcon(get_asset_path(Icons.CHECK_CIRCLE)))
+        ripara_act.triggered.connect(
+            lambda checked=False, idc=id_coemi, m=matricola: self._mark_as_repaired(idc, m)
+        )
+        menu.addAction(ripara_act)
+
+        lbl_mod = (
+            "Modifica Dati Guasto"
+            if is_guasto
+            else "Modifica Dati Valutazione Tecnica"
+            if is_controllo
+            else "Modifica Dati Dismissione"
+        )
+        st_val = 1 if is_guasto else 2 if is_controllo else 3
+        mod_act = QAction(lbl_mod, self)
+        mod_act.setIcon(QIcon(get_asset_path(Icons.EDIT)))
+        mod_act.triggered.connect(
+            lambda checked=False,
+            idc=id_coemi,
+            m=matricola,
+            mod=modello,
+            ct=current_tipo,
+            cd=current_data,
+            cn=current_note,
+            st=st_val: self._show_guasto_dialog(idc, m, mod, ct, cd, cn, st)
+        )
+        menu.addAction(mod_act)
+
+    def _add_new_fault_actions(self, menu: QMenu, id_coemi: str, matricola: str, modello: str) -> None:
+        guasto_act = QAction("Segnala Guasto", self)
+        guasto_act.setIcon(QIcon(get_asset_path(Icons.ALERT)))
+        guasto_act.triggered.connect(
+            lambda checked=False, idc=id_coemi, m=matricola, mod=modello: self._show_guasto_dialog(
+                idc, m, mod, stato_richiesto=1
+            )
+        )
+        menu.addAction(guasto_act)
+
+        controllo_act = QAction("Metti in Valutazione Tecnica", self)
+        controllo_act.setIcon(QIcon(get_asset_path(Icons.CALENDAR)))
+        controllo_act.triggered.connect(
+            lambda checked=False, idc=id_coemi, m=matricola, mod=modello: self._show_guasto_dialog(
+                idc, m, mod, stato_richiesto=2
+            )
+        )
+        menu.addAction(controllo_act)
+
+        dismesso_act = QAction("Segnala come Dismesso", self)
+        dismesso_act.setIcon(QIcon(get_asset_path(Icons.X_CIRCLE)))
+        dismesso_act.triggered.connect(
+            lambda checked=False, idc=id_coemi, m=matricola, mod=modello: self._show_guasto_dialog(
+                idc, m, mod, stato_richiesto=3
+            )
+        )
+        menu.addAction(dismesso_act)
+
+    def _add_parent_context_actions(self, menu: QMenu, item: QTreeWidgetItem) -> None:
         """Aggiunge le azioni specifiche per l'item padre (strumento)."""
-        # Recupera dati per il guasto
-        id_coemi = ""
-        matricola = ""
-        modello = ""
-        is_guasto = False
-        current_tipo = ""
-        current_data = ""
-        current_note = ""
+        id_coemi, matricola, modello = "", "", ""
+        is_guasto, is_controllo, is_dismesso = False, False, False
+        current_tipo, current_data, current_note = "", "", ""
 
         if item.childCount() > 0:
             parsed = self.engine.parse_parent_label(item.text(0))
-            id_coemi = parsed["id_coemi"]
-            matricola = parsed["matricola"]
-            modello = parsed["modello"]
-            # Utilizziamo il marker di fault per dedurre lo stato attuale
+            id_coemi, matricola, modello = parsed["id_coemi"], parsed["matricola"], parsed["modello"]
             user_data = item.data(0, Qt.ItemDataRole.UserRole)
             days = None
             if isinstance(user_data, dict):
@@ -559,84 +637,26 @@ class CertificatiCampioneTab(QWidget):
             is_controllo = days == self.engine.CONTROL_MARKER
             is_dismesso = days == self.engine.DISMISSED_MARKER
         else:
-            # Fallback se non ci sono figli (raro)
             parsed = self.engine.parse_parent_label(item.text(0))
-            matricola = parsed["matricola"]
-            modello = parsed["modello"]
+            matricola, modello = parsed.get("matricola", ""), parsed.get("modello", "")
 
-        # Monitoraggio
-        is_ex = matricola in self.engine._exclusions
-        mon_act = QAction("Includi nel monitoraggio" if is_ex else "Escludi dal monitoraggio", self)
-        mon_act.setIcon(QIcon(get_asset_path(Icons.CHECK_CIRCLE if is_ex else Icons.X_CIRCLE)))
-        mon_act.triggered.connect(lambda checked=False, m=matricola: self._toggle_exclusion(m))
-        menu.addAction(mon_act)
-
-        # Stampa
-        is_pr_ex = matricola in self.engine._print_exclusions
-        print_act = QAction("Includi nella stampa" if is_pr_ex else "Escludi dalla stampa", self)
-        print_act.setIcon(QIcon(get_asset_path(Icons.FILE_TEXT if is_pr_ex else Icons.ALERT)))
-        print_act.triggered.connect(lambda checked=False, m=matricola: self._toggle_print_exclusion(m))
-        menu.addAction(print_act)
-
+        self._add_monitoring_actions(menu, matricola)
         menu.addSeparator()
 
-        # Gestione Segnalazioni
         if is_guasto or is_controllo or is_dismesso:
-            ripara_act = QAction("Annulla Segnalazione / Segna Risolto", self)
-            ripara_act.setIcon(QIcon(get_asset_path(Icons.CHECK_CIRCLE)))
-            ripara_act.triggered.connect(
-                lambda checked=False, idc=id_coemi, m=matricola: self._mark_as_repaired(idc, m)
+            self._add_active_fault_actions(
+                menu,
+                is_guasto,
+                is_controllo,
+                id_coemi,
+                matricola,
+                modello,
+                current_tipo,
+                current_data,
+                current_note,
             )
-            menu.addAction(ripara_act)
-
-            lbl_mod = (
-                "Modifica Dati Guasto"
-                if is_guasto
-                else "Modifica Dati Valutazione Tecnica"
-                if is_controllo
-                else "Modifica Dati Dismissione"
-            )
-            st_val = 1 if is_guasto else 2 if is_controllo else 3
-            mod_act = QAction(lbl_mod, self)
-            mod_act.setIcon(QIcon(get_asset_path(Icons.EDIT)))
-            mod_act.triggered.connect(
-                lambda checked=False,
-                idc=id_coemi,
-                m=matricola,
-                mod=modello,
-                ct=current_tipo,
-                cd=current_data,
-                cn=current_note,
-                st=st_val: self._show_guasto_dialog(idc, m, mod, ct, cd, cn, st)
-            )
-            menu.addAction(mod_act)
         else:
-            guasto_act = QAction("Segnala Guasto", self)
-            guasto_act.setIcon(QIcon(get_asset_path(Icons.ALERT)))
-            guasto_act.triggered.connect(
-                lambda checked=False, idc=id_coemi, m=matricola, mod=modello: self._show_guasto_dialog(
-                    idc, m, mod, stato_richiesto=1
-                )
-            )
-            menu.addAction(guasto_act)
-
-            controllo_act = QAction("Metti in Valutazione Tecnica", self)
-            controllo_act.setIcon(QIcon(get_asset_path(Icons.CALENDAR)))
-            controllo_act.triggered.connect(
-                lambda checked=False, idc=id_coemi, m=matricola, mod=modello: self._show_guasto_dialog(
-                    idc, m, mod, stato_richiesto=2
-                )
-            )
-            menu.addAction(controllo_act)
-
-            dismesso_act = QAction("Segnala come Dismesso", self)
-            dismesso_act.setIcon(QIcon(get_asset_path(Icons.X_CIRCLE)))
-            dismesso_act.triggered.connect(
-                lambda checked=False, idc=id_coemi, m=matricola, mod=modello: self._show_guasto_dialog(
-                    idc, m, mod, stato_richiesto=3
-                )
-            )
-            menu.addAction(dismesso_act)
+            self._add_new_fault_actions(menu, id_coemi, matricola, modello)
 
         menu.addSeparator()
         self._add_expansion_action(menu, item)

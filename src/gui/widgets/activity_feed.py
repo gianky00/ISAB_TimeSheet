@@ -251,6 +251,36 @@ class ActivityFeed(QWidget):
         if shiboken6.isValid(self):
             self.refresh_feed()
 
+    def _clear_feed_items(self) -> None:
+        while self.feed_layout.count() > 1:
+            layout_item = self.feed_layout.takeAt(0)
+            if layout_item:
+                widget = layout_item.widget()
+                if widget is not None:
+                    if isinstance(widget, ActivityItem) and widget.fade_in_animation is not None:
+                        widget.fade_in_animation.stop()
+                    if widget.graphicsEffect():
+                        widget.setGraphicsEffect(None)  # type: ignore[arg-type]
+                    widget.deleteLater()
+
+    def _show_empty_label(self) -> None:
+        empty_lbl = QLabel("Nessuna attività recente")
+        empty_lbl.setStyleSheet(
+            f"""
+            QLabel {{
+            color: {COLORS["text_muted"]};
+            font-size: 13px;
+            font-weight: 500;
+            font-style: italic;
+            padding: 10px 20px;
+            background-color: {COLORS["bg_light"]};
+            border-radius: 8px;
+            border: 1px dashed {COLORS["border_light"]};
+            }}
+            """
+        )
+        self.feed_layout.insertWidget(0, empty_lbl)
+
     def refresh_feed(self) -> None:
         """Ricarica i log dall'AuditManager."""
         if not shiboken6.isValid(self):
@@ -262,40 +292,14 @@ class ActivityFeed(QWidget):
 
         self._refreshing = True
         try:
-            # Pulisci: remove all but stretch (last item)
-            while self.feed_layout.count() > 1:
-                layout_item = self.feed_layout.takeAt(0)
-                if layout_item:
-                    widget = layout_item.widget()
-                    if widget is not None:
-                        if isinstance(widget, ActivityItem) and widget.fade_in_animation is not None:
-                            widget.fade_in_animation.stop()
-                        if widget.graphicsEffect():
-                            widget.setGraphicsEffect(None)  # type: ignore[arg-type]
-                        widget.deleteLater()
+            self._clear_feed_items()
 
-            # Limit to 10 latest
             from src.application.services.audit_manager import AuditManager
 
             logs = AuditManager.instance().get_logs(limit=10)
 
             if not logs:
-                empty_lbl = QLabel("Nessuna attività recente")
-                empty_lbl.setStyleSheet(
-                    f"""
-          QLabel {{
-            color: {COLORS["text_muted"]};
-            font-size: 13px;
-            font-weight: 500;
-            font-style: italic;
-            padding: 10px 20px;
-            background-color: {COLORS["bg_light"]};
-            border-radius: 8px;
-            border: 1px dashed {COLORS["border_light"]};
-          }}
-        """
-                )
-                self.feed_layout.insertWidget(0, empty_lbl)
+                self._show_empty_label()
                 return
 
             for log in logs:

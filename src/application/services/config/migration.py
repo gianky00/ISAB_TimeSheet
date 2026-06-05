@@ -37,8 +37,7 @@ def deep_update_paths(data: Any, old_path: str, new_path: str) -> Any:
     return data
 
 
-def check_and_migrate_local_config(base_dir: Path, load_base_func: Any, atomic_write_func: Any) -> bool:  # noqa: C901
-    """Cerca file config.json fuori dalla cartella standard e lo migra."""
+def _get_potential_legacy_dirs(base_dir: Path) -> list[Path]:
     app_dir = Path(sys.executable).parent if getattr(sys, "frozen", False) else base_dir
     legacy_app_names = ["SyncroJob"]
     potential_dirs = [
@@ -58,39 +57,51 @@ def check_and_migrate_local_config(base_dir: Path, load_base_func: Any, atomic_w
     if roaming_appdata:
         potential_dirs.extend(roaming_appdata / old_name for old_name in legacy_app_names)
 
-    migrated = False
+    return potential_dirs
+
+
+def _migrate_from_legacy_dir(legacy_dir: Path, load_base_func: Any, atomic_write_func: Any) -> bool:
+    legacy_config_file = legacy_dir / FileNames.CONFIG
+    if not legacy_config_file.exists() or legacy_dir.resolve() == CONFIG_DIR.resolve():
+        return False
+
+    try:
+        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        with legacy_config_file.open("r", encoding="utf-8") as f:
+            old_config = json.load(f)
+
+        old_path_str = str(legacy_dir)
+        new_path_str = str(CONFIG_DIR)
+        migrated_config = deep_update_paths(old_config, old_path_str, new_path_str)
+
+        current_config = load_base_func()
+        for key, value in migrated_config.items():
+            if key not in current_config or not current_config[key]:
+                current_config[key] = value
+
+        atomic_write_func(CONFIG_DIR / FileNames.CONFIG, current_config)
+        print(f"[MIGRATION] Config merged and paths updated from {legacy_dir}")
+
+        legacy_data = legacy_dir / "data"
+        target_data = CONFIG_DIR / "data"
+        if legacy_data.exists():
+            shutil.copytree(legacy_data, target_data, dirs_exist_ok=True)
+            print(f"[MIGRATION] Data folder merged from {legacy_dir}")
+
+    except Exception as e:
+        print(f"[MIGRATION] Error during migration from {legacy_dir}: {e}")
+        return False
+    else:
+        return True
+
+
+def check_and_migrate_local_config(base_dir: Path, load_base_func: Any, atomic_write_func: Any) -> bool:
+    """Cerca file config.json fuori dalla cartella standard e lo migra."""
+    potential_dirs = _get_potential_legacy_dirs(base_dir)
     for legacy_dir in potential_dirs:
-        legacy_config_file = legacy_dir / FileNames.CONFIG
-        if legacy_config_file.exists() and legacy_dir.resolve() != CONFIG_DIR.resolve():
-            try:
-                CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-                with legacy_config_file.open("r", encoding="utf-8") as f:
-                    old_config = json.load(f)
-
-                old_path_str = str(legacy_dir)
-                new_path_str = str(CONFIG_DIR)
-                migrated_config = deep_update_paths(old_config, old_path_str, new_path_str)
-
-                current_config = load_base_func()
-                for key, value in migrated_config.items():
-                    if key not in current_config or not current_config[key]:
-                        current_config[key] = value
-
-                atomic_write_func(CONFIG_DIR / FileNames.CONFIG, current_config)
-                print(f"[MIGRATION] Config merged and paths updated from {legacy_dir}")
-
-                legacy_data = legacy_dir / "data"
-                target_data = CONFIG_DIR / "data"
-                if legacy_data.exists():
-                    shutil.copytree(legacy_data, target_data, dirs_exist_ok=True)
-                    print(f"[MIGRATION] Data folder merged from {legacy_dir}")
-
-                migrated = True
-                break
-            except Exception as e:
-                print(f"[MIGRATION] Error during migration from {legacy_dir}: {e}")
-
-    return migrated
+        if _migrate_from_legacy_dir(legacy_dir, load_base_func, atomic_write_func):
+            return True
+    return False
 
 
 def migrate_legacy_keys(config: dict[str, Any]) -> bool:

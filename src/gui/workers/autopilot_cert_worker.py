@@ -21,6 +21,46 @@ class AutopilotCertWorker(QThread):
 
     finished_signal = Signal(bool)
 
+    def _group_certificates(self, data: list[tuple[Any, ...]]) -> dict[str, list[tuple[Any, ...]]]:
+        """Raggruppa i certificati per ID o matricola."""
+        groups: dict[str, list[tuple[Any, ...]]] = {}
+        for r in data:
+            key = (
+                str(r[ContabilitaQueries.CERT_IDX_ID_STRUMENTO]).strip()
+                or str(r[ContabilitaQueries.CERT_IDX_MATRICOLA]).strip()
+            )
+            if key not in groups:
+                groups[key] = []
+            groups[key].append(r)
+        return groups
+
+    def _filter_expiring(
+        self, groups: dict[str, list[tuple[Any, ...]]], engine: CertificatiEngine
+    ) -> list[dict[str, Any]]:
+        """Filtra i certificati in scadenza non esclusi."""
+        certs_to_report = []
+        for certs in groups.values():
+            latest = max(certs, key=lambda x: str(x[ContabilitaQueries.CERT_IDX_EMISSIONE]))
+            matricola = str(latest[ContabilitaQueries.CERT_IDX_MATRICOLA]).strip()
+
+            if matricola in engine._exclusions:
+                continue
+
+            scadenza = latest[ContabilitaQueries.CERT_IDX_SCADENZA]
+            days, _ = engine.calculate_days_and_status(scadenza)
+
+            if days is not None and days <= engine.EXPIRING_THRESHOLD:
+                certs_to_report.append(
+                    {
+                        "id": latest[ContabilitaQueries.CERT_IDX_ID_STRUMENTO],
+                        "matricola": matricola,
+                        "modello": latest[ContabilitaQueries.CERT_IDX_MODELLO],
+                        "scadenza": scadenza,
+                        "giorni": days,
+                    }
+                )
+        return certs_to_report
+
     def run(self) -> None:
         """Esegue l'analisi e genera la bozza Outlook."""
         try:
@@ -35,37 +75,8 @@ class AutopilotCertWorker(QThread):
                 self.finished_signal.emit(True)
                 return
 
-            groups: dict[str, list[tuple[Any, ...]]] = {}
-            for r in data:
-                key = (
-                    str(r[ContabilitaQueries.CERT_IDX_ID_STRUMENTO]).strip()
-                    or str(r[ContabilitaQueries.CERT_IDX_MATRICOLA]).strip()
-                )
-                if key not in groups:
-                    groups[key] = []
-                groups[key].append(r)
-
-            certs_to_report = []
-            for certs in groups.values():
-                latest = max(certs, key=lambda x: str(x[ContabilitaQueries.CERT_IDX_EMISSIONE]))
-                matricola = str(latest[ContabilitaQueries.CERT_IDX_MATRICOLA]).strip()
-
-                if matricola in engine._exclusions:
-                    continue
-
-                scadenza = latest[ContabilitaQueries.CERT_IDX_SCADENZA]
-                days, _ = engine.calculate_days_and_status(scadenza)
-
-                if days is not None and days <= engine.EXPIRING_THRESHOLD:
-                    certs_to_report.append(
-                        {
-                            "id": latest[ContabilitaQueries.CERT_IDX_ID_STRUMENTO],
-                            "matricola": matricola,
-                            "modello": latest[ContabilitaQueries.CERT_IDX_MODELLO],
-                            "scadenza": scadenza,
-                            "giorni": days,
-                        }
-                    )
+            groups = self._group_certificates(data)
+            certs_to_report = self._filter_expiring(groups, engine)
 
             if certs_to_report:
                 engine.generate_outlook_draft(certs_to_report)

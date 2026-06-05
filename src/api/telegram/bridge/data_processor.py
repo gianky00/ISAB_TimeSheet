@@ -55,16 +55,9 @@ class TelegramDataProcessor(QObject):
             self.mw.navigation_controller.navigate_to_panel("scarico_ts")
         self._send_data_feedback(len(valid_items), duplicates, errors)
 
-    def process_bp_items(self, items: list[str]) -> None:
-        """Valida e aggiunge BP alla tabella."""
-        self.mw.navigation_controller.navigate_to_panel("prenota_bp")
-        panel = self.mw.bot_controller._get_active_bot_panel()
-        if not panel or getattr(panel, "bot_id", "") != "prenota_bp":
-            return
-
+    def _parse_and_validate_bp_items(self, items: list[str]) -> tuple[list[dict[str, Any]], int]:
         valid_items: list[dict[str, Any]] = []
         duplicates = 0
-
         for item in items:
             item = item.strip()  # noqa: PLW2901
             if not item:
@@ -77,6 +70,16 @@ class TelegramDataProcessor(QObject):
                 duplicates += 1
             else:
                 valid_items.append({"NUMERO BP": bp_num, "NOTE DI RITIRO": bp_note})
+        return valid_items, duplicates
+
+    def process_bp_items(self, items: list[str]) -> None:
+        """Valida e aggiunge BP alla tabella."""
+        self.mw.navigation_controller.navigate_to_panel("prenota_bp")
+        panel = self.mw.bot_controller._get_active_bot_panel()
+        if not panel or getattr(panel, "bot_id", "") != "prenota_bp":
+            return
+
+        valid_items, duplicates = self._parse_and_validate_bp_items(items)
 
         if valid_items:
             if hasattr(panel, "data_table"):

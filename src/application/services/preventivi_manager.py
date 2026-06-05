@@ -161,6 +161,34 @@ class PreventiviGeneratorManager:
         else:
             return f"{max_num + 1:03d}"
 
+    def _extract_sheet_data(self, sheet: Any) -> dict[str, Any]:
+        data: dict[str, Any] = {}
+        data["data"] = str(sheet.Range("A5").Value)
+        data["tcl"] = str(sheet.Range("A7").Value)
+        data["odc"] = str(sheet.Range("B5").Value or "")
+        data["avviso"] = str(sheet.Range("C7").Value or "")
+        data["ordine"] = str(sheet.Range("C5").Value or "")
+        data["stato_attivita"] = str(sheet.Range("D11").Value)
+        data["tipologia_preventivo"] = str(sheet.Range("D13").Value)
+        data["tipologia_economia"] = str(sheet.Range("E13").Value)
+
+        desc = []
+        for i in range(11):
+            val = sheet.Range(f"A{11 + i}").Value
+            if val:
+                desc.append(str(val))
+        data["descrizione_lavoro"] = "\n".join(desc)
+        data["descrizione_relazione"] = str(sheet.Range("A32").Value or "")
+        return data
+
+    def _extract_vba_data(self, wb: Any, data: dict[str, Any]) -> None:
+        with suppress(Exception):
+            vba_sheet = wb.Sheets("rif.VBA")
+            prog_val = str(vba_sheet.Range("A4").Value)
+            if "/" in prog_val:
+                data["progressivo"] = prog_val.split("/", maxsplit=1)[0]
+                data["anno_full"] = "20" + prog_val.split("/")[1]
+
     def read_existing_data(self, file_path: str) -> dict[str, Any]:
         """Legge i dati da un file Excel esistente per popolare la UI."""
         if not _win32com_found or not Path(file_path).exists():
@@ -175,31 +203,8 @@ class PreventiviGeneratorManager:
 
             try:
                 sheet = wb.Sheets("inserimento dati")
-                data["data"] = str(sheet.Range("A5").Value)
-                data["tcl"] = str(sheet.Range("A7").Value)
-                data["odc"] = str(sheet.Range("B5").Value or "")
-                data["avviso"] = str(sheet.Range("C7").Value or "")
-                data["ordine"] = str(sheet.Range("C5").Value or "")
-                data["stato_attivita"] = str(sheet.Range("D11").Value)
-                data["tipologia_preventivo"] = str(sheet.Range("D13").Value)
-                data["tipologia_economia"] = str(sheet.Range("E13").Value)
-
-                # Descrizione lavoro (prime 11 righe)
-                desc = []
-                for i in range(11):
-                    val = sheet.Range(f"A{11 + i}").Value
-                    if val:
-                        desc.append(str(val))
-                data["descrizione_lavoro"] = "\n".join(desc)
-                data["descrizione_relazione"] = str(sheet.Range("A32").Value or "")
-
-                # Progressivo da rif.VBA
-                with suppress(Exception):
-                    vba_sheet = wb.Sheets("rif.VBA")
-                    prog_val = str(vba_sheet.Range("A4").Value)
-                    if "/" in prog_val:
-                        data["progressivo"] = prog_val.split("/", maxsplit=1)[0]
-                        data["anno_full"] = "20" + prog_val.split("/")[1]
+                data = self._extract_sheet_data(sheet)
+                self._extract_vba_data(wb, data)
 
             finally:
                 wb.Close(False)

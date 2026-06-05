@@ -62,6 +62,28 @@ def _build_access_maps(
     return last_by_cf, last_by_name
 
 
+def _find_match_data(
+    cog: str,
+    nom: str,
+    cf: str,
+    last_by_cf: dict[str, tuple[int, str]],
+    last_by_name: dict[tuple[str, str], tuple[int, str]],
+) -> tuple[int | None, str | None, bool]:
+    if cf and cf.strip():
+        norm_cf = cf.strip().upper()
+        if norm_cf in last_by_cf:
+            delta, f_date = last_by_cf[norm_cf]
+            return delta, f_date, False
+
+    norm_key = (_normalize(cog), _normalize(nom))
+    if norm_key in last_by_name:
+        delta, f_date = last_by_name[norm_key]
+        missing_cf = not bool(cf and cf.strip())
+        return delta, f_date, missing_cf
+
+    return None, None, False
+
+
 def _process_employee_match(
     cog: str,
     nom: str,
@@ -70,45 +92,21 @@ def _process_employee_match(
     last_by_name: dict[tuple[str, str], tuple[int, str]],
 ) -> dict[str, Any] | None:
     """Determina se un dipendente ha un'abilitazione in scadenza e ritorna il record."""
-    match_found = False
-    delta: int | None = None
-    f_date: str | None = None
-    missing_cf_flag = False
+    delta, f_date, missing_cf_flag = _find_match_data(cog, nom, cf, last_by_cf, last_by_name)
 
-    # 1. Tenta Match primario: CF
-    if cf and cf.strip():
-        norm_cf = cf.strip().upper()
-        if norm_cf in last_by_cf:
-            delta, f_date = last_by_cf[norm_cf]
-            match_found = True
+    if delta is None or delta <= THRESHOLD_DAYS["warning"]:
+        return None
 
-    # 2. Tenta Match secondario: Nome/Cognome
-    if not match_found:
-        norm_key = (_normalize(cog), _normalize(nom))
-        if norm_key in last_by_name:
-            delta, f_date = last_by_name[norm_key]
-            match_found = True
-            if not cf or not cf.strip():
-                missing_cf_flag = True
+    stat = "SCADUTA" if delta > THRESHOLD_DAYS["expired"] else "IN SCADENZA"
 
-    # 3. Valutazione soglie
-    if match_found and delta is not None:
-        if delta <= THRESHOLD_DAYS["warning"]:
-            return None
-
-        stat = "IN SCADENZA"
-        if delta > THRESHOLD_DAYS["expired"]:
-            stat = "SCADUTA"
-
-        return {
-            "cognome": cog.upper(),
-            "nome": nom.upper(),
-            "ultima_data": f_date,
-            "giorni_trascorsi": delta,
-            "stato": stat,
-            "cf_mancante": missing_cf_flag,
-        }
-    return None
+    return {
+        "cognome": cog.upper(),
+        "nome": nom.upper(),
+        "ultima_data": f_date,
+        "giorni_trascorsi": delta,
+        "stato": stat,
+        "cf_mancante": missing_cf_flag,
+    }
 
 
 def check_expiring_isab_authorizations() -> list[dict[str, Any]]:

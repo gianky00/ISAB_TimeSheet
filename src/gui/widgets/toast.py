@@ -242,43 +242,18 @@ class ToastManager(QObject):
             cls._instance = cls()
         return cls._instance
 
-    def show(  # noqa: PLR0913
-        self,
-        message: str,
-        toast_type: str = Toast.Type.INFO,
-        duration: int = 3000,
-        position: str = "top",
-        pulse: bool = False,
-        is_rich_text: bool = False,
-    ) -> None:
-        """Crea e visualizza un nuovo toast, calcolando la posizione corretta nello stack.
-
-        Ottimizzato per limitare l'overhead di rendering su flussi massivi.
-        """
+    def _is_valid_to_show(self, message: str) -> bool:
         # Pulisce la lista dei toast non più visibili
         ToastManager._active_toasts = [t for t in ToastManager._active_toasts if t.isVisible()]
 
         # Protezione anti-jank: limite massimo di toast contemporanei
         if len(ToastManager._active_toasts) >= 3:
-            return
+            return False
 
         # Prevenzione duplicati identici (spam)
-        for t in ToastManager._active_toasts:
-            if hasattr(t, "_msg_text") and t._msg_text == message:
-                return
+        return all(getattr(t, "_msg_text", None) != message for t in ToastManager._active_toasts)
 
-        parent = QApplication.activeWindow()
-        params = ToastParams(
-            message=message,
-            toast_type=toast_type,
-            duration=duration,
-            pulse=pulse,
-            parent=parent,
-            is_rich_text=is_rich_text,
-        )
-        toast = Toast(params)
-        toast._msg_text = message  # Memorizza il testo per il filtro duplicati
-
+    def _calculate_toast_position(self, parent: Any, toast: Toast, position: str) -> tuple[int, int]:
         if parent:
             geo = parent.geometry()
             x = geo.x() + (geo.width() - toast.width()) // 2
@@ -300,6 +275,37 @@ class ToastManager(QObject):
                 y = top_offset if position == "top" else (screen.height() - bottom_offset)
             else:
                 x, y = 0, 0
+        return x, y
+
+    def show(  # noqa: PLR0913
+        self,
+        message: str,
+        toast_type: str = Toast.Type.INFO,
+        duration: int = 3000,
+        position: str = "top",
+        pulse: bool = False,
+        is_rich_text: bool = False,
+    ) -> None:
+        """Crea e visualizza un nuovo toast, calcolando la posizione corretta nello stack.
+
+        Ottimizzato per limitare l'overhead di rendering su flussi massivi.
+        """
+        if not self._is_valid_to_show(message):
+            return
+
+        parent = QApplication.activeWindow()
+        params = ToastParams(
+            message=message,
+            toast_type=toast_type,
+            duration=duration,
+            pulse=pulse,
+            parent=parent,
+            is_rich_text=is_rich_text,
+        )
+        toast = Toast(params)
+        toast._msg_text = message  # Memorizza il testo per il filtro duplicati
+
+        x, y = self._calculate_toast_position(parent, toast, position)
 
         ToastManager._active_toasts.append(toast)
         toast.destroyed.connect(

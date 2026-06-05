@@ -81,13 +81,7 @@ class ReportService:
         }
 
     @staticmethod
-    def build_report_html(data: dict[str, Any]) -> str:
-        """Costruisce il template HTML per l'email."""
-        current_date = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
-        font_family = "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif"
-        header_color = COLORS["primary_dark"]
-        border_color = COLORS.get("border_gray", "#dee2e6")
-
+    def _build_summary_section(data: dict[str, Any]) -> tuple[str, str, str]:
         urgenti = len([d for d in data["expired_list"] if d["giorni"] > 60])  # noqa: PLR2004
         tot_attenzione = len(data["warning_list"]) + len(data["expired_list"])
 
@@ -100,19 +94,34 @@ class ReportService:
         else:
             sum_text = f"<strong>{len(data['warning_list'])}</strong> dipendenti in scadenza da monitorare nei prossimi giorni."
             sum_color, sum_icon = COLORS["primary_dark"], "ℹ️"
+        return sum_text, sum_color, sum_icon
 
-        trend_html = ""
+    @staticmethod
+    def _build_trend_html(data: dict[str, Any]) -> str:
         trend = ReportHistory.calculate_trend(len(data["warning_list"]), len(data["expired_list"]))
-        if trend:
-            parts = []
-            for k, label in (("warning_diff", "in scadenza"), ("expired_diff", "scaduti")):
-                diff = trend[k]
-                if diff > 0:
-                    parts.append(f'<span style="color: {COLORS["error_red"]};">+{diff} {label}</span>')
-                elif diff < 0:
-                    parts.append(f'<span style="color: {COLORS["success_dark"]};">{diff} {label}</span>')
-            if parts:
-                trend_html = f'<p style="margin: 8px 0 0 0; padding: 10px 12px; background-color: {COLORS["bg_light"]}; border-radius: 4px; font-size: 12px; color: {COLORS["text_muted"]};">   <strong>Trend:</strong> {" | ".join(parts)} rispetto al {trend["last_date"]}</p>'
+        if not trend:
+            return ""
+        parts = []
+        for k, label in (("warning_diff", "in scadenza"), ("expired_diff", "scaduti")):
+            diff = trend[k]
+            if diff > 0:
+                parts.append(f'<span style="color: {COLORS["error_red"]};">+{diff} {label}</span>')
+            elif diff < 0:
+                parts.append(f'<span style="color: {COLORS["success_dark"]};">{diff} {label}</span>')
+        if parts:
+            return f'<p style="margin: 8px 0 0 0; padding: 10px 12px; background-color: {COLORS["bg_light"]}; border-radius: 4px; font-size: 12px; color: {COLORS["text_muted"]};">   <strong>Trend:</strong> {" | ".join(parts)} rispetto al {trend["last_date"]}</p>'
+        return ""
+
+    @staticmethod
+    def build_report_html(data: dict[str, Any]) -> str:
+        """Costruisce il template HTML per l'email."""
+        current_date = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
+        font_family = "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif"
+        header_color = COLORS["primary_dark"]
+        border_color = COLORS.get("border_gray", "#dee2e6")
+
+        sum_text, sum_color, sum_icon = ReportService._build_summary_section(data)
+        trend_html = ReportService._build_trend_html(data)
 
         html = f"""
     <html><head><style>

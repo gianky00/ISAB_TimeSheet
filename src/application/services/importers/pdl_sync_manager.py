@@ -155,6 +155,27 @@ class ProgrammingSyncManager:
                     }
         return mappa_pdl
 
+    def _process_existing_pdl(  # noqa: PLR0913
+        self,
+        row: tuple[Any, ...],
+        pdl_str: str,
+        info: dict[str, Any],
+        mappa_giorni: dict[int, int],
+        modif_x: dict[str, dict[int, str]],
+        modif_stato: dict[str, Any],
+    ) -> None:
+        """Elabora le modifiche di stato e programmazione per un PDL esistente."""
+        # Check X giorni
+        for idx_excel, idx_report in mappa_giorni.items():
+            if str(row[idx_report] or "").strip().lower() == "si":
+                modif_x.setdefault(pdl_str, {})[idx_excel] = "X"
+        # Check Stato
+        is_richiesto = str(row[14] or "").strip() in ("Richiesto", "Richiesto (Ese ok)")
+        if is_richiesto and info["stato"] != "RICHIESTO":
+            modif_stato[pdl_str] = "RICHIESTO"
+        elif not is_richiesto and info["stato"] == "RICHIESTO":
+            modif_stato[pdl_str] = "EMESSO"
+
     def _analyze_downloaded_file(
         self, path: str, mappa_pdl: dict[str, Any]
     ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
@@ -189,17 +210,9 @@ class ProgrammingSyncManager:
                         row[13],
                     ]
                 else:
-                    info = mappa_pdl[pdl_str]
-                    # Check X giorni
-                    for idx_excel, idx_report in mappa_giorni.items():
-                        if str(row[idx_report] or "").strip().lower() == "si":
-                            modif_x.setdefault(pdl_str, {})[idx_excel] = "X"
-                    # Check Stato
-                    is_richiesto = str(row[14] or "").strip() in ("Richiesto", "Richiesto (Ese ok)")
-                    if is_richiesto and info["stato"] != "RICHIESTO":
-                        modif_stato[pdl_str] = "RICHIESTO"
-                    elif not is_richiesto and info["stato"] == "RICHIESTO":
-                        modif_stato[pdl_str] = "EMESSO"
+                    self._process_existing_pdl(
+                        row, pdl_str, mappa_pdl[pdl_str], mappa_giorni, modif_x, modif_stato
+                    )
             wb_in.close()
         return nuovi_pdl, modif_x, modif_stato
 

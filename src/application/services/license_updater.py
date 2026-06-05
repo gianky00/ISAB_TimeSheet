@@ -3,7 +3,7 @@
 Modulo dedicato all'aggiornamento e alla sincronizzazione dei file di licenza dal repository GitHub.
 Gestisce i periodi di grazia offline tramite token cifrati e garantisce la validità temporale del software.
 """
-# ruff: noqa: PLR2004, TRY300, TRY301, C901, PLR0911, PLR0912, PLR0915, PLC0415
+# ruff: noqa: PLR2004, TRY300, TRY301, PLR0911, PLC0415
 
 import json
 import sys
@@ -177,12 +177,85 @@ def is_license_folder_empty() -> bool:
     return not (config_dat.exists() and manifest_json.exists())
 
 
-def run_update() -> bool:
-    """Esegue la procedura completa di aggiornamento licenza.
+def _handle_revocation(license_dir: Path) -> None:
+    config_dat = license_dir / "config.dat"
+    manifest_json = license_dir / "manifest.json"
+    if config_dat.exists():
+        config_dat.unlink()
+    if manifest_json.exists():
+        manifest_json.unlink()
 
-    Recupera l'Hardware ID, interroga le API di GitHub e scarica i file necessari se presenti o modificati.
-    Gestisce proattivamente la revoca della licenza con validazione preventiva.
-    """
+    logger.critical("Licenza REVOCATA dal server!")
+    from src.application.services.app_initializer import AppInitializer
+
+    AppInitializer.add_alert("CRITICAL", "LICENZA REVOCATA DAL SERVER. Contattare l'amministratore.")
+    raise LicenseError("LICENZA REVOCATA DAL SERVER. Contattare l'amministratore.")
+
+
+def _validate_new_config_bytes(new_config_bytes: bytes) -> bool:
+    try:
+        key_raw = SecretsManager.get_license_key()
+        if key_raw:
+            cipher = Fernet(key_raw)
+            decrypted = cipher.decrypt(new_config_bytes).decode("utf-8")
+            payload = json.loads(decrypted)
+
+            cur_hw = license_validator.get_hardware_id().strip().rstrip(".")
+            lic_hw = payload.get("Hardware ID", "").strip().rstrip(".")
+
+            if cur_hw != lic_hw and "UNKNOWN" not in cur_hw:
+                logger.error("La licenza sul cloud non corrisponde a questo Hardware ID. Update annullato.")
+                return False
+        else:
+            logger.error("Impossibile recuperare la chiave di decifratura per la validazione.")
+            return False
+    except Exception as ve:
+        logger.exception("La nuova licenza sul cloud corrotta o non valida. Update annullato.", exc=ve)
+        return False
+    return True
+
+
+def _download_and_apply_update(
+    base_url: str, headers_raw: dict[str, str], remote_manifest_bytes: bytes, license_dir: Path
+) -> bool:
+    logger.info("Rilevato aggiornamento o licenza locale non valida, download in corso...")
+    conf_res = requests.get(f"{base_url}/config.dat", headers=headers_raw, timeout=10)
+    if conf_res.status_code == 200:
+        new_config_bytes = conf_res.content
+        if not _validate_new_config_bytes(new_config_bytes):
+            return False
+
+        files = {"manifest.json": remote_manifest_bytes, "config.dat": new_config_bytes}
+        saved = _save_license_files(license_dir, files)
+        if saved:
+            NotificationManager.instance().add_notification(
+                "Sincronizzazione",
+                "Licenza aggiornata con successo dal cloud.",
+                level="success",
+                show_toast=True,
+            )
+        return saved
+
+    logger.error("Errore durante il download di config.dat")
+    return False
+
+
+def _check_update_required(license_dir: Path, remote_manifest_bytes: bytes) -> bool:
+    remote_manifest = json.loads(remote_manifest_bytes.decode("utf-8"))
+    remote_hash = remote_manifest.get("config.dat")
+
+    local_config = license_dir / "config.dat"
+    local_hash = ""
+    local_status, _ = license_validator.get_detailed_license_status()
+
+    if local_config.exists():
+        local_hash = license_validator._calculate_sha256(local_config)
+
+    return local_hash != remote_hash or local_status != license_validator.LicenseStatus.VALID
+
+
+def run_update() -> bool:
+    """Esegue la procedura completa di aggiornamento licenza."""
     logger.info("Verifica stato licenza cloud...")
     hw_id = license_validator.get_hardware_id().strip().rstrip(".")
     license_dir = get_license_dir()
@@ -196,94 +269,23 @@ def run_update() -> bool:
     headers_raw = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3.raw"}
 
     try:
-        # 1. Verifica se la cartella hw_id esiste sul server (Revoca)
         dir_res = requests.get(base_url, headers=headers_api, timeout=10)
 
         if dir_res.status_code == 404:
-            # Licenza rimossa dal server -> REVOCATA
-            config_dat = license_dir / "config.dat"
-            manifest_json = license_dir / "manifest.json"
-            if config_dat.exists():
-                config_dat.unlink()
-            if manifest_json.exists():
-                manifest_json.unlink()
-
-            logger.critical("Licenza REVOCATA dal server!")
-            from src.application.services.app_initializer import AppInitializer
-
-            AppInitializer.add_alert("CRITICAL", "LICENZA REVOCATA DAL SERVER. Contattare l'amministratore.")
-            raise LicenseError("LICENZA REVOCATA DAL SERVER. Contattare l'amministratore.")
+            _handle_revocation(license_dir)
 
         if dir_res.status_code != 200:
             logger.warning(f"Impossibile verificare la licenza cloud (HTTP {dir_res.status_code})")
             return False
 
-        # 2. Scarica il manifest.json per controllare l'aggiornamento
         man_res = requests.get(f"{base_url}/manifest.json", headers=headers_raw, timeout=10)
         if man_res.status_code != 200:
             logger.warning("File manifest.json non trovato sul server.")
             return False
 
         remote_manifest_bytes = man_res.content
-        remote_manifest = json.loads(remote_manifest_bytes.decode("utf-8"))
-        remote_hash = remote_manifest.get("config.dat")
-
-        local_config = license_dir / "config.dat"
-        local_hash = ""
-        local_status, _ = license_validator.get_detailed_license_status()
-
-        if local_config.exists():
-            local_hash = license_validator._calculate_sha256(local_config)
-
-        # 3. Scarica config.dat solo se l'hash  diverso O se quella locale non  valida
-        if local_hash != remote_hash or local_status != license_validator.LicenseStatus.VALID:
-            logger.info("Rilevato aggiornamento o licenza locale non valida, download in corso...")
-            conf_res = requests.get(f"{base_url}/config.dat", headers=headers_raw, timeout=10)
-            if conf_res.status_code == 200:
-                new_config_bytes = conf_res.content
-
-                # --- SICUREZZA: Verifica la validità dei nuovi dati prima di sovrascrivere ---
-                try:
-                    key_raw = SecretsManager.get_license_key()
-                    if key_raw:
-                        cipher = Fernet(key_raw)
-                        # Tenta la decifratura in memoria
-                        decrypted = cipher.decrypt(new_config_bytes).decode("utf-8")
-                        payload = json.loads(decrypted)
-
-                        # Verifica HWID matching
-                        cur_hw = license_validator.get_hardware_id().strip().rstrip(".")
-                        lic_hw = payload.get("Hardware ID", "").strip().rstrip(".")
-
-                        if cur_hw != lic_hw and "UNKNOWN" not in cur_hw:
-                            logger.error(
-                                "La licenza sul cloud non corrisponde a questo Hardware ID. Update annullato."
-                            )
-                            return False
-                    else:
-                        logger.error("Impossibile recuperare la chiave di decifratura per la validazione.")
-                        return False
-                except Exception as ve:
-                    logger.exception(
-                        "La nuova licenza sul cloud corrotta o non valida. Update annullato.",
-                        exc=ve,
-                    )
-                    return False
-                # ----------------------------------------------------------------------------
-
-                files = {"manifest.json": remote_manifest_bytes, "config.dat": new_config_bytes}
-                saved = _save_license_files(license_dir, files)
-                if saved:
-                    NotificationManager.instance().add_notification(
-                        "Sincronizzazione",
-                        "Licenza aggiornata con successo dal cloud.",
-                        level="success",
-                        show_toast=True,
-                    )
-                return saved
-
-            logger.error("Errore durante il download di config.dat")
-            return False
+        if _check_update_required(license_dir, remote_manifest_bytes):
+            return _download_and_apply_update(base_url, headers_raw, remote_manifest_bytes, license_dir)
 
         logger.info("  Licenza locale già aggiornata.")
         update_grace_timestamp()
@@ -293,7 +295,6 @@ def run_update() -> bool:
         logger.warning(f"Offline o errore di rete - Impossibile aggiornare: {e}")
         return False
     except Exception as e:
-        # Se  l'eccezione di revoca la facciamo passare
         if "REVOCATA" in str(e):
             raise
         logger.exception("Errore inatteso durante update licenza")

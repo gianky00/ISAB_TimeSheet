@@ -333,27 +333,35 @@ def _handle_direct_bot_commands(service: "TelegramService", data: str, chat_id: 
         service.command_received.emit(cmd[0], cmd[1])
 
 
-async def _handle_utility_actions(  # noqa: C901
+async def _handle_app_actions(service: "TelegramService", data: str) -> None:
+    if data == "app_restart":
+        service.command_received.emit("restart_app", {})
+    elif data == "app_conn_test":
+        service.command_received.emit("test_connectivity", {})
+
+
+async def _handle_utility_actions(
     service: "TelegramService", data: str, query: "CallbackQuery", chat_id: int
 ) -> None:
     if data == "status":
         service.status_requested.emit(str(chat_id))
-    elif data == "screenshot":
-        await query.edit_message_text("📸 Screenshot:", reply_markup=TelegramUI.get_screenshot_menu())
-    elif data in ("snap_app", "snap_pc"):
-        service.screenshot_requested.emit(data.replace("snap_", ""))
-    elif data == "stop_all":
+        return
+    if data == "stop_all":
         service.command_received.emit("stop_all", {})
-    elif data.startswith("app_"):
-        if data == "app_restart":
-            service.command_received.emit("restart_app", {})
-        elif data == "app_conn_test":
-            service.command_received.emit("test_connectivity", {})
+        return
+    if data in ("snap_app", "snap_pc"):
+        service.screenshot_requested.emit(data.replace("snap_", ""))
+        return
+
+    if data == "screenshot":
+        await query.edit_message_text("📸 Screenshot:", reply_markup=TelegramUI.get_screenshot_menu())
     elif data == "menu_power":
         await query.edit_message_text("  Manutenzione:", reply_markup=TelegramUI.get_power_menu())
+    elif data.startswith("app_"):
+        await _handle_app_actions(service, data)
     elif data.startswith("menu_"):
         await _handle_utility_menus(service, data, query)
-    elif data.startswith(("set_", "toggle_")):
+    else:
         await _handle_setting_changes(service, data, query, chat_id)
 
 

@@ -194,6 +194,28 @@ class ProcessScaricoOreRowsStep(ProcessingStep):
             s_comm,
         ]
 
+    def _extract_font_color(self, cell: Any) -> str | None:
+        with suppress(AttributeError, TypeError):
+            font = cell.font
+            if font and font.color and font.color.type == "rgb":
+                rgb = str(font.color.rgb)
+                hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"  # noqa: PLR2004
+                if hex_code != "#000000":
+                    return hex_code
+        return None
+
+    def _extract_fill_color(self, cell: Any) -> str | None:
+        with suppress(AttributeError, TypeError):
+            fill = cell.fill
+            if fill and fill.patternType == "solid":
+                start_color = fill.start_color
+                if start_color and start_color.type == "rgb":
+                    rgb = str(start_color.rgb)
+                    hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"  # noqa: PLR2004
+                    if hex_code not in {"#000000", "#FFFFFF"}:
+                        return hex_code
+        return None
+
     def _extract_row_styles(self, row: Any, vals: list[str]) -> str:
         """Estrae i colori (foreground/background) dalle celle e li serializza in JSON."""
         row_styles: dict[str, dict[str, str]] = {}
@@ -202,23 +224,13 @@ class ProcessScaricoOreRowsStep(ProcessingStep):
                 continue
 
             cell = row[i]
-            with suppress(AttributeError, TypeError):
-                font = cell.font
-                if font and font.color and font.color.type == "rgb":
-                    rgb = str(font.color.rgb)
-                    hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"  # noqa: PLR2004
-                    if hex_code != "#000000":
-                        row_styles.setdefault(key, {})["fg"] = hex_code
+            fg = self._extract_font_color(cell)
+            if fg:
+                row_styles.setdefault(key, {})["fg"] = fg
 
-            with suppress(AttributeError, TypeError):
-                fill = cell.fill
-                if fill and fill.patternType == "solid":
-                    start_color = fill.start_color
-                    if start_color and start_color.type == "rgb":
-                        rgb = str(start_color.rgb)
-                        hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"  # noqa: PLR2004
-                        if hex_code not in {"#000000", "#FFFFFF"}:
-                            row_styles.setdefault(key, {})["bg"] = hex_code
+            bg = self._extract_fill_color(cell)
+            if bg:
+                row_styles.setdefault(key, {})["bg"] = bg
 
         return json.dumps(row_styles) if row_styles else ""
 

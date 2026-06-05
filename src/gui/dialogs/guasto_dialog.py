@@ -56,58 +56,18 @@ class GuastoDialog(QDialog):
         self._result_data: dict[str, str] = {}
         self._setup_ui(current_tipo, current_data, current_note)
 
-    def _setup_ui(self, current_tipo: str, current_data: str, current_note: str) -> None:  # noqa: PLR0915, PLR0912, C901
-        """Configura l'interfaccia del dialog.
-
-        Args:
-            current_tipo: Tipo anomalia preimpostato.
-            current_data: Data rilevamento preimpostata.
-            current_note: Note preimpostate.
-        """
+    def _setup_header_text(self) -> tuple[str, str]:
         if self.stato_dialog == 2:
             self.setWindowTitle("Valutazione Tecnica")
-            header_text = "🔍 In Valutazione Tecnica"
-            header_color = "#DAA520"  # GoldenRod / Orange
-        elif self.stato_dialog == 3:
+            return "🔍 In Valutazione Tecnica", "#DAA520"
+        if self.stato_dialog == 3:
             self.setWindowTitle("Dismetti Strumento")
-            header_text = "🚫 Segnala Strumento Dismesso"
-            header_color = COLORS["text_muted"]
-        else:
-            self.setWindowTitle("Segnala Guasto Strumento")
-            header_text = "⚠️ Segnala Guasto Strumento"
-            header_color = COLORS["error_red"]
+            return "🚫 Segnala Strumento Dismesso", COLORS["text_muted"]
 
-        self.setMinimumWidth(480)
-        self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_white']}; }}")
+        self.setWindowTitle("Segnala Guasto Strumento")
+        return "⚠️ Segnala Guasto Strumento", COLORS["error_red"]
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(25, 20, 25, 20)
-        layout.setSpacing(15)
-
-        # Header
-        header = QLabel(header_text)
-        header.setStyleSheet(
-            f"color: {header_color}; font-size: 18px; font-weight: bold; padding-bottom: 5px;"
-        )
-        layout.addWidget(header)
-
-        # Form
-        form = QFormLayout()
-        form.setSpacing(12)
-        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
-
-        label_style = f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: 600;"
-        readonly_style = (
-            f"background-color: {COLORS['bg_alt']}; border: 1px solid {COLORS['border_light']}; "
-            f"border-radius: 6px; padding: 8px; color: {COLORS['text_muted']}; font-size: 13px;"
-        )
-        input_style = (
-            f"border: 1px solid {COLORS['border_medium']}; border-radius: 6px; "
-            f"padding: 8px; font-size: 13px; background-color: {COLORS['bg_white']}; "
-            f"color: {COLORS['text_dark']};"
-        )
-
-        # Campi readonly
+    def _setup_readonly_fields(self, form: QFormLayout, label_style: str, readonly_style: str) -> None:
         for label_text, value in [
             ("ID COEMI", self.id_coemi),
             ("Matricola", self.matricola),
@@ -120,7 +80,9 @@ class GuastoDialog(QDialog):
             field.setStyleSheet(readonly_style)
             form.addRow(lbl, field)
 
-        # Tipo anomalia / controllo
+    def _setup_combo_tipo(
+        self, form: QFormLayout, label_style: str, input_style: str, current_tipo: str
+    ) -> None:
         lbl_tipo = QLabel(
             "Motivo Valutazione"
             if self.stato_dialog == 2
@@ -152,6 +114,7 @@ class GuastoDialog(QDialog):
             )
         else:
             self.combo_tipo.addItems([t.value for t in TipoAnomalia])
+
         self.combo_tipo.setStyleSheet(input_style)
         if current_tipo:
             idx = self.combo_tipo.findText(current_tipo)
@@ -159,7 +122,7 @@ class GuastoDialog(QDialog):
                 self.combo_tipo.setCurrentIndex(idx)
         form.addRow(lbl_tipo, self.combo_tipo)
 
-        # Data rilevamento
+    def _setup_date_field(self, form: QFormLayout, label_style: str, current_data: str) -> None:
         lbl_data = QLabel("Data Rilevamento")
         lbl_data.setStyleSheet(label_style)
         self.date_edit = CalendarDateEdit()
@@ -173,18 +136,64 @@ class GuastoDialog(QDialog):
             self.date_edit.setDate(QDate.currentDate())
         form.addRow(lbl_data, self.date_edit)
 
-        # Note
+    def _setup_notes_field(
+        self, form: QFormLayout, label_style: str, input_style: str, current_note: str
+    ) -> None:
         lbl_note = QLabel("Note")
         lbl_note.setStyleSheet(label_style)
         self.text_note = QPlainTextEdit()
         self.text_note.setPlaceholderText("Descrivi l'anomalia riscontrata...")
-        # Remove padding from CSS to prevent Qt box-sizing bugs that squish text
         text_style = input_style.replace("padding: 8px;", "padding: 4px;")
         self.text_note.setStyleSheet(text_style + " min-height: 80px; line-height: 1.5;")
         self.text_note.setMaximumHeight(120)
         if current_note:
             self.text_note.setPlainText(current_note)
         form.addRow(lbl_note, self.text_note)
+
+    def _setup_ui(self, current_tipo: str, current_data: str, current_note: str) -> None:
+        """Configura l'interfaccia del dialog.
+
+        Args:
+            current_tipo: Tipo anomalia preimpostato.
+            current_data: Data rilevamento preimpostata.
+            current_note: Note preimpostate.
+        """
+        header_text, header_color = self._setup_header_text()
+
+        self.setMinimumWidth(480)
+        self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_white']}; }}")
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(25, 20, 25, 20)
+        layout.setSpacing(15)
+
+        # Header
+        header = QLabel(header_text)
+        header.setStyleSheet(
+            f"color: {header_color}; font-size: 18px; font-weight: bold; padding-bottom: 5px;"
+        )
+        layout.addWidget(header)
+
+        # Form
+        form = QFormLayout()
+        form.setSpacing(12)
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+
+        label_style = f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: 600;"
+        readonly_style = (
+            f"background-color: {COLORS['bg_alt']}; border: 1px solid {COLORS['border_light']}; "
+            f"border-radius: 6px; padding: 8px; color: {COLORS['text_muted']}; font-size: 13px;"
+        )
+        input_style = (
+            f"border: 1px solid {COLORS['border_medium']}; border-radius: 6px; "
+            f"padding: 8px; font-size: 13px; background-color: {COLORS['bg_white']}; "
+            f"color: {COLORS['text_dark']};"
+        )
+
+        self._setup_readonly_fields(form, label_style, readonly_style)
+        self._setup_combo_tipo(form, label_style, input_style, current_tipo)
+        self._setup_date_field(form, label_style, current_data)
+        self._setup_notes_field(form, label_style, input_style, current_note)
 
         layout.addLayout(form)
         layout.addSpacing(10)

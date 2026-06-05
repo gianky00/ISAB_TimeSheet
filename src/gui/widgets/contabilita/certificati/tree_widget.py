@@ -11,8 +11,9 @@ from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
     QHeaderView,
-    QLineEdit,
     QStyledItemDelegate,
+    QStyleOptionViewItem,
+    QTextEdit,
     QTreeWidgetItem,
     QWidget,
 )
@@ -77,24 +78,52 @@ class AnnotazioniDelegate(QStyledItemDelegate):
         self, parent: QWidget, option: object, index: QModelIndex | QPersistentModelIndex
     ) -> QWidget:
         """Crea l'editor per la colonna Annotazioni."""
-        editor = QLineEdit(parent)
-        # Rimuove il padding verticale per evitare che il testo venga tagliato nelle celle basse
-        editor.setStyleSheet("QLineEdit { padding: 0px 4px; margin: 0px; border: 1px solid #3498db; }")
+        editor = QTextEdit(parent)
+        editor.setAcceptRichText(False)
+        editor.setStyleSheet(
+            "QTextEdit { padding: 4px; margin: 0px; border: 1px solid #3498db; "
+            "background-color: #ffffff; color: #000000; font-size: 13px; }"
+        )
         return editor
 
     def setEditorData(self, editor: QWidget, index: QModelIndex | QPersistentModelIndex) -> None:
         """Popola l'editor con i dati correnti."""
         value = index.data(Qt.ItemDataRole.EditRole)
-        if isinstance(editor, QLineEdit):
-            editor.setText(value)
+        if isinstance(editor, QTextEdit):
+            editor.setPlainText(value)
 
     def setModelData(
         self, editor: QWidget, model: QAbstractItemModel, index: QModelIndex | QPersistentModelIndex
     ) -> None:
         """Salva i dati dall'editor al modello."""
-        if isinstance(editor, QLineEdit):
-            value = editor.text()
+        if isinstance(editor, QTextEdit):
+            value = editor.toPlainText()
             model.setData(index, value, Qt.ItemDataRole.EditRole)
+
+    def updateEditorGeometry(
+        self, editor: QWidget, option: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex
+    ) -> None:
+        """Aggiorna la geometria per espandere l'editor verticalmente e permettere lettura."""
+        rect = option.rect
+
+        # Rendiamo l'editor molto più spazioso per facilitare la scrittura "galleggiando" sopra le righe
+        desired_height = max(rect.height(), 120)
+        desired_width = max(rect.width(), 400)
+
+        # Se esce dai bordi del viewport, lo spostiamo verso sinistra o alto
+        viewport = editor.parentWidget()
+        if viewport:
+            if rect.x() + desired_width > viewport.width():
+                rect.setX(max(0, viewport.width() - desired_width))
+            if rect.y() + desired_height > viewport.height():
+                # Espande verso l'alto
+                rect.setY(max(0, rect.y() - (desired_height - rect.height())))
+
+        rect.setWidth(desired_width)
+        rect.setHeight(desired_height)
+        editor.setGeometry(rect)
+        # Portiamo l'editor in primo piano
+        editor.raise_()
 
 
 class CertificatiTreeWidget(StandardTreeWidget):

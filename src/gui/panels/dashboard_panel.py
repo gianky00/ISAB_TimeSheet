@@ -102,20 +102,20 @@ class DashboardPanel(QWidget):
     def refresh_live_data(self) -> None:
         """Aggiorna i dati dinamici dei widget senza ricostruire la UI."""
         with suppress(Exception):
-            if hasattr(self, "activity_feed") and self.activity_feed:
-                self.activity_feed.refresh_feed()
-
-            if hasattr(self, "quick_actions") and self.quick_actions:
-                self.quick_actions.refresh_actions()
-
-            if hasattr(self, "autopilot_widget") and self.autopilot_widget:
-                self.autopilot_widget.refresh_events()
-
-            if hasattr(self, "roi_widget") and self.roi_widget:
-                self.roi_widget.refresh_stats()
-
-            if hasattr(self, "card_pdl") and self.card_pdl:
-                self.card_pdl.refresh_stats()
+            widgets_to_refresh = [
+                ("activity_feed", "refresh_feed"),
+                ("quick_actions", "refresh_actions"),
+                ("autopilot_widget", "refresh_events"),
+                ("roi_widget", "refresh_stats"),
+                ("card_pdl", "refresh_stats"),
+            ]
+            for attr_name, method_name in widgets_to_refresh:
+                if hasattr(self, attr_name):
+                    widget = getattr(self, attr_name)
+                    if widget and hasattr(widget, method_name):
+                        method = getattr(widget, method_name)
+                        if callable(method):
+                            method()
 
     def _setup_ui(self) -> None:
         """Inizializza e posiziona i widget della dashboard."""
@@ -218,7 +218,7 @@ class DashboardPanel(QWidget):
 
             mw.service_controller._schedule_bot_with_parallelism(bot_id, panel, site, log_msg)
 
-    def _handle_quick_action(self, key: str) -> None:  # noqa: C901
+    def _handle_quick_action(self, key: str) -> None:
         """Gestisce il click su un'azione rapida della dashboard."""
         main_window: Any = self.window()
         if main_window is None or not hasattr(main_window, "navigation_controller"):
@@ -226,7 +226,6 @@ class DashboardPanel(QWidget):
 
         nav = main_window.navigation_controller
 
-        # Mapping bot -> navigate_to_panel keys
         automation_map = {
             "nav_dettagli_oda": "dettagli_oda",
             "nav_scarico_ts": "scarico_ts",
@@ -237,26 +236,23 @@ class DashboardPanel(QWidget):
             "nav_ricerca_pdl": "ricerca_pdl",
         }
 
-        # Handle specific page navigation
+        page_map = {
+            "nav_page_5": 5,
+            "nav_page_6": 6,
+            "nav_page_8": 8,
+            "nav_page_11": 11,
+            "nav_storico_oda": 10,
+        }
+
         if key in automation_map:
             nav.navigate_to_panel(automation_map[key])
+        elif key in page_map:
+            nav.navigate_to(page_map[key])
         elif key.startswith("nav_sub_strumentale_"):
             with suppress(ValueError):
-                sub_idx = int(key.rsplit("_", maxsplit=1)[-1])
-                nav.navigate_to(4, sub_index=sub_idx)
-        elif key == "nav_page_5":
-            nav.navigate_to(5)  # DataEase
-        elif key == "nav_page_6":
-            nav.navigate_to(6)  # Anagrafiche PDL
-        elif key == "nav_page_8":
-            nav.navigate_to(8)  # Guida
-        elif key == "nav_page_11":
-            nav.navigate_to(11)  # Dipendenti
-        elif key == "nav_storico_oda":
-            nav.navigate_to(10)  # Storico OdA
+                nav.navigate_to(4, sub_index=int(key.rsplit("_", maxsplit=1)[-1]))
         elif key.startswith("nav_sub_notifiche_"):
             with suppress(ValueError):
-                sub_idx = int(key.rsplit("_", maxsplit=1)[-1])
-                nav.navigate_to(9, sub_index=sub_idx)
+                nav.navigate_to(9, sub_index=int(key.rsplit("_", maxsplit=1)[-1]))
         elif key.startswith("settings_"):
             nav.navigate_to(7)

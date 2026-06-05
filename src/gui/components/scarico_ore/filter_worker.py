@@ -43,6 +43,22 @@ class FilterWorker(QThread):
         """Annulla l'operazione di filtraggio corrente."""
         self._is_cancelled = True
 
+    def _apply_global_search(self, indices: list[int], search_terms: list[str]) -> list[int]:
+        if not search_terms:
+            return indices
+        s_idx = self.search_index
+        return [i for i in indices if all(t in s_idx[i] for t in search_terms)]
+
+    def _apply_column_filters(self, indices: list[int]) -> list[int]:
+        if not self.col_filters:
+            return indices
+        d_data = self.display_data
+        for col, allowed in self.col_filters.items():
+            if self._is_cancelled:
+                return indices
+            indices = [i for i in indices if d_data[i][col].lower() in allowed]
+        return indices
+
     def run(self) -> None:
         """Esegue il filtraggio."""
         if self._is_cancelled:
@@ -50,20 +66,9 @@ class FilterWorker(QThread):
         search_terms = self.text.split() if self.text else []
         indices = list(range(len(self.display_data)))
 
-        # 1. Global Search
-        if search_terms:
-            s_idx = self.search_index
-            indices = [i for i in indices if all(t in s_idx[i] for t in search_terms)]
-            if self._is_cancelled:
-                return  # type: ignore[unreachable]
+        indices = self._apply_global_search(indices, search_terms)
 
-        # 2. Column Filters
-        if self.col_filters:
-            d_data = self.display_data
-            for col, allowed in self.col_filters.items():
-                if self._is_cancelled:
-                    return  # type: ignore[unreachable]
-                indices = [i for i in indices if d_data[i][col].lower() in allowed]
+        indices = self._apply_column_filters(indices)
 
         if not self._is_cancelled:
             self.finished.emit(indices, len(indices))

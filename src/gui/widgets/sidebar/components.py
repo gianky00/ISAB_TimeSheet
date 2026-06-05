@@ -183,6 +183,23 @@ class SidebarGroup(QWidget):
         self.content_layout.addWidget(widget)
         self.children_elements.append(widget)
 
+    def _update_child_state(self, elem: QWidget, collapsed: bool) -> bool:
+        is_active = False
+        if isinstance(elem, SidebarButton):
+            is_active = elem.isChecked()
+        elif isinstance(elem, SidebarSubGroup):
+            is_active = elem.header_btn.isChecked() or any(b.isChecked() for b in elem.children_btns)
+
+        if hasattr(elem, "set_collapsed"):
+            elem.set_collapsed(collapsed)
+
+        if collapsed:
+            elem.setVisible(is_active)
+        else:
+            elem.setVisible(True)
+
+        return is_active
+
     def set_collapsed(self, collapsed: bool) -> None:
         """Imposta lo stato di contrazione del gruppo.
 
@@ -194,24 +211,8 @@ class SidebarGroup(QWidget):
 
         has_active_child = False
         for elem in self.children_elements:
-            if hasattr(elem, "set_collapsed"):
-                elem.set_collapsed(collapsed)
-
-            if (isinstance(elem, SidebarButton) and elem.isChecked()) or (
-                isinstance(elem, SidebarSubGroup)
-                and (elem.header_btn.isChecked() or any(b.isChecked() for b in elem.children_btns))
-            ):
+            if self._update_child_state(elem, collapsed):
                 has_active_child = True
-
-            if collapsed:
-                if isinstance(elem, SidebarButton):
-                    elem.setVisible(elem.isChecked())
-                elif isinstance(elem, SidebarSubGroup):
-                    elem.setVisible(
-                        elem.header_btn.isChecked() or any(b.isChecked() for b in elem.children_btns)
-                    )
-            else:
-                elem.setVisible(True)
 
         if collapsed:
             self.content_area.setVisible(has_active_child)

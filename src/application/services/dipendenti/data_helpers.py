@@ -14,6 +14,48 @@ def normalize_name(text: Any) -> str:
     return re.sub(r"\s+", " ", str(text).strip().upper())
 
 
+def _parse_date_and_diff(d_str: str, today: datetime) -> tuple[int, str] | None:
+    """Estrae la differenza in giorni e la stringa formattata dalla data del DB."""
+    date_part = d_str.split(" ")[0]
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+        try:
+            d_dt = datetime.strptime(date_part, fmt).replace(tzinfo=UTC)
+            return (today - d_dt).days, d_dt.strftime("%d/%m/%Y")
+        except ValueError:
+            continue
+    return None
+
+
+def _process_single_accesso(  # noqa: PLR0913
+    cog: Any,
+    nom: Any,
+    cf: Any,
+    d_str: str | None,
+    today: datetime,
+    last_by_cf: dict[str, tuple[int, str]],
+    last_by_name: dict[tuple[str, str], tuple[int, str]],
+) -> None:
+    """Elabora una singola riga di timbratura aggiornando le mappe di stato."""
+    if not d_str:
+        return
+
+    norm_key = (normalize_name(cog), normalize_name(nom))
+    norm_cf = str(cf).strip().upper() if cf and str(cf).strip() else None
+
+    with suppress(Exception):
+        parsed = _parse_date_and_diff(d_str, today)
+        if not parsed:
+            return
+
+        diff, pretty_date = parsed
+
+        if norm_cf and (norm_cf not in last_by_cf or diff < last_by_cf[norm_cf][0]):
+            last_by_cf[norm_cf] = (diff, pretty_date)
+
+        if norm_key not in last_by_name or diff < last_by_name[norm_key][0]:
+            last_by_name[norm_key] = (diff, pretty_date)
+
+
 def build_timbrature_maps(
     accessi: Sequence[Sequence[Any]],
 ) -> tuple[dict[str, tuple[int, str]], dict[tuple[str, str], tuple[int, str]], Callable[[Any], str]]:
@@ -35,28 +77,8 @@ def build_timbrature_maps(
         return normalize_name(t)
 
     for cog, nom, cf, d_str in accessi:
-        if d_str:
-            norm_key = (normalize(cog), normalize(nom))
-            norm_cf = cf.strip().upper() if cf and cf.strip() else None
-            with suppress(Exception):
-                date_part = d_str.split(" ")[0]
-                d_dt = None
-                for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
-                    try:
-                        d_dt = datetime.strptime(date_part, fmt).replace(tzinfo=UTC)
-                        break
-                    except ValueError:
-                        continue
-                if d_dt:
-                    diff = (today - d_dt).days
-                    # Salviamo la data formattata come DD/MM/YYYY per la UI
-                    pretty_date = d_dt.strftime("%d/%m/%Y")
+        _process_single_accesso(cog, nom, cf, d_str, today, last_by_cf, last_by_name)
 
-                    if norm_cf and (norm_cf not in last_by_cf or diff < last_by_cf[norm_cf][0]):
-                        last_by_cf[norm_cf] = (diff, pretty_date)
-
-                    if norm_key not in last_by_name or diff < last_by_name[norm_key][0]:
-                        last_by_name[norm_key] = (diff, pretty_date)
     return last_by_cf, last_by_name, normalize
 
 

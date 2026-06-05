@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QScrollArea,
     QSizePolicy,
+    QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
 )
@@ -484,39 +485,59 @@ class ScadenzeAnalysisDialog(QDialog):
                 {cta_html}
         """
 
-    def _generate_audit_pdf(self) -> str | None:  # noqa: C901
+    def _should_hide_item(self, item: QTreeWidgetItem) -> bool:
+        """Determina se un item deve essere nascosto (Assente, Attivo o Speciale)."""
+        if self.tree_widget is None or self.engine is None or item.childCount() == 0:
+            return False
+
+        child = item.child(0)
+        if not child:
+            return False
+
+        child_loc = child.text(self.tree_widget.IDX_UBICAZIONE).upper()
+        if UbicazioneStrumenti.ASSENTE.value in child_loc:
+            return True
+
+        scadenza_str = child.text(self.tree_widget.IDX_SCADENZA)
+        days, _ = self.engine.calculate_days_and_status(scadenza_str)
+        if days is not None and days > THRESHOLD_ATTENTION:
+            return True
+
+        user_data = item.data(0, Qt.ItemDataRole.UserRole)
+        return bool(user_data and user_data.get("days") in (-9999, -8888, -7777))
+
+    def _hide_excluded_items(self) -> dict[int, bool]:
+        """Nasconde temporaneamente gli ASSENTI e gli ATTIVI."""
+        if self.tree_widget is None or self.engine is None:
+            return {}
+        visibility_map: dict[int, bool] = {}
+        for i in range(self.tree_widget.topLevelItemCount()):
+            item = self.tree_widget.topLevelItem(i)
+            if not item:
+                continue
+            visibility_map[i] = not item.isHidden()
+            if self._should_hide_item(item):
+                item.setHidden(True)
+        return visibility_map
+
+    def _restore_items_visibility(self, visibility_map: dict[int, bool]) -> None:
+        """Ripristina la visibilità originale degli item."""
+        if self.tree_widget is None:
+            return
+        for i, was_visible in visibility_map.items():
+            t_item = self.tree_widget.topLevelItem(i)
+            if t_item:
+                t_item.setHidden(not was_visible)
+
+    def _generate_audit_pdf(self) -> str | None:
         """Genera un file PDF temporaneo con lo storico ed escludendo gli ASSENTI e gli ATTIVI."""
         if not self.tree_widget or not self.engine:
             return None
 
         from src.gui.widgets.contabilita.certificati.pdf_exporter import CertificatiPdfExporter
 
-        # 1. Nascondi temporaneamente gli ASSENTI e gli ATTIVI
-        visibility_map = {}
-        for i in range(self.tree_widget.topLevelItemCount()):
-            item = self.tree_widget.topLevelItem(i)
-            if not item:
-                continue
-            visibility_map[i] = not item.isHidden()
-            is_absent = False
-            is_active = False
-            is_special = False
-            if item.childCount() > 0:
-                child = item.child(0)
-                if child:
-                    child_loc = child.text(self.tree_widget.IDX_UBICAZIONE).upper()
-                    is_absent = UbicazioneStrumenti.ASSENTE.value in child_loc
-                    scadenza_str = child.text(self.tree_widget.IDX_SCADENZA)
-                    days, _ = self.engine.calculate_days_and_status(scadenza_str)
-                    if days is not None and days > THRESHOLD_ATTENTION:
-                        is_active = True
-                    user_data = item.data(0, Qt.ItemDataRole.UserRole)
-                    if user_data and user_data.get("days") in (-9999, -8888, -7777):
-                        is_special = True
-            if is_absent or is_active or is_special:
-                item.setHidden(True)
+        visibility_map = self._hide_excluded_items()
 
-        # 2. Genera PDF
         temp_pdf = os.path.join(
             tempfile.gettempdir(),
             f"Audit Certificati Strumentali ISAB SUD del {datetime.now().strftime('%d_%m_%Y')}.pdf",
@@ -529,11 +550,7 @@ class ScadenzeAnalysisDialog(QDialog):
         )
         success, _ = exporter.export(temp_pdf)
 
-        # 3. Ripristina visibilità
-        for i, was_visible in visibility_map.items():
-            t_item = self.tree_widget.topLevelItem(i)
-            if t_item:
-                t_item.setHidden(not was_visible)
+        self._restore_items_visibility(visibility_map)
         return temp_pdf if success else None
 
     def _raise_no_images(self) -> None:
@@ -547,19 +564,22 @@ class ScadenzeAnalysisDialog(QDialog):
             with suppress(Exception):
                 Path(p).unlink()
 
-    def _capture_widgets_as_images(self) -> list[str]:
-        """Cattura solo gli screenshot delle sezioni critiche."""
+    def _find_critical_widgets(self) -> list[QWidget]:
         widgets: list[QWidget] = []
         layout = self.content_widget.layout()
-        if layout:
-            for i in range(layout.count()):
-                item = layout.itemAt(i)
-                if item and (w := item.widget()):
-                    title_label = w.findChild(QLabel)
-                    if title_label:
-                        text = title_label.text().upper()
-                        if any(x in text for x in ("SCADUTI", "IN SCADENZA", "DATA NON DISPONIBILE")):
-                            widgets.append(w)
+        if not layout:
+            return widgets
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            if item and (w := item.widget()):
+                title_label = w.findChild(QLabel)
+                if title_label:
+                    text = title_label.text().upper()
+                    if any(x in text for x in ("SCADUTI", "IN SCADENZA", "DATA NON DISPONIBILE")):
+                        widgets.append(w)
+        return widgets
+
+    def _save_widgets_to_images(self, widgets: list[QWidget]) -> list[str]:
         paths = []
         temp_dir = tempfile.gettempdir()
         for i, w in enumerate(widgets):
@@ -570,3 +590,8 @@ class ScadenzeAnalysisDialog(QDialog):
                 if px.save(p, "PNG"):
                     paths.append(p)
         return paths
+
+    def _capture_widgets_as_images(self) -> list[str]:
+        """Cattura solo gli screenshot delle sezioni critiche."""
+        widgets = self._find_critical_widgets()
+        return self._save_widgets_to_images(widgets)

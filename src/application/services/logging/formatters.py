@@ -118,18 +118,17 @@ class JSONFormatter:
         if "module" in context:
             tags.append(f"module:{context['module']}")
 
-        # Tag da message
         msg_lower = message.lower()
-        if "error" in msg_lower or "fail" in msg_lower:
-            tags.append("error")
-        if "success" in msg_lower or "completat" in msg_lower:
-            tags.append("success")
-        if "download" in msg_lower or "scaric" in msg_lower:
-            tags.append("download")
-        if "upload" in msg_lower or "caric" in msg_lower:
-            tags.append("upload")
-        if "login" in msg_lower or "accesso" in msg_lower:
-            tags.append("auth")
+        keyword_tags = {
+            "error": ["error", "fail"],
+            "success": ["success", "completat"],
+            "download": ["download", "scaric"],
+            "upload": ["upload", "caric"],
+            "auth": ["login", "accesso"],
+        }
+        for tag, keywords in keyword_tags.items():
+            if any(k in msg_lower for k in keywords):
+                tags.append(tag)
 
         return list(set(tags))  # Remove duplicates
 
@@ -157,6 +156,21 @@ class HumanFormatter:
             return bool(isatty and isatty())
 
         return "ANSICON" in os.environ or "WT_SESSION" in os.environ
+
+    def _build_context_string(self) -> str:
+        """Costruisce la stringa del context."""
+        context = get_context().to_dict()
+        if not context:
+            return ""
+        ctx_parts = []
+        if "trace_id" in context:
+            ctx_parts.append(f"trace={context['trace_id'][:12]}...")
+        if "span_id" in context:
+            ctx_parts.append(f"span={context['span_id']}")
+        if "bot_type" in context:
+            ctx_parts.append(f"bot={context['bot_type']}")
+
+        return f" | {' | '.join(ctx_parts)}" if ctx_parts else ""
 
     def format(  # noqa: PLR0913
         self,
@@ -191,19 +205,7 @@ class HumanFormatter:
 
         # Aggiungi context
         if self.show_context:
-            context = get_context().to_dict()
-            if context:
-                ctx_parts = []
-                # Mostra trace_id e span_id se presenti
-                if "trace_id" in context:
-                    ctx_parts.append(f"trace={context['trace_id'][:12]}...")
-                if "span_id" in context:
-                    ctx_parts.append(f"span={context['span_id']}")
-                if "bot_type" in context:
-                    ctx_parts.append(f"bot={context['bot_type']}")
-
-                if ctx_parts:
-                    line += f" | {' | '.join(ctx_parts)}"
+            line += self._build_context_string()
 
         # Aggiungi extra data
         if extra:

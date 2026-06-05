@@ -37,43 +37,55 @@ class TelegramIntentHandler(QObject):
     def handle_intent(self, chat_id: int, intent: dict[str, Any]) -> None:
         """Punto di ingresso per il processing degli intenti AI."""
         action = intent.get("action")
-        obj = intent.get("object")
+        obj = str(intent.get("object") or "")
         items = intent.get("items", [])
 
         # 1. Processamento Dati
         if items:
-            self._process_intent_data(str(obj) if obj else "", items)
+            self._process_intent_data(obj, items)
 
         # 2. Processamento Azione
+        if action:
+            self._execute_action(str(action), obj, chat_id, items)
+
+    def _execute_action(self, action: str, obj: str, chat_id: int, items: list[Any]) -> None:
         if action == "print" and obj == "pdl":
             self._handle_print_pdl(chat_id, items)
         elif action == "download" and obj == "pdl":
             self._handle_download_pdl(chat_id)
         elif action == "download":
-            self._handle_generic_download(str(obj) if obj else "")
+            self._handle_generic_download(obj)
         elif action == "status" and self.system_handler:
             self.system_handler.handle_status()
         elif action == "restart" and self.system_handler:
             self.system_handler.handle_restart_app()
 
+    def _process_pdl_items(self, items: list[Any]) -> None:
+        valid = [i for i in items if InputValidator.validate_pdl(i).valid]
+        if not valid:
+            return
+        rows = [{"numero_pdl": InputValidator.validate_pdl(v).sanitized_value} for v in valid]
+        panel = getattr(self.mw, "pdl_panel", None)
+        if panel:
+            panel.add_rows_simple(rows)
+            self.mw.show_toast(f"Telegram: aggiunti {len(valid)} PDL")
+
+    def _process_oda_items(self, items: list[Any]) -> None:
+        valid = [i for i in items if InputValidator.validate_oda(i).valid]
+        if not valid:
+            return
+        rows = [{"numero_oda": InputValidator.validate_oda(v).sanitized_value} for v in valid]
+        panel = getattr(self.mw, "scarico_panel", None)
+        if panel:
+            panel.add_rows_simple(rows)
+            self.mw.show_toast(f"Telegram: aggiunti {len(valid)} OdA")
+
     def _process_intent_data(self, obj: str, items: list[Any]) -> None:
         """Aggiunge dati ai pannelli in base all'oggetto dell'intento."""
         if obj == "pdl":
-            valid = [i for i in items if InputValidator.validate_pdl(i).valid]
-            if valid:
-                rows = [{"numero_pdl": InputValidator.validate_pdl(v).sanitized_value} for v in valid]
-                panel = getattr(self.mw, "pdl_panel", None)
-                if panel:
-                    panel.add_rows_simple(rows)
-                    self.mw.show_toast(f"Telegram: aggiunti {len(valid)} PDL")
+            self._process_pdl_items(items)
         elif obj == "oda":
-            valid = [i for i in items if InputValidator.validate_oda(i).valid]
-            if valid:
-                rows = [{"numero_oda": InputValidator.validate_oda(v).sanitized_value} for v in valid]
-                panel = getattr(self.mw, "scarico_panel", None)
-                if panel:
-                    panel.add_rows_simple(rows)
-                    self.mw.show_toast(f"Telegram: aggiunti {len(valid)} OdA")
+            self._process_oda_items(items)
 
     def _handle_print_pdl(self, chat_id: int, items: list[str]) -> None:
         self.telegram.pending_data[chat_id] = {"action": "print", "items": items}
