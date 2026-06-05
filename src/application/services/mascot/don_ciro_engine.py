@@ -156,26 +156,33 @@ class DonCiroEngine(QObject):
         self._jacket_vel += (target_j - self._jacket_flap) * 40.0 * DT - self._jacket_vel * 6.0 * DT
         self._jacket_flap += self._jacket_vel * DT
 
+    def _handle_walking_state(self) -> None:
+        """Gestisce lo stato di camminata."""
+        speed = 0.65 * self._scale
+        if self._weather == WeatherCond.RAINY:
+            speed *= 1.2
+        self._walk_x += speed * self._look_dir
+
+        # Check inversioni o idle
+        if IDLE_ZONE_MIN < self._walk_x < IDLE_ZONE_MAX and self._rng.random() < IDLE_CHANCE:
+            self._start_idle()
+        elif self._look_dir > 0 and self._walk_x >= MAX_WALK_X:
+            self.trigger_turn(TURN_ANGLE_RIGHT)
+        elif self._look_dir < 0 and self._walk_x <= MIN_WALK_X:
+            self.trigger_turn(TURN_ANGLE_LEFT)
+
+    def _handle_idle_state(self) -> None:
+        """Gestisce lo stato di inattività."""
+        self._idle_time -= 16
+        if self._idle_time <= 0:
+            self._pick_random_action()
+
     def _update_state_machine(self) -> None:
         # 3. Comportamento (Macchina a Stati)
         if self._state == DonState.WALKING:
-            speed = 0.65 * self._scale
-            if self._weather == WeatherCond.RAINY:
-                speed *= 1.2
-            self._walk_x += speed * self._look_dir
-
-            # Check inversioni o idle
-            if IDLE_ZONE_MIN < self._walk_x < IDLE_ZONE_MAX and self._rng.random() < IDLE_CHANCE:
-                self._start_idle()
-            elif self._look_dir > 0 and self._walk_x >= MAX_WALK_X:
-                self.trigger_turn(TURN_ANGLE_RIGHT)
-            elif self._look_dir < 0 and self._walk_x <= MIN_WALK_X:
-                self.trigger_turn(TURN_ANGLE_LEFT)
-
+            self._handle_walking_state()
         elif self._state == DonState.IDLE:
-            self._idle_time -= 16
-            if self._idle_time <= 0:
-                self._pick_random_action()
+            self._handle_idle_state()
 
     def update_physics(self) -> None:
         """Ciclo di aggiornamento della fisica (60 FPS)."""

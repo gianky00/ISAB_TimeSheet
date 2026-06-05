@@ -141,11 +141,13 @@ class ROIEngine:
             )
             is_success = status == "success"
 
-            if not is_success or "Completamento" not in action:
-                if not is_success:
-                    state["fail_count"] += 1
-                    if severity == "critical":
-                        state["critical_errs"] += 1
+            if not is_success:
+                state["fail_count"] += 1
+                if severity == "critical":
+                    state["critical_errs"] += 1
+                return
+
+            if "Completamento" not in action:
                 return
 
             state["success_cnt"] += 1

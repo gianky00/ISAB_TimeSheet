@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QScrollArea,
     QSizePolicy,
+    QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
 )
@@ -484,6 +485,27 @@ class ScadenzeAnalysisDialog(QDialog):
                 {cta_html}
         """
 
+    def _should_hide_item(self, item: QTreeWidgetItem) -> bool:
+        """Determina se un item deve essere nascosto (Assente, Attivo o Speciale)."""
+        if self.tree_widget is None or self.engine is None or item.childCount() == 0:
+            return False
+
+        child = item.child(0)
+        if not child:
+            return False
+
+        child_loc = child.text(self.tree_widget.IDX_UBICAZIONE).upper()
+        if UbicazioneStrumenti.ASSENTE.value in child_loc:
+            return True
+
+        scadenza_str = child.text(self.tree_widget.IDX_SCADENZA)
+        days, _ = self.engine.calculate_days_and_status(scadenza_str)
+        if days is not None and days > THRESHOLD_ATTENTION:
+            return True
+
+        user_data = item.data(0, Qt.ItemDataRole.UserRole)
+        return bool(user_data and user_data.get("days") in (-9999, -8888, -7777))
+
     def _hide_excluded_items(self) -> dict[int, bool]:
         """Nasconde temporaneamente gli ASSENTI e gli ATTIVI."""
         if self.tree_widget is None or self.engine is None:
@@ -494,22 +516,7 @@ class ScadenzeAnalysisDialog(QDialog):
             if not item:
                 continue
             visibility_map[i] = not item.isHidden()
-            is_absent = False
-            is_active = False
-            is_special = False
-            if item.childCount() > 0:
-                child = item.child(0)
-                if child:
-                    child_loc = child.text(self.tree_widget.IDX_UBICAZIONE).upper()
-                    is_absent = UbicazioneStrumenti.ASSENTE.value in child_loc
-                    scadenza_str = child.text(self.tree_widget.IDX_SCADENZA)
-                    days, _ = self.engine.calculate_days_and_status(scadenza_str)
-                    if days is not None and days > THRESHOLD_ATTENTION:
-                        is_active = True
-                    user_data = item.data(0, Qt.ItemDataRole.UserRole)
-                    if user_data and user_data.get("days") in (-9999, -8888, -7777):
-                        is_special = True
-            if is_absent or is_active or is_special:
+            if self._should_hide_item(item):
                 item.setHidden(True)
         return visibility_map
 
