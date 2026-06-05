@@ -14,7 +14,8 @@ from src.infrastructure.utils.browser_diagnostics import (
 
 def test_run_browser_diagnostic_fail_overall(tmp_path, mocker):
     mocker.patch(
-        "src.infrastructure.utils.browser_diagnostics._check_filesystem", return_value={"status": "FAIL", "details": []}
+        "src.infrastructure.utils.browser_diagnostics._check_filesystem",
+        return_value={"status": "FAIL", "details": []},
     )
     mocker.patch("src.infrastructure.utils.browser_diagnostics._save_report")
     report = run_browser_diagnostic(tmp_path)
@@ -48,7 +49,10 @@ def test_check_processes_exceptions(tmp_path, mocker):
 
 
 def test_test_bare_launch_exception(mocker):
-    mocker.patch("src.infrastructure.utils.browser_diagnostics.sync_playwright", side_effect=Exception("Playwright failure"))
+    mocker.patch(
+        "src.infrastructure.utils.browser_diagnostics.sync_playwright",
+        side_effect=Exception("Playwright failure"),
+    )
     res = _test_bare_launch()
     assert res["status"] == "FAIL"
 

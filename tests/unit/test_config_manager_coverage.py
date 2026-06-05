@@ -46,7 +46,9 @@ class TestConfigManager:
 
     def test_add_remove_account(self, mocker):
         # Mock SecretsManager to avoid keyring issues
-        mocker.patch("src.application.services.config.account_manager.SecretsManager.is_available", return_value=False)
+        mocker.patch(
+            "src.application.services.config.account_manager.SecretsManager.is_available", return_value=False
+        )
         mocker.patch(
             "src.infrastructure.utils.security.password_manager.encrypt",
             side_effect=lambda x: f"enc_{x}",

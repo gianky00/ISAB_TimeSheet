@@ -31,8 +31,13 @@ class TestLicenseValidator:
         self.test_key = Fernet.generate_key()
         self.cipher = Fernet(self.test_key)
 
-        with patch("src.application.services.license_validator.get_data_path", return_value=str(self.data_dir)):
-            with patch("src.application.services.secrets_manager.SecretsManager.get_license_key", return_value=self.test_key):
+        with patch(
+            "src.application.services.license_validator.get_data_path", return_value=str(self.data_dir)
+        ):
+            with patch(
+                "src.application.services.secrets_manager.SecretsManager.get_license_key",
+                return_value=self.test_key,
+            ):
                 yield
 
     def _create_valid_license(self, hwid="HWID_TEST", expiry="01/01/2050"):

@@ -31,12 +31,18 @@ class TestAppInitializer:
         AppInitializer._core_initialized = True
         assert AppInitializer.initialize_core() is True
 
-    @patch("src.application.services.app_initializer.LicenseVerifier.verify_license", side_effect=Exception("REVOCATA"))
+    @patch(
+        "src.application.services.app_initializer.LicenseVerifier.verify_license",
+        side_effect=Exception("REVOCATA"),
+    )
     def test_initialize_core_critical_failure(self, mock_lic):
         with pytest.raises(Exception, match="REVOCATA"):
             AppInitializer.initialize_core()
 
-    @patch("src.application.services.app_initializer.LicenseVerifier.verify_license", side_effect=Exception("Random Error"))
+    @patch(
+        "src.application.services.app_initializer.LicenseVerifier.verify_license",
+        side_effect=Exception("Random Error"),
+    )
     def test_initialize_core_generic_failure(self, mock_lic):
         with pytest.raises(StartupError):
             AppInitializer.initialize_core()

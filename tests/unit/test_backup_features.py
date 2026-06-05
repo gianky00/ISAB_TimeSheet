@@ -50,7 +50,9 @@ class TestBackupFeatures:
         """Verifica che il backup contenga solo i file corretti."""
         source, target = mock_dirs
         mocker.patch("src.application.services.backup_manager.CONFIG_DIR", source)
-        mocker.patch("src.application.services.backup_manager.BackupManager.get_backup_dir", return_value=target)
+        mocker.patch(
+            "src.application.services.backup_manager.BackupManager.get_backup_dir", return_value=target
+        )
 
         # Esegui backup
         success, zip_path = BackupManager.create_backup()

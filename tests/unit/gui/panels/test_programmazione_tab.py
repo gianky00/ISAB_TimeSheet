@@ -9,7 +9,10 @@ from src.gui.panels.pdl.programmazione_tab import ProgrammazioneTab
 
 @pytest.fixture
 def mock_pdl_service(mocker):
-    mocker.patch("src.application.services.pdl.pdl_service.PDLService.get_unique_requesters", return_value=["REQ1", "REQ2"])
+    mocker.patch(
+        "src.application.services.pdl.pdl_service.PDLService.get_unique_requesters",
+        return_value=["REQ1", "REQ2"],
+    )
 
     # Mock data con la chiave 'programmazione' richiesta dalla tabella
     # Ogni entry in programmazione è un dict con 'tcl' e 'tgo' (bool)
@@ -29,7 +32,10 @@ def mock_pdl_service(mocker):
             "programmazione": [{"tcl": False, "tgo": True} for _ in range(7)],
         },
     ]
-    mocker.patch("src.application.services.pdl.pdl_service.PDLService.get_programming_results_by_week", return_value=results)
+    mocker.patch(
+        "src.application.services.pdl.pdl_service.PDLService.get_programming_results_by_week",
+        return_value=results,
+    )
     return mocker
 
 
@@ -132,7 +138,9 @@ class TestProgrammazioneTab:
         widget = ProgrammazioneTab()
         qtbot.addWidget(widget)
 
-        mock_save = mocker.patch("src.application.services.pdl.pdl_service.PDLService.save_programming_results")
+        mock_save = mocker.patch(
+            "src.application.services.pdl.pdl_service.PDLService.save_programming_results"
+        )
 
         widget.worker = MagicMock()
         widget.worker.bot = MagicMock()

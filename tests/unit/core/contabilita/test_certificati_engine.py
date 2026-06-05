@@ -26,7 +26,9 @@ class TestCertificatiEngine:
 
     def test_calculate_days_and_status(self, engine, mocker):
         mock_now = datetime(2026, 5, 25, 0, 0, 0, tzinfo=UTC)
-        mocker.patch("src.application.services.contabilita.certificati_engine.datetime", mocker.Mock(wraps=datetime))
+        mocker.patch(
+            "src.application.services.contabilita.certificati_engine.datetime", mocker.Mock(wraps=datetime)
+        )
         import src.application.services.contabilita.certificati_engine as ce_mod
 
         ce_mod.datetime.now.return_value = mock_now

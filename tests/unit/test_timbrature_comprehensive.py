@@ -53,7 +53,9 @@ class TestTimbratureStorageComprehensive:
 
         # 2. Mocking pandas per evitare I/O reale
         mock_df = pd.DataFrame([{"Data Timbratura": "2024-01-01", "Cognome Risorsa": "Rossi"}])
-        mocker.patch("src.infrastructure.bots.portale_fornitori.timbrature.storage.pd.read_excel", return_value=mock_df)
+        mocker.patch(
+            "src.infrastructure.bots.portale_fornitori.timbrature.storage.pd.read_excel", return_value=mock_df
+        )
 
         # Mocking db_manager per la connessione
         mocker.patch(

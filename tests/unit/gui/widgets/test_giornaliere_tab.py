@@ -131,7 +131,10 @@ class TestGiornaliereYearTab:
 
     def test_open_giornaliera_flow(self, tab, mocker):
         """Verifica il flusso di apertura file."""
-        mocker.patch("src.application.services.config_manager.load_config", return_value={"giornaliere_path": "C:/fake"})
+        mocker.patch(
+            "src.application.services.config_manager.load_config",
+            return_value={"giornaliere_path": "C:/fake"},
+        )
         mocker.patch("os.path.exists", return_value=True)
         mocker.patch("pathlib.Path.exists", return_value=True)
         mock_start = mocker.patch("os.startfile")

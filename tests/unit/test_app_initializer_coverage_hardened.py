@@ -12,8 +12,12 @@ class TestAppInitializerHardened:
     def reset_state(self, mocker):
         AppInitializer._core_initialized = False
         # Mock global components to avoid real FS/DB access
-        mocker.patch("src.application.services.initialization.license_verifier.LicenseVerifier.verify_license")
-        mocker.patch("src.application.services.initialization.migration_engine.DatabaseMigrationEngine.initialize_database")
+        mocker.patch(
+            "src.application.services.initialization.license_verifier.LicenseVerifier.verify_license"
+        )
+        mocker.patch(
+            "src.application.services.initialization.migration_engine.DatabaseMigrationEngine.initialize_database"
+        )
         mocker.patch("src.infrastructure.utils.resource_manager.ResourceManager.ensure_automation_driver")
         yield
         AppInitializer._core_initialized = False

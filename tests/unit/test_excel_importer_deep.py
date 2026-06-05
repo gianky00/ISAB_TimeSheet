@@ -55,7 +55,8 @@ class TestExcelImporterComprehensive:
 
         with patch("src.application.services.processing.giornaliere.steps.pd.read_excel", return_value=df):
             with patch(
-                "src.application.services.processing.giornaliere.steps.SyncGiornaliereStep.execute", return_value=None
+                "src.application.services.processing.giornaliere.steps.SyncGiornaliereStep.execute",
+                return_value=None,
             ):
                 # Using dict() to avoid tool interpolation issues with {}
                 _year, rows, err = GiornaliereImporter._process_single_giornaliera((2024, Path(file1), {}))

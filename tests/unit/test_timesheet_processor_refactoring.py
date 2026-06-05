@@ -114,7 +114,10 @@ def test_process_and_move_mkdir_error(tmp_path):
     ws["A2"] = "5400123"  # ODC
     ws["B2"] = "10"  # POS
     wb.save(src)
-    with patch("src.application.services.processing.timesheet.steps.Path.mkdir", side_effect=PermissionError("Perm error")):
+    with patch(
+        "src.application.services.processing.timesheet.steps.Path.mkdir",
+        side_effect=PermissionError("Perm error"),
+    ):
         success, msg = TimesheetProcessor.process_and_move(src, tmp_path / "new_dir")
         assert success is False
         assert "Impossibile creare dest_dir" in msg

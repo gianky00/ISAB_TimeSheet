@@ -33,7 +33,9 @@ class TestMainWindow:
             patch("src.application.services.dipendenti.anagrafica_controller.AnagraficaController"),
             patch("src.application.services.pdl.pdl_controller.PDLController"),
             patch("src.application.services.contabilita.scarico_ore.controller.ScaricoOreController"),
-            patch("src.application.services.contabilita.consuntivo.consuntivo_controller.ConsuntivoController"),
+            patch(
+                "src.application.services.contabilita.consuntivo.consuntivo_controller.ConsuntivoController"
+            ),
             patch("src.gui.main_window.main.QMainWindow.show"),  # Impedisce show() reale
         ):
             yield

@@ -29,7 +29,9 @@ class TestBotPanelsFinal:
         from src.gui.panels.storico_oda.oda_panel import StoricoOdaPanel
 
         mock_ctrl = MagicMock()
-        with patch("src.application.services.sync_tracker.SyncTracker.get_formatted_status", return_value="N/D"):
+        with patch(
+            "src.application.services.sync_tracker.SyncTracker.get_formatted_status", return_value="N/D"
+        ):
             p = StoricoOdaPanel(mock_ctrl)
             qtbot.addWidget(p)
             assert p.controller == mock_ctrl

@@ -11,7 +11,9 @@ class TestBotParametersWidget:
     @pytest.fixture
     def widget(self, qtbot):
         # Mock config_manager to avoid real file access
-        with patch("src.application.services.config_manager.load_config", return_value={"fornitori": ["F1", "F2"]}):
+        with patch(
+            "src.application.services.config_manager.load_config", return_value={"fornitori": ["F1", "F2"]}
+        ):
             w = BotParametersWidget(show_date_range=True)
             qtbot.addWidget(w)
             return w

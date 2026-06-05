@@ -113,7 +113,9 @@ class TestPdlRepository:
         mock_cursor.fetchall.return_value = [mock_row]
 
         # Patching dict in the repository module to handle sqlite3.Row conversion
-        with patch("src.application.services.database.repositories.pdl_repository.dict", side_effect=lambda x: x):
+        with patch(
+            "src.application.services.database.repositories.pdl_repository.dict", side_effect=lambda x: x
+        ):
             res = repo.get_interventions("123", "ext.db")
             assert len(res) == 1
             assert res[0]["tecnico"] == "T1"

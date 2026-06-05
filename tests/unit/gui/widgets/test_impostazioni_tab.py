@@ -10,7 +10,10 @@ from src.gui.widgets.contabilita.consuntivo.impostazioni_tab import Impostazioni
 def mock_config(mocker):
     """Fixture per mockare config_manager."""
     config_data = {"preventivi_tcl": ["TCL1", "TCL2"], "preventivi_stati": ["Stato1"]}
-    mocker.patch("src.application.services.config_manager.get_config_value", side_effect=lambda k, d: config_data.get(k, d))
+    mocker.patch(
+        "src.application.services.config_manager.get_config_value",
+        side_effect=lambda k, d: config_data.get(k, d),
+    )
     mocker.patch("src.application.services.config_manager.set_config_value")
     return config_data
 

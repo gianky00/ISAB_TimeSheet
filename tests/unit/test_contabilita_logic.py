@@ -76,7 +76,10 @@ class TestContabilitaLogic:
                 "src.application.services.excel_importer.ExcelImporter.import_giornaliere",
                 return_value=(True, "OK", [], [2024]),
             ),
-            patch("src.application.services.data_synchronizer.DataSynchronizer.sync_giornaliere", return_value=(1, 0)),
+            patch(
+                "src.application.services.data_synchronizer.DataSynchronizer.sync_giornaliere",
+                return_value=(1, 0),
+            ),
             patch(
                 "src.application.services.contabilita.importer_service.ContabilitaImporterService._prepare_odc_lookup_map",
                 return_value={},
@@ -87,12 +90,16 @@ class TestContabilitaLogic:
             assert added == 1
 
     def test_scan_workload(self, manager):
-        with patch("src.application.services.excel_importer.ExcelImporter.scan_workload", return_value=(10, 5)):
+        with patch(
+            "src.application.services.excel_importer.ExcelImporter.scan_workload", return_value=(10, 5)
+        ):
             rows, files = manager.scan_workload("fake.xlsx", "fake_dir")
             assert rows == 10
             assert files == 5
 
     def test_scan_scarico_ore_rows(self, manager):
-        with patch("src.application.services.excel_importer.ExcelImporter.scan_scarico_ore_rows", return_value=100):
+        with patch(
+            "src.application.services.excel_importer.ExcelImporter.scan_scarico_ore_rows", return_value=100
+        ):
             rows = manager.scan_scarico_ore_rows("fake.xlsx")
             assert rows == 100

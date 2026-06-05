@@ -70,7 +70,9 @@ class TestSprintAAuditBackup:
         backup_dir = tmp_path / "Backups"
         backup_dir.mkdir()
 
-        with patch("src.application.services.backup_manager.BackupManager.get_backup_dir", return_value=backup_dir):
+        with patch(
+            "src.application.services.backup_manager.BackupManager.get_backup_dir", return_value=backup_dir
+        ):
             success, zip_path = BackupManager.create_backup()
             assert success is True
             assert Path(zip_path).exists()

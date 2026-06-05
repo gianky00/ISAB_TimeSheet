@@ -52,7 +52,9 @@ class TestAppStatusController:
         assert mock_toast.return_value.show.called
 
     def test_switch_headless(self, mock_main_window, mocker):
-        mocker.patch("src.application.services.config_manager.get_config_value", return_value=False)  # Visibile
+        mocker.patch(
+            "src.application.services.config_manager.get_config_value", return_value=False
+        )  # Visibile
         mock_set = mocker.patch("src.application.services.config_manager.set_config_value", return_value=True)
         mock_toast = mocker.patch("src.gui.widgets.toast.ToastManager.instance")
 

@@ -38,7 +38,10 @@ class TestGiornaliereImporter:
         df = pd.DataFrame(columns=["DATA", "PERSONALE", "ORE", "N° PDL"])
         context = {"success": True, "df": df}
 
-        with patch("src.application.services.processing.giornaliere.steps.validate_giornaliere", side_effect=lambda x: x):
+        with patch(
+            "src.application.services.processing.giornaliere.steps.validate_giornaliere",
+            side_effect=lambda x: x,
+        ):
             NormalizeGiornalieraStep().execute(context)
             assert context.get("success") is False or "df" in context
 

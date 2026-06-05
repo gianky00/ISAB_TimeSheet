@@ -50,7 +50,9 @@ class TestPrenotaBPService:
         params = {"societa": "S1", "fornitore": "F1", "data_da": "D1", "data_a": "D2"}
         data = [{"id": 100}]
 
-        with patch("src.application.services.config_manager.load_config", return_value={"browser_headless": True}):
+        with patch(
+            "src.application.services.config_manager.load_config", return_value={"browser_headless": True}
+        ):
             with patch("src.application.services.config_manager.get_download_path", return_value="/tmp"):
                 bot_params, bot_data = service.prepare_payload(creds, params, data)
 

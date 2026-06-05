@@ -43,7 +43,10 @@ class TestMasterCoverage:
         am = AuditManager()
 
         # Patch hash per stabilità
-        with patch("src.application.services.audit.integrity.AuditIntegrity.calculate_hash", return_value="FIXED_HASH"):
+        with patch(
+            "src.application.services.audit.integrity.AuditIntegrity.calculate_hash",
+            return_value="FIXED_HASH",
+        ):
             am.log_action("Test", category="User1")
             am._log_queue.join()  # Attesa sincrona del worker
 

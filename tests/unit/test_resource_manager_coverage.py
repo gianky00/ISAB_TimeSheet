@@ -14,7 +14,9 @@ class TestResourceManager:
             return_value=tmp_path / "config",
         )
         # Update other class attrs derived from PROJECT_ROOT
-        mocker.patch("src.infrastructure.utils.resource_manager.ResourceManager.ASSETS_DIR", tmp_path / "assets")
+        mocker.patch(
+            "src.infrastructure.utils.resource_manager.ResourceManager.ASSETS_DIR", tmp_path / "assets"
+        )
         mocker.patch(
             "src.infrastructure.utils.resource_manager.ResourceManager.ICONS_DIR",
             tmp_path / "assets" / "icons",

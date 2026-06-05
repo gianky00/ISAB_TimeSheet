@@ -124,7 +124,9 @@ class TestSafeWorkPDLBotComprehensive:
 
     def test_unisci_e_stampa_logic(self, bot, mocker):
         """Test unione PDF."""
-        mocker.patch("src.infrastructure.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True)
+        mocker.patch(
+            "src.infrastructure.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True
+        )
         mocker.patch("os.rename")
         item = {"numero_pdl": "569157/C", "print_enabled": True}
         all_paths = []

@@ -64,7 +64,10 @@ class TestStatusBarComponent:
 
     def test_update_license_info(self, qtbot, real_main_window, mock_license_info, mocker):
         """Verifica lbl'aggiornamento delle label di licenza."""
-        mocker.patch("src.application.services.config_manager.load_config", return_value={"last_login_date": "20/05/2026"})
+        mocker.patch(
+            "src.application.services.config_manager.load_config",
+            return_value={"last_login_date": "20/05/2026"},
+        )
         mocker.patch("src.application.services.config_manager.set_config_value")
 
         comp = StatusBarComponent(real_main_window)

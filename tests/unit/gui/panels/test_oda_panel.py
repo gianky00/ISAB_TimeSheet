@@ -27,7 +27,9 @@ class TestStoricoOdaPanel:
     @pytest.fixture
     def panel(self, controller, qtbot):
         with (
-            patch("src.application.services.sync_tracker.SyncTracker.get_formatted_status", return_value="N/D"),
+            patch(
+                "src.application.services.sync_tracker.SyncTracker.get_formatted_status", return_value="N/D"
+            ),
             patch("src.gui.styles.ui_effects.UIEffectsManager.apply_shadow"),
             patch("src.gui.styles.ui_effects.UIEffectsManager.animate_fade"),
         ):

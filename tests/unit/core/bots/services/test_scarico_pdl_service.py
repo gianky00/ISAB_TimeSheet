@@ -20,7 +20,9 @@ class TestScaricoPDLService:
             },
         )
         # Mock Path.exists for the destination
-        mocker.patch("src.application.services.bots.services.scarico_pdl_service.Path.exists", return_value=True)
+        mocker.patch(
+            "src.application.services.bots.services.scarico_pdl_service.Path.exists", return_value=True
+        )
 
         cfg = service.load_config()
         assert cfg["stampa"] is True
@@ -30,7 +32,10 @@ class TestScaricoPDLService:
 
     def test_load_config_fallback_path(self, service, mocker):
         mocker.patch("src.application.services.config_manager.load_config", return_value={})
-        mocker.patch("src.application.services.bots.services.scarico_pdl_service.Path.home", return_value=Path("/home/user"))
+        mocker.patch(
+            "src.application.services.bots.services.scarico_pdl_service.Path.home",
+            return_value=Path("/home/user"),
+        )
 
         cfg = service.load_config()
         assert "Downloads" in cfg["dest_path"]
@@ -53,7 +58,9 @@ class TestScaricoPDLService:
         params = {"dest_path": "/custom", "stampa": True, "stampante": "PRN"}
         data = [{"numero_pdl": "PDL-001"}]
 
-        mocker.patch("src.application.services.config_manager.load_config", return_value={"browser_headless": False})
+        mocker.patch(
+            "src.application.services.config_manager.load_config", return_value={"browser_headless": False}
+        )
 
         bot_params, bot_data = service.prepare_payload(creds, params, data)
 

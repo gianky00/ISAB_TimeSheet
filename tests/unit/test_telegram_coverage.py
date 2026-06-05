@@ -9,7 +9,9 @@ from src.application.services.telegram_bridge import TelegramUIBridge
 class TestTelegramCoverage:
     @pytest.fixture
     def service(self, mocker):
-        mocker.patch("src.application.services.config_manager.load_config", return_value={"telegram_token": "TOKEN"})
+        mocker.patch(
+            "src.application.services.config_manager.load_config", return_value={"telegram_token": "TOKEN"}
+        )
         return TelegramService()
 
     @pytest.mark.asyncio

@@ -93,7 +93,9 @@ class TestAuditManager:
         assert not any(log_entry["action"] == "Old Action" for log_entry in logs)
 
     def test_notification_emission(self, manager):
-        with patch("src.application.services.notification_manager.NotificationManager.instance") as mock_notif:
+        with patch(
+            "src.application.services.notification_manager.NotificationManager.instance"
+        ) as mock_notif:
             manager.log_action("Action", notify=True)
             manager._log_queue.join()
             mock_notif.return_value.add_notification.assert_called_once()

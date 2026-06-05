@@ -25,7 +25,9 @@ class TestConfigSecurity:
 
         mocker.patch("src.application.services.config_manager.save_config", side_effect=sync_save)
 
-        mocker.patch("src.application.services.config.account_manager.SecretsManager.is_available", return_value=False)
+        mocker.patch(
+            "src.application.services.config.account_manager.SecretsManager.is_available", return_value=False
+        )
 
         yield config_file
         config_manager._config_cache = None

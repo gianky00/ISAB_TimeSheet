@@ -31,7 +31,9 @@ class TestLicenseVerifier:
             LicenseVerifier.verify_license(step)
 
     @patch("src.application.services.initialization.license_verifier.run_update")
-    @patch("src.application.services.initialization.license_verifier.LicenseVerifier._trigger_revocation_shutdown")
+    @patch(
+        "src.application.services.initialization.license_verifier.LicenseVerifier._trigger_revocation_shutdown"
+    )
     def test_async_handshake_revocation(self, mock_shutdown, mock_update):
         # Testiamo la logica interna di _async_handshake
         mock_update.side_effect = Exception("REVOCATA")

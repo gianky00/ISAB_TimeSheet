@@ -43,7 +43,10 @@ class TestContabilitaRepository:
         fields.update({"year": 2023, "n_prev": "100"})
         mock_cursor.fetchall.return_value = [fields]
 
-        with patch("src.application.services.database.repositories.contabilita_repository.dict", side_effect=lambda x: x):
+        with patch(
+            "src.application.services.database.repositories.contabilita_repository.dict",
+            side_effect=lambda x: x,
+        ):
             results = repo.get_data_by_year(2023, as_objects=True)
             assert len(results) == 1
             assert results[0].year == 2023
@@ -69,7 +72,10 @@ class TestContabilitaRepository:
         fields.update({"year": 2023, "personale": "P1"})
         mock_cursor.fetchall.return_value = [fields]
 
-        with patch("src.application.services.database.repositories.contabilita_repository.dict", side_effect=lambda x: x):
+        with patch(
+            "src.application.services.database.repositories.contabilita_repository.dict",
+            side_effect=lambda x: x,
+        ):
             results = repo.get_giornaliere_by_year(2023, as_objects=True)
             assert results[0].personale == "P1"
 
@@ -83,7 +89,10 @@ class TestContabilitaRepository:
         fields.update({"id": 1, "descrizione": "D1"})
         mock_cursor.fetchall.return_value = [fields]
 
-        with patch("src.application.services.database.repositories.contabilita_repository.dict", side_effect=lambda x: x):
+        with patch(
+            "src.application.services.database.repositories.contabilita_repository.dict",
+            side_effect=lambda x: x,
+        ):
             results = repo.get_attivita_programmate(as_objects=True)
             assert results[0].descrizione == "D1"
 
@@ -111,7 +120,10 @@ class TestContabilitaRepository:
             ],
         ]
 
-        with patch("src.application.services.database.repositories.contabilita_repository.dict", side_effect=lambda x: x):
+        with patch(
+            "src.application.services.database.repositories.contabilita_repository.dict",
+            side_effect=lambda x: x,
+        ):
             results = repo.get_certificati_campione(as_objects=True)
             assert len(results) == 1
             assert results[0].id_coemi == "COE1"

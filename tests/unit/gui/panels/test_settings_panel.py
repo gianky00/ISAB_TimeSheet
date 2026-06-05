@@ -127,7 +127,9 @@ class TestConfigSaveWorker:
         assert blocker.args == [True, ""]
 
     def test_run_failure(self, qtbot, mocker):
-        mocker.patch("src.application.services.config_manager.save_config", side_effect=Exception("Disk Full"))
+        mocker.patch(
+            "src.application.services.config_manager.save_config", side_effect=Exception("Disk Full")
+        )
         worker = ConfigSaveWorker({})
 
         with qtbot.waitSignal(worker.finished) as blocker:

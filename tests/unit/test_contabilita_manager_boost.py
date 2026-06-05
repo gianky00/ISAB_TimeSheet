@@ -86,7 +86,9 @@ class TestContabilitaManagerBoost:
 
     def test_import_data_from_excel_failure_handling(self, db_setup, mocker):
         """Verifica gestione fallimento dell'importer Excel."""
-        m_import = mocker.patch("src.application.services.excel_importer.ExcelImporter.import_contabilita_dati")
+        m_import = mocker.patch(
+            "src.application.services.excel_importer.ExcelImporter.import_contabilita_dati"
+        )
         m_import.return_value = (False, "File Corrotto", [], [])
 
         success, msg, _a, _r = ContabilitaManager.import_data_from_excel("fake.xlsx")

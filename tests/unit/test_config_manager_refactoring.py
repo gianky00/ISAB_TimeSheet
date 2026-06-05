@@ -171,7 +171,9 @@ def test_save_config_io_error(clean_config_env):
 def test_save_config_critical_exception(clean_config_env):
     """Test handling of unexpected exceptions during save."""
     config = {"test": "data"}
-    with patch("src.application.services.config_manager.json.dump", side_effect=Exception("Critical Failure")):
+    with patch(
+        "src.application.services.config_manager.json.dump", side_effect=Exception("Critical Failure")
+    ):
         save_config(config, async_save=False)
 
 

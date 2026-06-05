@@ -24,9 +24,13 @@ class TestAppStartupSequence:
                 "src.application.services.initialization.migration_engine.DatabaseMigrationEngine.initialize_database"
             ),
             "logging": mocker.patch.object(AppInitializer, "_setup_logging"),
-            "driver": mocker.patch("src.infrastructure.utils.resource_manager.ResourceManager.ensure_automation_driver"),
+            "driver": mocker.patch(
+                "src.infrastructure.utils.resource_manager.ResourceManager.ensure_automation_driver"
+            ),
             "preload": mocker.patch.object(AppInitializer, "_preload_heavy_modules"),
-            "bots": mocker.patch("src.application.services.app_initializer.get_available_bots", return_value=[]),
+            "bots": mocker.patch(
+                "src.application.services.app_initializer.get_available_bots", return_value=[]
+            ),
         }
 
     def test_initialize_core_idempotency(self, mock_deps):

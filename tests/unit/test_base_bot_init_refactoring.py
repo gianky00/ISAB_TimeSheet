@@ -61,7 +61,9 @@ def test_init_driver_success(bot, mocker):
 
 
 def test_init_driver_headless_config(bot, mocker):
-    mocker.patch("src.application.services.config_manager.load_config", return_value={"browser_headless": True})
+    mocker.patch(
+        "src.application.services.config_manager.load_config", return_value={"browser_headless": True}
+    )
     m_options = mocker.patch("src.infrastructure.bots.base.selenium_base_bot.Options")
     mocker.patch("src.infrastructure.bots.base.selenium_base_bot.webdriver.Chrome")
     mocker.patch(
@@ -74,10 +76,12 @@ def test_init_driver_headless_config(bot, mocker):
 
 def test_init_driver_failure_handling(bot, mocker):
     mocker.patch(
-        "src.infrastructure.utils.resource_manager.ResourceManager.ensure_automation_driver", return_value="chromedriver.exe"
+        "src.infrastructure.utils.resource_manager.ResourceManager.ensure_automation_driver",
+        return_value="chromedriver.exe",
     )
     mocker.patch(
-        "src.infrastructure.bots.base.selenium_base_bot.webdriver.Chrome", side_effect=Exception("chrome instance exited")
+        "src.infrastructure.bots.base.selenium_base_bot.webdriver.Chrome",
+        side_effect=Exception("chrome instance exited"),
     )
 
     logs = []
@@ -92,10 +96,14 @@ def test_init_driver_failure_handling(bot, mocker):
 
 def test_init_driver_version_error(bot, mocker):
     mocker.patch(
-        "src.infrastructure.utils.resource_manager.ResourceManager.ensure_automation_driver", return_value="chromedriver.exe"
+        "src.infrastructure.utils.resource_manager.ResourceManager.ensure_automation_driver",
+        return_value="chromedriver.exe",
     )
     fake_dir = Path("/tmp/drivers")
-    mocker.patch("src.infrastructure.utils.resource_manager.ResourceManager.get_writable_drivers_dir", return_value=fake_dir)
+    mocker.patch(
+        "src.infrastructure.utils.resource_manager.ResourceManager.get_writable_drivers_dir",
+        return_value=fake_dir,
+    )
 
     # Mock exists/unlink to avoid side effects
     mocker.patch("pathlib.Path.exists", return_value=True)

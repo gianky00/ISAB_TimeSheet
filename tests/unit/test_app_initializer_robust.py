@@ -21,7 +21,9 @@ class TestAppInitializerRobust:
         return QApplication([]) if not QApplication.instance() else QApplication.instance()
 
     @patch("src.application.services.app_initializer.AppInitializer._setup_logging")
-    @patch("src.application.services.initialization.migration_engine.DatabaseMigrationEngine.initialize_database")
+    @patch(
+        "src.application.services.initialization.migration_engine.DatabaseMigrationEngine.initialize_database"
+    )
     @patch("src.application.services.initialization.license_verifier.LicenseVerifier.verify_license")
     @patch("src.infrastructure.utils.resource_manager.ResourceManager.ensure_automation_driver")
     @patch("src.application.services.app_initializer.get_available_bots")
@@ -66,7 +68,9 @@ class TestAppInitializerRobust:
         assert AppInitializer._core_initialized is False
 
     @patch("src.application.services.app_initializer.logger")
-    @patch("src.application.services.initialization.migration_engine.DatabaseMigrationEngine.initialize_database")
+    @patch(
+        "src.application.services.initialization.migration_engine.DatabaseMigrationEngine.initialize_database"
+    )
     def test_initialize_core_failure(
         self,
         mock_db_init,

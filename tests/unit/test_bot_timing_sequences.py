@@ -141,7 +141,9 @@ class TestBotTimingSequences:
             page.wait = MagicMock()
             page.wait.until.return_value = mock_el
 
-            with patch("src.infrastructure.bots.portale_fornitori.timbrature.pages.timbrature_page.ActionChains"):
+            with patch(
+                "src.infrastructure.bots.portale_fornitori.timbrature.pages.timbrature_page.ActionChains"
+            ):
                 page.navigate_to_timbrature()
 
             # Verifichiamo che _wait_for_overlay sia stato chiamato invece di time.sleep espliciti
@@ -181,7 +183,10 @@ class TestBotTimingSequences:
 
         with (
             patch("src.infrastructure.bots.portale_fornitori.scarico_ts.bot.poll_for_new_file") as mock_poll,
-            patch("src.infrastructure.bots.portale_fornitori.scarico_ts.bot.sanitize_filename", return_value="safe"),
+            patch(
+                "src.infrastructure.bots.portale_fornitori.scarico_ts.bot.sanitize_filename",
+                return_value="safe",
+            ),
             patch.object(mock_scarico_bot, "_move_to_destination") as mock_move,
             patch.object(mock_scarico_bot, "_click_excel_export_button", return_value=True),
         ):

@@ -46,7 +46,8 @@ def mock_bot_deps():
         patch("src.infrastructure.bots.base.base_bot.get_logger") as mock_logger,
         patch("src.infrastructure.bots.base.base_bot.generate_trace_id", return_value="test-trace"),
         patch(
-            "src.infrastructure.bots.base.execution_guard.ExecutionGuard.check_environment", return_value=(True, "")
+            "src.infrastructure.bots.base.execution_guard.ExecutionGuard.check_environment",
+            return_value=(True, ""),
         ) as mock_guard,
     ):
         yield {

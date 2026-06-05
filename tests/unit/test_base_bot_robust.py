@@ -111,7 +111,10 @@ class TestBaseBotRobust:
 
     # --- Execution Flow Tests ---
 
-    @patch("src.infrastructure.bots.base.execution_guard.ExecutionGuard.check_environment", return_value=(True, ""))
+    @patch(
+        "src.infrastructure.bots.base.execution_guard.ExecutionGuard.check_environment",
+        return_value=(True, ""),
+    )
     @patch("src.infrastructure.bots.base.selenium_base_bot.LoginPage")
     def test_execute_success(self, mock_login_page_cls, mock_guard, bot):
         """Test flusso execute completo con successo."""

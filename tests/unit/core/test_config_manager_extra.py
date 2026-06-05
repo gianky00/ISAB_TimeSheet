@@ -25,7 +25,10 @@ def test_load_base_config_exception(tmp_path, mocker):
 
 
 def test_save_config_exceptions(mocker):
-    mocker.patch("src.application.services.config_manager.encrypt_all_credentials", side_effect=Exception("Encrypt fail"))
+    mocker.patch(
+        "src.application.services.config_manager.encrypt_all_credentials",
+        side_effect=Exception("Encrypt fail"),
+    )
     # Test sync error fallback
     assert save_config({}, async_save=False) is False
 
@@ -33,7 +36,8 @@ def test_save_config_exceptions(mocker):
 def test_save_config_async_exception(mocker):
     # The exception inside _execute_save should not crash the app, just print
     mocker.patch(
-        "src.application.services.config_manager.encrypt_all_credentials", side_effect=Exception("Async encrypt fail")
+        "src.application.services.config_manager.encrypt_all_credentials",
+        side_effect=Exception("Async encrypt fail"),
     )
     # The wrapper starts a thread, it will return True immediately
     assert save_config({}, async_save=True) is True
@@ -45,7 +49,9 @@ def test_set_default_account_fallback(mocker):
 
 
 def test_switch_default_account_fallback(mocker):
-    mocker.patch("src.application.services.config_manager.switch_default_account_logic", return_value=(False, ""))
+    mocker.patch(
+        "src.application.services.config_manager.switch_default_account_logic", return_value=(False, "")
+    )
     assert switch_default_account("isab", async_save=False) is False
 
 
@@ -59,7 +65,9 @@ def test_get_default_account_no_default_flag(mocker):
 def test_import_config_from_file_exceptions(tmp_path, mocker):
     f = tmp_path / "foo.json"
     f.write_text('{"valid": true}', encoding="utf-8")
-    mocker.patch("src.application.services.config_manager.save_config", side_effect=Exception("Critical disk error"))
+    mocker.patch(
+        "src.application.services.config_manager.save_config", side_effect=Exception("Critical disk error")
+    )
     success, msg = import_config_from_file(f, async_save=False)
     assert success is False
     assert "Errore critico importazione" in msg

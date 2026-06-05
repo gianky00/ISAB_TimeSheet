@@ -24,7 +24,9 @@ class TestGiornaliereProcessingSteps:
         assert ctx["success"] is True
         assert "df" in ctx
 
-    @patch("src.application.services.processing.giornaliere.steps.pd.read_excel", side_effect=ValueError("Fail"))
+    @patch(
+        "src.application.services.processing.giornaliere.steps.pd.read_excel", side_effect=ValueError("Fail")
+    )
     def test_read_giornaliera_step_failure(self, mock_read, fs):
         fs.create_file("fail.xlsx")
         step = ReadGiornalieraStep()
@@ -34,7 +36,10 @@ class TestGiornaliereProcessingSteps:
         assert ctx["success"] is False
         assert "Impossibile leggere" in ctx["message"]
 
-    @patch("src.application.services.processing.giornaliere.steps.validate_giornaliere", side_effect=lambda df: df)
+    @patch(
+        "src.application.services.processing.giornaliere.steps.validate_giornaliere",
+        side_effect=lambda df: df,
+    )
     def test_normalize_giornaliera_step(self, mock_val):
         df = pd.DataFrame(
             {

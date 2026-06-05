@@ -49,7 +49,9 @@ class TestAppEventHandler:
 
         mocker.patch("src.application.services.app_updater.has_pending_update", return_value=False)
         mocker.patch("src.application.services.app_updater.run_pending_installer")
-        mocker.patch("src.application.services.config_manager.load_config", return_value={"auto_backup": False})
+        mocker.patch(
+            "src.application.services.config_manager.load_config", return_value={"auto_backup": False}
+        )
 
         handler.handle_close_event(event)
 

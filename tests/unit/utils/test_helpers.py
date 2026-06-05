@@ -27,7 +27,8 @@ class TestHelpers:
         # ResourceManager è mockato internamente se necessario,
         # ma qui verifichiamo che la delega funzioni
         mocker.patch(
-            "src.infrastructure.utils.resource_manager.ResourceManager.get_asset_path", return_value="/mock/path/test.txt"
+            "src.infrastructure.utils.resource_manager.ResourceManager.get_asset_path",
+            return_value="/mock/path/test.txt",
         )
         path = get_asset_path("test.txt")
         assert "/mock/path/test.txt" in path

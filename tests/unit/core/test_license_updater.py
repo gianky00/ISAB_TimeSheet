@@ -148,7 +148,10 @@ class TestLicenseUpdater:
 
         mock_get.side_effect = [res_dir, res_man, res_conf]
 
-        with patch("src.application.services.secrets_manager.SecretsManager.get_license_key", return_value=self.license_key):
+        with patch(
+            "src.application.services.secrets_manager.SecretsManager.get_license_key",
+            return_value=self.license_key,
+        ):
             with patch(
                 "src.application.services.license_validator.get_detailed_license_status",
                 return_value=(LicenseStatus.INVALID, ""),

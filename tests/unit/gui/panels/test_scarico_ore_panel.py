@@ -28,7 +28,9 @@ def mock_controller():
 @pytest.fixture
 def panel(qtbot, mock_controller, mocker):
     """Istanza di ScaricoOrePanel per i test."""
-    mocker.patch("src.application.services.config_manager.load_config", return_value={"dataease_path": "/test/path"})
+    mocker.patch(
+        "src.application.services.config_manager.load_config", return_value={"dataease_path": "/test/path"}
+    )
     mocker.patch("pathlib.Path.exists", return_value=True)
     mocker.patch("src.gui.components.scarico_ore.ScaricoOreTableModel.load_data_async")
 

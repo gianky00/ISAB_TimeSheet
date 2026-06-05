@@ -20,7 +20,8 @@ def mock_config(mocker):
     }
     mocker.patch("src.application.services.config_manager.set_config_value")
     mocker.patch(
-        "src.application.services.config_manager.get_default_account", return_value={"username": "u", "password": "p"}
+        "src.application.services.config_manager.get_default_account",
+        return_value={"username": "u", "password": "p"},
     )
     mocker.patch("src.application.services.config_manager.get_download_path", return_value="/mock/downloads")
     return mock_load

@@ -91,11 +91,16 @@ class TestAnagraficaController:
         assert dtos[0].id_risorsa == "2"
 
     def test_get_last_isab_access_success(self, controller, mocker):
-        mocker.patch("src.application.services.database.db_manager.execute_query", return_value=[("2026-05-20 10:00:00",)])
+        mocker.patch(
+            "src.application.services.database.db_manager.execute_query",
+            return_value=[("2026-05-20 10:00:00",)],
+        )
 
         # Fixed "now" for test
         mock_now = datetime(2026, 5, 25, 12, 0, tzinfo=UTC)
-        mocker.patch("src.application.services.dipendenti.anagrafica_controller.datetime", mocker.Mock(wraps=datetime))
+        mocker.patch(
+            "src.application.services.dipendenti.anagrafica_controller.datetime", mocker.Mock(wraps=datetime)
+        )
         import src.application.services.dipendenti.anagrafica_controller as ac
 
         ac.datetime.now.return_value = mock_now

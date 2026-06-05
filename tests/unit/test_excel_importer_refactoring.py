@@ -18,9 +18,18 @@ from src.application.services.importers.giornaliere import GiornaliereImporter
 @pytest.fixture(autouse=True)
 def mock_data_synchronizer():
     with (
-        patch("src.application.services.data_synchronizer.DataSynchronizer.sync_certificati_campione", return_value=(1, 0)),
-        patch("src.application.services.data_synchronizer.DataSynchronizer.sync_scarico_ore", return_value=(1, 0)),
-        patch("src.application.services.data_synchronizer.DataSynchronizer.sync_giornaliere", return_value=(1, 0)),
+        patch(
+            "src.application.services.data_synchronizer.DataSynchronizer.sync_certificati_campione",
+            return_value=(1, 0),
+        ),
+        patch(
+            "src.application.services.data_synchronizer.DataSynchronizer.sync_scarico_ore",
+            return_value=(1, 0),
+        ),
+        patch(
+            "src.application.services.data_synchronizer.DataSynchronizer.sync_giornaliere",
+            return_value=(1, 0),
+        ),
     ):
         yield
 
@@ -100,7 +109,9 @@ def test_import_contabilita_dati_empty_sheet(tmp_path):
 
 def test_import_contabilita_dati_critical_error():
     with (
-        patch("src.application.services.importers.contabilita.pd.ExcelFile", side_effect=Exception("Critical")),
+        patch(
+            "src.application.services.importers.contabilita.pd.ExcelFile", side_effect=Exception("Critical")
+        ),
         patch("src.application.services.importers.contabilita.Path.exists", return_value=True),
     ):
         success, msg, _rows, _years = ExcelImporter.import_contabilita_dati("dummy.xlsx")
@@ -157,7 +168,9 @@ def test_import_giornaliere_success(tmp_path):
 
     # Mocking extraction logic to return valid tuples directly
     with (
-        patch("src.application.services.importers.giornaliere.GiornaliereImporter._process_single_giornaliera") as mock_proc,
+        patch(
+            "src.application.services.importers.giornaliere.GiornaliereImporter._process_single_giornaliera"
+        ) as mock_proc,
         patch("src.gui.main_window.page_index.PageIndex") as mock_page_index,
         patch("src.application.services.importers.giornaliere.ProcessPoolExecutor") as mock_pool,
     ):

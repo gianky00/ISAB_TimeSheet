@@ -13,7 +13,9 @@ class TestContabilitaManagerRobust:
             mock.DB_CONTABILITA = path
             yield mock
 
-    @patch("src.application.services.contabilita.importer_service.ContabilitaImporterService.import_main_data")
+    @patch(
+        "src.application.services.contabilita.importer_service.ContabilitaImporterService.import_main_data"
+    )
     def test_import_data_from_excel_success(self, mock_import):
         """Test importazione dati contabilità successo."""
         mock_import.return_value = (True, "OK", 10, 0)
@@ -22,7 +24,9 @@ class TestContabilitaManagerRobust:
         assert added == 10
         mock_import.assert_called_with("file.xlsx", None)
 
-    @patch("src.application.services.contabilita.importer_service.ContabilitaImporterService.import_main_data")
+    @patch(
+        "src.application.services.contabilita.importer_service.ContabilitaImporterService.import_main_data"
+    )
     def test_import_data_from_excel_failure(self, mock_import):
         """Test importazione dati contabilità fallimento."""
         mock_import.return_value = (False, "Error", 0, 0)
@@ -30,7 +34,9 @@ class TestContabilitaManagerRobust:
         assert success is False
         assert msg == "Error"
 
-    @patch("src.application.services.contabilita.importer_service.ContabilitaImporterService.import_giornaliere")
+    @patch(
+        "src.application.services.contabilita.importer_service.ContabilitaImporterService.import_giornaliere"
+    )
     def test_import_giornaliere_flow(self, mock_import):
         """Test flusso complesso importazione giornaliere."""
         mock_import.return_value = (True, "OK", 5, 2)
@@ -48,7 +54,9 @@ class TestContabilitaManagerRobust:
         assert success is False
         assert "non trovata" in msg
 
-    @patch("src.application.services.contabilita.importer_service.ContabilitaImporterService.import_scarico_ore")
+    @patch(
+        "src.application.services.contabilita.importer_service.ContabilitaImporterService.import_scarico_ore"
+    )
     def test_import_scarico_ore(self, mock_import):
         """Test importazione scarico ore."""
         mock_import.return_value = (True, "OK", 100, 0)

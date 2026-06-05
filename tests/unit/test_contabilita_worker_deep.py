@@ -13,7 +13,9 @@ class TestContabilitaWorkerDeep:
                 "src.application.services.contabilita_manager.ContabilitaManager.scan_workload",
                 return_value=(1, 1),
             ),
-            patch("src.application.services.contabilita_manager.ContabilitaManager.import_data_from_excel") as mock_import,
+            patch(
+                "src.application.services.contabilita_manager.ContabilitaManager.import_data_from_excel"
+            ) as mock_import,
             patch("src.application.services.contabilita_worker.Path.exists", return_value=True),
         ):
             mock_import.return_value = (True, "Successo", 10, 2)

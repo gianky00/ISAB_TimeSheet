@@ -16,7 +16,10 @@ class TestDatabaseBackupManager:
         fs.create_dir(str(self.db_dir))
 
         with patch("src.application.services.database.backup_manager.DB_DIR", self.db_dir):
-            with patch("src.application.services.database.backup_manager.DatabaseBackupManager.BACKUP_DIR", self.backup_dir):
+            with patch(
+                "src.application.services.database.backup_manager.DatabaseBackupManager.BACKUP_DIR",
+                self.backup_dir,
+            ):
                 yield
 
     @patch("src.application.services.database.backup_manager.AuditManager.instance")
@@ -24,7 +27,10 @@ class TestDatabaseBackupManager:
         fs.create_file(str(self.db_dir / "db1.db"))
         fs.create_file(str(self.db_dir / "db2.db"))
 
-        with patch("src.application.services.database.backup_manager.DatabaseBackupManager._safe_copy", return_value=True):
+        with patch(
+            "src.application.services.database.backup_manager.DatabaseBackupManager._safe_copy",
+            return_value=True,
+        ):
             success = DatabaseBackupManager.execute_backup()
 
         assert success is True

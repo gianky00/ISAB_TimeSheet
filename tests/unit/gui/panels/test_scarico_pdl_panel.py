@@ -37,9 +37,12 @@ def panel(qtbot, mock_service, mocker):
     mocker.patch("PySide6.QtCore.QTimer.singleShot")
     mocker.patch("src.gui.styles.ui_effects.UIEffectsManager.apply_shadow")
     mocker.patch("src.gui.styles.ui_effects.UIEffectsManager.animate_fade")
-    mocker.patch("src.infrastructure.utils.printing.get_installed_printers", return_value=["Printer1", "Printer2"])
     mocker.patch(
-        "src.application.services.config_manager.get_default_account", return_value={"username": "u", "password": "p"}
+        "src.infrastructure.utils.printing.get_installed_printers", return_value=["Printer1", "Printer2"]
+    )
+    mocker.patch(
+        "src.application.services.config_manager.get_default_account",
+        return_value={"username": "u", "password": "p"},
     )
 
     p = ScaricoPDLPanel()

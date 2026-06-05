@@ -32,7 +32,9 @@ class TestEmployeeRepository:
         }
         mock_db.execute_query.return_value = [row]
 
-        with patch("src.application.services.database.repositories.employee_repository.dict", side_effect=lambda x: x):
+        with patch(
+            "src.application.services.database.repositories.employee_repository.dict", side_effect=lambda x: x
+        ):
             results = repo.get_all(active_only=False, as_objects=True)
             assert len(results) == 1
             assert isinstance(results[0], EmployeeRecord)
@@ -51,7 +53,9 @@ class TestEmployeeRepository:
         }
         mock_db.execute_query.return_value = [row]
 
-        with patch("src.application.services.database.repositories.employee_repository.dict", side_effect=lambda x: x):
+        with patch(
+            "src.application.services.database.repositories.employee_repository.dict", side_effect=lambda x: x
+        ):
             results = repo.get_all(active_only=True, as_objects=False)
             assert len(results) == 1
             assert results[0]["cognome"] == "ROSSI"
@@ -73,7 +77,9 @@ class TestEmployeeRepository:
         row = {"id_risorsa": 1, "cognome": "ROSSI"}
         mock_db.execute_query.return_value = [row]
 
-        with patch("src.application.services.database.repositories.employee_repository.dict", side_effect=lambda x: x):
+        with patch(
+            "src.application.services.database.repositories.employee_repository.dict", side_effect=lambda x: x
+        ):
             results = repo.get_filtered(search_text="mario", active_only=True, as_objects=True)
             assert len(results) == 1
             assert "WHERE 1=1" in mock_db.execute_query.call_args[0][1]
@@ -83,7 +89,9 @@ class TestEmployeeRepository:
         row = {"id_risorsa": 1, "cognome": "ROSSI"}
         mock_db.execute_query.return_value = [row]
 
-        with patch("src.application.services.database.repositories.employee_repository.dict", side_effect=lambda x: x):
+        with patch(
+            "src.application.services.database.repositories.employee_repository.dict", side_effect=lambda x: x
+        ):
             res = repo.get_by_badge("B1")
             assert res.cognome == "ROSSI"
 

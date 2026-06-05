@@ -27,7 +27,9 @@ class TestBackupResilience:
     def test_backup_creation_and_filtering(self, setup_files, mocker):
         source_dir, backup_dir = setup_files
         mocker.patch("src.application.services.backup_manager.CONFIG_DIR", source_dir)
-        mocker.patch("src.application.services.backup_manager.BackupManager.get_backup_dir", return_value=backup_dir)
+        mocker.patch(
+            "src.application.services.backup_manager.BackupManager.get_backup_dir", return_value=backup_dir
+        )
         mocker.patch("src.application.services.backup_manager.AuditManager")
         success, zip_path = BackupManager.create_backup()
         assert success is True

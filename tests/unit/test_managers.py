@@ -74,7 +74,9 @@ class TestManagers:
     def test_stats_manager_flow(self, monkeypatch):
         config = {"statistics": {}}
         monkeypatch.setattr("src.application.services.config_manager.load_config", lambda: config)
-        monkeypatch.setattr("src.application.services.config_manager.set_config_value", lambda k, v: config.update({k: v}))
+        monkeypatch.setattr(
+            "src.application.services.config_manager.set_config_value", lambda k, v: config.update({k: v})
+        )
 
         sm = StatsManager()
         sm.increment_usage("test_bot")

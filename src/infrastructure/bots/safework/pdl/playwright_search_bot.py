@@ -158,6 +158,7 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
 
     def _import_to_db(self, file_path: str) -> None:
         import re
+
         try:
             self.log("    Importazione in database...")
             start_time = time.time()
@@ -167,8 +168,8 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
             clean_columns = {}
             for col in df.columns:
                 c = str(col).upper()
-                c = re.sub(r'[^A-Z0-9 ]', '', c)
-                c = re.sub(r'\s+', ' ', c).strip()
+                c = re.sub(r"[^A-Z0-9 ]", "", c)
+                c = re.sub(r"\s+", " ", c).strip()
                 clean_columns[col] = c
             df.rename(columns=clean_columns, inplace=True)
 
@@ -198,10 +199,25 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
             df.rename(columns=mapping_ita, inplace=True)
 
             target_cols = [
-                "n_pdl", "data_creazione", "area", "unita", "ditta",
-                "descrizione_lavoro", "tipologia", "stato", "apparecchiatura",
-                "richiedente", "data_richiesta", "emittente", "data_emissione",
-                "aprente", "data_apertura", "priorita", "contratto", "ordine", "sito"
+                "n_pdl",
+                "data_creazione",
+                "area",
+                "unita",
+                "ditta",
+                "descrizione_lavoro",
+                "tipologia",
+                "stato",
+                "apparecchiatura",
+                "richiedente",
+                "data_richiesta",
+                "emittente",
+                "data_emissione",
+                "aprente",
+                "data_apertura",
+                "priorita",
+                "contratto",
+                "ordine",
+                "sito",
             ]
 
             for col in target_cols:

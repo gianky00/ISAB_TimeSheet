@@ -82,7 +82,9 @@ class TestBugReporterRobust:
         mock_manager = mock_audit_cls.instance.return_value
         mock_manager.get_recent_actions.return_value = [{"action": "Test"}]
 
-        with patch.dict("sys.modules", {"src.application.services.audit": MagicMock(AuditManager=mock_audit_cls)}):
+        with patch.dict(
+            "sys.modules", {"src.application.services.audit": MagicMock(AuditManager=mock_audit_cls)}
+        ):
             files = BugReporter._add_audit_trail(mock_zip_instance)
 
         assert "audit_trail.json" in files
@@ -91,7 +93,9 @@ class TestBugReporterRobust:
     def test_collect_system_info(self):
         """Test raccolta info sistema."""
         with patch("platform.system", return_value="TestOS"):
-            with patch("src.application.services.diagnostics.diagnostics_collector.get_version", return_value="1.0.0"):
+            with patch(
+                "src.application.services.diagnostics.diagnostics_collector.get_version", return_value="1.0.0"
+            ):
                 info = BugReporter._collect_system_info()
                 assert info["os"] == "TestOS"
                 assert info["app_version"] == "1.0.0"

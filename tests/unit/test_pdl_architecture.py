@@ -49,7 +49,9 @@ class TestPdlArchitecture:
         assert records[0].n_pdl == "PDL1"
 
     def test_controller_data_loading(self, mock_db_manager):
-        with patch("src.application.services.database.repositories.pdl_repository.PdlRepository.get_filtered") as mock_get:
+        with patch(
+            "src.application.services.database.repositories.pdl_repository.PdlRepository.get_filtered"
+        ) as mock_get:
             record = PdlRecord(
                 id=1,
                 n_pdl="PDL1",

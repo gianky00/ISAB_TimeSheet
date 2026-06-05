@@ -7,7 +7,9 @@ from src.application.services.diagnostics.diagnostics_collector import Diagnosti
 
 def test_collect_system_info_basic() -> None:
     """Verifica che collect_system_info restituisca le informazioni di sistema base."""
-    with patch("src.application.services.diagnostics.diagnostics_collector.get_version", return_value="1.2.3"):
+    with patch(
+        "src.application.services.diagnostics.diagnostics_collector.get_version", return_value="1.2.3"
+    ):
         info = DiagnosticsCollector.collect_system_info()
 
         # Controlliamo la presenza delle chiavi fondamentali di sistema

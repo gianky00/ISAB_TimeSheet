@@ -29,7 +29,9 @@ class TestAppInitializerCoverage:
                 "src.infrastructure.utils.resource_manager.ResourceManager.ensure_automation_driver"
             ),
             "preload": mocker.patch.object(AppInitializer, "_preload_heavy_modules"),
-            "get_bots": mocker.patch("src.application.services.app_initializer.get_available_bots", return_value=[]),
+            "get_bots": mocker.patch(
+                "src.application.services.app_initializer.get_available_bots", return_value=[]
+            ),
         }
 
     def test_initialize_core_success(self, mock_core_deps):

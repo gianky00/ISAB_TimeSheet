@@ -114,7 +114,9 @@ class TestConfigManagerHardened:
 
     def test_credential_storage_priority(self, mocker):
         """Verifica che il keyring abbia priorità sul file."""
-        mocker.patch("src.application.services.secrets_manager.SecretsManager.is_available", return_value=True)
+        mocker.patch(
+            "src.application.services.secrets_manager.SecretsManager.is_available", return_value=True
+        )
         m_store = mocker.patch("src.application.services.secrets_manager.SecretsManager.store_credential")
 
         config = load_config()

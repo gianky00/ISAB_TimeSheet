@@ -50,7 +50,10 @@ class TestCertificatiGUI:
 
     def test_exclusions_engine_io(self, tmp_path):
         test_file = tmp_path / "exclusions.json"
-        with patch("src.application.services.contabilita.certificati_engine.CertificatiEngine.exclusions_file", test_file):
+        with patch(
+            "src.application.services.contabilita.certificati_engine.CertificatiEngine.exclusions_file",
+            test_file,
+        ):
             engine = CertificatiEngine()
             engine.save_exclusions({"MAT-001"})
             assert test_file.exists()

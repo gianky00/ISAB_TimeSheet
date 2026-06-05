@@ -84,8 +84,13 @@ class TestExcelImporterAdvanced:
         )
 
         with (
-            patch("src.application.services.processing.giornaliere.steps.pd.read_excel", return_value=df_giorn),
-            patch("src.application.services.importers.giornaliere.SyncGiornaliereStep.execute", return_value=None),
+            patch(
+                "src.application.services.processing.giornaliere.steps.pd.read_excel", return_value=df_giorn
+            ),
+            patch(
+                "src.application.services.importers.giornaliere.SyncGiornaliereStep.execute",
+                return_value=None,
+            ),
         ):
             _year, rows, err = GiornaliereImporter._process_single_giornaliera((2026, Path("test.xlsx"), {}))
             assert err is None
@@ -113,7 +118,10 @@ class TestExcelImporterAdvanced:
 
         with (
             patch("src.application.services.processing.giornaliere.steps.pd.read_excel", return_value=df),
-            patch("src.application.services.importers.giornaliere.SyncGiornaliereStep.execute", return_value=None),
+            patch(
+                "src.application.services.importers.giornaliere.SyncGiornaliereStep.execute",
+                return_value=None,
+            ),
         ):
             _year, rows, _err = GiornaliereImporter._process_single_giornaliera(
                 (2026, Path("f.xlsx"), lookup)
