@@ -209,6 +209,26 @@ class ActivityTimelineWidget(QWidget):
         self.nodes = [TimelineNode(name) for _, name in steps]
         self.update()
 
+    def _resolve_status(self, status: StepStatus | int) -> StepStatus:
+        if isinstance(status, int):
+            return list(StepStatus)[status - 1] if status > 0 else StepStatus.PENDING
+        return status
+
+    def _update_node_timing(self, node: TimelineNode, status: StepStatus) -> None:
+        if status == StepStatus.RUNNING:
+            node.start_time = time.time()
+        elif status in (StepStatus.COMPLETED, StepStatus.ERROR) and node.start_time > 0:
+            dur = time.time() - node.start_time
+            node.duration_str = f"{dur:.1f}s"
+
+    def _update_animations(self, status: StepStatus) -> None:
+        if status == StepStatus.RUNNING:
+            if self._pulse_anim.state() != QPropertyAnimation.State.Running:
+                self._pulse_anim.start()
+        elif not any(n.status == StepStatus.RUNNING for n in self.nodes):
+            self._pulse_anim.stop()
+            self._pulse_value = 1.0
+
     @Slot(int, str, object)
     def on_step_changed(self, index: int, name: str, status: StepStatus | int) -> None:
         """Slot chiamato quando lo stato di uno step del bot cambia.
@@ -221,27 +241,15 @@ class ActivityTimelineWidget(QWidget):
         if not shiboken6.isValid(self):
             return
 
-        # Supporta sia l'oggetto Enum che l'indice dell'Enum
-        if isinstance(status, int):
-            # Mapping inverso se arriva come int (PyQt signal compat)
-            status = list(StepStatus)[status - 1] if status > 0 else StepStatus.PENDING
+        status_enum = self._resolve_status(status)
 
         if 0 <= index < len(self.nodes):
             node = self.nodes[index]
-            node.status = status
+            node.status = status_enum
 
-            if status == StepStatus.RUNNING:
-                node.start_time = time.time()
-                if self._pulse_anim.state() != QPropertyAnimation.State.Running:
-                    self._pulse_anim.start()
-            elif status in (StepStatus.COMPLETED, StepStatus.ERROR):
-                if node.start_time > 0:
-                    dur = time.time() - node.start_time
-                    node.duration_str = f"{dur:.1f}s"
+            self._update_node_timing(node, status_enum)
+            self._update_animations(status_enum)
 
-            if not any(n.status == StepStatus.RUNNING for n in self.nodes):
-                self._pulse_anim.stop()
-                self._pulse_value = 1.0
             self.update()
 
     def resizeEvent(self, event: QResizeEvent) -> None:

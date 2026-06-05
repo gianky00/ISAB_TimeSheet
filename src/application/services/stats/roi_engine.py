@@ -94,6 +94,33 @@ class ROIEngine:
             return ROIMetrics(0, 0, 0, 0, 0, 0, 0.0, "Nessuno", 0.0, [])
 
     @classmethod
+    def _update_task_metrics(
+        cls,
+        state: dict[str, Any],
+        matched_task: str,
+        dur_ms: float,
+        weights: dict[str, float],
+    ) -> None:
+        state["total_min_man"] += float(weights.get(matched_task, cls.DEFAULT_MINUTES))
+        state["total_bot_min"] += dur_ms / 60000.0
+        state["total_ops"] += 1
+        state["task_counts"][matched_task] = state["task_counts"].get(matched_task, 0) + 1
+
+    @classmethod
+    def _update_date_metrics(
+        cls,
+        state: dict[str, Any],
+        ts_str: str,
+        dates: dict[str, datetime],
+    ) -> None:
+        row_date = cls._parse_timestamp(ts_str)
+        if row_date:
+            if row_date >= dates["thirty"]:
+                state["curr_30d_ops"] += 1
+            elif row_date >= dates["sixty"]:
+                state["prev_30d_ops"] += 1
+
+    @classmethod
     def _process_audit_row(
         cls,
         row: Any,
@@ -126,17 +153,8 @@ class ROIEngine:
             matched_task = cls._match_task(search_text, task_aliases)
 
             if matched_task:
-                state["total_min_man"] += float(weights.get(matched_task, cls.DEFAULT_MINUTES))
-                state["total_bot_min"] += dur_ms / 60000.0
-                state["total_ops"] += 1
-                state["task_counts"][matched_task] = state["task_counts"].get(matched_task, 0) + 1
-
-                row_date = cls._parse_timestamp(ts_str)
-                if row_date:
-                    if row_date >= dates["thirty"]:
-                        state["curr_30d_ops"] += 1
-                    elif row_date >= dates["sixty"]:
-                        state["prev_30d_ops"] += 1
+                cls._update_task_metrics(state, matched_task, float(dur_ms), weights)
+                cls._update_date_metrics(state, ts_str, dates)
         except (IndexError, ValueError):
             logger.exception("ROIEngine: Errore processamento riga %s", row)
         except Exception:

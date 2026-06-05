@@ -183,11 +183,9 @@ class NormalizeCertificatiStep(ProcessingStep):
 
         context["df"] = df
 
-    def _build_rename_map(self, columns: list[str]) -> dict[str, str]:
-        """Costruisce una mappa di rinomina per le colonne del DataFrame."""
-        rename_map = {}
-        used_db_cols = set()
-
+    def _match_exact_columns(
+        self, columns: list[str], rename_map: dict[str, str], used_db_cols: set[str]
+    ) -> None:
         for col in columns:
             col_clean = col.strip().upper()
             for schema_col, db_col in self.CERTIFICATI_CAMPIONE_MAPPING.items():
@@ -198,6 +196,9 @@ class NormalizeCertificatiStep(ProcessingStep):
                     used_db_cols.add(db_col)
                     break
 
+    def _match_partial_columns(
+        self, columns: list[str], rename_map: dict[str, str], used_db_cols: set[str]
+    ) -> None:
         for col in columns:
             if col in rename_map:
                 continue
@@ -210,6 +211,15 @@ class NormalizeCertificatiStep(ProcessingStep):
                     rename_map[col] = db_col
                     used_db_cols.add(db_col)
                     break
+
+    def _build_rename_map(self, columns: list[str]) -> dict[str, str]:
+        """Costruisce una mappa di rinomina per le colonne del DataFrame."""
+        rename_map: dict[str, str] = {}
+        used_db_cols: set[str] = set()
+
+        self._match_exact_columns(columns, rename_map, used_db_cols)
+        self._match_partial_columns(columns, rename_map, used_db_cols)
+
         return rename_map
 
 

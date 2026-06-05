@@ -181,33 +181,29 @@ class ProgrammazioneTab(QWidget):
         config_manager.set_config_value("programming_group_mode", mode)
         self._update_tables()
 
-    def _update_tables(self) -> None:
+    def _clear_existing_tables(self) -> None:
         while self.tables_layout.count() > 1:
             item = self.tables_layout.takeAt(0)
             if item and (w := item.widget()):
                 w.deleteLater()
         self.tables.clear()
 
-        if not self.last_results:
-            self.view_filter.set_items([])
-            return
+    def _group_results(self, mode: str) -> dict[str, list[dict[str, Any]]]:
+        if mode == "Tabella Unica":
+            return {"Globale": self.last_results}
 
-        self.view_filter.set_items(sorted({r["richiedente"] for r in self.last_results}))
-        mode = self.group_selector.currentText()
+        grouped: dict[str, list[dict[str, Any]]] = {}
+        key = "area" if mode == "Area" else "richiedente"
+        for r in self.last_results:
+            val = r.get(key) or "N/D"
+            if val not in grouped:
+                grouped[val] = []
+            grouped[val].append(r)
+        return grouped
 
-        grouped = {"Globale": self.last_results} if mode == "Tabella Unica" else {}
-        if mode != "Tabella Unica":
-            key = "area" if mode == "Area" else "richiedente"
-            for r in self.last_results:
-                val = r.get(key) or "N/D"
-                if val not in grouped:
-                    grouped[val] = []
-                grouped[val].append(r)
-
-        _, _, start_dt = PDLPeriodManager.get_week_range(self.week_selector.currentIndex())
-        headers = PDLPeriodManager.get_table_headers(start_dt)
-        today_idx = datetime.now(UTC).astimezone().weekday() if self.week_selector.currentIndex() == 0 else -1
-
+    def _render_grouped_tables(
+        self, grouped: dict[str, list[dict[str, Any]]], headers: list[str], today_idx: int
+    ) -> None:
         for name, res in sorted(grouped.items()):
             box = StandardGroupBox(name)
             box_lay = QVBoxLayout(box)
@@ -220,6 +216,24 @@ class ProgrammazioneTab(QWidget):
             self.tables.append(table)
             box_lay.addWidget(table)
             self.tables_layout.insertWidget(self.tables_layout.count() - 1, box)
+
+    def _update_tables(self) -> None:
+        self._clear_existing_tables()
+
+        if not self.last_results:
+            self.view_filter.set_items([])
+            return
+
+        self.view_filter.set_items(sorted({r["richiedente"] for r in self.last_results}))
+        mode = self.group_selector.currentText()
+
+        grouped = self._group_results(mode)
+
+        _, _, start_dt = PDLPeriodManager.get_week_range(self.week_selector.currentIndex())
+        headers = PDLPeriodManager.get_table_headers(start_dt)
+        today_idx = datetime.now(UTC).astimezone().weekday() if self.week_selector.currentIndex() == 0 else -1
+
+        self._render_grouped_tables(grouped, headers, today_idx)
 
         self._apply_filters()
         self.btn_email.setEnabled(len(self.last_results) > 0)

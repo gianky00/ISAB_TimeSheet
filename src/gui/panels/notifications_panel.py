@@ -269,28 +269,26 @@ class NotificationsPanel(QWidget):
         grouped = self._group_notifications_by_time(notifs)
         self._render_groups(grouped, disable_animations)
 
+    def _filter_by_level(self, notifs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        if self.current_filter in ("error", "warning", "info"):
+            return [n for n in notifs if n.get("level") == self.current_filter]
+        return notifs
+
+    def _filter_by_search(self, notifs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        if not self.current_search:
+            return notifs
+        return [
+            n
+            for n in notifs
+            if self.current_search in n.get("title", "").lower()
+            or self.current_search in n.get("message", "").lower()
+        ]
+
     def _get_filtered_sorted_notifications(self) -> list[dict[str, Any]]:
         """Esegue il filtraggio e l'ordinamento logico dei dati."""
-        if self.current_filter == "unread":
-            notifs = self.manager.get_notifications(filter_unread=True)
-        else:
-            notifs = self.manager.get_notifications(filter_unread=False)
-
-        if self.current_filter == "error":
-            notifs = [n for n in notifs if n.get("level") == "error"]
-        elif self.current_filter == "warning":
-            notifs = [n for n in notifs if n.get("level") == "warning"]
-        elif self.current_filter == "info":
-            notifs = [n for n in notifs if n.get("level") == "info"]
-
-        if self.current_search:
-            notifs = [
-                n
-                for n in notifs
-                if self.current_search in n.get("title", "").lower()
-                or self.current_search in n.get("message", "").lower()
-            ]
-
+        notifs = self.manager.get_notifications(filter_unread=(self.current_filter == "unread"))
+        notifs = self._filter_by_level(notifs)
+        notifs = self._filter_by_search(notifs)
         return self._sort_notifications(notifs)
 
     def _render_groups(self, grouped: dict[str, dict[str, Any]], disable_animations: bool) -> None:

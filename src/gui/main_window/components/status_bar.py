@@ -7,7 +7,7 @@ Gestisce le transizioni visive tra la fase di avvio e quella operativa dell'appl
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import QEasingCurve, QObject, QPropertyAnimation, QSize, Qt, QTimer
 from PySide6.QtWidgets import QGraphicsOpacityEffect, QStatusBar
@@ -197,14 +197,15 @@ class StatusBarComponent(QObject):
         except Exception as e:
             logger.critical(f"Error in show_operational_state: {e}", exc_info=True)
 
-    def update_autopilot_ui(self) -> None:
-        """Analizza i bot programmati nell'Autopilot e calcola il countdown per il task più imminente.
+    def _format_countdown(self, name: str, secs: int) -> str:
+        """Formatta il tempo rimanente in una stringa leggibile (H/M)."""
+        h, m = secs // 3600, (secs % 3600) // 60
+        return f"{name}: {'TRA ' + str(h) + 'H ' + str(m) + 'M' if h > 0 else 'TRA ' + str(m) + 'M'}"
 
-        Aggiorna le card di stato nella parte destra della barra.
-        """
+    def _get_imminent_tasks(
+        self, config: dict[str, Any], now: Any
+    ) -> tuple[tuple[str, int] | None, tuple[str, int] | None]:
         from PySide6.QtCore import QTime
-
-        config = config_manager.load_config()
 
         tasks = [
             ("PF", "TIMBRATURE", "timbrature_autopilot_enabled", "timbrature_autopilot_time"),
@@ -217,7 +218,6 @@ class StatusBarComponent(QObject):
             ("SW", "RICERCA PDL", "ricerca_pdl_autopilot_enabled", "ricerca_pdl_autopilot_time"),
         ]
 
-        now = QTime.currentTime()
         imminent_pf: tuple[str, int] | None = None
         imminent_sw: tuple[str, int] | None = None
         min_secs_pf, min_secs_sw = float("inf"), float("inf")
@@ -240,14 +240,23 @@ class StatusBarComponent(QObject):
                 elif site == "SW" and secs_to < min_secs_sw:
                     min_secs_sw, imminent_sw = secs_to, (name, secs_to)
 
-        def format_countdown(name: str, secs: int) -> str:
-            """Formatta il tempo rimanente in una stringa leggibile (H/M)."""
-            h, m = secs // 3600, (secs % 3600) // 60
-            return f"{name}: {'TRA ' + str(h) + 'H ' + str(m) + 'M' if h > 0 else 'TRA ' + str(m) + 'M'}"
+        return imminent_pf, imminent_sw
+
+    def update_autopilot_ui(self) -> None:
+        """Analizza i bot programmati nell'Autopilot e calcola il countdown per il task più imminente.
+
+        Aggiorna le card di stato nella parte destra della barra.
+        """
+        from PySide6.QtCore import QTime
+
+        config = config_manager.load_config()
+        now = QTime.currentTime()
+
+        imminent_pf, imminent_sw = self._get_imminent_tasks(config, now)
 
         self.status_portale.setAutopilot(
-            bool(imminent_pf), format_countdown(*imminent_pf) if imminent_pf else ""
+            bool(imminent_pf), self._format_countdown(*imminent_pf) if imminent_pf else ""
         )
         self.status_safework.setAutopilot(
-            bool(imminent_sw), format_countdown(*imminent_sw) if imminent_sw else ""
+            bool(imminent_sw), self._format_countdown(*imminent_sw) if imminent_sw else ""
         )

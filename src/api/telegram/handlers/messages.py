@@ -70,12 +70,14 @@ async def _handle_sequential_input(
     if not items:
         return
 
-    if state == "WAITING_PDL":
-        service.data_received.emit("pdl", items)
-    elif state == "WAITING_ODA":
-        service.data_received.emit("oda", items)
-    elif state == "WAITING_BP":
-        service.data_received.emit("bp", items)
+    simple_states = {
+        "WAITING_PDL": "pdl",
+        "WAITING_ODA": "oda",
+        "WAITING_BP": "bp",
+    }
+
+    if state in simple_states:
+        service.data_received.emit(simple_states[state], items)
     elif state == "WAITING_AUTOPILOT_TIME":
         if re.match(r"^([01]?[0-9]|2[0-3]):[0-5][0-9]$", items[0]):
             service.command_received.emit("set_autopilot", {"time": items[0]})

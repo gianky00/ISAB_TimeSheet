@@ -97,6 +97,26 @@ class NavigationController(QObject):
         """Restituisce il widget stack della MainWindow."""
         return self.mw.stacked_widget
 
+    def _perform_stack_transition(self, index: int) -> None:
+        if hasattr(self.stack, "slide_to_index"):
+            self.stack.slide_to_index(index)
+        else:
+            self.stack.setCurrentIndex(index)
+
+    def _sync_panel_state(self, index: int, sub_index: int | None, bot_index: int | None) -> None:
+        if hasattr(self.mw.sidebar, "set_active_button"):
+            self.mw.sidebar.set_active_button(index, sub_index, bot_index)
+
+        panel = self.stack.widget(index)
+        if panel and hasattr(panel, "set_current_tab"):
+            try:
+                panel.set_current_tab(sub_index, bot_index)
+            except TypeError:
+                panel.set_current_tab(sub_index)
+
+        if panel and hasattr(panel, "on_focus_received") and callable(panel.on_focus_received):
+            panel.on_focus_received()
+
     def navigate_to(self, index: int, sub_index: int | None = None, bot_index: int | None = None) -> None:
         """Cambia la pagina attiva nel container principale.
 
@@ -115,26 +135,10 @@ class NavigationController(QObject):
             return
 
         # 3. Cambio pagina reale nello stack
-        if hasattr(self.stack, "slide_to_index"):
-            self.stack.slide_to_index(index)
-        else:
-            self.stack.setCurrentIndex(index)
+        self._perform_stack_transition(index)
 
-        # 4. Sincronizzazione Sidebar
-        if hasattr(self.mw.sidebar, "set_active_button"):
-            self.mw.sidebar.set_active_button(index, sub_index, bot_index)
-
-        # 5. Gestione sub-index (es. per pannelli tabulati)
-        panel = self.stack.widget(index)
-        if panel and hasattr(panel, "set_current_tab"):
-            try:
-                panel.set_current_tab(sub_index, bot_index)
-            except TypeError:
-                panel.set_current_tab(sub_index)
-
-        # 6. Notifica il pannello del focus
-        if panel and hasattr(panel, "on_focus_received") and callable(panel.on_focus_received):
-            panel.on_focus_received()
+        # 4 & 5 & 6. Sincronizzazione Sidebar e Pannello
+        self._sync_panel_state(index, sub_index, bot_index)
 
     def navigate_to_panel(self, panel_key: str) -> None:
         """Naviga verso un pannello specifico tramite chiave logica."""

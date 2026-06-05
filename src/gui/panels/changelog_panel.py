@@ -233,10 +233,7 @@ class ReleaseCard(QWidget):
                 stats["UPDATE"] += 1
         return stats
 
-    def _setup_header(self, card_layout: QVBoxLayout) -> None:
-        card_header_layout = QHBoxLayout()
-        card_header_layout.setSpacing(10)
-        # Badge Versione - Rimossa la stroke per un look più moderno e flat
+    def _create_version_badge(self) -> QLabel:
         version = self.release.get("version", "N/D")
         version_text = f"  v{version}  " if not self.is_next else f"  In Arrivo v{version} [NEXT]  "
         version_badge = QLabel(version_text)
@@ -253,10 +250,9 @@ class ReleaseCard(QWidget):
             font-weight: 900;
             padding: 4px 6px;
         """)
-        card_header_layout.addWidget(version_badge)
+        return version_badge
 
-        # Smart Header: Statistiche
-        stats = self._count_stats()
+    def _create_stats_layout(self, stats: dict[str, int]) -> QHBoxLayout:
         stats_layout = QHBoxLayout()
         stats_layout.setSpacing(6)
 
@@ -278,47 +274,105 @@ class ReleaseCard(QWidget):
                 f"color: {COLORS['primary_blue']}; font-size: 11px; font-weight: 800; background: {COLORS['bg_info_pastel']}; padding: 4px 8px; border-radius: 6px;"
             )
             stats_layout.addWidget(lbl)
+        return stats_layout
 
-        card_header_layout.addLayout(stats_layout)
+    def _create_date_label(self) -> QLabel:
+        date_raw = self.release.get("date", "N/D")
+        if len(date_raw) == 10 and date_raw[4] == date_raw[7] == "-":
+            parts = date_raw.split("-")
+            date = f"{parts[2]}/{parts[1]}/{parts[0]}"
+        else:
+            date = date_raw
+        date_lbl = QLabel(date)
+        date_lbl.setStyleSheet(
+            f"color: {COLORS['text_secondary']}; font-size: 12px; font-weight: 600; letter-spacing: 1px;"
+        )
+        return date_lbl
 
+    def _create_copy_button(self) -> QPushButton:
+        btn = QPushButton()
+        btn.setFixedSize(28, 28)
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent;
+                border: 1px solid {COLORS["border_light"]};
+                border-radius: 6px;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS["glass_border"]};
+                border-color: {self.border_color};
+            }}
+        """)
+        btn.setIcon(get_colored_icon(get_asset_path(Icons.COPY), COLORS["text_secondary"]))
+        btn.setToolTip("Copia note negli appunti")
+        btn.clicked.connect(self._copy_to_clipboard)
+        return btn
+
+    def _setup_header(self, card_layout: QVBoxLayout) -> None:
+        card_header_layout = QHBoxLayout()
+        card_header_layout.setSpacing(10)
+
+        card_header_layout.addWidget(self._create_version_badge())
+        card_header_layout.addLayout(self._create_stats_layout(self._count_stats()))
         card_header_layout.addStretch()
 
-        # Data Rilascio spostata a destra
         if not self.is_next:
-            date_raw = self.release.get("date", "N/D")
-            if len(date_raw) == 10 and date_raw[4] == date_raw[7] == "-":
-                parts = date_raw.split("-")
-                date = f"{parts[2]}/{parts[1]}/{parts[0]}"
-            else:
-                date = date_raw
-            date_lbl = QLabel(date)
-            date_lbl.setStyleSheet(
-                f"color: {COLORS['text_secondary']}; font-size: 12px; font-weight: 600; letter-spacing: 1px;"
-            )
-            card_header_layout.addWidget(date_lbl)
-
-        # Pulsante Copia
-        if not self.is_next:
-            self.copy_btn = QPushButton()
-            self.copy_btn.setFixedSize(28, 28)
-            self.copy_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            self.copy_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background: transparent;
-                    border: 1px solid {COLORS["border_light"]};
-                    border-radius: 6px;
-                }}
-                QPushButton:hover {{
-                    background-color: {COLORS["glass_border"]};
-                    border-color: {self.border_color};
-                }}
-            """)
-            self.copy_btn.setIcon(get_colored_icon(get_asset_path(Icons.COPY), COLORS["text_secondary"]))
-            self.copy_btn.setToolTip("Copia note negli appunti")
-            self.copy_btn.clicked.connect(self._copy_to_clipboard)
+            card_header_layout.addWidget(self._create_date_label())
+            self.copy_btn = self._create_copy_button()
             card_header_layout.addWidget(self.copy_btn)
 
         card_layout.addLayout(card_header_layout)
+
+    def _get_note_text_and_sha(self, note_data: Any) -> tuple[str, str]:
+        if isinstance(note_data, dict):
+            note = note_data.get("message", "")
+            sha = note_data.get("sha", "")
+            if not sha:
+                sha = hashlib.sha256(note.encode("utf-8")).hexdigest()[:7]
+            return note, sha
+        note = note_data
+        sha = hashlib.sha256(note.encode("utf-8")).hexdigest()[:7]
+        return note, sha
+
+    def _create_note_row(self, note: str, sha: str) -> tuple[QWidget, str]:
+        note_row = QWidget()
+        note_row.setStyleSheet("background: transparent; border: none;")
+        note_row_layout = QHBoxLayout(note_row)
+        note_row_layout.setContentsMargins(0, 0, 0, 0)
+        note_row_layout.setSpacing(10)
+
+        category_label, category_style_type = self._parse_note_category(note)
+        clean_text = self._clean_note_text(note)
+
+        # Design del Commit SHA migliorato
+        sha_lbl = QLabel(f" 🔀 {sha} ")
+        sha_lbl.setStyleSheet(f"""
+            color: {COLORS["text_secondary"]};
+            background-color: {COLORS["bg_light"]};
+            font-family: Consolas, monospace;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 3px 6px;
+            border-radius: 10px;
+            border: 1px solid {COLORS["border_light"]};
+        """)
+        sha_lbl.setFixedHeight(22)
+        note_row_layout.addWidget(sha_lbl)
+
+        # Pillola Categoria
+        pill = self._create_pill(category_label, category_style_type)
+        note_row_layout.addWidget(pill)
+
+        # Testo
+        note_text_lbl = QLabel(clean_text)
+        note_text_lbl.setWordWrap(True)
+        note_text_lbl.setStyleSheet(
+            f"color: {COLORS['text_dark']}; font-size: 13px; line-height: 1.5; font-weight: 500;"
+        )
+        note_row_layout.addWidget(note_text_lbl, 1)
+
+        return note_row, category_style_type
 
     def _setup_notes(self, card_layout: QVBoxLayout) -> None:
         self.notes_container = QWidget()
@@ -329,51 +383,8 @@ class ReleaseCard(QWidget):
 
         notes = self.release.get("notes", [])
         for note_data in notes:
-            if isinstance(note_data, dict):
-                note = note_data.get("message", "")
-                sha = note_data.get("sha", "")
-                if not sha:
-                    sha = hashlib.sha256(note.encode("utf-8")).hexdigest()[:7]
-            else:
-                note = note_data
-                sha = hashlib.sha256(note.encode("utf-8")).hexdigest()[:7]
-
-            note_row = QWidget()
-            note_row.setStyleSheet("background: transparent; border: none;")
-            note_row_layout = QHBoxLayout(note_row)
-            note_row_layout.setContentsMargins(0, 0, 0, 0)
-            note_row_layout.setSpacing(10)
-
-            category_label, category_style_type = self._parse_note_category(note)
-            clean_text = self._clean_note_text(note)
-
-            # Design del Commit SHA migliorato
-            sha_lbl = QLabel(f" 🔀 {sha} ")
-            sha_lbl.setStyleSheet(f"""
-                color: {COLORS["text_secondary"]};
-                background-color: {COLORS["bg_light"]};
-                font-family: Consolas, monospace;
-                font-size: 11px;
-                font-weight: bold;
-                padding: 3px 6px;
-                border-radius: 10px;
-                border: 1px solid {COLORS["border_light"]};
-            """)
-            sha_lbl.setFixedHeight(22)
-            note_row_layout.addWidget(sha_lbl)
-
-            # Pillola Categoria
-            pill = self._create_pill(category_label, category_style_type)
-            note_row_layout.addWidget(pill)
-
-            # Testo
-            note_text_lbl = QLabel(clean_text)
-            note_text_lbl.setWordWrap(True)
-            note_text_lbl.setStyleSheet(
-                f"color: {COLORS['text_dark']}; font-size: 13px; line-height: 1.5; font-weight: 500;"
-            )
-            note_row_layout.addWidget(note_text_lbl, 1)
-
+            note, sha = self._get_note_text_and_sha(note_data)
+            note_row, category_style_type = self._create_note_row(note, sha)
             notes_layout.addWidget(note_row)
             self.notes_rows.append((note_row, category_style_type))
 
@@ -936,6 +947,35 @@ class ChangelogPanel(QWidget):
         self._changelog_worker.finished_signal.connect(self._on_changelog_ready)
         self._changelog_worker.start()
 
+    def _find_first_stable_index(self, changelog_data: list[dict[str, Any]]) -> int:
+        for idx, release in enumerate(changelog_data):
+            if isinstance(release, dict):
+                is_next = (
+                    release.get("is_next", False)
+                    or "roadmap" in str(release.get("date", "")).lower()
+                    or "arrivo" in str(release.get("date", "")).lower()
+                )
+                if not is_next:
+                    return idx
+        return -1
+
+    def _render_releases(self, changelog_data: list[dict[str, Any]], first_stable_index: int) -> None:
+        total_real = len(changelog_data)
+        for i, release in enumerate(changelog_data):
+            if isinstance(release, dict):
+                is_next = (
+                    release.get("is_next", False)
+                    or "roadmap" in str(release.get("date", "")).lower()
+                    or "arrivo" in str(release.get("date", "")).lower()
+                )
+                self._add_release_row(
+                    release,
+                    is_latest=(i == first_stable_index),
+                    is_next=is_next,
+                    is_first=(i == 0),
+                    is_last=(i == total_real - 1),
+                )
+
     def _on_changelog_ready(self, changelog_data: list[dict[str, Any]]) -> None:
         """Popola la UI con i dati del changelog caricati asincronamente."""
         ChangelogPanel._changelog_cache = changelog_data
@@ -950,23 +990,10 @@ class ChangelogPanel(QWidget):
         self.diag_outer_layout.addWidget(diagnostics)
 
         # 2. Rendering delle release reali
-        total_real = len(changelog_data)
-
-        # Troviamo l'indice della prima release stabile reale
-        first_stable_index = -1
-        for idx, release in enumerate(changelog_data):
-            if isinstance(release, dict):
-                is_next = (
-                    release.get("is_next", False)
-                    or "roadmap" in str(release.get("date", "")).lower()
-                    or "arrivo" in str(release.get("date", "")).lower()
-                )
-                if not is_next:
-                    first_stable_index = idx
-                    break
+        first_stable_index = self._find_first_stable_index(changelog_data)
 
         # Impostiamo la versione corrente vista (Asincrono per non bloccare con fsync)
-        if first_stable_index != -1 and first_stable_index < total_real:
+        if first_stable_index != -1 and first_stable_index < len(changelog_data):
             latest_version = changelog_data[first_stable_index].get("version")
             if latest_version:
                 # Differiamo il salvataggio per massimizzare la fluidità immediata
@@ -974,23 +1001,6 @@ class ChangelogPanel(QWidget):
                     1000, lambda v=latest_version: set_config_value("changelog_last_viewed_version", str(v))
                 )
 
-        for i, release in enumerate(changelog_data):
-            if isinstance(release, dict):
-                is_next = (
-                    release.get("is_next", False)
-                    or "roadmap" in str(release.get("date", "")).lower()
-                    or "arrivo" in str(release.get("date", "")).lower()
-                )
-                is_latest_real = i == first_stable_index
-                is_first_real = i == 0
-                is_last_real = i == total_real - 1
-
-                self._add_release_row(
-                    release,
-                    is_latest=is_latest_real,
-                    is_next=is_next,
-                    is_first=is_first_real,
-                    is_last=is_last_real,
-                )
+        self._render_releases(changelog_data, first_stable_index)
 
         self.scroll_layout.addStretch()

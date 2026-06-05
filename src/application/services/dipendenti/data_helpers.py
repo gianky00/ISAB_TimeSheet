@@ -14,6 +14,18 @@ def normalize_name(text: Any) -> str:
     return re.sub(r"\s+", " ", str(text).strip().upper())
 
 
+def _parse_date_and_diff(d_str: str, today: datetime) -> tuple[int, str] | None:
+    """Estrae la differenza in giorni e la stringa formattata dalla data del DB."""
+    date_part = d_str.split(" ")[0]
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+        try:
+            d_dt = datetime.strptime(date_part, fmt).replace(tzinfo=UTC)
+            return (today - d_dt).days, d_dt.strftime("%d/%m/%Y")
+        except ValueError:
+            continue
+    return None
+
+
 def build_timbrature_maps(
     accessi: Sequence[Sequence[Any]],
 ) -> tuple[dict[str, tuple[int, str]], dict[tuple[str, str], tuple[int, str]], Callable[[Any], str]]:
@@ -39,18 +51,9 @@ def build_timbrature_maps(
             norm_key = (normalize(cog), normalize(nom))
             norm_cf = cf.strip().upper() if cf and cf.strip() else None
             with suppress(Exception):
-                date_part = d_str.split(" ")[0]
-                d_dt = None
-                for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
-                    try:
-                        d_dt = datetime.strptime(date_part, fmt).replace(tzinfo=UTC)
-                        break
-                    except ValueError:
-                        continue
-                if d_dt:
-                    diff = (today - d_dt).days
-                    # Salviamo la data formattata come DD/MM/YYYY per la UI
-                    pretty_date = d_dt.strftime("%d/%m/%Y")
+                parsed = _parse_date_and_diff(d_str, today)
+                if parsed:
+                    diff, pretty_date = parsed
 
                     if norm_cf and (norm_cf not in last_by_cf or diff < last_by_cf[norm_cf][0]):
                         last_by_cf[norm_cf] = (diff, pretty_date)

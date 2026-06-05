@@ -92,13 +92,7 @@ class PDLDetailView(QWidget):
         self.cron_table.setStyleSheet("QTableWidget { font-size: 11px; }")
         layout.addWidget(self.cron_table, 1)  # Stretch factor 1
 
-    def update_details(self, data: Sequence[Any], interventions: list[dict[str, Any]] | None = None) -> None:
-        """Aggiorna le label con i dati forniti e popola la cronologiàdegli interventi.
-
-        Args:
-          data: Sequenza di valori corrispondenti agli headers inizializzati.
-          interventions: Lista di dizionari contenenti i dati degli interventi (data, tecnico, ore, ecc.).
-        """
+    def _update_detail_labels(self, data: Sequence[Any]) -> None:
         for i, h in enumerate(self.headers):
             if i >= len(data):
                 break
@@ -114,26 +108,38 @@ class PDLDetailView(QWidget):
 
             self.detail_labels[h].setText(val)
 
+    def _update_cron_table(self, interventions: list[dict[str, Any]]) -> None:
+        self.cron_table.setRowCount(len(interventions))
+        for row_idx, inv in enumerate(interventions):
+            self.cron_table.setItem(row_idx, 0, QTableWidgetItem(inv.get("data", "")))
+
+            fonte_item = QTableWidgetItem(inv.get("fonte", ""))
+            # Colora in base alla fonte per visibilit
+            if "In Attesa" in inv.get("fonte", ""):
+                fonte_item.setForeground(QColor(COLORS["warning_orange"]))
+            elif "Validato" in inv.get("fonte", ""):
+                fonte_item.setForeground(QColor(COLORS["success_dark"]))
+
+            self.cron_table.setItem(row_idx, 1, fonte_item)
+            self.cron_table.setItem(row_idx, 2, QTableWidgetItem(inv.get("tecnico", "")))
+            self.cron_table.setItem(row_idx, 3, QTableWidgetItem(str(inv.get("ore_lavoro", ""))))
+            desc_item = QTableWidgetItem(inv.get("descrizione", ""))
+            desc_item.setToolTip(inv.get("descrizione", ""))
+            self.cron_table.setItem(row_idx, 4, desc_item)
+
+    def update_details(self, data: Sequence[Any], interventions: list[dict[str, Any]] | None = None) -> None:
+        """Aggiorna le label con i dati forniti e popola la cronologiàdegli interventi.
+
+        Args:
+          data: Sequenza di valori corrispondenti agli headers inizializzati.
+          interventions: Lista di dizionari contenenti i dati degli interventi (data, tecnico, ore, ecc.).
+        """
+        self._update_detail_labels(data)
+
         # Aggiorna Cronologia
         self.cron_table.setRowCount(0)
         if interventions:
-            self.cron_table.setRowCount(len(interventions))
-            for row_idx, inv in enumerate(interventions):
-                self.cron_table.setItem(row_idx, 0, QTableWidgetItem(inv.get("data", "")))
-
-                fonte_item = QTableWidgetItem(inv.get("fonte", ""))
-                # Colora in base alla fonte per visibilit
-                if "In Attesa" in inv.get("fonte", ""):
-                    fonte_item.setForeground(QColor(COLORS["warning_orange"]))
-                elif "Validato" in inv.get("fonte", ""):
-                    fonte_item.setForeground(QColor(COLORS["success_dark"]))
-
-                self.cron_table.setItem(row_idx, 1, fonte_item)
-                self.cron_table.setItem(row_idx, 2, QTableWidgetItem(inv.get("tecnico", "")))
-                self.cron_table.setItem(row_idx, 3, QTableWidgetItem(str(inv.get("ore_lavoro", ""))))
-                desc_item = QTableWidgetItem(inv.get("descrizione", ""))
-                desc_item.setToolTip(inv.get("descrizione", ""))
-                self.cron_table.setItem(row_idx, 4, desc_item)
+            self._update_cron_table(interventions)
 
     def clear(self) -> None:
         """Resetta tutti i campiùdel dettaglio e svuota la tabella della cronologia."""

@@ -3,19 +3,37 @@
 from collections.abc import Sequence
 from contextlib import suppress
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, ClassVar
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFormLayout, QLabel, QScrollArea, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFormLayout, QGroupBox, QLabel, QScrollArea, QVBoxLayout, QWidget
 
 from src.gui.styles import COLORS
 
 
-class TimbratureDetailView(QWidget):
-    """Componente per la visualizzazione dei dettagli di una timbratura.
+class TimbratureDetailView(QGroupBox):
+    """Pannello laterale per la visualizzazione dei dettagli di una timbratura."""
 
-    Inizializza la classe.
-    """
+    _MAPPING: ClassVar[dict[str, int]] = {
+        "Data": 0,
+        "Ingresso": 1,
+        "Uscita": 2,
+        "Nome": 3,
+        "Cognome": 4,
+        "Codice Fiscale": 7,
+        "ID Dipendente": 8,
+        "Fornitore": 9,
+        "Numero Badge": 11,
+        "Reparto": 16,
+        "Cantiere": 17,
+        "Presenza TS": 5,
+        "Sito": 6,
+        "Codice RILPRES": 10,
+        "Codice Qualifica": 12,
+        "Specializzazione": 13,
+        "Società Ospitante": 14,
+        "Data Inserimento": 15,
+    }
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -70,6 +88,15 @@ class TimbratureDetailView(QWidget):
         scroll.setWidget(scroll_content)
         detail_layout.addWidget(scroll)
 
+    def _get_formatted_value(self, h: str, val: str) -> str:
+        if val.lower() in ("nan", "none"):
+            return ""
+        if h == "Data" and val:
+            return self._format_date(val)
+        if h == "Data Inserimento" and val:
+            return self._format_date(val, strict=False)
+        return val
+
     def display_data(self, data: Sequence[Any] | None) -> None:
         """Visualizza i dati passati.
 
@@ -80,43 +107,10 @@ class TimbratureDetailView(QWidget):
             self.clear_fields()
             return
 
-        # Indices source mapping (based on original file)
-        mapping = {
-            "Data": 0,
-            "Ingresso": 1,
-            "Uscita": 2,
-            "Nome": 3,
-            "Cognome": 4,
-            "Codice Fiscale": 7,
-            "ID Dipendente": 8,
-            "Fornitore": 9,
-            "Numero Badge": 11,
-            "Reparto": 16,
-            "Cantiere": 17,
-            "Presenza TS": 5,
-            "Sito": 6,
-            "Codice RILPRES": 10,
-            "Codice Qualifica": 12,
-            "Specializzazione": 13,
-            "Società Ospitante": 14,
-            "Data Inserimento": 15,
-        }
-
         for h in self.full_headers:
-            idx = mapping.get(h)
+            idx = self._MAPPING.get(h)
             val = str(data[idx]) if idx is not None and idx < len(data) and data[idx] is not None else ""
-
-            if val.lower() in ("nan", "none"):
-                val = ""
-
-            # Formattazione
-            if h == "Data" and val:
-                val = self._format_date(val)
-
-            if h == "Data Inserimento" and val:
-                val = self._format_date(val, strict=False)
-
-            self.detail_labels[h].setText(val)
+            self.detail_labels[h].setText(self._get_formatted_value(h, val))
 
     def _format_date(self, val_str: str, strict: bool = True) -> str:
         """Helper per formattazione date."""

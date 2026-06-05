@@ -511,6 +511,17 @@ class CertificatiEngine:
             groups[key].append(tuple(r))
         return dict(groups)
 
+    def _extract_guasto_info(self, latest: tuple[Any, ...]) -> tuple[int, str, str, str]:
+        guasto_flag = (
+            int(latest[ContabilitaQueries.CERT_IDX_GUASTO])
+            if len(latest) > ContabilitaQueries.CERT_IDX_GUASTO and latest[ContabilitaQueries.CERT_IDX_GUASTO]
+            else 0
+        )
+        guasto_tipo = self.get_col_safe(latest, ContabilitaQueries.CERT_IDX_GUASTO_TIPO)
+        guasto_data = self.get_col_safe(latest, ContabilitaQueries.CERT_IDX_GUASTO_DATA)
+        guasto_note = self.get_col_safe(latest, ContabilitaQueries.CERT_IDX_GUASTO_NOTE)
+        return guasto_flag, guasto_tipo, guasto_data, guasto_note
+
     def prepare_groups_with_priority(self, groups: dict[str, list[tuple[Any, ...]]]) -> list[dict[str, Any]]:
         """Calcola stati e priorità per ogni gruppo di certificati."""
         processed_groups = []
@@ -524,31 +535,7 @@ class CertificatiEngine:
                 else ""
             )
 
-            guasto_flag = (
-                int(latest[ContabilitaQueries.CERT_IDX_GUASTO])
-                if len(latest) > ContabilitaQueries.CERT_IDX_GUASTO
-                and latest[ContabilitaQueries.CERT_IDX_GUASTO]
-                else 0
-            )
-
-            guasto_tipo = (
-                str(latest[ContabilitaQueries.CERT_IDX_GUASTO_TIPO])
-                if len(latest) > ContabilitaQueries.CERT_IDX_GUASTO_TIPO
-                and latest[ContabilitaQueries.CERT_IDX_GUASTO_TIPO]
-                else ""
-            )
-            guasto_data = (
-                str(latest[ContabilitaQueries.CERT_IDX_GUASTO_DATA])
-                if len(latest) > ContabilitaQueries.CERT_IDX_GUASTO_DATA
-                and latest[ContabilitaQueries.CERT_IDX_GUASTO_DATA]
-                else ""
-            )
-            guasto_note = (
-                str(latest[ContabilitaQueries.CERT_IDX_GUASTO_NOTE])
-                if len(latest) > ContabilitaQueries.CERT_IDX_GUASTO_NOTE
-                and latest[ContabilitaQueries.CERT_IDX_GUASTO_NOTE]
-                else ""
-            )
+            guasto_flag, guasto_tipo, guasto_data, guasto_note = self._extract_guasto_info(latest)
 
             days, icon = self.calculate_days_and_status_with_guasto(scadenza, guasto_flag)
 

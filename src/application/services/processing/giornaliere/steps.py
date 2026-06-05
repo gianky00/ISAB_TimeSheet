@@ -62,6 +62,18 @@ class NormalizeGiornalieraStep(ProcessingStep):
         "consuntivo": "n_prev",
     }
 
+    def _build_rename_map(self, df_columns: list[str]) -> dict[str, str]:
+        rename_map = {}
+        for excel_col, db_col in self.GIORNALIERE_MAPPING.items():
+            if excel_col in df_columns:
+                rename_map[excel_col] = db_col
+            else:
+                for col in df_columns:
+                    if col.upper() == excel_col.upper():
+                        rename_map[col] = db_col
+                        break
+        return rename_map
+
     def execute(self, context: dict[str, Any]) -> None:
         """Esegue la normalizzazione dei dati giornaliera."""
         if not context.get("success") or "df" not in context:
@@ -69,16 +81,8 @@ class NormalizeGiornalieraStep(ProcessingStep):
 
         df = context["df"]
         df.columns = df.columns.astype(str).str.strip()
-        rename_map = {}
 
-        for excel_col, db_col in self.GIORNALIERE_MAPPING.items():
-            if excel_col in df.columns:
-                rename_map[excel_col] = db_col
-            else:
-                for col in df.columns:
-                    if col.upper() == excel_col.upper():
-                        rename_map[col] = db_col
-                        break
+        rename_map = self._build_rename_map(df.columns.tolist())
 
         if not rename_map:
             context["success"] = False

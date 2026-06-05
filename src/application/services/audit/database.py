@@ -117,6 +117,40 @@ class AuditDatabase:
             conn.commit()
             return int(cursor.lastrowid) if cursor.lastrowid is not None else 0
 
+    def _build_filter_clauses(
+        self,
+        start_date: datetime | None,
+        end_date: datetime | None,
+        levels: list[str] | None,
+        category: str | None,
+        search_text: str | None,
+    ) -> tuple[str, list[Any]]:
+        clause = ""
+        params: list[Any] = []
+
+        if start_date:
+            clause += " AND timestamp >= ?"
+            params.append(start_date.isoformat())
+        if end_date:
+            e_date = end_date + timedelta(days=1)
+            clause += " AND timestamp < ?"
+            params.append(e_date.isoformat())
+        if levels and "ALL" not in levels:
+            pl = ",".join(["?"] * len(levels))
+            clause += f" AND severity IN ({pl})"
+            params.extend(levels)
+        if category and category != "Tutte":
+            clause += " AND category = ?"
+            params.append(category)
+        if search_text:
+            sp = f"%{search_text}%"
+            clause += (
+                " AND (action LIKE ? OR entity LIKE ? OR params LIKE ? OR error_code LIKE ? OR module LIKE ?)"
+            )
+            params.extend([sp] * 5)
+
+        return clause, params
+
     def fetch_filtered(  # noqa: PLR0913
         self,
         start_date: datetime | None = None,
@@ -144,34 +178,9 @@ class AuditDatabase:
         logs: list[dict[str, Any]] = []
         total = 0
         try:
-            query = "SELECT * FROM audit_logs WHERE 1=1"
-            c_query = "SELECT COUNT(*) FROM audit_logs WHERE 1=1"
-            params: list[Any] = []
-
-            if start_date:
-                query += " AND timestamp >= ?"
-                c_query += " AND timestamp >= ?"
-                params.append(start_date.isoformat())
-            if end_date:
-                e_date = end_date + timedelta(days=1)
-                query += " AND timestamp < ?"
-                c_query += " AND timestamp < ?"
-                params.append(e_date.isoformat())
-            if levels and "ALL" not in levels:
-                pl = ",".join(["?"] * len(levels))
-                query += f" AND severity IN ({pl})"
-                c_query += f" AND severity IN ({pl})"
-                params.extend(levels)
-            if category and category != "Tutte":
-                query += " AND category = ?"
-                c_query += " AND category = ?"
-                params.append(category)
-            if search_text:
-                sp = f"%{search_text}%"
-                clause = " AND (action LIKE ? OR entity LIKE ? OR params LIKE ? OR error_code LIKE ? OR module LIKE ?)"
-                query += clause
-                c_query += clause
-                params.extend([sp] * 5)
+            clause, params = self._build_filter_clauses(start_date, end_date, levels, category, search_text)
+            query = f"SELECT * FROM audit_logs WHERE 1=1{clause}"
+            c_query = f"SELECT COUNT(*) FROM audit_logs WHERE 1=1{clause}"
 
             with self.get_connection() as conn:
                 conn.row_factory = sqlite3.Row

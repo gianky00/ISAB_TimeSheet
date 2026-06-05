@@ -320,22 +320,12 @@ class ContabilitaPanel(QWidget):
                 self._on_search_changed(text)
             self.search_input.setFocus()
 
-    def refresh_tabs(self, auto_email: bool = False) -> None:
-        """Interroga il database per gli anni disponibili e aggiorna i tab degli anni.
+    def _handle_empty_years(self) -> None:
+        for tw in (self.year_tabs_widget, self.giornaliere_tabs_widget):
+            tw.clear()
+            tw.addTab(QLabel("Nessun dato disponibile."), "Info")
 
-        Sincronizza inoltre i dati per le attività e i certificati.
-        """
-        years = ContabilitaManager.get_available_years()
-        if not years:
-            for tw in (self.year_tabs_widget, self.giornaliere_tabs_widget):
-                tw.clear()
-                tw.addTab(QLabel("Nessun dato disponibile."), "Info")
-            return
-
-        self._sync_tab_widget(self.year_tabs_widget, years, ContabilitaYearTab)
-        self._sync_tab_widget(self.giornaliere_tabs_widget, years, GiornaliereYearTab)
-        self._connect_selection_signal()
-
+    def _refresh_widgets(self, auto_email: bool) -> None:
         if hasattr(self.kpi_panel, "refresh_years") and callable(self.kpi_panel.refresh_years):
             self.kpi_panel.refresh_years()
 
@@ -352,6 +342,22 @@ class ContabilitaPanel(QWidget):
                 from PySide6.QtCore import QTimer
 
                 QTimer.singleShot(1000, self.certificati_widget._run_analysis_and_send_email)
+
+    def refresh_tabs(self, auto_email: bool = False) -> None:
+        """Interroga il database per gli anni disponibili e aggiorna i tab degli anni.
+
+        Sincronizza inoltre i dati per le attività e i certificati.
+        """
+        years = ContabilitaManager.get_available_years()
+        if not years:
+            self._handle_empty_years()
+            return
+
+        self._sync_tab_widget(self.year_tabs_widget, years, ContabilitaYearTab)
+        self._sync_tab_widget(self.giornaliere_tabs_widget, years, GiornaliereYearTab)
+        self._connect_selection_signal()
+
+        self._refresh_widgets(auto_email)
 
         # Riapplica il filtro di ricerca se presente
         search_text = self.search_input.text()

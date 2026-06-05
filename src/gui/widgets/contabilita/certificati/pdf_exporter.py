@@ -305,6 +305,43 @@ class CertificatiPdfExporter:
         parts = re.split(r"(\d+)", id_coemi)
         return [(True, int(c)) if c.isdigit() else (False, c.lower()) for c in parts if c]
 
+    def _build_current_row_html(
+        self, child: QTreeWidgetItem, cert_display: str, stato_display: str, ubicazione: str, annotazioni: str
+    ) -> str:
+        tree_any = self._get_tree()
+        modello = self._format_modello(child.text(tree_any.IDX_MODELLO))
+        row_html = f"<td class='text-center'>{child.text(tree_any.IDX_ID_STRUMENTO)}</td>"
+        row_html += f"<td>{cert_display}</td>"
+        row_html += f"<td>{modello}</td>"
+        row_html += f"<td>{child.text(tree_any.IDX_COSTRUTTORE)}</td>"
+        row_html += f"<td>{child.text(tree_any.IDX_MATRICOLA)}</td>"
+        row_html += f"<td>{child.text(tree_any.IDX_RANGE)}</td>"
+        row_html += f"<td class='text-center col-err'>{child.text(tree_any.IDX_ERRORE)}</td>"
+        row_html += f"<td>{child.text(tree_any.IDX_EMISSIONE)}</td>"
+        row_html += f"<td>{child.text(tree_any.IDX_SCADENZA)}</td>"
+        row_html += f"<td class='col-stato'>{stato_display}</td>"
+        row_html += f"<td>{ubicazione}</td>"
+        row_html += f"<td>{annotazioni}</td>"
+        return row_html
+
+    def _build_storico_row_html(
+        self, child: QTreeWidgetItem, storico_display: str, stato_display: str
+    ) -> str:
+        tree_any = self._get_tree()
+        row_html = "<td></td>"
+        row_html += f"<td>{storico_display}</td>"
+        row_html += "<td></td>"
+        row_html += "<td></td>"
+        row_html += "<td></td>"
+        row_html += "<td></td>"
+        row_html += "<td></td>"
+        row_html += f"<td>{child.text(tree_any.IDX_EMISSIONE)}</td>"
+        row_html += f"<td>{child.text(tree_any.IDX_SCADENZA)}</td>"
+        row_html += f"<td class='col-stato'>{stato_display}</td>"
+        row_html += "<td></td>"
+        row_html += "<td></td>"
+        return row_html
+
     def _build_row_html(self, child: QTreeWidgetItem, is_current: bool, get_link_fn: Any) -> str:
         """Costruisce l'HTML per una singola riga (corrente o storica)."""
         tree_any = self._get_tree()
@@ -333,51 +370,30 @@ class CertificatiPdfExporter:
             stato_display = "STORICO"
             row_class = "historical-row"
 
-        modello = self._format_modello(child.text(tree_any.IDX_MODELLO))
-        ubicazione = self._format_ubicazione(child.text(tree_any.IDX_UBICAZIONE))
-
         cert_name = child.text(tree_any.IDX_CERTIFICATO)
         cert_link = get_link_fn(cert_name)
-        cert_display = (
-            f"<a href='{cert_link}' style='color: #2563eb; text-decoration: underline;'>{cert_name}</a>"
-            if cert_link
-            else cert_name
-        )
-        storico_display = (
-            f"&raquo; <a href='{cert_link}' style='color: #64748b; text-decoration: underline;'>{cert_name}</a>"
-            if cert_link
-            else f"&raquo; {cert_name}"
-        )
 
         row_html = f"<tr class='{row_class}'>"
         if is_current:
-            annotazioni = self._build_annotations_html(days, child.text(tree_any.IDX_ANNOTAZIONI), guasto_tipo, guasto_data, guasto_note)
-
-            row_html += f"<td class='text-center'>{child.text(tree_any.IDX_ID_STRUMENTO)}</td>"
-            row_html += f"<td>{cert_display}</td>"
-            row_html += f"<td>{modello}</td>"
-            row_html += f"<td>{child.text(tree_any.IDX_COSTRUTTORE)}</td>"
-            row_html += f"<td>{child.text(tree_any.IDX_MATRICOLA)}</td>"
-            row_html += f"<td>{child.text(tree_any.IDX_RANGE)}</td>"
-            row_html += f"<td class='text-center col-err'>{child.text(tree_any.IDX_ERRORE)}</td>"
-            row_html += f"<td>{child.text(tree_any.IDX_EMISSIONE)}</td>"
-            row_html += f"<td>{child.text(tree_any.IDX_SCADENZA)}</td>"
-            row_html += f"<td class='col-stato'>{stato_display}</td>"
-            row_html += f"<td>{ubicazione}</td>"
-            row_html += f"<td>{annotazioni}</td>"
+            ubicazione = self._format_ubicazione(child.text(tree_any.IDX_UBICAZIONE))
+            cert_display = (
+                f"<a href='{cert_link}' style='color: #2563eb; text-decoration: underline;'>{cert_name}</a>"
+                if cert_link
+                else cert_name
+            )
+            annotazioni = self._build_annotations_html(
+                days, child.text(tree_any.IDX_ANNOTAZIONI), guasto_tipo, guasto_data, guasto_note
+            )
+            row_html += self._build_current_row_html(
+                child, cert_display, stato_display, ubicazione, annotazioni
+            )
         else:
-            row_html += "<td></td>"
-            row_html += f"<td>{storico_display}</td>"
-            row_html += "<td></td>"
-            row_html += "<td></td>"
-            row_html += "<td></td>"
-            row_html += "<td></td>"
-            row_html += "<td></td>"
-            row_html += f"<td>{child.text(tree_any.IDX_EMISSIONE)}</td>"
-            row_html += f"<td>{child.text(tree_any.IDX_SCADENZA)}</td>"
-            row_html += f"<td class='col-stato'>{stato_display}</td>"
-            row_html += "<td></td>"
-            row_html += "<td></td>"
+            storico_display = (
+                f"&raquo; <a href='{cert_link}' style='color: #64748b; text-decoration: underline;'>{cert_name}</a>"
+                if cert_link
+                else f"&raquo; {cert_name}"
+            )
+            row_html += self._build_storico_row_html(child, storico_display, stato_display)
 
         row_html += "</tr>"
         return row_html
@@ -400,10 +416,12 @@ class CertificatiPdfExporter:
             return "<span style='color: #64748B; font-weight: bold;'>🚫 Ritirato</span>"
         return ""
 
-    def _build_annotations_html(self, days: int | None, annotazioni: str, guasto_tipo: str, guasto_data: str, guasto_note: str) -> str:
+    def _build_annotations_html(
+        self, days: int | None, annotazioni: str, guasto_tipo: str, guasto_data: str, guasto_note: str
+    ) -> str:
         if days not in (-9999, -8888, -7777):
             return annotazioni
-            
+
         guasto_info = []
         if guasto_data:
             guasto_info.append(self._get_guasto_info_with_data(days, guasto_data))
@@ -420,7 +438,7 @@ class CertificatiPdfExporter:
         if guasto_info:
             sep = "<br>" if annotazioni else ""
             return annotazioni + sep + "<br>".join(filter(None, guasto_info))
-            
+
         return annotazioni
 
     def _format_status_display(self, days: int | None, guasto_tipo: str = "") -> str:  # noqa: PLR0911
@@ -437,22 +455,25 @@ class CertificatiPdfExporter:
         }
         if days in special_days:
             return special_days[days]
-            
+
         upper_display = stato_display.upper()
-        if "GUASTO" in upper_display: return special_days[-9999]
-        if "VALUTAZIONE" in upper_display: return special_days[-8888]
-        if "DISMESSO" in upper_display: return special_days[-7777]
+        if "GUASTO" in upper_display:
+            return special_days[-9999]
+        if "VALUTAZIONE" in upper_display:
+            return special_days[-8888]
+        if "DISMESSO" in upper_display:
+            return special_days[-7777]
 
         replacements = [
             (f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>", "gg fa)", " giorni"),
             (f"{StatoCertificatoLabel.ATTIVO} (", "Attivo per<br>", "gg rim.)", " giorni"),
-            (f"{StatoCertificatoLabel.IN_SCADENZA} (", "In scadenza<br>", "gg)", " giorni<br>rimanenti")
+            (f"{StatoCertificatoLabel.IN_SCADENZA} (", "In scadenza<br>", "gg)", " giorni<br>rimanenti"),
         ]
-        
+
         for start_str, start_rep, end_str, end_rep in replacements:
             if stato_display.startswith(start_str):
                 return stato_display.replace(start_str, start_rep).replace(end_str, end_rep)
-                
+
         if StatoCertificatoLabel.SENZA_SCADENZA in stato_display:
             return "N/D *"
         return stato_display

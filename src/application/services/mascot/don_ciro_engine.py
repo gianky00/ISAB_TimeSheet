@@ -133,10 +133,7 @@ class DonCiroEngine(QObject):
         """Restituisce l'oscillazione corrente della giacca."""
         return self._jacket_flap
 
-    def update_physics(self) -> None:
-        """Ciclo di aggiornamento della fisica (60 FPS)."""
-        cos_y = math.cos(math.radians(self._yaw_angle))
-
+    def _update_accessories_physics(self, cos_y: float) -> None:
         # 1. Fisica Cravatta (Molla)
         target_t = (
             math.sin(self._walk_phase * 2 * math.pi) * 12 * cos_y if self._state == DonState.WALKING else 0.0
@@ -159,6 +156,7 @@ class DonCiroEngine(QObject):
         self._jacket_vel += (target_j - self._jacket_flap) * 40.0 * DT - self._jacket_vel * 6.0 * DT
         self._jacket_flap += self._jacket_vel * DT
 
+    def _update_state_machine(self) -> None:
         # 3. Comportamento (Macchina a Stati)
         if self._state == DonState.WALKING:
             speed = 0.65 * self._scale
@@ -178,6 +176,13 @@ class DonCiroEngine(QObject):
             self._idle_time -= 16
             if self._idle_time <= 0:
                 self._pick_random_action()
+
+    def update_physics(self) -> None:
+        """Ciclo di aggiornamento della fisica (60 FPS)."""
+        cos_y = math.cos(math.radians(self._yaw_angle))
+
+        self._update_accessories_physics(cos_y)
+        self._update_state_machine()
 
         self.physics_updated.emit()
 

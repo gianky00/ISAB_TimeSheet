@@ -1,5 +1,6 @@
 """Repository per l'accesso ai dati della Contabilità Strumentale."""
 
+import sqlite3
 from typing import Any, Literal, overload
 
 from src.application.services.database import db_manager
@@ -171,6 +172,43 @@ class ContabilitaRepository:
             logger.exception("Errore repository get_attivita_programmate")
             return []
 
+    def _get_certificati_objects(self, cursor: sqlite3.Cursor) -> list[CertificatoCampioneRecord]:
+        cursor.execute("SELECT * FROM certificati_campione ORDER BY id ASC")
+        rows = cursor.fetchall()
+        results = []
+        for row in rows:
+            d = dict(row)
+            if "id_strumento" in d and "id_coemi" not in d:
+                d["id_coemi"] = d.pop("id_strumento")
+
+            filtered_d = {k: v for k, v in d.items() if k in CertificatoCampioneRecord.__dataclass_fields__}
+            results.append(CertificatoCampioneRecord(**filtered_d))
+        return results
+
+    def _get_certificati_tuples(self, cursor: sqlite3.Cursor, id_col: str) -> list[tuple[Any, ...]]:
+        from src.application.services.excel_importer import ExcelImporter  # noqa: PLC0415
+
+        cols = ExcelImporter.CERTIFICATI_CAMPIONE_COLS.copy()
+        if id_col == "id_strumento" and "id_coemi" in cols:
+            cols[cols.index("id_coemi")] = "id_strumento"
+
+        cols = [
+            "id_coemi",
+            "certificato",
+            "modello",
+            "costruttore",
+            "matricola",
+            "range_strumento",
+            "errore_max",
+            "emissione",
+            "scadenza",
+            "stato",
+        ]
+        cols_str = ", ".join(cols)
+        query = f"SELECT {cols_str}, annotazioni, ubicazione, guasto, guasto_tipo, guasto_data, guasto_note, id FROM certificati_campione ORDER BY id ASC"  # nosec B608
+        cursor.execute(query)
+        return [tuple(row) for row in cursor.fetchall()]
+
     @overload
     def get_certificati_campione(
         self, as_objects: Literal[True] = ...
@@ -199,46 +237,8 @@ class ContabilitaRepository:
                 id_col = "id_coemi" if "id_coemi" in db_cols else "id_strumento"
 
                 if as_objects:
-                    cursor.execute("SELECT * FROM certificati_campione ORDER BY id ASC")
-                    rows = cursor.fetchall()
-                    results = []
-                    for row in rows:
-                        d = dict(row)
-                        # Allineamento dinamico al modello
-                        if "id_strumento" in d and "id_coemi" not in d:
-                            d["id_coemi"] = d.pop("id_strumento")
-
-                        # Rimuovi campi non presenti nel modello (es. created_at)
-                        filtered_d = {
-                            k: v for k, v in d.items() if k in CertificatoCampioneRecord.__dataclass_fields__
-                        }
-                        results.append(CertificatoCampioneRecord(**filtered_d))
-                    return results
-
-                from src.application.services.excel_importer import ExcelImporter  # noqa: PLC0415
-
-                cols = ExcelImporter.CERTIFICATI_CAMPIONE_COLS.copy()
-
-                # Sostituiamo id_coemi con quello reale del DB se necessario
-                if id_col == "id_strumento" and "id_coemi" in cols:
-                    cols[cols.index("id_coemi")] = "id_strumento"
-
-                cols = [
-                    "id_coemi",
-                    "certificato",
-                    "modello",
-                    "costruttore",
-                    "matricola",
-                    "range_strumento",
-                    "errore_max",
-                    "emissione",
-                    "scadenza",
-                    "stato",
-                ]
-                cols_str = ", ".join(cols)
-                query = f"SELECT {cols_str}, annotazioni, ubicazione, guasto, guasto_tipo, guasto_data, guasto_note, id FROM certificati_campione ORDER BY id ASC"  # nosec B608
-                cursor.execute(query)
-                return [tuple(row) for row in cursor.fetchall()]
+                    return self._get_certificati_objects(cursor)
+                return self._get_certificati_tuples(cursor, id_col)
         except Exception:
             logger.exception("Errore repository get_certificati_campione")
             return []

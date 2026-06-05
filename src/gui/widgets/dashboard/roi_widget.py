@@ -309,62 +309,68 @@ class BotSavingsWidget(ModernCard):
         self._update_ui(metrics)
         self.stats_updated.emit(metrics)
 
-    def _update_ui(self, metrics: ROIMetrics) -> None:
-        """Aggiorna gli elementi grafici con le nuove metriche calcolate.
+    def _update_time_trend(self, metrics: ROIMetrics) -> None:
+        if not hasattr(self, "lbl_time") or not self.lbl_time:
+            return
 
-        Args:
-          metrics: Oggetto ROIMetrics contenente i dati elaborati.
-        """
-        if hasattr(self, "lbl_time") and self.lbl_time:
-            # Visualizziamo il Risparmio Netto (Manuale - Bot)
-            self.lbl_time.setText(ROIEngine.format_time_saved(metrics.net_minutes_saved))
+        self.lbl_time.setText(ROIEngine.format_time_saved(metrics.net_minutes_saved))
 
-            # Aggiorna Trend
-            trend = metrics.trend_percentage
-            if trend > 0:
-                trend_text = f"  +{trend}% vs 30gg prec."
-                color = COLORS["success_dark"]
-            elif trend < 0:
-                trend_text = f"  {trend}% vs 30gg prec."
-                color = COLORS["error_red"]
-            else:
-                trend_text = "  0% vs 30gg prec."
-                color = COLORS["text_muted"]
+        trend = metrics.trend_percentage
+        if trend > 0:
+            trend_text = f"  +{trend}% vs 30gg prec."
+            color = COLORS["success_dark"]
+        elif trend < 0:
+            trend_text = f"  {trend}% vs 30gg prec."
+            color = COLORS["error_red"]
+        else:
+            trend_text = "  0% vs 30gg prec."
+            color = COLORS["text_muted"]
 
-            if self.lbl_trend:
-                self.lbl_trend.setText(trend_text)
-                self.lbl_trend.setStyleSheet(
-                    f"color: {color}; font-size: 11px; font-weight: 700; background: transparent; border: none;"
+        if self.lbl_trend:
+            self.lbl_trend.setText(trend_text)
+            self.lbl_trend.setStyleSheet(
+                f"color: {color}; font-size: 11px; font-weight: 700; background: transparent; border: none;"
+            )
+
+    def _update_top_tasks(self, metrics: ROIMetrics) -> None:
+        if not hasattr(self, "lbl_ops") or not self.lbl_ops:
+            return
+
+        self.lbl_ops.setText(str(metrics.total_operations))
+
+        if metrics.top_tasks:
+            icons = ["  ", "  ", "  "]
+            top_text_lines = []
+            for i, (name, pct) in enumerate(metrics.top_tasks):
+                icon = icons[i] if i < len(icons) else "  "
+                top_text_lines.append(f"{icon} {name} ({pct}%)")
+
+            if self.lbl_top_task:
+                self.lbl_top_task.setText("\n".join(top_text_lines))
+                self.lbl_top_task.setStyleSheet(
+                    f"color: {COLORS['primary_blue']}; font-size: 10px; font-weight: 700;"
+                    " background: transparent; border: none; line-height: 1.2;"
                 )
+        elif self.lbl_top_task:
+            self.lbl_top_task.setText("Nessun dato")
 
-        if hasattr(self, "lbl_ops") and self.lbl_ops:
-            self.lbl_ops.setText(str(metrics.total_operations))
-
-            # Aggiorna Top Task (Top 3)
-            if metrics.top_tasks:
-                icons = ["  ", "  ", "  "]
-                top_text_lines = []
-                for i, (name, pct) in enumerate(metrics.top_tasks):
-                    icon = icons[i] if i < len(icons) else "  "
-                    top_text_lines.append(f"{icon} {name} ({pct}%)")
-
-                if self.lbl_top_task:
-                    self.lbl_top_task.setText("\n".join(top_text_lines))
-                    self.lbl_top_task.setStyleSheet(
-                        f"color: {COLORS['primary_blue']}; font-size: 10px; font-weight: 700;"
-                        " background: transparent; border: none; line-height: 1.2;"
-                    )
-            elif self.lbl_top_task:
-                self.lbl_top_task.setText("Nessun dato")
-
-        # Update Progress Bars
+    def _update_progress_bars(self, metrics: ROIMetrics) -> None:
         self.lbl_success_pct.setText(f"{metrics.success_rate}%")
         self.progress_success.set_value(int(metrics.success_rate))
 
         self.lbl_rel_pct.setText(f"{metrics.reliability_score}%")
         self.progress_rel.set_value(metrics.reliability_score)
 
-        # Media giornaliera basata sullo storico reale
         days = max(1, metrics.total_days)
         avg = round(metrics.total_operations / days, 1) if metrics.total_operations > 0 else 0
         self.lbl_avg.setText(f"Media: ~{avg} task/giorno (su {days} gg)")
+
+    def _update_ui(self, metrics: ROIMetrics) -> None:
+        """Aggiorna gli elementi grafici con le nuove metriche calcolate.
+
+        Args:
+          metrics: Oggetto ROIMetrics contenente i dati elaborati.
+        """
+        self._update_time_trend(metrics)
+        self._update_top_tasks(metrics)
+        self._update_progress_bars(metrics)

@@ -360,6 +360,23 @@ class StartupDialog(QDialog):
 
         parent_layout.addLayout(license_box)
 
+    def _format_build_date(self, raw_date: str) -> str | None:
+        if raw_date and "-" in raw_date:
+            parts = raw_date.split("-")
+            if len(parts) == 3:
+                y, m, d = parts
+                return f"{d}/{m}/{y}"
+        return None
+
+    def _find_date_in_changelog(self, data: list[dict[str, str]]) -> str | None:
+        for entry in data:
+            if entry.get("version") == __version__:
+                return self._format_build_date(entry.get("date", ""))
+
+        if data:
+            return self._format_build_date(data[0].get("date", ""))
+        return None
+
     def _get_build_date(self) -> str:
         """Estrae la data di rilascio della versione corrente dal changelog."""
         try:
@@ -372,18 +389,9 @@ class StartupDialog(QDialog):
                 with changelog_path.open(encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, list):
-                        for entry in data:
-                            if entry.get("version") == __version__:
-                                raw_date = entry.get("date", "")
-                                if raw_date and "-" in raw_date:
-                                    y, m, d = raw_date.split("-")
-                                    return f"{d}/{m}/{y}"
-                        # Fallback alla data dell'ultima versione se non trovata (molto raro)
-                        if data:
-                            raw_date = data[0].get("date", "")
-                            if raw_date and "-" in raw_date:
-                                y, m, d = raw_date.split("-")
-                                return f"{d}/{m}/{y}"
+                        result = self._find_date_in_changelog(data)
+                        if result:
+                            return result
         except Exception:
             logger.exception("Errore nel caricamento della build date nello splash screen")
         return "N/D"

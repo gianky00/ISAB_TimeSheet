@@ -101,6 +101,18 @@ class ReportService:
         return w_list, e_list
 
     @classmethod
+    def _parse_days_diff(cls, d_str: str, today: datetime) -> int | None:
+        try:
+            dp = d_str.split(" ", maxsplit=1)[0]
+            for f in ("%Y-%m-%d", "%d/%m/%Y"):
+                with suppress(ValueError):
+                    d_dt = datetime.strptime(dp, f).replace(tzinfo=UTC)
+                    return (today - d_dt).days
+        except Exception as e:
+            logger.debug(f"Parsing ignore: {e}")
+        return None
+
+    @classmethod
     def _build_access_maps(
         cls, accessi: Sequence[Sequence[Any]]
     ) -> tuple[dict[str, int], dict[tuple[str, str], int]]:
@@ -110,22 +122,19 @@ class ReportService:
         l_nm: dict[tuple[str, str], int] = {}
         for r in accessi:
             d_str = str(r[3])
-            if d_str:
-                nk = (cls._norm_text(r[0]), cls._norm_text(r[1]))
-                ncf = r[2].strip().upper() if r[2] else None
-                with suppress(Exception):
-                    dp = d_str.split(" ", maxsplit=1)[0]
-                    d_dt = None
-                    for f in ("%Y-%m-%d", "%d/%m/%Y"):
-                        with suppress(ValueError):
-                            d_dt = datetime.strptime(dp, f).replace(tzinfo=UTC)
-                            break
-                    if d_dt:
-                        df = (today - d_dt).days
-                        if ncf and (ncf not in l_cf or df < l_cf[ncf]):
-                            l_cf[ncf] = df
-                        if nk not in l_nm or df < l_nm[nk]:
-                            l_nm[nk] = df
+            if not d_str:
+                continue
+
+            nk = (cls._norm_text(r[0]), cls._norm_text(r[1]))
+            ncf = r[2].strip().upper() if r[2] else None
+            df = cls._parse_days_diff(d_str, today)
+
+            if df is not None:
+                if ncf and (ncf not in l_cf or df < l_cf[ncf]):
+                    l_cf[ncf] = df
+                if nk not in l_nm or df < l_nm[nk]:
+                    l_nm[nk] = df
+
         return l_cf, l_nm
 
     @staticmethod

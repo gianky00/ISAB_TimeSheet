@@ -84,6 +84,30 @@ class DownloadWorker(QThread):
         else:
             self._run_network_copy(setup_path)
 
+    def _process_network_chunk(
+        self, chunk: bytes, total_size: int, downloaded: int, last_time: float
+    ) -> tuple[int, float]:
+        current_time = time.time()
+        elapsed = current_time - last_time
+        real_chunk_size = len(chunk)
+        new_downloaded = downloaded + real_chunk_size
+
+        current_speed = real_chunk_size / elapsed if elapsed > 0 else 0
+        if self._ema_speed == 0.0:
+            self._ema_speed = current_speed
+        else:
+            self._ema_speed = (self.EMA_ALPHA * current_speed) + ((1 - self.EMA_ALPHA) * self._ema_speed)
+
+        remaining_bytes = total_size - new_downloaded
+        eta = remaining_bytes / self._ema_speed if self._ema_speed > 0 else 0.0
+
+        now = time.time()
+        if now - self._last_progress_time >= self.PROGRESS_INTERVAL or new_downloaded >= total_size:
+            self.progress.emit(new_downloaded, total_size, self._ema_speed, eta)
+            self._last_progress_time = now
+
+        return new_downloaded, current_time
+
     def _run_network_copy(self, setup_path: str) -> None:
         """Copies file from network path with progress feedback."""
         try:
@@ -103,31 +127,10 @@ class DownloadWorker(QThread):
                     if not chunk:
                         break
 
-                    current_time = time.time()
-                    elapsed = current_time - last_time
-                    last_time = current_time
-
-                    real_chunk_size = len(chunk)
                     f_dst.write(chunk)
-                    downloaded += real_chunk_size
-
-                    # Calcolo Velocità Dinamico (EMA)
-                    current_speed = real_chunk_size / elapsed if elapsed > 0 else 0
-                    if self._ema_speed == 0.0:
-                        self._ema_speed = current_speed
-                    else:
-                        self._ema_speed = (self.EMA_ALPHA * current_speed) + (
-                            (1 - self.EMA_ALPHA) * self._ema_speed
-                        )
-
-                    remaining_bytes = total_size - downloaded
-                    eta = remaining_bytes / self._ema_speed if self._ema_speed > 0 else 0.0
-
-                    # Throttling emissione segnali progress (max 10 Hz)
-                    now = time.time()
-                    if now - self._last_progress_time >= self.PROGRESS_INTERVAL or downloaded >= total_size:
-                        self.progress.emit(downloaded, total_size, self._ema_speed, eta)
-                        self._last_progress_time = now
+                    downloaded, last_time = self._process_network_chunk(
+                        chunk, total_size, downloaded, last_time
+                    )
 
             if not self._is_cancelled:
                 self.finished_download.emit(setup_path)

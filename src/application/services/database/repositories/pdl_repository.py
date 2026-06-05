@@ -41,17 +41,14 @@ class PdlRepository:
             "importato_il",
         ]
 
-    def get_filtered(
+    def _build_filter_query_parts(
         self,
         filters: dict[str, Any],
-        sort_col_name: str = "importato_il",
-        sort_order: str = "DESC",
-        as_objects: bool = True,
-    ) -> list[PdlRecord] | list[tuple[Any, ...]]:
-        """Recupera i PDL filtrati e ordinati."""
-        query = f"SELECT {', '.join(self.columns)} FROM pdl WHERE 1=1"  # nosec B608
-        # nosec B608
-        params = []
+        sort_col_name: str,
+        sort_order: str,
+    ) -> tuple[str, list[Any]]:
+        clause = ""
+        params: list[Any] = []
 
         search_text = filters.get("search", "")
         site_filter = filters.get("site", "Tutti i siti")
@@ -60,19 +57,19 @@ class PdlRepository:
         unit_filter = filters.get("unit", "Tutte")
 
         if site_filter != "Tutti i siti":
-            query += " AND sito = ?"
+            clause += " AND sito = ?"
             params.append(site_filter)
 
         if group_filter != "Tutti":
-            query += " AND n_pdl LIKE ?"
+            clause += " AND n_pdl LIKE ?"
             params.append(f"%/{group_filter}")
 
         if area_filter != "Tutte":
-            query += " AND area = ?"
+            clause += " AND area = ?"
             params.append(area_filter)
 
         if unit_filter != "Tutte":
-            query += " AND unita = ?"
+            clause += " AND unita = ?"
             params.append(unit_filter)
 
         if search_text:
@@ -89,19 +86,29 @@ class PdlRepository:
                 "sito",
             ]
             or_clause = " OR ".join([f"{col} LIKE ?" for col in search_cols])
-            query += f" AND ({or_clause})"
-            p = f"%{search_text}%"
-            params.extend([p] * len(search_cols))
+            clause += f" AND ({or_clause})"
+            params.extend([f"%{search_text}%"] * len(search_cols))
 
-        # Sorting logic (adapted from original controller)
         if sort_col_name == "n_pdl":
-            query += f" ORDER BY CAST(n_pdl AS INTEGER) {sort_order}, n_pdl {sort_order}"
+            clause += f" ORDER BY CAST(n_pdl AS INTEGER) {sort_order}, n_pdl {sort_order}"
         elif sort_col_name == "data_creazione":
-            query += f" ORDER BY substr(data_creazione, 7, 4) || substr(data_creazione, 4, 2) || substr(data_creazione, 1, 2) || substr(data_creazione, 11) {sort_order}"
+            clause += f" ORDER BY substr(data_creazione, 7, 4) || substr(data_creazione, 4, 2) || substr(data_creazione, 1, 2) || substr(data_creazione, 11) {sort_order}"
         else:
-            query += f" ORDER BY {sort_col_name} {sort_order}"
+            clause += f" ORDER BY {sort_col_name} {sort_order}"
 
-        query += " LIMIT 2000"
+        return clause, params
+
+    def get_filtered(
+        self,
+        filters: dict[str, Any],
+        sort_col_name: str = "importato_il",
+        sort_order: str = "DESC",
+        as_objects: bool = True,
+    ) -> list[PdlRecord] | list[tuple[Any, ...]]:
+        """Recupera i PDL filtrati e ordinati."""
+        base_query = f"SELECT {', '.join(self.columns)} FROM pdl WHERE 1=1"  # nosec B608
+        clause, params = self._build_filter_query_parts(filters, sort_col_name, sort_order)
+        query = f"{base_query}{clause} LIMIT 2000"
 
         try:
             rows = self.db.execute_query(self.db.DB_PDL, query, tuple(params))

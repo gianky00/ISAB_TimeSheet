@@ -12,6 +12,30 @@ from src.domain import EmployeeRecord
 class EmployeeCsvReadStep(ProcessingStep):
     """Passaggio per la lettura e il parsing del file CSV dei dipendenti."""
 
+    def _parse_csv_file(self, path: Path) -> list[EmployeeRecord]:
+        employees_to_sync = []
+        with path.open("r", encoding="utf-8-sig") as f:
+            reader = csv.DictReader(f, delimiter=";")
+            if reader.fieldnames:
+                reader.fieldnames = [name.strip() for name in reader.fieldnames]
+
+            for row in reader:
+                id_val = row.get("id_risorsa") or row.get("ID")
+                id_risorsa = int(id_val) if id_val and str(id_val).isdigit() else None
+
+                emp = EmployeeRecord(
+                    id_risorsa=id_risorsa,
+                    cognome=row.get("Cognome", "").upper(),
+                    nome=row.get("Nome", "").upper(),
+                    data_nascita=row.get("Data_nascita"),
+                    codice_fiscale=row.get("Codice_fiscale", "").upper(),
+                    badge=row.get("Badge", ""),
+                    data_assunzione=row.get("Data_assunzione"),
+                    monitoraggio_attivo=1,
+                )
+                employees_to_sync.append(emp)
+        return employees_to_sync
+
     def execute(self, context: dict[str, Any]) -> None:
         """Esegue la lettura del file CSV."""
         csv_path = context.get("file_path")
@@ -24,30 +48,8 @@ class EmployeeCsvReadStep(ProcessingStep):
             context["message"] = f"File CSV non trovato: {csv_path}"
             return
 
-        employees_to_sync = []
         try:
-            with path.open("r", encoding="utf-8-sig") as f:
-                reader = csv.DictReader(f, delimiter=";")
-                if reader.fieldnames:
-                    reader.fieldnames = [name.strip() for name in reader.fieldnames]
-
-                for row in reader:
-                    id_val = row.get("id_risorsa") or row.get("ID")
-                    id_risorsa = int(id_val) if id_val and str(id_val).isdigit() else None
-
-                    emp = EmployeeRecord(
-                        id_risorsa=id_risorsa,
-                        cognome=row.get("Cognome", "").upper(),
-                        nome=row.get("Nome", "").upper(),
-                        data_nascita=row.get("Data_nascita"),
-                        codice_fiscale=row.get("Codice_fiscale", "").upper(),
-                        badge=row.get("Badge", ""),
-                        data_assunzione=row.get("Data_assunzione"),
-                        monitoraggio_attivo=1,
-                    )
-                    employees_to_sync.append(emp)
-
-            context["employees"] = employees_to_sync
+            context["employees"] = self._parse_csv_file(path)
             context["success"] = True
         except Exception as e:
             context["success"] = False
