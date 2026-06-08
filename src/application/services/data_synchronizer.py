@@ -110,7 +110,7 @@ class DataSynchronizer:
         res = SmartSyncEngine.sync_full_replace_with_metadata(
             target,
             rows,
-            key_cols=["id_coemi", "certificato"],
+            key_cols=["id_coemi", "matricola"],
             metadata_cols=[
                 "annotazioni",
                 "ubicazione",

@@ -238,7 +238,15 @@ class SmartSyncEngine(BaseSyncEngine):
             saved_meta = metadata_map.get(tuple(keys_val))
 
             # Aggiunta valori metadati
-            meta_values = [saved_meta.get(m) if saved_meta else "" for m in metadata_cols]
+            meta_values = []
+            for m in metadata_cols:
+                if saved_meta and m in saved_meta:
+                    meta_values.append(saved_meta[m])
+                elif m == "guasto":
+                    meta_values.append(0)
+                else:
+                    meta_values.append("")
+
             final_rows.append(tuple(row_list) + tuple(meta_values))
         return final_rows
 
