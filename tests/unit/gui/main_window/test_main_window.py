@@ -78,13 +78,16 @@ class TestMainWindow:
         """Verifica la riduzione a tray alla chiusura se abilitata."""
         mocker.patch("src.application.services.config_manager.get_config_value", return_value=True)
         mocker.patch("src.gui.dialogs.confirmation_dialog.ConfirmationDialog.confirm", return_value=True)
+        mocker.patch("src.gui.main_window.main.QSystemTrayIcon.isSystemTrayAvailable", return_value=True)
         window = MainWindow()
         qtbot.addWidget(window)
+        mock_show_message = mocker.patch.object(window.tray_icon_component, "show_message")
         window.show()
         event = MagicMock()
         window.closeEvent(event)
         assert window.isHidden()
         assert event.ignore.called
+        assert mock_show_message.called
 
     def test_close_event_actual_exit(self, qtbot, mock_all_services, mocker):
         """Verifica lbl'uscita reale con conferma."""

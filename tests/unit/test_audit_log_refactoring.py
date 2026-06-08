@@ -59,7 +59,16 @@ def audit_widget(qtbot, mocker):
         patch("PySide6.QtWidgets.QHBoxLayout.addWidget"),
         patch("PySide6.QtWidgets.QGridLayout.addWidget"),
         patch("PySide6.QtCore.QTimer"),
+        patch("src.gui.widgets.audit_log_widget.QThreadPool") as mock_pool,
     ):
+        # MOCK QThreadPool per eseguire in sincrono nel test ed evitare Segfault C++
+        pool_instance = MagicMock()
+        mock_pool.globalInstance.return_value = pool_instance
+
+        def sync_start(worker):
+            worker.run()
+
+        pool_instance.start.side_effect = sync_start
         widget = AuditLogWidget()
         # MOCK UI Heavy operations that cause crashes in CI
         widget.table_view.resizeColumnsToContents = MagicMock()
