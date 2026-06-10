@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 
 # Add project root to sys.path to allow importing src modules
 current_dir = Path(__file__).parent.resolve()
-project_root = current_dir.parent.parent.parent
+project_root = current_dir.parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 # Carica variabili d'ambiente

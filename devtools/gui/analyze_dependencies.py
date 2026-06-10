@@ -139,7 +139,7 @@ def get_all_imports(script_path: str, src_path: str) -> list[str]:  # noqa: C901
 
 if __name__ == "__main__":
     # Test run
-    root = Path(__file__).parent.parent.resolve()
+    root = Path(__file__).parent.parent.parent.resolve()
     main_py_file = root / "main.py"
     src_dir_path = root / "src"
 

@@ -22,7 +22,7 @@ from analyze_dependencies import get_all_imports  # type: ignore
 
 # Paths
 SCRIPT_DIR = Path(__file__).resolve().parent
-ROOT_DIR = SCRIPT_DIR.parent.parent
+ROOT_DIR = SCRIPT_DIR.parent.parent.parent
 DIST_DIR = SCRIPT_DIR / "dist"
 BUILD_DIR = SCRIPT_DIR / "build"
 OBF_DIR = BUILD_DIR / "obf"

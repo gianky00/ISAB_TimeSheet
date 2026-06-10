@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (
 )
 
 # Configurazione
-PROJECT_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 if sys.platform == "win32":
     VENV_PYTHON = PROJECT_ROOT / ".venv" / "Scripts" / "python.exe"
     VENV_BIN = PROJECT_ROOT / ".venv" / "Scripts"
@@ -614,12 +614,12 @@ class DeveloperToolboxGUI(QMainWindow):
 
     def _full_release(self) -> None:
         """Opzione 14: Full Release"""
-        self._run_command([str(VENV_PYTHON), "devtools/maintenance/release.py", "auto"], "Full Release")
+        self._run_command([str(VENV_PYTHON), "devtools/gui/release.py", "auto"], "Full Release")
 
     def _fast_release(self) -> None:
         """Opzione 15: Fast Release"""
         self._run_command(
-            [str(VENV_PYTHON), "devtools/maintenance/release.py", "auto", "--skip-tests"],
+            [str(VENV_PYTHON), "devtools/gui/release.py", "auto", "--skip-tests"],
             "Fast Release",
         )
 
@@ -634,7 +634,7 @@ class DeveloperToolboxGUI(QMainWindow):
     def _full_deploy(self) -> None:
         """Opzione 16: Full Deploy"""
         self._run_command(
-            [str(VENV_PYTHON), "devtools/maintenance/release.py", "auto", "--skip-tests", "--deploy"], "Full Deploy"
+            [str(VENV_PYTHON), "devtools/gui/release.py", "auto", "--skip-tests", "--deploy"], "Full Deploy"
         )
 
     def _secrets_mgmt(self) -> None:

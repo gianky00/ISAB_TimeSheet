@@ -44,7 +44,7 @@ except ImportError:
     sys.exit(1)
 
 # Configurazione Base
-PROJECT_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 LOG_DIR = PROJECT_ROOT / ".cache" / "temp" / "logs"
 REPORT_DIR = PROJECT_ROOT / ".cache" / "reports" / "preflight"
 VENV_BIN = PROJECT_ROOT / ".venv" / "Scripts" if sys.platform == "win32" else PROJECT_ROOT / ".venv" / "bin"

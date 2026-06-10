@@ -16,7 +16,7 @@ def normalize_name(text: Any) -> str:
 
 def _parse_date_and_diff(d_str: str, today: datetime) -> tuple[int, str] | None:
     """Estrae la differenza in giorni e la stringa formattata dalla data del DB."""
-    date_part = d_str.split(" ")[0]
+    date_part = d_str.split(" ", maxsplit=1)[0]
     for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
         try:
             d_dt = datetime.strptime(date_part, fmt).replace(tzinfo=UTC)

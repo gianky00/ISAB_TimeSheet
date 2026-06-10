@@ -24,7 +24,7 @@ def bump_version(part="patch"):
         part: 'major', 'minor', o 'patch'
     """
     # devtools/gui/bump_version.py -> admin -> root
-    root_dir = Path(__file__).parent.parent.resolve()
+    root_dir = Path(__file__).parent.parent.parent.resolve()
     version_file = root_dir / "src" / "core" / "version.py"
 
     if not version_file.exists():

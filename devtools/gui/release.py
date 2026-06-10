@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 
 # Paths
-ROOT_DIR = Path(__file__).parent.parent
+ROOT_DIR = Path(__file__).parent.parent.parent
 VENV_PYTHON = (
     ROOT_DIR / ".venv" / "Scripts" / "python.exe"
     if sys.platform == "win32"

@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Configurazione Percorsi
-ROOT_DIR = Path(__file__).parent.parent.resolve()
+ROOT_DIR = Path(__file__).parent.parent.parent.resolve()
 SRC_DIR = ROOT_DIR / "src"
 REPORTS_DIR = ROOT_DIR / ".cache" / "reports" / "mutation"
 
