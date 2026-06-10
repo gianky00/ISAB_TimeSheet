@@ -20,6 +20,11 @@ VENV_PYTHON = (
     if sys.platform == "win32"
     else ROOT_DIR / ".venv" / "bin" / "python"
 )
+UV_EXE = (
+    ROOT_DIR / ".venv" / "Scripts" / "uv.exe"
+    if sys.platform == "win32"
+    else ROOT_DIR / ".venv" / "bin" / "uv"
+)
 
 
 def find_git_executable() -> str:
@@ -580,7 +585,7 @@ def main() -> None:
         )
 
     # Verifica sincronia lock file (fondamentale per EXE stabile)
-    run_command(["uv", "lock"], "Verifica integrità uv.lock")
+    run_command([str(UV_EXE), "lock"], "Verifica integrità uv.lock")
 
     # 1. Pre-Flight Check Interno
     pre_flight_cmd = [str(VENV_PYTHON), "devtools/gui/pre_flight_check.py"]
