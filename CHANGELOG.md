@@ -1,10 +1,38 @@
 ## Unreleased
 
+### Feat
+
+- **certificati**: ottimizzazione UI e PDF per annotazioni e correzione test suite
+- **ai**: configure gemini overrides and setup session memory state
+
+### Fix
+
+- **devtools**: preemptively run uv lock and fix generate_ai_context.py path to prevent pre-commit commit failure
+- **devtools**: inject VENV_BIN into PATH to prevent pre-commit uv hooks from failing and fix leftover changelog.json path
+- **devtools**: fix incorrect paths to version.py and changelog.json
+- **devtools**: use explicit UV_EXE path for lock integrity check to prevent WinError 2
+- **devtools**: resolve WinError 2 resolving path with shutil.which in release.py
+- **devtools**: fix PROJECT_ROOT path resolution in gui scripts and linter warnings
+- **sync**: refine SmartSyncEngine metadata handling and key column mapping
+- **ci**: fix ruff linting errors in test runner reporting
+- **ci**: robust test runner now exports markdown report and exits with proper status code
+- **ci**: do not fail if ruff outputs success message
+- **ci**: suppress PLW0108 ruff rule, fix lints, and print linter errors to CI stdout
+- **ci**: correct project root path and ensure strict exit codes in generate_ci_context.py
+
+### Refactor
+
+- **core&gui**: successfully reduce cyclomatic complexity to rank A/B for remaining targets
+- **core&gui**: reduce cyclomatic complexity, fix annotazioni UX and tests regression
+- **ai**: cleanup and restructure .gemini AI folder to new standard
+
+## v1.56.2 (2026-06-03)
+
 ### Fix
 
 - **pdl**: prevent silent UI crashes by casting imported dataframe to strings
 - **ci**: esegui generate_ci_context.py all'interno dell'ambiente virtuale di poetry per risolvere ModuleNotFoundError
-- **ci**: aggiornato il percorso dello script generate_ci_context.py (da devtools/maintenance/ a devtools/cli/)
+- **ci**: aggiornato il percorso dello script generate_ci_context.py (da scripts/ a tools/)
 - **ci**: aggiunti campi mancanti in tool.poetry per correggere l'errore di poetry install
 
 ### Refactor

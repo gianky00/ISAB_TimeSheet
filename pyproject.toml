@@ -1,6 +1,6 @@
 [project]
 name = "syncrojob"
-version = "1.56.2"
+version = "1.57.0"
 description = "ISAB TimeSheet application"
 authors = [
     { name = "Giancarlo Allegretti" }
@@ -378,7 +378,7 @@ exclude_dirs = [".venv", "tests", "docs", "build", "dist", "temp", "devtools", "
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "1.56.2"
+version = "1.57.0"
 tag_format = "v$version"
 changelog_file = "CHANGELOG.md"
 update_changelog_on_bump = true

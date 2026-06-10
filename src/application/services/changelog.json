@@ -1,5 +1,147 @@
 [
   {
+    "version": "1.57.0",
+    "date": "2026-06-10",
+    "notes": [
+      {
+        "sha": "df15e0ec",
+        "message": "fix(devtools): preemptively run uv lock and fix generate_ai_context.py path to prevent pre-commit commit failure"
+      },
+      {
+        "sha": "2977d0de",
+        "message": "fix(devtools): inject VENV_BIN into PATH to prevent pre-commit uv hooks from failing and fix leftover changelog.json path"
+      },
+      {
+        "sha": "81c51946",
+        "message": "fix(devtools): fix incorrect paths to version.py and changelog.json"
+      },
+      {
+        "sha": "02bfb8fe",
+        "message": "fix(devtools): use explicit UV_EXE path for lock integrity check to prevent WinError 2"
+      },
+      {
+        "sha": "b956de32",
+        "message": "fix(devtools): resolve WinError 2 resolving path with shutil.which in release.py"
+      },
+      {
+        "sha": "502b33c5",
+        "message": "add"
+      },
+      {
+        "sha": "d78c93d1",
+        "message": "fix(devtools): fix PROJECT_ROOT path resolution in gui scripts and linter warnings"
+      },
+      {
+        "sha": "f43544d9",
+        "message": "fix(sync): refine SmartSyncEngine metadata handling and key column mapping"
+      },
+      {
+        "sha": "9c8d7fd7",
+        "message": "test(gui): fix pytest timeouts and segfaults caused by QThreadPool and QSystemTrayIcon in headless environment"
+      },
+      {
+        "sha": "f9515e00",
+        "message": "Merge branch 'feature/refactor-final-c-complexity' into main"
+      },
+      {
+        "sha": "88953874",
+        "message": "refactor(core&gui): successfully reduce cyclomatic complexity to rank A/B for remaining targets"
+      },
+      {
+        "sha": "dc1d2bd3",
+        "message": "docs: add remaining C-rank targets to plan"
+      },
+      {
+        "sha": "3b378d6a",
+        "message": "refactor(core&gui): reduce cyclomatic complexity, fix annotazioni UX and tests regression"
+      },
+      {
+        "sha": "997ee355",
+        "message": "style: autoformattazione ruff per allineamento stile"
+      },
+      {
+        "sha": "be5ffc74",
+        "message": "docs: aggiunta piano di refactoring per XENON"
+      },
+      {
+        "sha": "ff629e6e",
+        "message": "chore(quality): fix quality_check script e riduzione complessità ciclomatica pdf_exporter"
+      },
+      {
+        "sha": "85002dac",
+        "message": "feat(certificati): ottimizzazione UI e PDF per annotazioni e correzione test suite"
+      },
+      {
+        "sha": "a61f9aee",
+        "message": "docs(ai): add domain GEMINI.md cross-references in AI onboarding README"
+      },
+      {
+        "sha": "fec39cfc",
+        "message": "chore(ai): expand gemini.toml overrides with complete QA standards"
+      },
+      {
+        "sha": "7ae7839f",
+        "message": "docs(ai): add README onboarding guide for .gemini structure"
+      },
+      {
+        "sha": "d24fe013",
+        "message": "refactor(ai): cleanup and restructure .gemini AI folder to new standard"
+      },
+      {
+        "sha": "146a297d",
+        "message": "chore(ai): track AI session state in git for cross-machine synchronization"
+      },
+      {
+        "sha": "189afb1a",
+        "message": "feat(ai): configure gemini overrides and setup session memory state"
+      },
+      {
+        "sha": "137286bf",
+        "message": "chore: add sqlite shm/wal and temp folder to gitignore"
+      },
+      {
+        "sha": "af7e32f0",
+        "message": "docs: reference domain-specific GEMINI.md files in root"
+      },
+      {
+        "sha": "c4ca1913",
+        "message": "fix(ci): fix ruff linting errors in test runner reporting"
+      },
+      {
+        "sha": "cc97c49d",
+        "message": "fix(ci): robust test runner now exports markdown report and exits with proper status code"
+      },
+      {
+        "sha": "0f39ce21",
+        "message": "fix(ci): do not fail if ruff outputs success message"
+      },
+      {
+        "sha": "f6525f3f",
+        "message": "fix(ci): suppress PLW0108 ruff rule, fix lints, and print linter errors to CI stdout"
+      },
+      {
+        "sha": "b5a79dba",
+        "message": "test: skip test_pandera_validation gracefully when local data file is missing"
+      },
+      {
+        "sha": "2432b758",
+        "message": "fix(ci): correct project root path and ensure strict exit codes in generate_ci_context.py"
+      },
+      {
+        "sha": "fecfb5cd",
+        "message": "chore: remove remaining obsolete poetry references"
+      },
+      {
+        "sha": "787fe571",
+        "message": "docs(ai): setup domain-specific GEMINI.md rules and update ai-context.json generator for uv"
+      },
+      {
+        "sha": "4ae82c06",
+        "message": "build(deps): migrate from poetry to uv, cleanup root dir and scripts"
+      }
+    ]
+  },
+  {
     "version": "1.56.2",
     "date": "2026-06-03",
     "notes": [
