@@ -2,6 +2,12 @@
 
 ### Fix
 
+- **devtools**: fix ModuleNotFoundError for analyze_dependencies in build_dist.py
+
+## v1.57.1 (2026-06-10)
+
+### Fix
+
 - **devtools**: fix incorrect path to build_dist.py replacing admin with devtools/gui
 
 ## v1.57.0 (2026-06-10)

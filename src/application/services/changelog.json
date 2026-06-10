@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.57.2",
+    "date": "2026-06-10",
+    "notes": [
+      {
+        "sha": "c2f0f719",
+        "message": "fix(devtools): fix ModuleNotFoundError for analyze_dependencies in build_dist.py"
+      }
+    ]
+  },
+  {
     "version": "1.57.1",
     "date": "2026-06-10",
     "notes": [

@@ -2358,7 +2358,7 @@ wheels = [
 
 [[package]]
 name = "syncrojob"
-version = "1.57.1"
+version = "1.57.2"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },
