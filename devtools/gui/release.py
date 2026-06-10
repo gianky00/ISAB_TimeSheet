@@ -167,9 +167,9 @@ def run_command_safe(
 
 #: File che vengono modificati dal processo di bump + changelog.
 _VERSIONED_FILES: list[Path] = [
-    ROOT_DIR / "src" / "core" / "version.py",
+    ROOT_DIR / "src" / "application" / "services" / "version.py",
     ROOT_DIR / "pyproject.toml",
-    ROOT_DIR / "src" / "core" / "changelog.json",
+    ROOT_DIR / "src" / "application" / "services" / "changelog.json",
     ROOT_DIR / "CHANGELOG.md",
 ]
 
@@ -211,7 +211,7 @@ def rollback_versioned_files(snapshot: dict[Path, str | None]) -> None:
 
 def get_current_version() -> str:
     """Extracts the current version string from src/application/services/version.py."""
-    version_file = ROOT_DIR / "src" / "core" / "version.py"
+    version_file = ROOT_DIR / "src" / "application" / "services" / "version.py"
     content = version_file.read_text(encoding="utf-8")
     import re
 

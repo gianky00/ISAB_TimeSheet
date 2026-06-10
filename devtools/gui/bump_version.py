@@ -25,7 +25,7 @@ def bump_version(part="patch"):
     """
     # devtools/gui/bump_version.py -> admin -> root
     root_dir = Path(__file__).parent.parent.parent.resolve()
-    version_file = root_dir / "src" / "core" / "version.py"
+    version_file = root_dir / "src" / "application" / "services" / "version.py"
 
     if not version_file.exists():
         print(f"Errore: File versione non trovato: {version_file}")

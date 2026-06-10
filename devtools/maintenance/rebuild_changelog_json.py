@@ -14,7 +14,7 @@ MAX_SCOPE_LEN = 15
 
 def _get_current_version() -> str:
     """Legge la versione corrente del software da src/application/services/version.py."""
-    version_file = Path(__file__).resolve().parent.parent / "src" / "core" / "version.py"
+    version_file = Path(__file__).resolve().parent.parent.parent / "src" / "application" / "services" / "version.py"
     if version_file.exists():
         content = version_file.read_text(encoding="utf-8")
         match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
@@ -126,9 +126,9 @@ def _parse_changelog_content(content: str) -> list[dict[str, Any]]:
 
 def rebuild_changelog() -> None:
     """Parses CHANGELOG.md and generates a comprehensive src/application/services/changelog.json."""
-    root_dir = Path(__file__).resolve().parent.parent
+    root_dir = Path(__file__).resolve().parent.parent.parent
     changelog_md_path = root_dir / "CHANGELOG.md"
-    changelog_json_path = root_dir / "src" / "core" / "changelog.json"
+    changelog_json_path = root_dir / "src" / "application" / "services" / "changelog.json"
 
     if not changelog_md_path.exists():
         print(f"Errore: {changelog_md_path} non esiste.")
