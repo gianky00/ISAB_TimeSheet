@@ -1,5 +1,11 @@
 ## Unreleased
 
+### Fix
+
+- **devtools**: fix incorrect path to build_dist.py replacing admin with devtools/gui
+
+## v1.57.0 (2026-06-10)
+
 ### Feat
 
 - **certificati**: ottimizzazione UI e PDF per annotazioni e correzione test suite

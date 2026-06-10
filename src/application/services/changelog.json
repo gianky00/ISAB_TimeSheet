@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.57.1",
+    "date": "2026-06-10",
+    "notes": [
+      {
+        "sha": "e19c48b6",
+        "message": "fix(devtools): fix incorrect path to build_dist.py replacing admin with devtools/gui"
+      }
+    ]
+  },
+  {
     "version": "1.57.0",
     "date": "2026-06-10",
     "notes": [
