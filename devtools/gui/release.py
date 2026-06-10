@@ -454,10 +454,11 @@ def run_git_operations(
     if args.no_git:
         return True
 
-    # Pre-genera .ai-context.json prima dello staging per evitare che il pre-commit
-    # hook "generate-ai-context" lo modifichi durante il commit (pattern noto che causa
-    # "files were modified by this hook" e quindi il fallimento del commit).
-    ai_context_script = ROOT_DIR / "tools" / "generate_ai_context.py"
+    # Pre-genera lock e .ai-context.json prima dello staging per evitare che il pre-commit
+    # modifichi i file durante il commit (pattern noto che causa il fallimento del commit).
+    run_command([str(UV_EXE), "lock"], "Updating uv.lock preemptively")
+
+    ai_context_script = ROOT_DIR / "devtools" / "cli" / "generate_ai_context.py"
     if ai_context_script.exists():
         run_command(
             [str(VENV_PYTHON), str(ai_context_script)],
