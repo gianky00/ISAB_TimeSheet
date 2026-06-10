@@ -64,6 +64,10 @@ def run_command(
     # Se il primo argomento è 'git', prova a risolverlo
     if cmd[0] == "git":
         cmd[0] = find_git_executable()
+    elif not os.path.isabs(cmd[0]):
+        resolved = shutil.which(cmd[0])
+        if resolved:
+            cmd[0] = resolved
 
     try:
         if capture:
