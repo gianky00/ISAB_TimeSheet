@@ -25,6 +25,8 @@ UV_EXE = (
     if sys.platform == "win32"
     else ROOT_DIR / ".venv" / "bin" / "uv"
 )
+VENV_BIN = ROOT_DIR / ".venv" / "Scripts" if sys.platform == "win32" else ROOT_DIR / ".venv" / "bin"
+os.environ["PATH"] = f"{VENV_BIN}{os.pathsep}{os.environ.get('PATH', '')}"
 
 
 def find_git_executable() -> str:
@@ -325,7 +327,7 @@ def verify_clean_git_status(git_bin: str) -> None:
 
 def update_json_changelog(version: str, git_bin: str) -> None:
     """Genera e aggiorna il changelog.json strutturato in src/application/services/changelog.json."""
-    changelog_path = ROOT_DIR / "src" / "core" / "changelog.json"
+    changelog_path = ROOT_DIR / "src" / "application" / "services" / "changelog.json"
 
     # Ottiene l'ultimo tag Git prima del rilascio
     last_tag = None
