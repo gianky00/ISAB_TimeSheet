@@ -506,7 +506,7 @@ def run_git_operations(
 
 def run_build_operations(new_version: str, args: argparse.Namespace, start_time: float) -> None:
     """Compila il pacchetto di distribuzione e notifica il rilascio su Telegram."""
-    build_script = ROOT_DIR / "admin" / "Crea Setup" / "build_dist.py"
+    build_script = ROOT_DIR / "devtools" / "gui" / "Crea Setup" / "build_dist.py"
     build_cmd = [str(VENV_PYTHON), str(build_script)]
     if not args.deploy:
         build_cmd.append("--no-deploy")
