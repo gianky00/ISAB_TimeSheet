@@ -15,8 +15,9 @@ import time
 import zipfile
 from pathlib import Path
 
-# Add current folder to path to import local modules
+# Add parent folders to path to import local modules
 sys.path.append(str(Path(__file__).resolve().parent))
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 import requests
 from analyze_dependencies import get_all_imports  # type: ignore
 
