@@ -24,19 +24,13 @@ if not exist "%VENV_PYTHON%" (
     exit /b 1
 )
 
-set "NUITKA_FLAG="
-if "%1"=="--nuitka" (
-    set "NUITKA_FLAG=--nuitka"
-    echo [INFO] Utilizzo Nuitka come compilatore...
-)
-
 REM Esegue release.py in modalità "solo build locale"
 REM --no-git: Non crea commit o tag
 REM --no-deploy: Non carica su Netlify
 REM --skip-tests: Salta i test unitari per velocizzare
 REM patch: usa un incremento di versione patch temporaneo
 
-"%VENV_PYTHON%" "devtools/gui/release.py" patch --no-git --skip-tests --force %NUITKA_FLAG%
+"%VENV_PYTHON%" "devtools/gui/release.py" patch --no-git --skip-tests --force
 
 if %errorlevel% neq 0 (
     echo [ERROR] Build fallita.

@@ -64,8 +64,7 @@ uv run pre-commit run --all-files
 # Build standard (PyInstaller)
 python "devtools/gui/Crea Setup/build_dist.py"
 
-# Build Nuitka (Standalone)
-python "devtools/gui/Crea Setup/build_dist.py" --use-nuitka
+
 ```
 
 ### Versioning

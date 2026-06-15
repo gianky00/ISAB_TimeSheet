@@ -25,10 +25,10 @@ class ResourceManager:
         meipass_path = Path(getattr(sys, "_MEIPASS", exe_path))
 
         # Priorità 1: Cartelle esterne (SVILUPPATORE/ADMIN OVERRIDE)
-        # Se esistono 'assets' o 'drivers' accanto all'exe, usiamo quella come root
-        if (exe_path / "assets").exists() or (exe_path / "drivers").exists():
+        # Se esistono gli asset in modo completo
+        if (exe_path / "assets" / "ui").exists():
             PROJECT_ROOT = exe_path
-        # Priorità 2: Cartelle interne (DEFAULT PYINSTALLER)
+        # Priorità 2: Cartelle interne (DEFAULT PYINSTALLER 6+)
         elif (exe_path / "_internal" / "assets").exists():
             PROJECT_ROOT = exe_path / "_internal"
         else:
@@ -40,7 +40,7 @@ class ResourceManager:
     ASSETS_DIR = PROJECT_ROOT / "assets"
     ICONS_DIR = ASSETS_DIR / "ui" / "icons"
     STYLES_DIR = ASSETS_DIR / "ui" / "styles"
-    TEMP_DIR = PROJECT_ROOT / ".cache" / "temp"
+    TEMP_DIR = CONFIG_DIR / "temp"
 
     @classmethod
     def _get_config_dir(cls) -> Path:

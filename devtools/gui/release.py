@@ -420,9 +420,7 @@ def prompt_interactive_release(args: argparse.Namespace) -> None:
     skip_ans = input("\nDesideri saltare la suite dei test di qualità pre-flight? (s/N): ").strip().lower()
     args.skip_tests = skip_ans == "s"
 
-    # 3. Nuitka or PyInstaller
-    nuitka_ans = input("\nDesideri compilare con Nuitka invece di PyInstaller? (s/N): ").strip().lower()
-    args.nuitka = nuitka_ans == "s"
+
 
     # 4. Deploy
     deploy_ans = input("\nDesideri eseguire il deploy su Netlify? (s/N): ").strip().lower()
@@ -510,8 +508,7 @@ def run_build_operations(new_version: str, args: argparse.Namespace, start_time:
     build_cmd = [str(VENV_PYTHON), str(build_script)]
     if not args.deploy:
         build_cmd.append("--no-deploy")
-    if args.nuitka:
-        build_cmd.append("--use-nuitka")
+
     run_command(build_cmd, "Building Distribution")
 
     duration = time.time() - start_time
@@ -548,7 +545,6 @@ def main() -> None:
         help="Bump type",
     )
     parser.add_argument("--deploy", action="store_true", help="Deploy to Netlify")
-    parser.add_argument("--nuitka", action="store_true", help="Use Nuitka instead of PyInstaller")
     parser.add_argument(
         "--skip-tests",
         action="store_true",

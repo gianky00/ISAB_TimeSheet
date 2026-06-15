@@ -106,11 +106,11 @@ Source: "{#EULAFile}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "INFO_BEFORE.rtf"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Assets
-Source: "{#AssetsPath}\app.ico"; DestDir: "{app}\assets"; Flags: ignoreversion
+; Source: "{#AssetsPath}\app.ico"; DestDir: "{app}\assets"; Flags: ignoreversion
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\assets\app.ico"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\assets\app.ico"; Tasks: desktopicon
+Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "Avvia {#MyAppName}"; Flags: nowait postinstall skipifsilent unchecked
