@@ -1,5 +1,5 @@
 {
   "passed": [
-    "tests/integration/test_sync_flow_hardened.py"
+    "tests/unit/gui/widgets/test_automazioni_widget.py"
   ]
 }

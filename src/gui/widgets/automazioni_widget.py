@@ -94,6 +94,7 @@ class AutomazioniWidget(QWidget):
 
         self.panel_pdl = ScaricoPDLPanel()
         self.panel_pdl_search = RicercaPDLPanel()
+        self.panel_pdl_search.data_updated.connect(self._on_pdl_search_completed)
 
         self.tab_safework.addTab(
             self.panel_pdl,
@@ -180,3 +181,13 @@ class AutomazioniWidget(QWidget):
         if sub_idx < target_tab.count():
             return target_tab.widget(sub_idx)
         return None
+
+    def _on_pdl_search_completed(self) -> None:
+        """Naviga alla vista PDL e aggiorna i dati dopo una ricerca completata."""
+        if hasattr(self.mw, "navigation_controller"):
+            self.mw.navigation_controller.navigate_to_pdl()
+            from src.gui.main_window.page_index import PageIndex
+
+            pdl_panel = self.mw.navigation_controller.get_panel(PageIndex.PDL_DB)
+            if pdl_panel and hasattr(pdl_panel, "refresh_data"):
+                pdl_panel.refresh_data()
