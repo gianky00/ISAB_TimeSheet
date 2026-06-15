@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.57.5",
+    "date": "2026-06-15",
+    "notes": [
+      {
+        "sha": "d35a53b3",
+        "message": "Fix: risoluzione path _internal per installer, rimozione Nuitka e fix mypy"
+      }
+    ]
+  },
+  {
     "version": "1.57.4",
     "date": "2026-06-15",
     "notes": [

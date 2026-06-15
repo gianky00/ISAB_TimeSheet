@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v1.57.4 (2026-06-15)
+
 ### Fix
 
 - **gui**: naviga a DB PDL dopo aggiornamento e correggi hint mypy
