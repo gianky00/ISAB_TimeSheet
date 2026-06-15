@@ -1,5 +1,19 @@
 [
   {
+    "version": "1.57.4",
+    "date": "2026-06-15",
+    "notes": [
+      {
+        "sha": "af691d0e",
+        "message": "chore(release): bump version and update changelog"
+      },
+      {
+        "sha": "f90510e6",
+        "message": "fix(gui): naviga a DB PDL dopo aggiornamento e correggi hint mypy"
+      }
+    ]
+  },
+  {
     "version": "1.57.3",
     "date": "2026-06-15",
     "notes": [
