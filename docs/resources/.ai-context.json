@@ -3,7 +3,7 @@
   "$generated_by": "devtools/cli/generate_ai_context.py",
   "$note": "File generato automaticamente. NON modificare manualmente.",
   "project": "SyncroJob Enterprise (ISAB_TimeSheet)",
-  "version": "1.57.2",
+  "version": "1.57.3",
   "entry_point": "main.py",
   "python_version": ">=3.12,<3.13",
   "architectural_style": "Layered Architecture (Domain, Application, Infrastructure)",

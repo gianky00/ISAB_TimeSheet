@@ -2,6 +2,12 @@
 
 ### Fix
 
+- **gui**: naviga a DB PDL dopo aggiornamento e correggi hint mypy
+
+## v1.57.2 (2026-06-10)
+
+### Fix
+
 - **devtools**: fix ModuleNotFoundError for analyze_dependencies in build_dist.py
 
 ## v1.57.1 (2026-06-10)
