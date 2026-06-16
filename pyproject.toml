@@ -318,10 +318,7 @@ module = [
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = [
-    "src.infrastructure.bots.*",
-    "win32com.*",
-]
+module = "src.infrastructure.bots.*"
 disallow_untyped_calls = false
 
 
