@@ -1,5 +1,11 @@
 ## Unreleased
 
+### Fix
+
+- **pdl**: ottimizzazione data creazione e risoluzione segnalazioni mypy
+
+## v1.57.5 (2026-06-15)
+
 ## v1.57.4 (2026-06-15)
 
 ### Fix

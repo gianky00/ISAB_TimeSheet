@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.57.6",
+    "date": "2026-06-16",
+    "notes": [
+      {
+        "sha": "2ec3895d",
+        "message": "fix(pdl): ottimizzazione data creazione e risoluzione segnalazioni mypy"
+      }
+    ]
+  },
+  {
     "version": "1.57.5",
     "date": "2026-06-15",
     "notes": [
