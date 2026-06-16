@@ -218,5 +218,6 @@ class ResourceManager:
             d.mkdir(parents=True, exist_ok=True)
 
 
-# Inizializzazione struttura all'import
-ResourceManager.ensure_structure()
+# Inizializzazione struttura all'import (evitata nei test per compatibilità pyfakefs)
+if "pytest" not in sys.modules:
+    ResourceManager.ensure_structure()

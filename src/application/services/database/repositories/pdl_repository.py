@@ -92,7 +92,8 @@ class PdlRepository:
         if sort_col_name == "n_pdl":
             clause += f" ORDER BY CAST(n_pdl AS INTEGER) {sort_order}, n_pdl {sort_order}"
         elif sort_col_name == "data_creazione":
-            clause += f" ORDER BY substr(data_creazione, 7, 4) || substr(data_creazione, 4, 2) || substr(data_creazione, 1, 2) || substr(data_creazione, 11) {sort_order}"
+            # Ordinamento solo per data (senza orario) come richiesto per risolvere problemi di sorting
+            clause += f" ORDER BY substr(data_creazione, 7, 4) || substr(data_creazione, 4, 2) || substr(data_creazione, 1, 2) {sort_order}, n_pdl {sort_order}"
         else:
             clause += f" ORDER BY {sort_col_name} {sort_order}"
 

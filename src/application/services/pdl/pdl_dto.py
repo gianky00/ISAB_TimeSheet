@@ -93,9 +93,14 @@ class PdlRowDTO:
         )
 
     def to_master_list(self) -> list[str]:
-        """Restituisce i campiùformattati per la tabella master della GUI."""
+        """Restituisce i campi formattati per la tabella master della GUI."""
+        # Visualizziamo solo la data in tabella per pulizia e ordinamento richiesti
+        display_date = self.data_creazione
+        if " " in display_date:
+            display_date = display_date.split(" ")[0]
+
         raw = [
-            self.data_creazione,
+            display_date,
             self.richiedente,
             self.n_pdl,
             self.area,
