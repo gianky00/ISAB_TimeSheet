@@ -314,6 +314,8 @@ module = [
     "email_validator.*",
     "jaraco.*",
     "playwright.*",
+    "pandas.*",
+    "shiboken6.*",
 ]
 ignore_missing_imports = true
 

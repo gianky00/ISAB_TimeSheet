@@ -16,7 +16,7 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 
 @overload
-def measure_time[F: Callable[..., Any]](
+def measure_time(
     func: F,
     *,
     threshold_ms: float | None = None,
@@ -31,7 +31,7 @@ def measure_time(
     threshold_ms: float | None = None,
     logger_name: str | None = None,
 ) -> Callable[[F], F]: ...
-def measure_time[F: Callable[..., Any]](
+def measure_time(
     func: F | None = None,
     *,
     threshold_ms: float | None = None,
@@ -118,7 +118,7 @@ def measure_time[F: Callable[..., Any]](
 
 
 @overload
-def log_entry_exit[F: Callable[..., Any]](
+def log_entry_exit(
     func: F,
     *,
     logger_name: str | None = None,
@@ -137,7 +137,7 @@ def log_entry_exit(
 ) -> Callable[[F], F]: ...
 
 
-def log_entry_exit[F: Callable[..., Any]](
+def log_entry_exit(
     func: F | None = None,
     *,
     logger_name: str | None = None,

@@ -190,6 +190,9 @@ class CertificatiTreeWidget(StandardTreeWidget):
                 h.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
             h.setStretchLastSection(True)
 
+        chevron_right = get_asset_path(Icons.CHEVRON_RIGHT).replace("\\", "/")
+        chevron_down = get_asset_path(Icons.CHEVRON_DOWN).replace("\\", "/")
+
         self.setStyleSheet(f"""
       QTreeWidget {{
         border: 1px solid {COLORS["border_light"]};
@@ -217,11 +220,11 @@ class CertificatiTreeWidget(StandardTreeWidget):
       }}
       QTreeWidget::branch:has-children:closed {{
         border-image: none;
-        image: url("{get_asset_path(Icons.CHEVRON_RIGHT).replace("\\", "/")}");
+        image: url("{chevron_right}");
       }}
       QTreeWidget::branch:has-children:open {{
         border-image: none;
-        image: url("{get_asset_path(Icons.CHEVRON_DOWN).replace("\\", "/")}");
+        image: url("{chevron_down}");
       }}
     """)
 
