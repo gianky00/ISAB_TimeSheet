@@ -147,7 +147,7 @@ class TestHelpers:
         mock_iter.return_value = [mock_proc1, mock_proc2, mock_proc3, mock_proc4]
 
         # Patch CONFIG_DIR to avoid side effects on real files
-        with patch("src.infrastructure.utils.helpers.CONFIG_DIR", Path("/config")):
+        with patch("src.infrastructure.utils.helpers.CONFIG_DIR", Path("/devtools/config")):
             fs.create_dir("/devtools/config/data/chrome_profile/Default")
             fs.create_file("/devtools/config/data/chrome_profile/SingletonLock")
             fs.create_file("/devtools/config/data/chrome_profile/Default/Lock")
