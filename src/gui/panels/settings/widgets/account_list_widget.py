@@ -76,6 +76,10 @@ class AccountListWidget(QWidget):
         self._add_btn(btns, Icons.EDIT, COLORS["primary_blue"], self.edit_account, "Modifica")
         self._add_btn(btns, Icons.TRASH, COLORS["error_red"], self.remove_account, "Rimuovi")
         self._add_btn(btns, Icons.STAR, COLORS["warning_yellow"], self.set_default, "Imposta Default")
+
+        if "Portale Fornitori" in self.title:
+            self._add_btn(btns, Icons.RESET, COLORS["primary_blue"], self.unlock_portale, "Sblocca Portale")
+
         btns.addStretch()
         layout.addLayout(btns)
 
@@ -103,6 +107,19 @@ class AccountListWidget(QWidget):
         viewport = self.list_widget.viewport()
         if viewport:
             menu.exec(viewport.mapToGlobal(pos))
+
+    def unlock_portale(self) -> None:
+        """Sblocca il Portale Fornitori se bloccato per credenziali errate."""
+        from PySide6.QtWidgets import QMessageBox
+
+        from src.application.services.config_manager import get_config_value, set_config_value
+
+        if get_config_value("portaleFornitoriLocked", False):
+            set_config_value("portaleFornitoriLocked", False)
+            QMessageBox.information(self, "Portale Sbloccato", "Il Portale Fornitori è stato sbloccato. Ora puoi riprovare i bot.")
+            self.changed.emit()
+        else:
+            QMessageBox.information(self, "Portale Attivo", "Il Portale Fornitori non è attualmente bloccato.")
 
     def add_account(self) -> None:
         """Apre il dialogo per l'aggiunta di un nuovo account."""

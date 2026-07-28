@@ -226,15 +226,37 @@ class BaseBot(ABC):
     def _login(self) -> bool:
         """Esegue il login al portale."""
 
+    def _is_portale_fornitori_bot(self) -> bool:
+        """Determina se questo è un bot del Portale Fornitori."""
+        from src.application.services.constants import URLs
+        return str(getattr(self, "ISAB_URL", "")) == URLs.ISAB_PORTAL
+
     def _safe_login_with_retry(self, max_retries: int = 2) -> bool:
         """Tenta il login con gestione automatica errori."""
-        for _ in range(max_retries):
+        is_pf = self._is_portale_fornitori_bot()
+        if is_pf:
+            from src.application.services.config_manager import get_config_value
+            if get_config_value("portaleFornitoriLocked", False):
+                self.log("❌ Portale Fornitori bloccato: credenziali errate. Sbloccare dalle Impostazioni.", "ERROR")
+                self.signals.critical_error.emit("Blocco Portale", "Il bot è stato bloccato per credenziali errate. Sbloccare nelle Impostazioni.")
+                return False
+            max_retries = 1
+
+        for attempt in range(max_retries):
             self._check_stop()
             try:
                 self._init_driver()
                 if self._login():
                     return True
+
                 self.cleanup()
+                self.log(f"Login fallito al tentativo {attempt + 1}/{max_retries}", "WARNING")
+
+                if is_pf:
+                    from src.application.services.config_manager import set_config_value
+                    set_config_value("portaleFornitoriLocked", True)
+                    self.log("❌ Credenziali Portale Fornitori errate: tutti i bot PF sono bloccati.", "ERROR")
+                    return False
             except Exception as e:
                 self.log(f"⚠️ Errore tentativo: {e}")
                 self.cleanup()
