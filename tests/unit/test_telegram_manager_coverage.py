@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from telegram import CallbackQuery, Chat, Message, Update, User
 
 from src.api.telegram.handlers import callbacks, messages
-from src.api.telegram_manager import TelegramService
+from src.application.services.telegram_manager import TelegramService
 
 
 class TestTelegramManagerCoverage:

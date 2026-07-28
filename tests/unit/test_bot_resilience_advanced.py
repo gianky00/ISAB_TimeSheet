@@ -9,6 +9,8 @@ from src.infrastructure.bots.base.base_bot import BaseBot
 
 # Classe concreta per testare BaseBot (che è astratta)
 class MockBot(BaseBot):
+    ISAB_URL = "http://mock-generic-url"
+
     @property
     def name(self):
         return "MockBot"
@@ -103,6 +105,21 @@ class TestBotResilienceAdvanced:
             assert res is True
             assert mock_login.call_count == 2
             assert mock_cleanup.call_count == 1  # Chiamato dopo il primo fallimento
+
+    def test_pf_login_fails_immediately_and_locks(self, bot, mocker):
+        """Test: Verifica che un bot PF non riprovi e blocchi il config al fallimento."""
+        from src.application.services.constants import URLs
+        bot.ISAB_URL = URLs.ISAB_PORTAL  # Setto l'URL per farlo identificare come PF
+        
+        with (
+            patch.object(bot, "_init_driver"),
+            patch.object(bot, "_login", return_value=False),
+            patch("src.application.services.config_manager.set_config_value") as mock_set,
+        ):
+            res = bot._safe_login_with_retry(max_retries=2)
+            
+            assert res is False
+            mock_set.assert_called_once_with("portaleFornitoriLocked", True)
 
     def test_execute_interrupted_error(self, bot):
         """Test: Gestione corretta dell'interruzione manuale dell'utente."""

@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.api.telegram.handlers import callbacks
-from src.api.telegram_manager import TelegramService
+from src.application.services.telegram_manager import TelegramService
 
 
 class TestTelegramDeepDive:

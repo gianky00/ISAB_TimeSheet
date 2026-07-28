@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from telegram import Chat, Message, Update, User
 
-from src.api.telegram_manager import TelegramService
+from src.application.services.telegram_manager import TelegramService
 
 
 @pytest.fixture
