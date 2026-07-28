@@ -58,7 +58,7 @@ class MonitoringController(QObject):
         num_scaduti = sum(1 for d in expiring if d["stato"] == "SCADUTA")
         num_in_scadenza = sum(1 for d in expiring if d["stato"] == "IN SCADENZA")
 
-        if num_scaduti == 0 and num_in_scadenza == 0:
+        if num_scaduti == num_in_scadenza == 0:
             return
 
         msg = self._build_toast_message(num_scaduti, num_in_scadenza)

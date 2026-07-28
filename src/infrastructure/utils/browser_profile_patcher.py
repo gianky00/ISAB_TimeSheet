@@ -57,16 +57,16 @@ def _patch_file(path: Path, download_path: Path) -> bool:
         # Mappa delle preferenze critiche da forzare a False
         overrides = {
             # Gestione Password (Root e Profile)
-            "password_manager.enabled": False,
-            "password_manager.google_password_manager_enabled": False,
-            "password_manager.leak_detection_check_enabled": False,
-            "password_manager.password_leak_detection_enabled": False,
-            "password_manager.password_check_enabled": False,
-            "password_manager.compromised_credentials_check_enabled": False,
-            "password_manager.leak_detection_enabled": False,
-            "profile.password_manager_enabled": False,
-            "profile.password_manager_leak_detection": False,
-            "profile.password_manager_leak_detection_check_enabled": False,
+            "password_manager.enabled": False,  # nosec B105
+            "password_manager.google_password_manager_enabled": False,  # nosec B105
+            "password_manager.leak_detection_check_enabled": False,  # nosec B105
+            "password_manager.password_leak_detection_enabled": False,  # nosec B105
+            "password_manager.password_check_enabled": False,  # nosec B105
+            "password_manager.compromised_credentials_check_enabled": False,  # nosec B105
+            "password_manager.leak_detection_enabled": False,  # nosec B105
+            "profile.password_manager_enabled": False,  # nosec B105
+            "profile.password_manager_leak_detection": False,  # nosec B105
+            "profile.password_manager_leak_detection_check_enabled": False,  # nosec B105
             "credentials_enable_service": False,
             "credentials_enable_autosignin": False,
             # Autofill e Privacy
@@ -86,7 +86,7 @@ def _patch_file(path: Path, download_path: Path) -> bool:
             "savefile.default_directory": str(download_path),
             # Blocco esplicito dei popup di sicurezza e password
             "profile.default_content_setting_values.notifications": 2,
-            "profile.default_content_setting_values.password_manager": 2,
+            "profile.default_content_setting_values.password_manager": 2,  # nosec B105
         }
 
         modified = False

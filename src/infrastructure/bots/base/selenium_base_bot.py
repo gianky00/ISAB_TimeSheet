@@ -133,9 +133,9 @@ class SeleniumBaseBot(BaseBot, ABC):
             "download.prompt_for_download": False,
             "credentials_enable_service": False,
             "profile.password_manager_enabled": False,
-            "profile.password_manager_leak_detection": False,
-            "password_manager.enabled": False,
-            "password_manager.leak_detection_check_enabled": False,
+            "profile.password_manager_leak_detection": False,  # nosec B105
+            "password_manager.enabled": False,  # nosec B105
+            "password_manager.leak_detection_check_enabled": False,  # nosec B105
         }
         if self.download_path:
             prefs["download.default_directory"] = str(Path(self.download_path).resolve())

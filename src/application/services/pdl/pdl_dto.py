@@ -108,7 +108,7 @@ class PdlRowDTO:
             self.stato,
             self.descrizione,
         ]
-        return [("" if str(val).lower() in ("nan", "none", "") else str(val)) for val in raw]
+        return [("" if str(val).lower() in ("nan", "none", "") else str(val)) for val in raw]  # noqa: FURB123
 
     def to_full_list(self) -> list[str | int]:
         """Restituisce tutti i campiùcome lista (per compatibilit  legacy se necessaria)."""

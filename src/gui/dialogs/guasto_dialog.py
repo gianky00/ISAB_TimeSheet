@@ -68,11 +68,11 @@ class GuastoDialog(QDialog):
         return "⚠️ Segnala Guasto Strumento", COLORS["error_red"]
 
     def _setup_readonly_fields(self, form: QFormLayout, label_style: str, readonly_style: str) -> None:
-        for label_text, value in [
+        for label_text, value in (
             ("ID COEMI", self.id_coemi),
             ("Matricola", self.matricola),
             ("Modello", self.modello),
-        ]:
+        ):
             lbl = QLabel(label_text)
             lbl.setStyleSheet(label_style)
             field = QLineEdit(value)

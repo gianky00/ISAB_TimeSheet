@@ -167,7 +167,7 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
             # Pulizia avanzata nomi colonne: toglie accenti incasinati e spazi multipli
             clean_columns = {}
             for col in df.columns:
-                c = str(col).upper()
+                c = str(col).upper()  # noqa: FURB123
                 c = re.sub(r"[^A-Z0-9 ]", "", c)
                 c = re.sub(r"\s+", " ", c).strip()
                 clean_columns[col] = c

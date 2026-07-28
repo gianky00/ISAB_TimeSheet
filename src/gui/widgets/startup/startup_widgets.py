@@ -200,7 +200,7 @@ class GlowingProgressBar(QWidget):
         base_chance = 0.4
         sprint_bonus = min(5, int(diff / 2)) if diff > 0.1 else 0
 
-        if random.random() < base_chance or sprint_bonus > 0:  # noqa: S311
+        if random.random() < base_chance or sprint_bonus > 0:  # noqa: S311  # nosec B311
             num_to_spawn = 1 + sprint_bonus
             for _ in range(num_to_spawn):
                 speed_mult = 1.5 if sprint_bonus > 0 else 0.5
@@ -208,8 +208,8 @@ class GlowingProgressBar(QWidget):
                     {
                         "x": float(pw),
                         "y": float(bar_y + 3),
-                        "vx": -random.uniform(1.0, 5.0) * speed_mult,  # noqa: S311
-                        "vy": random.uniform(-2.0, 2.0) * speed_mult,  # noqa: S311
+                        "vx": -random.uniform(1.0, 5.0) * speed_mult,  # noqa: S311  # nosec B311
+                        "vy": random.uniform(-2.0, 2.0) * speed_mult,  # noqa: S311  # nosec B311
                         "life": 1.0,
                     }
                 )
@@ -267,7 +267,7 @@ class GlowingProgressBar(QWidget):
             alpha = int(p["life"] * 255)
             color = (
                 QColor(255, 200, 50, alpha)
-                if random.random() > 0.3  # noqa: S311
+                if random.random() > 0.3  # noqa: S311  # nosec B311
                 else QColor(52, 152, 219, alpha)
             )
             painter.setPen(QPen(color, 1.5))
