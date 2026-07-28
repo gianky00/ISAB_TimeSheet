@@ -1,5 +1,1479 @@
 [
   {
+    "version": "1.58.0",
+    "date": "2026-07-28",
+    "notes": [
+      {
+        "sha": "13c9e661",
+        "message": "add"
+      },
+      {
+        "sha": "f6df001b",
+        "message": "test: Fix remaining failing mock tests"
+      },
+      {
+        "sha": "c3acf4f4",
+        "message": "test: fix mock directory path in test_cleanup_bot_processes"
+      },
+      {
+        "sha": "8e26d3cd",
+        "message": "a"
+      },
+      {
+        "sha": "58517314",
+        "message": "style: fix ruff linting errors in tests"
+      },
+      {
+        "sha": "6b960c3b",
+        "message": "add"
+      },
+      {
+        "sha": "e0304aea",
+        "message": "test(robust): fix test collection hangs and pf resilience logic"
+      },
+      {
+        "sha": "85dc4160",
+        "message": "fix(security): resolve pip-audit vulnerabilities"
+      },
+      {
+        "sha": "cd8263a3",
+        "message": "fix(quality): resolve ruff lint errors and config conflicts"
+      },
+      {
+        "sha": "46c33016",
+        "message": "fix(quality): resolve refurb and bandit security alerts"
+      },
+      {
+        "sha": "1e501f2f",
+        "message": "fix(typing): resolve mypy typing errors and strict checking conflicts"
+      },
+      {
+        "sha": "736b45cd",
+        "message": "fix(devtools): resolve UV_EXE path issue in release.py"
+      },
+      {
+        "sha": "f5532dd1",
+        "message": "add"
+      },
+      {
+        "sha": "aaaab2b6",
+        "message": "feat(bot): implement PF automatic lock on failed login and GUI unlock"
+      },
+      {
+        "sha": "734ff064",
+        "message": "fix(mypy): risoluzione definitiva segnalazioni untyped call in pdl_sync_manager"
+      },
+      {
+        "sha": "e9631cb6",
+        "message": "chore: release v1.57.6 [auto]"
+      },
+      {
+        "sha": "2ec3895d",
+        "message": "fix(pdl): ottimizzazione data creazione e risoluzione segnalazioni mypy"
+      },
+      {
+        "sha": "cda6838f",
+        "message": "chore: release v1.57.5 [auto]"
+      },
+      {
+        "sha": "d35a53b3",
+        "message": "Fix: risoluzione path _internal per installer, rimozione Nuitka e fix mypy"
+      },
+      {
+        "sha": "5a30b9d5",
+        "message": "chore: release v1.57.4 [auto]"
+      },
+      {
+        "sha": "af691d0e",
+        "message": "chore(release): bump version and update changelog"
+      },
+      {
+        "sha": "f90510e6",
+        "message": "fix(gui): naviga a DB PDL dopo aggiornamento e correggi hint mypy"
+      },
+      {
+        "sha": "047ba347",
+        "message": "chore: release v1.57.2 [auto]"
+      },
+      {
+        "sha": "c2f0f719",
+        "message": "fix(devtools): fix ModuleNotFoundError for analyze_dependencies in build_dist.py"
+      },
+      {
+        "sha": "cc20b8b3",
+        "message": "chore: release v1.57.1 [auto]"
+      },
+      {
+        "sha": "e19c48b6",
+        "message": "fix(devtools): fix incorrect path to build_dist.py replacing admin with devtools/gui"
+      },
+      {
+        "sha": "8ae62fb7",
+        "message": "chore: release v1.57.0 [auto]"
+      },
+      {
+        "sha": "df15e0ec",
+        "message": "fix(devtools): preemptively run uv lock and fix generate_ai_context.py path to prevent pre-commit commit failure"
+      },
+      {
+        "sha": "2977d0de",
+        "message": "fix(devtools): inject VENV_BIN into PATH to prevent pre-commit uv hooks from failing and fix leftover changelog.json path"
+      },
+      {
+        "sha": "81c51946",
+        "message": "fix(devtools): fix incorrect paths to version.py and changelog.json"
+      },
+      {
+        "sha": "02bfb8fe",
+        "message": "fix(devtools): use explicit UV_EXE path for lock integrity check to prevent WinError 2"
+      },
+      {
+        "sha": "b956de32",
+        "message": "fix(devtools): resolve WinError 2 resolving path with shutil.which in release.py"
+      },
+      {
+        "sha": "502b33c5",
+        "message": "add"
+      },
+      {
+        "sha": "d78c93d1",
+        "message": "fix(devtools): fix PROJECT_ROOT path resolution in gui scripts and linter warnings"
+      },
+      {
+        "sha": "f43544d9",
+        "message": "fix(sync): refine SmartSyncEngine metadata handling and key column mapping"
+      },
+      {
+        "sha": "9c8d7fd7",
+        "message": "test(gui): fix pytest timeouts and segfaults caused by QThreadPool and QSystemTrayIcon in headless environment"
+      },
+      {
+        "sha": "f9515e00",
+        "message": "Merge branch 'feature/refactor-final-c-complexity' into main"
+      },
+      {
+        "sha": "88953874",
+        "message": "refactor(core&gui): successfully reduce cyclomatic complexity to rank A/B for remaining targets"
+      },
+      {
+        "sha": "dc1d2bd3",
+        "message": "docs: add remaining C-rank targets to plan"
+      },
+      {
+        "sha": "3b378d6a",
+        "message": "refactor(core&gui): reduce cyclomatic complexity, fix annotazioni UX and tests regression"
+      },
+      {
+        "sha": "997ee355",
+        "message": "style: autoformattazione ruff per allineamento stile"
+      },
+      {
+        "sha": "be5ffc74",
+        "message": "docs: aggiunta piano di refactoring per XENON"
+      },
+      {
+        "sha": "ff629e6e",
+        "message": "chore(quality): fix quality_check script e riduzione complessità ciclomatica pdf_exporter"
+      },
+      {
+        "sha": "85002dac",
+        "message": "feat(certificati): ottimizzazione UI e PDF per annotazioni e correzione test suite"
+      },
+      {
+        "sha": "a61f9aee",
+        "message": "docs(ai): add domain GEMINI.md cross-references in AI onboarding README"
+      },
+      {
+        "sha": "fec39cfc",
+        "message": "chore(ai): expand gemini.toml overrides with complete QA standards"
+      },
+      {
+        "sha": "7ae7839f",
+        "message": "docs(ai): add README onboarding guide for .gemini structure"
+      },
+      {
+        "sha": "d24fe013",
+        "message": "refactor(ai): cleanup and restructure .gemini AI folder to new standard"
+      },
+      {
+        "sha": "146a297d",
+        "message": "chore(ai): track AI session state in git for cross-machine synchronization"
+      },
+      {
+        "sha": "189afb1a",
+        "message": "feat(ai): configure gemini overrides and setup session memory state"
+      },
+      {
+        "sha": "137286bf",
+        "message": "chore: add sqlite shm/wal and temp folder to gitignore"
+      },
+      {
+        "sha": "af7e32f0",
+        "message": "docs: reference domain-specific GEMINI.md files in root"
+      },
+      {
+        "sha": "c4ca1913",
+        "message": "fix(ci): fix ruff linting errors in test runner reporting"
+      },
+      {
+        "sha": "cc97c49d",
+        "message": "fix(ci): robust test runner now exports markdown report and exits with proper status code"
+      },
+      {
+        "sha": "0f39ce21",
+        "message": "fix(ci): do not fail if ruff outputs success message"
+      },
+      {
+        "sha": "f6525f3f",
+        "message": "fix(ci): suppress PLW0108 ruff rule, fix lints, and print linter errors to CI stdout"
+      },
+      {
+        "sha": "b5a79dba",
+        "message": "test: skip test_pandera_validation gracefully when local data file is missing"
+      },
+      {
+        "sha": "2432b758",
+        "message": "fix(ci): correct project root path and ensure strict exit codes in generate_ci_context.py"
+      },
+      {
+        "sha": "fecfb5cd",
+        "message": "chore: remove remaining obsolete poetry references"
+      },
+      {
+        "sha": "787fe571",
+        "message": "docs(ai): setup domain-specific GEMINI.md rules and update ai-context.json generator for uv"
+      },
+      {
+        "sha": "4ae82c06",
+        "message": "build(deps): migrate from poetry to uv, cleanup root dir and scripts"
+      },
+      {
+        "sha": "7927e420",
+        "message": "chore: release v1.56.2 [auto]"
+      },
+      {
+        "sha": "c61477eb",
+        "message": "fix(pdl): prevent silent UI crashes by casting imported dataframe to strings"
+      },
+      {
+        "sha": "289e3332",
+        "message": "refactor(gui): ottimizzazione componenti base bot e gestione asincrona worker"
+      },
+      {
+        "sha": "5d40a916",
+        "message": "fix(ci): esegui generate_ci_context.py all'interno dell'ambiente virtuale di poetry per risolvere ModuleNotFoundError"
+      },
+      {
+        "sha": "e22c89d2",
+        "message": "chore(ci): pin windows runner to windows-2025 to suppress redirect notice"
+      },
+      {
+        "sha": "7d6064e0",
+        "message": "chore(ci): opt into Node.js 24 for GitHub Actions to fix deprecation warnings"
+      },
+      {
+        "sha": "6b1b13c6",
+        "message": "chore(ci): rimuovi step Codecov per assenza di report di copertura e token"
+      },
+      {
+        "sha": "13c47a09",
+        "message": "fix(ci): aggiornato il percorso dello script generate_ci_context.py (da scripts/ a tools/)"
+      },
+      {
+        "sha": "88a98af6",
+        "message": "chore(ci): update poetry version to 2.3.4 in github workflows"
+      },
+      {
+        "sha": "8a749112",
+        "message": "fix(ci): aggiunti campi mancanti in tool.poetry per correggere l'errore di poetry install"
+      },
+      {
+        "sha": "2d7d88b5",
+        "message": "chore: release v1.56.1 [auto]"
+      },
+      {
+        "sha": "1a875c39",
+        "message": "fix(typing): risoluzione segnalazioni mypy in pdl_sync_manager e pdf_exporter"
+      },
+      {
+        "sha": "76e57ccf",
+        "message": "chore: release v1.56.0 [auto]"
+      },
+      {
+        "sha": "76f14287",
+        "message": "feat(certificati): aggiunta funzionalità Controllo Preventivo per gli strumenti"
+      },
+      {
+        "sha": "cd41704d",
+        "message": "feat(certificati): invio notifica email guasto, fix pdf stats e fix crash menu"
+      },
+      {
+        "sha": "dcd3ab1b",
+        "message": "feat(certificati): implementata gestione guasti per strumenti campione (Opzione B)"
+      },
+      {
+        "sha": "fe4a2d3b",
+        "message": "Merge pull request #155 from gianky00/feature/gui-optimization"
+      },
+      {
+        "sha": "9fc5c47a",
+        "message": "test: add comprehensive unit tests to reach coverage goals and update config"
+      },
+      {
+        "sha": "a046fc58",
+        "message": "chore: cleanup analysis files"
+      },
+      {
+        "sha": "80e4472c",
+        "message": "docs: stabilize 99%+ docstring coverage and fix mypy types"
+      },
+      {
+        "sha": "e333fe36",
+        "message": "feat(test): comprehensive coverage expansion and report styling optimization"
+      },
+      {
+        "sha": "d56b00a4",
+        "message": "Remove generated test report files"
+      },
+      {
+        "sha": "e4eb4851",
+        "message": "chore: release v1.55.0 [auto]"
+      },
+      {
+        "sha": "06b8f38d",
+        "message": "chore: release v1.54.0 [auto]"
+      },
+      {
+        "sha": "5255182d",
+        "message": "fix(security): resolve and exclude dev-only diagrams vulnerability for 100/100 syncro-score"
+      },
+      {
+        "sha": "38bf8a9b",
+        "message": "fix(types): fix mypy errors after poetry update and pywin32 types upgrade"
+      },
+      {
+        "sha": "7ed4b850",
+        "message": "fix(gui): optimize splash progress bar with ultra-soft 0.15 points per frame increment"
+      },
+      {
+        "sha": "8824c234",
+        "message": "fix(gui): further soften splash progress bar to 0.25 points per frame for maximum smoothness"
+      },
+      {
+        "sha": "98497cb2",
+        "message": "fix(gui): linearize and smooth splash progress bar to eliminate discrete steps"
+      },
+      {
+        "sha": "37f3e0bf",
+        "message": "fix(gui): remove holographic text scramble glitch from splash progress bar"
+      },
+      {
+        "sha": "e520d32d",
+        "message": "fix(gui): fix parent branch icons in certificates tree and linearize splash progress"
+      },
+      {
+        "sha": "f6b21ee4",
+        "message": "fix(release): fix resource manager changelog path and dependency analyzer encoding on Windows"
+      },
+      {
+        "sha": "c8176058",
+        "message": "chore: release v1.53.0 [auto]"
+      },
+      {
+        "sha": "23169af7",
+        "message": "refactor(poetry): migrate config to standard PEP 621 metadata (Poetry 2.0)"
+      },
+      {
+        "sha": "8a4ce960",
+        "message": "chore: release v1.52.0 [auto]"
+      },
+      {
+        "sha": "b681abdc",
+        "message": "fix(release): fix git PATH resolving and quality tools false positives"
+      },
+      {
+        "sha": "e9575039",
+        "message": "fix(changelog): risolto caricamento changelog e build date in produzione"
+      },
+      {
+        "sha": "2d967697",
+        "message": "chore: release v1.51.0 [auto]"
+      },
+      {
+        "sha": "3668cbd7",
+        "message": "fix(release): sostituisce poetry lock --check con poetry check --lock per compatibilità Poetry 2.x"
+      },
+      {
+        "sha": "05050e41",
+        "message": "Remove pydantic_settings from pyproject modules"
+      },
+      {
+        "sha": "8530b5b3",
+        "message": "test(gui): expand coverage for low-coverage modules"
+      },
+      {
+        "sha": "068b50c6",
+        "message": "fix(tests): resolve regressions and lint issues in gui tests"
+      },
+      {
+        "sha": "5899f70c",
+        "message": "feat(tests): migrate to robust test runner and modernize gui test suite"
+      },
+      {
+        "sha": "50e591a7",
+        "message": "feat(gui): standardize dialogs and expand test coverage"
+      },
+      {
+        "sha": "237f65bd",
+        "message": "fix(tests): prevent ai json truncation on exit"
+      },
+      {
+        "sha": "a76f359b",
+        "message": "fix(tests): resolve remaining failures in runner internals tests"
+      },
+      {
+        "sha": "62e85da2",
+        "message": "fix(tests): adapt runner internals unit tests to SRP signatures"
+      },
+      {
+        "sha": "a0c26186",
+        "message": "feat(runner): add --test shortcut for AI diagnostic mode"
+      },
+      {
+        "sha": "c547c5ca",
+        "message": "fix(runner): restore worker isolation and granular --last-failed retry"
+      },
+      {
+        "sha": "7ce21390",
+        "message": "test: fix timeout and Qt native crashes in unit tests"
+      },
+      {
+        "sha": "1552bdeb",
+        "message": "refactor: apply refurb code style improvements (FURB113-183)"
+      },
+      {
+        "sha": "1a7e4b7f",
+        "message": "test: fix remaining import paths for tests"
+      },
+      {
+        "sha": "5c3c59ea",
+        "message": "test: resolve test file name conflicts and remove duplicates"
+      },
+      {
+        "sha": "1c432403",
+        "message": "test: comprehensive refactoring and stabilization"
+      },
+      {
+        "sha": "129310d9",
+        "message": "fix: resolve MyPy 'unreachable' error and complete test suite expansion"
+      },
+      {
+        "sha": "90988caf",
+        "message": "test: massive expansion of unit test suite and core stability fixes"
+      },
+      {
+        "sha": "e67e140c",
+        "message": "style(gui): complete redesign of changelog panel with animated timeline and unified layout"
+      },
+      {
+        "sha": "7559fc0b",
+        "message": "chore(docs): remove completed PYSIDE6_OPTIMIZATION.md roadmap"
+      },
+      {
+        "sha": "0e64008c",
+        "message": "test: stabilize full suite and align with V9.4 SRP architecture"
+      },
+      {
+        "sha": "1366a3d2",
+        "message": "Merge pull request #154 from gianky00/feature/gui-optimization"
+      },
+      {
+        "sha": "a1b91343",
+        "message": "feat(ui): refine Storico OdA layout, animation and resizing"
+      },
+      {
+        "sha": "594a58bf",
+        "message": "Merge pull request #153 from gianky00/feature/gui-optimization"
+      },
+      {
+        "sha": "d12c2c44",
+        "message": "add"
+      },
+      {
+        "sha": "09572c61",
+        "message": "chore(docs): clean up obsolete documentation and include new structural docs"
+      },
+      {
+        "sha": "40ca5ab5",
+        "message": "refactor(core): scomposizione SRP completa di AppInitializer e BackupManager"
+      },
+      {
+        "sha": "64d3bee5",
+        "message": "docs: integra l'analisi completa della coesione LCOM in implementation_plan.md"
+      },
+      {
+        "sha": "9707812b",
+        "message": "docs(refactor): update implementation plan with completed status"
+      },
+      {
+        "sha": "a6333fc2",
+        "message": "refactor(core): decouple autopilot scheduling and system diagnostics for SRP compliance"
+      },
+      {
+        "sha": "29718994",
+        "message": "refactor(gui): decompose search_controller into search_results_menu for SRP"
+      },
+      {
+        "sha": "49960a86",
+        "message": "feat: integrate cohesion library for SRP and LCOM metrics mapping and update documents"
+      },
+      {
+        "sha": "cb2dc684",
+        "message": "feat: integrate pydantic-settings and libcst libraries with typed SyncroJobSettings model and context documentation"
+      },
+      {
+        "sha": "7373ef54",
+        "message": "chore: exclude utility scripts from mypy in pyproject.toml"
+      },
+      {
+        "sha": "764336e5",
+        "message": "docs: add AI context files (llm.txt, llm-full.txt) and semantic typing guidelines"
+      },
+      {
+        "sha": "e34647bc",
+        "message": "docs: risoluzione massiva delle segnalazioni pydoclint (DOC301, DOC601, DOC603) e Ruff"
+      },
+      {
+        "sha": "a69398de",
+        "message": "fix(quality): resolve ruff and mypy strict violations in gui and core"
+      },
+      {
+        "sha": "66cb43f3",
+        "message": "chore: remove accidental byproduct file"
+      },
+      {
+        "sha": "bcd139b8",
+        "message": "fix(quality): final type cleanup in safework base"
+      },
+      {
+        "sha": "0ebaa327",
+        "message": "docs(quality): 100% docstring coverage for optimized modules and ruff fixes"
+      },
+      {
+        "sha": "e3b4c878",
+        "message": "fix(quality): full mypy strict compliance across all modules"
+      },
+      {
+        "sha": "b77b086e",
+        "message": "fix(quality): final ruff formatting and type fixes"
+      },
+      {
+        "sha": "c3d67bdd",
+        "message": "refactor: radical gui optimization for extreme fluidity (Zero-I/O UI)"
+      },
+      {
+        "sha": "68f22470",
+        "message": "chore: apply automated linting and formatting fixes (Ruff/pre-commit)"
+      },
+      {
+        "sha": "4cd17260",
+        "message": "Merge branch 'feature/dynamic-changelog-safety-checks'"
+      },
+      {
+        "sha": "3984a35a",
+        "message": "Merge branch 'feature/dynamic-changelog-safety-checks'"
+      },
+      {
+        "sha": "4564acc2",
+        "message": "fix: ripristinati cast espliciti per conformità MyPy Strict"
+      },
+      {
+        "sha": "88f5c14f",
+        "message": "fix(contabilita): risolto bug aggiornamento certificati e unificati percorsi DB"
+      },
+      {
+        "sha": "3fb019b3",
+        "message": "refactor: ottimizzazione codice via refurb e personalizzazioni GUI"
+      },
+      {
+        "sha": "b5584fa2",
+        "message": "add"
+      },
+      {
+        "sha": "21cc0dfc",
+        "message": "chore: release v1.49.0 [auto]"
+      },
+      {
+        "sha": "1d2fd16c",
+        "message": "fix(security): risolte vulnerabilità Bandit e allineati controlli Ruff"
+      },
+      {
+        "sha": "1267ef53",
+        "message": "feat(splash): implementata Laser-Track Progress Bar con percentuale olografica dinamica"
+      },
+      {
+        "sha": "1b3f5eb0",
+        "message": "feat(splash): raffinamento totale macro-status per eliminare fallback generici"
+      },
+      {
+        "sha": "8b245d9c",
+        "message": "fix(splash): risolto bug visibilità notifica LICENZA VALIDATA e sincronizzato effetto typewriter"
+      },
+      {
+        "sha": "50f5ed1e",
+        "message": "feat(splash): riorganizzazione header con info stack laterale (versione sopra, rilascio sotto)"
+      },
+      {
+        "sha": "e45553ce",
+        "message": "feat(splash): upgrade animazione LICENZA VALIDATA con effetto typewriter e breathing fluido"
+      },
+      {
+        "sha": "04e18480",
+        "message": "feat(splash): aggiunto feedback olografico LICENZA VALIDATA con animazione breathing"
+      },
+      {
+        "sha": "bc524da0",
+        "message": "style(splash): ottimizzato contrasto e leggibilità data di rilascio nell'header"
+      },
+      {
+        "sha": "3daaf83a",
+        "message": "feat(splash): espansione verticale e riorganizzazione finale layout header/footer"
+      },
+      {
+        "sha": "e1a11611",
+        "message": "feat(splash): riorganizzazione layout con data sotto il titolo e credits centrati a piè di pagina"
+      },
+      {
+        "sha": "ddd92661",
+        "message": "style(splash): uniformato colore data rilascio al blu della versione"
+      },
+      {
+        "sha": "df98eefc",
+        "message": "feat(splash): spostata e rinominata data rilascio accanto alla versione nell'header"
+      },
+      {
+        "sha": "c4bc462f",
+        "message": "feat(splash): aggiunta Build Date dinamica dal changelog nel box metadati"
+      },
+      {
+        "sha": "163f3dfd",
+        "message": "feat(splash): perfezionata animazione breathing crediti con ciclo fluido e fix indentazione"
+      },
+      {
+        "sha": "2f6086f4",
+        "message": "feat(splash): animazione typewriter e breathing pulse per i crediti developer"
+      },
+      {
+        "sha": "8fcdf933",
+        "message": "feat(splash): aggiunto system credit olografico e risolti errori import Ruff"
+      },
+      {
+        "sha": "4f46b84f",
+        "message": "feat(splash): raffinamento mappatura macro-status per eliminare fallback AVVIO IN CORSO"
+      },
+      {
+        "sha": "fcaefb5d",
+        "message": "feat(splash): raggruppamento macro-fasi e conformità totale QA"
+      },
+      {
+        "sha": "6fd154d9",
+        "message": "feat(splash): unificato header brand-versione con scaling dinamico"
+      },
+      {
+        "sha": "07d818e3",
+        "message": "feat(splash): aggiunto orologio live e DNA tech-trace nel changelog"
+      },
+      {
+        "sha": "33047d90",
+        "message": "feat(splash): sostituita animazione caricamento testuale con PulseIndicator grafico"
+      },
+      {
+        "sha": "43b9c57e",
+        "message": "style(splash): armonizzazione cromatica blu, effetto glow header e pulizia titoli console"
+      },
+      {
+        "sha": "e50c6d2f",
+        "message": "style(splash): restyling header changelog con effetto glow e rimozione parentesi"
+      },
+      {
+        "sha": "84797d11",
+        "message": "style(splash): aggiornato titolo header changelog ticker per rimuovere ridondanza versione"
+      },
+      {
+        "sha": "baefb27e",
+        "message": "feat(splash): aggiunto titolo dinamico della versione e refactoring per standard Ruff"
+      },
+      {
+        "sha": "ddc79b1d",
+        "message": "fix(splash): risolto bug sovrapposizione righe changelog ticker tramite ancoraggio posizioni statiche"
+      },
+      {
+        "sha": "c7753788",
+        "message": "style(splash): riduzione intervallo changelog ticker a 3.5 secondi"
+      },
+      {
+        "sha": "de548cae",
+        "message": "feat(splash): animazione Slide-Up & Fade con easing OutBack per il changelog ticker"
+      },
+      {
+        "sha": "e74c68b1",
+        "message": "style(splash): standardizzazione etichette changelog in NEW, FIX e UPDATE"
+      },
+      {
+        "sha": "e8a7ab1b",
+        "message": "style(splash): rimozione bordi sottili dalle righe del changelog ticker"
+      },
+      {
+        "sha": "8039b360",
+        "message": "style(splash): espansione orizzontale changelog ticker a 750px per evitare troncamenti"
+      },
+      {
+        "sha": "f725998a",
+        "message": "style(splash): upscale proporzionale dello splash screen a 850x560"
+      },
+      {
+        "sha": "db1364b5",
+        "message": "style(splash): restyling premium con effetti neon, bagliori dinamici e contenitori olografici"
+      },
+      {
+        "sha": "2aebec25",
+        "message": "feat(splash): implementazione Ticker multi-riga per il changelog"
+      },
+      {
+        "sha": "5d33ae28",
+        "message": "style(gui): uniformati tooltip per ModernButton in Light Mode"
+      },
+      {
+        "sha": "611900bc",
+        "message": "feat(splash): implementazione ChangelogTicker nello splashscreen"
+      },
+      {
+        "sha": "3f220afc",
+        "message": "feat(gui): persistenza dello stato dettagli della card meteo al riavvio"
+      },
+      {
+        "sha": "67724da9",
+        "message": "style(gui): uniformati tutti i tooltip in Light Mode e corretti errori linter"
+      },
+      {
+        "sha": "f726487a",
+        "message": "feat(gui): aggiunti pulsanti dettaglio/ritorno in WeatherWidget con animazione spin di Don Ciro"
+      },
+      {
+        "sha": "e0ac3d0f",
+        "message": "feat(ui): implement dynamic version badge with sparkles in sidebar changelog"
+      },
+      {
+        "sha": "a76c84da",
+        "message": "fix(updater): resolve 'Install Now' failure on Windows"
+      },
+      {
+        "sha": "e1ebb709",
+        "message": "docs(quality): achieve 100% docstring coverage globally"
+      },
+      {
+        "sha": "4f5da98c",
+        "message": "chore: release v1.48.0 [auto]"
+      },
+      {
+        "sha": "fb5f43c1",
+        "message": "chore(quality): global code quality cleanup and documentation enhancement"
+      },
+      {
+        "sha": "92e7ea9f",
+        "message": "refactor(bots): enhance interaction robustness and migrate to structural locators"
+      },
+      {
+        "sha": "4a36bfa7",
+        "message": "feat(timbrature): implement massive import and real-time access monitoring"
+      },
+      {
+        "sha": "0b96e466",
+        "message": "fix(bot): resolve Excel download ambiguity in Timbrature bot using FontAwesome unicode"
+      },
+      {
+        "sha": "2baf75b1",
+        "message": "fix(browser): remove --no-sandbox, --disable-gpu to resolve STATUS_BREAKPOINT crashes"
+      },
+      {
+        "sha": "dbaa0a3b",
+        "message": "fix(splash): pipe license details dynamically to standalone splash screen via binary unbuffered stdin"
+      },
+      {
+        "sha": "453303cc",
+        "message": "fix(bot): prevent TypeError on unexpected societa parameter in Playwright base and Timbrature bot"
+      },
+      {
+        "sha": "5b3ddc09",
+        "message": "perf(gui): optimize splash screen and startup dialog with async license and HWID IPC"
+      },
+      {
+        "sha": "98cbac43",
+        "message": "feat(ui): implement dynamic changelog and sidebar breathing warning pulse"
+      },
+      {
+        "sha": "6be8b7d2",
+        "message": "feat(gui): improve changelog UI with light-mode tooltips, clear filters and dynamic next release handling"
+      },
+      {
+        "sha": "92a8a858",
+        "message": "Merge pull request #152 from gianky00/feature/refactor-contabilita-srp"
+      },
+      {
+        "sha": "c7868a76",
+        "message": "feat(report): aggiunta postilla audit per strumenti senza scadenza nel PDF"
+      },
+      {
+        "sha": "e7916371",
+        "message": "fix(updater): improve installer launch robustness on Windows with delay and detached process"
+      },
+      {
+        "sha": "d9312285",
+        "message": "chore: release v1.47.0 [auto]"
+      },
+      {
+        "sha": "289527dc",
+        "message": "build: pulizia repository e aggiornamento .gitignore"
+      },
+      {
+        "sha": "8848bac6",
+        "message": "refactor(core): allineamento suite di test alla nuova architettura SRP e fix MyPy"
+      },
+      {
+        "sha": "636c75a3",
+        "message": "fix(core): remove blocking run_update() from BotWorker to prevent getaddrinfo GIL freeze"
+      },
+      {
+        "sha": "4e4bae3d",
+        "message": "perf(core): aggiunge riscaldamento WMI/psutil nello splashscreen per eliminare il blocco GIL causato dall'iterazione dei processi al primo avvio"
+      },
+      {
+        "sha": "e9451454",
+        "message": "perf(core): pre-carica i moduli pesanti (Playwright, PDF, Excel) nello splashscreen per eliminare lag al primo avvio"
+      },
+      {
+        "sha": "712d03e7",
+        "message": "perf(gui): elimina freeze GIL al primo avvio centralizzando i log con QApplication.processEvents"
+      },
+      {
+        "sha": "8003f104",
+        "message": "perf(bots): elimina timeout chiusura Playwright tramite rimozione page.close ridondanti e cleanup forzato dei processi"
+      },
+      {
+        "sha": "a507d675",
+        "message": "perf(gui): elimina freeze GUI al termine del bot tramite QThread asincroni"
+      },
+      {
+        "sha": "e692fbf3",
+        "message": "refactor(bots): hardening pass dati, gestione sessione attiva, timesheet vuoti, race condition e click nativo cerca"
+      },
+      {
+        "sha": "0fc16f83",
+        "message": "fix(bots/db): corretti errori di sintassi XPath in locators e query SQL nel repository PDL"
+      },
+      {
+        "sha": "a3ac0f3c",
+        "message": "fix(bots): corretto errore sintassi XPath nei locators del portale fornitori"
+      },
+      {
+        "sha": "39eb0a85",
+        "message": "fix(gui): risolto ripristino parametri all'avvio e prevenuto salvataggio spurio allo spegnimento"
+      },
+      {
+        "sha": "124d07d6",
+        "message": "style(tests): risolte segnalazioni ruff e mypy nei test (completamento)"
+      },
+      {
+        "sha": "8650865c",
+        "message": "style(tests): risolte tutte le segnalazioni ruff e mypy nei test"
+      },
+      {
+        "sha": "6cce95b5",
+        "message": "test: stabilizzazione suite di test e allineamento patch mock"
+      },
+      {
+        "sha": "3a275aad",
+        "message": "test: ristrutturazione gerarchica suite test (migrazione e pulizia duplicati)"
+      },
+      {
+        "sha": "db444544",
+        "message": "test: implementazione massiva test unitari e refactor copertura (Stream J, D, B/E)"
+      },
+      {
+        "sha": "8c336717",
+        "message": "refactor: reach zero Ruff/MyPy reports and fix bot logic type safety"
+      },
+      {
+        "sha": "509c8f38",
+        "message": "test: add and fix unit tests (Stream B/E) and apply linter fixes"
+      },
+      {
+        "sha": "77be7860",
+        "message": "feat: implement button elevation effect"
+      },
+      {
+        "sha": "f5ee28c5",
+        "message": "feat: apply Modern Card restyling to all bot panels"
+      },
+      {
+        "sha": "c1d8209f",
+        "message": "feat: apply Modern Card style to Storico OdA panel"
+      },
+      {
+        "sha": "459500a5",
+        "message": "feat: apply Modern Card style and animations to KPI Panel"
+      },
+      {
+        "sha": "d354083e",
+        "message": "feat: implement modern UI effects and card styles"
+      },
+      {
+        "sha": "1aea96e2",
+        "message": "feat: implement centralized design system typography constants"
+      },
+      {
+        "sha": "72518176",
+        "message": "feat: implement self-cleaning logic in maintenance worker"
+      },
+      {
+        "sha": "35d44831",
+        "message": "feat: implement database maintenance worker and background optimization"
+      },
+      {
+        "sha": "0ccbf522",
+        "message": "fix: risoluzione errori linter pre-commit e stabilità finale"
+      },
+      {
+        "sha": "e59ca6ea",
+        "message": "fix: risoluzione finale bug database, mock test e importazione certificati"
+      },
+      {
+        "sha": "a3c4c6e9",
+        "message": "refactor: complete SRP decomposition & industrial-grade standardization (final stability batch)"
+      },
+      {
+        "sha": "f10a2325",
+        "message": "add"
+      },
+      {
+        "sha": "3567653d",
+        "message": "refactor: code quality cleanup (zero MyPy errors & Ruff optimization)"
+      },
+      {
+        "sha": "0ee79e6e",
+        "message": "fix: ripristino icone certificati, sincronizzazione ubicazione e pulizia QA totale"
+      },
+      {
+        "sha": "c9b0e2b0",
+        "message": "chore: release v1.46.3 [auto]"
+      },
+      {
+        "sha": "66993766",
+        "message": "fix: risoluzione violazioni Ruff e 80 segnalazioni Mypy"
+      },
+      {
+        "sha": "ed2a7509",
+        "message": "chore: release v1.46.2 [auto]"
+      },
+      {
+        "sha": "e9640657",
+        "message": "chore: release v1.46.1 [auto]"
+      },
+      {
+        "sha": "a919dfba",
+        "message": "add"
+      },
+      {
+        "sha": "9898e4f4",
+        "message": "merge: integrate backup system and 100% QA compliance from pyside6-phase3"
+      },
+      {
+        "sha": "cb35f8fd",
+        "message": "chore: release v1.46.0 [auto]"
+      },
+      {
+        "sha": "c0cda91f",
+        "message": "fix(certificati): bugfix autopilot e ottimizzazione workflow email audit"
+      },
+      {
+        "sha": "f12dde8b",
+        "message": "add"
+      },
+      {
+        "sha": "3e46cc38",
+        "message": "feat(autopilot): automazione certificati campione e unificazione logica Outlook"
+      },
+      {
+        "sha": "a1fe0cf0",
+        "message": "fix(gui): correct type hints for resizeEvent and paintEvent in ActivityTimeline"
+      },
+      {
+        "sha": "df4ed3a6",
+        "message": "perf: implement industrial-grade PySide6 optimizations"
+      },
+      {
+        "sha": "6971c988",
+        "message": "docs: add PySide6 specific improvements analysis (Slot, shiboken6, Property notify, QEnum, CLI tools)"
+      },
+      {
+        "sha": "68e2e31b",
+        "message": "docs: update LINTING_REMEDIATION_PLAN and TODO_QUALITY to reflect industrial grade completion (Ruff 0 | MyPy 0 | startup crash fixed)"
+      },
+      {
+        "sha": "c98cd4c1",
+        "message": "fix: resolve startup hang due to QObject access violation in background threads"
+      },
+      {
+        "sha": "4b28ae66",
+        "message": "chore: Hardening completo MyPy e Ruff (0 warnings, 0 bypass globali)"
+      },
+      {
+        "sha": "b365c11e",
+        "message": "style: industrial grade cleanup complete (100% ruff/mypy compliance)"
+      },
+      {
+        "sha": "8aa48659",
+        "message": "Progress save: resolving Ruff/MyPy violations"
+      },
+      {
+        "sha": "d72c51bf",
+        "message": "refactor: risolte violazioni MyPy e Ruff (standardizzazione tipi DB, logging e UI) e applicati fix automatici Ruff"
+      },
+      {
+        "sha": "74547cdc",
+        "message": "fix(core): resolve syntax error and ruff warnings in bug_reporter.py"
+      },
+      {
+        "sha": "3836e287",
+        "message": "fix(license): resolve circular import and satisfy ruff"
+      },
+      {
+        "sha": "f511f191",
+        "message": "fix(core): resolve critical circular dependency"
+      },
+      {
+        "sha": "31245e2d",
+        "message": "add"
+      },
+      {
+        "sha": "603275d0",
+        "message": "Industrializzazione avvio e bonifica ruff/mypy (Phase 3)"
+      },
+      {
+        "sha": "aafb7440",
+        "message": "fix(deps): resolve circular import in DettagliOdABot and stabilize bot initialization"
+      },
+      {
+        "sha": "b11aee76",
+        "message": "refactor: global synchronization, structural hardening, and UI standardization -- [NO-HOOKS]"
+      },
+      {
+        "sha": "8dbc6327",
+        "message": "style: finalizzazione rebranding SyncroJob e ottimizzazione stabilità UI"
+      },
+      {
+        "sha": "31062bf4",
+        "message": "chore: cleanup scratch scripts and synchronize core/GUI updates"
+      },
+      {
+        "sha": "d27ae4ba",
+        "message": "refactor: massive structural hardening and UI standardization"
+      },
+      {
+        "sha": "6d347589",
+        "message": "Fix UI encoding issues and upgrade diagnostic emojis"
+      },
+      {
+        "sha": "fcda4f7f",
+        "message": "fix(startup): final repairs and structural hardening"
+      },
+      {
+        "sha": "32964840",
+        "message": "refactor(quality): 100% Ruff/MyPy compliance and UI hardening"
+      },
+      {
+        "sha": "d877e85f",
+        "message": "refactor(quality): project-wide Rank B compliance and final hardening V9.2"
+      },
+      {
+        "sha": "4b89ed4f",
+        "message": "add"
+      },
+      {
+        "sha": "9ad3365c",
+        "message": "refactor(quality): achieve 100% PASS on all quality tools (Ruff, MyPy, Xenon, Bandit) V9.0 Final Compliance"
+      },
+      {
+        "sha": "eb97c560",
+        "message": "refactor(quality): resolve Ruff/MyPy issues and synchronize codebase standards V9.0"
+      },
+      {
+        "sha": "fbe6698a",
+        "message": "refactor(quality): project-wide hardening and PlaywrightBaseBot decomposition"
+      },
+      {
+        "sha": "d6881d2a",
+        "message": "chore: release v1.45.4 [auto]"
+      },
+      {
+        "sha": "834d3936",
+        "message": "a"
+      },
+      {
+        "sha": "e49e7fc1",
+        "message": "chore: release v1.45.3 [auto]"
+      },
+      {
+        "sha": "957e2986",
+        "message": "chore: release v1.45.2 [auto]"
+      },
+      {
+        "sha": "8fadacd7",
+        "message": "Add docstrings and small fixes across codebase"
+      },
+      {
+        "sha": "8acf9fef",
+        "message": "chore: release v1.45.1 [auto]"
+      },
+      {
+        "sha": "e83f2f40",
+        "message": "fix: automate downloads and suppress 'Save As' dialog"
+      },
+      {
+        "sha": "6077a87b",
+        "message": "fix: suppress 'change password' security alerts in Playwright"
+      },
+      {
+        "sha": "7e59de79",
+        "message": "chore: release v1.45.0 [auto]"
+      },
+      {
+        "sha": "6076b02d",
+        "message": "add"
+      },
+      {
+        "sha": "192bd018",
+        "message": "refactor: finalize SRP and complexity improvements across bots and GUI"
+      },
+      {
+        "sha": "2f13621a",
+        "message": "docs: update quality plan for ScaricaTSBot completion"
+      },
+      {
+        "sha": "59e8965c",
+        "message": "refactor(bot): reduce complexity in ScaricaTSBot"
+      },
+      {
+        "sha": "89bdd560",
+        "message": "refactor(core): reduce complexity in ContabilitaImporter"
+      },
+      {
+        "sha": "1f52a031",
+        "message": "refactor(core): reduce complexity in AuditManager"
+      },
+      {
+        "sha": "1cf49b37",
+        "message": "refactor: reduce complexity in TreeWidget helpers and Log Humanizer"
+      },
+      {
+        "sha": "73484f5e",
+        "message": "refactor(bot): reduce complexity in SafeWorkPDLBot"
+      },
+      {
+        "sha": "fd8da877",
+        "message": "docs: update quality plan as completed SRP refactors"
+      },
+      {
+        "sha": "ea713086",
+        "message": "refactor(gui): finalize BaseBotPanel SRP decomposition"
+      },
+      {
+        "sha": "84a7058e",
+        "message": "fix(test): align unit tests to BaseBot refactor and sync logic"
+      },
+      {
+        "sha": "c16706fb",
+        "message": "fix(admin): make HWID detection standalone and generic"
+      },
+      {
+        "sha": "7bf75936",
+        "message": "Merge branch 'main' into fix/align-tests"
+      },
+      {
+        "sha": "a8bd9aab",
+        "message": "merge: integrate HWID tools from main"
+      },
+      {
+        "sha": "33d19841",
+        "message": "feat(admin): add HWID detection script and automated batch tool"
+      },
+      {
+        "sha": "507eaee4",
+        "message": "refactor(core): reduce complexity in DataSynchronizer and ContabilitaSyncEngine"
+      },
+      {
+        "sha": "cd8802b9",
+        "message": "refactor(gui): apply SRP to DonCiroWidget and integrate real weather"
+      },
+      {
+        "sha": "b611344b",
+        "message": "refactor(gui): apply SRP to WeatherWidget and NavigationController"
+      },
+      {
+        "sha": "52e52ee7",
+        "message": "fix(gui): implement trigger_pdl_print in MainWindow"
+      },
+      {
+        "sha": "c51984d2",
+        "message": "fix(test): align test suite to V9.0 architecture and fix import_config bug"
+      },
+      {
+        "sha": "1d0530f2",
+        "message": "chore: release v1.44.0 [auto]"
+      },
+      {
+        "sha": "64082905",
+        "message": "feat(certificati): implement professional toolbar and layout optimization"
+      },
+      {
+        "sha": "6a28d623",
+        "message": "Update Report Certificati Campione Secondari ISAB SUD al 24-04-2026.pdf"
+      },
+      {
+        "sha": "05535792",
+        "message": "refactor: scomposizione logica statistiche e fix qualità core"
+      },
+      {
+        "sha": "6c5394d3",
+        "message": "chore: completamento transizione Poetry e pulizia documentazione"
+      },
+      {
+        "sha": "7b127aa1",
+        "message": "merge: risoluzione conflitti e integrazione refactoring certificati"
+      },
+      {
+        "sha": "87f9447f",
+        "message": "refactor(certificati): centralizzazione costanti e separazione logica statistiche"
+      },
+      {
+        "sha": "a4b90088",
+        "message": "style(pdf): ridenominata sezione 'CERTIFICATI' in 'STATO CERTIFICATI'"
+      },
+      {
+        "sha": "18cae886",
+        "message": "style(pdf): rinominata etichetta riepilogo 'In campo' in 'Assegnati ai Tecnici'"
+      },
+      {
+        "sha": "d350569c",
+        "message": "feat(pdf): aggiunta categoria strumenti Assenti e perfezionamento layout padri"
+      },
+      {
+        "sha": "77b4e657",
+        "message": "style(pdf): righe padre in grassetto e formattazione stati definitiva"
+      },
+      {
+        "sha": "fb8ef4d9",
+        "message": "feat(certificati): ripristino logica scadenze e ottimizzazione report PDF"
+      },
+      {
+        "sha": "74371168",
+        "message": "feat(certificati): aggiornamento elenco ubicazioni e migrazione dati"
+      },
+      {
+        "sha": "0341236a",
+        "message": "Merge branch 'task/align-tests'"
+      },
+      {
+        "sha": "e048c7e2",
+        "message": "merge: integrazione modifiche di qualità e stabilizzazione test da task/align-tests"
+      },
+      {
+        "sha": "b515d8dc",
+        "message": "chore(quality): risoluzione violazioni Ruff/Mypy e stabilizzazione test suite"
+      },
+      {
+        "sha": "56f16a4a",
+        "message": "docs(pdf): rimozione abbreviazioni gg/rim nel report per un linguaggio più esteso"
+      },
+      {
+        "sha": "1a16cfa8",
+        "message": "fix(certificati): ottimizzazione layout PDF e risoluzione crash in analisi scadenze"
+      },
+      {
+        "sha": "0ef6dbd7",
+        "message": "feat(certificati): implementazione full mirroring 1:1, ripristino metadati da PDF e ricerca avanzata per ID-COEMI"
+      },
+      {
+        "sha": "b50c0367",
+        "message": "test: align tests and implement robust configuration isolation"
+      },
+      {
+        "sha": "4cc7d569",
+        "message": "chore: release v1.43.2 [auto]"
+      },
+      {
+        "sha": "0d460561",
+        "message": "chore: release v1.43.1 [auto]"
+      },
+      {
+        "sha": "c08e91ca",
+        "message": "chore: release v1.43.0 [auto]"
+      },
+      {
+        "sha": "c4d2c5c7",
+        "message": "fix(pw): change password input type to text before submit to completely bypass chromium password compromised alert"
+      },
+      {
+        "sha": "53f6b7cf",
+        "message": "fix(pw): ultra-aggressive alert handling and hardened password suppression"
+      },
+      {
+        "sha": "3e7bf644",
+        "message": "feat: align project and improve browser security (removed large binaries)"
+      },
+      {
+        "sha": "b9fb6a21",
+        "message": "add"
+      },
+      {
+        "sha": "35806e81",
+        "message": "fix(portale-fornitori): implement ultra-robust PW interaction pattern and accelerate login"
+      },
+      {
+        "sha": "4711cf5a",
+        "message": "chore: release v1.42.1 [auto]"
+      },
+      {
+        "sha": "f07a6920",
+        "message": "refactor: rimozione globale emoji per risolvere l'errore di encoding charmap / cp1252"
+      },
+      {
+        "sha": "06bfa261",
+        "message": "fix(portale-fornitori): implement robust interaction pattern for PW bots and fix scarico_ts timeout"
+      },
+      {
+        "sha": "0e149948",
+        "message": "chore: release v1.42.0 [auto]"
+      },
+      {
+        "sha": "44d629ae",
+        "message": "chore: finalize technical debt cleanup and test isolation implementation"
+      },
+      {
+        "sha": "b71d4132",
+        "message": "refactor: allineamento suite di test, fix linting ruff/mypy e aggiornamento componenti GUI"
+      },
+      {
+        "sha": "4f1d03a4",
+        "message": "fix(runner): V5.3.1 - Fail-Fast aggressivo, isolamento coverage e bonifica suite test"
+      },
+      {
+        "sha": "962e7ae7",
+        "message": "docs: aggiornamento CHANGELOG v1.42.1 e TODO_QUALITY per audit runner V5.1\""
+      },
+      {
+        "sha": "c05a249b",
+        "message": "fix(runner): V5.1 - Fix 6 bug + 2 miglioramenti architetturali\\n\\nBUG-1: Fix doppio conteggio passed/failed nella fase isolamento SHOTGUN\\nBUG-2: _parse_pytest_summary ora cattura sia 'failed' che 'error' con findall\\nBUG-3: Commento correttivo su AssertionError match\\nBUG-4: SNIPER retry usa --last-failed invece di rieseguire tutti i target\\nBUG-5: Pattern E-prefix non piu' limitato a 'not failures'\\nBUG-6: _extract_traceback_block matching preciso con delimitatori pytest\\nARCH-2: sys.exit() centralizzato in __main__, metodi usano _exit_code\\nARCH-4: Report IA troncato a MAX_OUTPUT_CHARS, -80% dimensione\\n\\nAggiunto test suite: tests/unit/test_runner_internals.py (34 test)\""
+      },
+      {
+        "sha": "855d2967",
+        "message": "chore: remove obsolete requirements sync from release process"
+      },
+      {
+        "sha": "1ab67e47",
+        "message": "feat: automate CHANGELOG.md generation in release process via Commitizen"
+      },
+      {
+        "sha": "decc6b92",
+        "message": "docs: reconstruct CHANGELOG.md history to align with real version v1.41.2 and documented milestones"
+      },
+      {
+        "sha": "65f9866f",
+        "message": "docs: update CHANGELOG.md for structural cleanup and poetry migration"
+      },
+      {
+        "sha": "240b67ed",
+        "message": "chore: project cleanup, organization of data files, and script path update"
+      },
+      {
+        "sha": "bf2932fe",
+        "message": "fix: implementato metodo show_settings in MainWindow per attivare l'ingranaggio dei parametri bot"
+      },
+      {
+        "sha": "e7ccf50a",
+        "message": "fix: corretto locatore Società in 'Company' e migliorata robustezza login Playwright/Selenium"
+      },
+      {
+        "sha": "cff26deb",
+        "message": "feat: aggiunto selettore SOCIETA' (ISAB/PSER) per login portale fornitori e aggiornata logica bot (Selenium/Playwright)"
+      },
+      {
+        "sha": "9072c1f3",
+        "message": "refactor: stabilizzazione Playwright, soppressione popup Chromium, bugfix switch account e 100% qualità (Ruff/MyPy/Interrogate)"
+      },
+      {
+        "sha": "6fe2f26e",
+        "message": "feat: consolidamento architettura Playwright, fix locatori SafeWork e controlli dinamici nel footer"
+      },
+      {
+        "sha": "93b8a7b8",
+        "message": "add"
+      },
+      {
+        "sha": "9343399a",
+        "message": "fix: Correzione nome attributo locatore ScaricoTSLocators"
+      },
+      {
+        "sha": "deca5a8d",
+        "message": "fix: Risoluzione errore 'Unknown engine name' e centralizzazione selettori Playwright"
+      },
+      {
+        "sha": "6380bdaf",
+        "message": "fix: risolto errore importazione PrenotaBP e implementato caricamento granulare bot Playwright"
+      },
+      {
+        "sha": "bd4b87f5",
+        "message": "fix: risolto problema switch motore automazione invalidando la cache config"
+      },
+      {
+        "sha": "2310deb1",
+        "message": "feat: migrazione strutturale a Playwright con supporto dual-engine e migrazione di tutti i bot principali"
+      },
+      {
+        "sha": "1cbad52c",
+        "message": "chore: release v1.41.2 [auto]"
+      },
+      {
+        "sha": "fd12c7f6",
+        "message": "add"
+      },
+      {
+        "sha": "d3186883",
+        "message": "chore: release v1.41.1 [auto]"
+      },
+      {
+        "sha": "8813c13b",
+        "message": "chore: release v1.41.0 [auto]"
+      },
+      {
+        "sha": "7cef1a29",
+        "message": "Add dettagli_oda trace and update bot code"
+      },
+      {
+        "sha": "adbc5cd0",
+        "message": "chore: bump version to 1.40.3"
+      },
+      {
+        "sha": "cf274927",
+        "message": "feat: update engine optimization and premium wave animation integration"
+      },
+      {
+        "sha": "d4d280cf",
+        "message": "Delete scarico_pdl_trace_6b175811bb764a12.json"
+      }
+    ]
+  },
+  {
     "version": "1.57.6",
     "date": "2026-06-16",
     "notes": [

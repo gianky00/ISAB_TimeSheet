@@ -1,153 +1,20 @@
 ## Unreleased
 
-### Fix
-
-- **pdl**: ottimizzazione data creazione e risoluzione segnalazioni mypy
-
-## v1.57.5 (2026-06-15)
-
-## v1.57.4 (2026-06-15)
-
-### Fix
-
-- **gui**: naviga a DB PDL dopo aggiornamento e correggi hint mypy
-
-## v1.57.2 (2026-06-10)
-
-### Fix
-
-- **devtools**: fix ModuleNotFoundError for analyze_dependencies in build_dist.py
-
-## v1.57.1 (2026-06-10)
-
-### Fix
-
-- **devtools**: fix incorrect path to build_dist.py replacing admin with devtools/gui
-
-## v1.57.0 (2026-06-10)
-
 ### Feat
 
+- **bot**: implement PF automatic lock on failed login and GUI unlock
 - **certificati**: ottimizzazione UI e PDF per annotazioni e correzione test suite
 - **ai**: configure gemini overrides and setup session memory state
-
-### Fix
-
-- **devtools**: preemptively run uv lock and fix generate_ai_context.py path to prevent pre-commit commit failure
-- **devtools**: inject VENV_BIN into PATH to prevent pre-commit uv hooks from failing and fix leftover changelog.json path
-- **devtools**: fix incorrect paths to version.py and changelog.json
-- **devtools**: use explicit UV_EXE path for lock integrity check to prevent WinError 2
-- **devtools**: resolve WinError 2 resolving path with shutil.which in release.py
-- **devtools**: fix PROJECT_ROOT path resolution in gui scripts and linter warnings
-- **sync**: refine SmartSyncEngine metadata handling and key column mapping
-- **ci**: fix ruff linting errors in test runner reporting
-- **ci**: robust test runner now exports markdown report and exits with proper status code
-- **ci**: do not fail if ruff outputs success message
-- **ci**: suppress PLW0108 ruff rule, fix lints, and print linter errors to CI stdout
-- **ci**: correct project root path and ensure strict exit codes in generate_ci_context.py
-
-### Refactor
-
-- **core&gui**: successfully reduce cyclomatic complexity to rank A/B for remaining targets
-- **core&gui**: reduce cyclomatic complexity, fix annotazioni UX and tests regression
-- **ai**: cleanup and restructure .gemini AI folder to new standard
-
-## v1.56.2 (2026-06-03)
-
-### Fix
-
-- **pdl**: prevent silent UI crashes by casting imported dataframe to strings
-- **ci**: esegui generate_ci_context.py all'interno dell'ambiente virtuale di poetry per risolvere ModuleNotFoundError
-- **ci**: aggiornato il percorso dello script generate_ci_context.py (da scripts/ a tools/)
-- **ci**: aggiunti campi mancanti in tool.poetry per correggere l'errore di poetry install
-
-### Refactor
-
-- **gui**: ottimizzazione componenti base bot e gestione asincrona worker
-
-## v1.56.1 (2026-06-01)
-
-### Fix
-
-- **typing**: risoluzione segnalazioni mypy in pdl_sync_manager e pdf_exporter
-
-## v1.56.0 (2026-06-01)
-
-### Feat
-
 - **certificati**: aggiunta funzionalità Controllo Preventivo per gli strumenti
 - **certificati**: invio notifica email guasto, fix pdf stats e fix crash menu
 - **certificati**: implementata gestione guasti per strumenti campione (Opzione B)
 - **test**: comprehensive coverage expansion and report styling optimization
-
-## v1.55.0 (2026-05-27)
-
-## v1.54.0 (2026-05-27)
-
-### Fix
-
-- **security**: resolve and exclude dev-only diagrams vulnerability for 100/100 syncro-score
-- **types**: fix mypy errors after poetry update and pywin32 types upgrade
-- **gui**: optimize splash progress bar with ultra-soft 0.15 points per frame increment
-- **gui**: further soften splash progress bar to 0.25 points per frame for maximum smoothness
-- **gui**: linearize and smooth splash progress bar to eliminate discrete steps
-- **gui**: remove holographic text scramble glitch from splash progress bar
-- **gui**: fix parent branch icons in certificates tree and linearize splash progress
-- **release**: fix resource manager changelog path and dependency analyzer encoding on Windows
-
-## v1.53.0 (2026-05-27)
-
-### Refactor
-
-- **poetry**: migrate config to standard PEP 621 metadata (Poetry 2.0)
-
-## v1.52.0 (2026-05-27)
-
-### Fix
-
-- **release**: fix git PATH resolving and quality tools false positives
-- **changelog**: risolto caricamento changelog e build date in produzione
-
-## v1.51.0 (2026-05-25)
-
-### Feat
-
 - **tests**: migrate to robust test runner and modernize gui test suite
 - **gui**: standardize dialogs and expand test coverage
 - **runner**: add --test shortcut for AI diagnostic mode
 - **ui**: refine Storico OdA layout, animation and resizing
 - integrate cohesion library for SRP and LCOM metrics mapping and update documents
 - integrate pydantic-settings and libcst libraries with typed SyncroJobSettings model and context documentation
-
-### Fix
-
-- **release**: sostituisce poetry lock --check con poetry check --lock per compatibilità Poetry 2.x
-- **tests**: resolve regressions and lint issues in gui tests
-- **tests**: prevent ai json truncation on exit
-- **tests**: resolve remaining failures in runner internals tests
-- **tests**: adapt runner internals unit tests to SRP signatures
-- **runner**: restore worker isolation and granular --last-failed retry
-- resolve MyPy 'unreachable' error and complete test suite expansion
-- **quality**: resolve ruff and mypy strict violations in gui and core
-- **quality**: final type cleanup in safework base
-- **quality**: full mypy strict compliance across all modules
-- **quality**: final ruff formatting and type fixes
-- ripristinati cast espliciti per conformità MyPy Strict
-- **contabilita**: risolto bug aggiornamento certificati e unificati percorsi DB
-
-### Refactor
-
-- apply refurb code style improvements (FURB113-183)
-- **core**: scomposizione SRP completa di AppInitializer e BackupManager
-- **core**: decouple autopilot scheduling and system diagnostics for SRP compliance
-- **gui**: decompose search_controller into search_results_menu for SRP
-- radical gui optimization for extreme fluidity (Zero-I/O UI)
-- ottimizzazione codice via refurb e personalizzazioni GUI
-
-## v1.49.0 (2026-05-22)
-
-### Feat
-
 - **splash**: implementata Laser-Track Progress Bar con percentuale olografica dinamica
 - **splash**: raffinamento totale macro-status per eliminare fallback generici
 - **splash**: riorganizzazione header con info stack laterale (versione sopra, rilascio sotto)
@@ -172,43 +39,10 @@
 - **gui**: persistenza dello stato dettagli della card meteo al riavvio
 - **gui**: aggiunti pulsanti dettaglio/ritorno in WeatherWidget con animazione spin di Don Ciro
 - **ui**: implement dynamic version badge with sparkles in sidebar changelog
-
-### Fix
-
-- **security**: risolte vulnerabilità Bandit e allineati controlli Ruff
-- **splash**: risolto bug visibilità notifica LICENZA VALIDATA e sincronizzato effetto typewriter
-- **splash**: risolto bug sovrapposizione righe changelog ticker tramite ancoraggio posizioni statiche
-- **updater**: resolve 'Install Now' failure on Windows
-
-## v1.48.0 (2026-05-21)
-
-### Feat
-
 - **timbrature**: implement massive import and real-time access monitoring
 - **ui**: implement dynamic changelog and sidebar breathing warning pulse
 - **gui**: improve changelog UI with light-mode tooltips, clear filters and dynamic next release handling
 - **report**: aggiunta postilla audit per strumenti senza scadenza nel PDF
-
-### Fix
-
-- **bot**: resolve Excel download ambiguity in Timbrature bot using FontAwesome unicode
-- **browser**: remove --no-sandbox, --disable-gpu to resolve STATUS_BREAKPOINT crashes
-- **splash**: pipe license details dynamically to standalone splash screen via binary unbuffered stdin
-- **bot**: prevent TypeError on unexpected societa parameter in Playwright base and Timbrature bot
-- **updater**: improve installer launch robustness on Windows with delay and detached process
-
-### Refactor
-
-- **bots**: enhance interaction robustness and migrate to structural locators
-
-### Perf
-
-- **gui**: optimize splash screen and startup dialog with async license and HWID IPC
-
-## v1.47.0 (2026-05-18)
-
-### Feat
-
 - implement button elevation effect
 - apply Modern Card restyling to all bot panels
 - apply Modern Card style to Storico OdA panel
@@ -217,9 +51,81 @@
 - implement centralized design system typography constants
 - implement self-cleaning logic in maintenance worker
 - implement database maintenance worker and background optimization
+- **autopilot**: automazione certificati campione e unificazione logica Outlook
+- **admin**: add HWID detection script and automated batch tool
+- **certificati**: implement professional toolbar and layout optimization
+- **pdf**: aggiunta categoria strumenti Assenti e perfezionamento layout padri
+- **certificati**: ripristino logica scadenze e ottimizzazione report PDF
+- **certificati**: aggiornamento elenco ubicazioni e migrazione dati
+- **certificati**: implementazione full mirroring 1:1, ripristino metadati da PDF e ricerca avanzata per ID-COEMI
+- align project and improve browser security (removed large binaries)
+- automate CHANGELOG.md generation in release process via Commitizen
+- aggiunto selettore SOCIETA' (ISAB/PSER) per login portale fornitori e aggiornata logica bot (Selenium/Playwright)
+- consolidamento architettura Playwright, fix locatori SafeWork e controlli dinamici nel footer
+- migrazione strutturale a Playwright con supporto dual-engine e migrazione di tutti i bot principali
+- update engine optimization and premium wave animation integration
 
 ### Fix
 
+- **security**: resolve pip-audit vulnerabilities
+- **quality**: resolve ruff lint errors and config conflicts
+- **quality**: resolve refurb and bandit security alerts
+- **typing**: resolve mypy typing errors and strict checking conflicts
+- **devtools**: resolve UV_EXE path issue in release.py
+- **mypy**: risoluzione definitiva segnalazioni untyped call in pdl_sync_manager
+- **pdl**: ottimizzazione data creazione e risoluzione segnalazioni mypy
+- **gui**: naviga a DB PDL dopo aggiornamento e correggi hint mypy
+- **devtools**: fix ModuleNotFoundError for analyze_dependencies in build_dist.py
+- **devtools**: fix incorrect path to build_dist.py replacing admin with devtools/gui
+- **devtools**: preemptively run uv lock and fix generate_ai_context.py path to prevent pre-commit commit failure
+- **devtools**: inject VENV_BIN into PATH to prevent pre-commit uv hooks from failing and fix leftover changelog.json path
+- **devtools**: fix incorrect paths to version.py and changelog.json
+- **devtools**: use explicit UV_EXE path for lock integrity check to prevent WinError 2
+- **devtools**: resolve WinError 2 resolving path with shutil.which in release.py
+- **devtools**: fix PROJECT_ROOT path resolution in gui scripts and linter warnings
+- **sync**: refine SmartSyncEngine metadata handling and key column mapping
+- **ci**: fix ruff linting errors in test runner reporting
+- **ci**: robust test runner now exports markdown report and exits with proper status code
+- **ci**: do not fail if ruff outputs success message
+- **ci**: suppress PLW0108 ruff rule, fix lints, and print linter errors to CI stdout
+- **ci**: correct project root path and ensure strict exit codes in generate_ci_context.py
+- **pdl**: prevent silent UI crashes by casting imported dataframe to strings
+- **ci**: esegui generate_ci_context.py all'interno dell'ambiente virtuale di poetry per risolvere ModuleNotFoundError
+- **ci**: aggiornato il percorso dello script generate_ci_context.py (da scripts/ a tools/)
+- **ci**: aggiunti campi mancanti in tool.poetry per correggere l'errore di poetry install
+- **typing**: risoluzione segnalazioni mypy in pdl_sync_manager e pdf_exporter
+- **security**: resolve and exclude dev-only diagrams vulnerability for 100/100 syncro-score
+- **types**: fix mypy errors after poetry update and pywin32 types upgrade
+- **gui**: optimize splash progress bar with ultra-soft 0.15 points per frame increment
+- **gui**: further soften splash progress bar to 0.25 points per frame for maximum smoothness
+- **gui**: linearize and smooth splash progress bar to eliminate discrete steps
+- **gui**: remove holographic text scramble glitch from splash progress bar
+- **gui**: fix parent branch icons in certificates tree and linearize splash progress
+- **release**: fix resource manager changelog path and dependency analyzer encoding on Windows
+- **release**: fix git PATH resolving and quality tools false positives
+- **changelog**: risolto caricamento changelog e build date in produzione
+- **release**: sostituisce poetry lock --check con poetry check --lock per compatibilità Poetry 2.x
+- **tests**: resolve regressions and lint issues in gui tests
+- **tests**: prevent ai json truncation on exit
+- **tests**: resolve remaining failures in runner internals tests
+- **tests**: adapt runner internals unit tests to SRP signatures
+- **runner**: restore worker isolation and granular --last-failed retry
+- resolve MyPy 'unreachable' error and complete test suite expansion
+- **quality**: resolve ruff and mypy strict violations in gui and core
+- **quality**: final type cleanup in safework base
+- **quality**: full mypy strict compliance across all modules
+- **quality**: final ruff formatting and type fixes
+- ripristinati cast espliciti per conformità MyPy Strict
+- **contabilita**: risolto bug aggiornamento certificati e unificati percorsi DB
+- **security**: risolte vulnerabilità Bandit e allineati controlli Ruff
+- **splash**: risolto bug visibilità notifica LICENZA VALIDATA e sincronizzato effetto typewriter
+- **splash**: risolto bug sovrapposizione righe changelog ticker tramite ancoraggio posizioni statiche
+- **updater**: resolve 'Install Now' failure on Windows
+- **bot**: resolve Excel download ambiguity in Timbrature bot using FontAwesome unicode
+- **browser**: remove --no-sandbox, --disable-gpu to resolve STATUS_BREAKPOINT crashes
+- **splash**: pipe license details dynamically to standalone splash screen via binary unbuffered stdin
+- **bot**: prevent TypeError on unexpected societa parameter in Playwright base and Timbrature bot
+- **updater**: improve installer launch robustness on Windows with delay and detached process
 - **core**: remove blocking run_update() from BotWorker to prevent getaddrinfo GIL freeze
 - **bots/db**: corretti errori di sintassi XPath in locators e query SQL nel repository PDL
 - **bots**: corretto errore sintassi XPath nei locators del portale fornitori
@@ -227,41 +133,7 @@
 - risoluzione errori linter pre-commit e stabilità finale
 - risoluzione finale bug database, mock test e importazione certificati
 - ripristino icone certificati, sincronizzazione ubicazione e pulizia QA totale
-
-### Refactor
-
-- **core**: allineamento suite di test alla nuova architettura SRP e fix MyPy
-- **bots**: hardening pass dati, gestione sessione attiva, timesheet vuoti, race condition e click nativo cerca
-- reach zero Ruff/MyPy reports and fix bot logic type safety
-- complete SRP decomposition & industrial-grade standardization (final stability batch)
-- code quality cleanup (zero MyPy errors & Ruff optimization)
-
-### Perf
-
-- **core**: aggiunge riscaldamento WMI/psutil nello splashscreen per eliminare il blocco GIL causato dall'iterazione dei processi al primo avvio
-- **core**: pre-carica i moduli pesanti (Playwright, PDF, Excel) nello splashscreen per eliminare lag al primo avvio
-- **gui**: elimina freeze GIL al primo avvio centralizzando i log con QApplication.processEvents
-- **bots**: elimina timeout chiusura Playwright tramite rimozione page.close ridondanti e cleanup forzato dei processi
-- **gui**: elimina freeze GUI al termine del bot tramite QThread asincroni
-
-## v1.46.3 (2026-05-13)
-
-### Fix
-
 - risoluzione violazioni Ruff e 80 segnalazioni Mypy
-
-## v1.46.2 (2026-05-13)
-
-## v1.46.1 (2026-05-13)
-
-## v1.46.0 (2026-05-12)
-
-### Feat
-
-- **autopilot**: automazione certificati campione e unificazione logica Outlook
-
-### Fix
-
 - **certificati**: bugfix autopilot e ottimizzazione workflow email audit
 - **gui**: correct type hints for resizeEvent and paintEvent in ActivityTimeline
 - resolve startup hang due to QObject access violation in background threads
@@ -270,117 +142,17 @@
 - **core**: resolve critical circular dependency
 - **deps**: resolve circular import in DettagliOdABot and stabilize bot initialization
 - **startup**: final repairs and structural hardening
-
-### Refactor
-
-- risolte violazioni MyPy e Ruff (standardizzazione tipi DB, logging e UI) e applicati fix automatici Ruff
-- global synchronization, structural hardening, and UI standardization -- [NO-HOOKS]
-- massive structural hardening and UI standardization
-- **quality**: 100% Ruff/MyPy compliance and UI hardening
-- **quality**: project-wide Rank B compliance and final hardening V9.2
-- **quality**: achieve 100% PASS on all quality tools (Ruff, MyPy, Xenon, Bandit) V9.0 Final Compliance
-- **quality**: resolve Ruff/MyPy issues and synchronize codebase standards V9.0
-- **quality**: project-wide hardening and PlaywrightBaseBot decomposition
-
-### Perf
-
-- implement industrial-grade PySide6 optimizations
-
-## v1.45.4 (2026-05-06)
-
-## v1.45.3 (2026-05-06)
-
-## v1.45.2 (2026-05-06)
-
-## v1.45.1 (2026-05-06)
-
-### Fix
-
 - automate downloads and suppress 'Save As' dialog
 - suppress 'change password' security alerts in Playwright
-
-## v1.45.0 (2026-05-05)
-
-### Feat
-
-- **admin**: add HWID detection script and automated batch tool
-
-### Fix
-
 - **test**: align unit tests to BaseBot refactor and sync logic
 - **admin**: make HWID detection standalone and generic
 - **gui**: implement trigger_pdl_print in MainWindow
 - **test**: align test suite to V9.0 architecture and fix import_config bug
-
-### Refactor
-
-- finalize SRP and complexity improvements across bots and GUI
-- **bot**: reduce complexity in ScaricaTSBot
-- **core**: reduce complexity in ContabilitaImporter
-- **core**: reduce complexity in AuditManager
-- reduce complexity in TreeWidget helpers and Log Humanizer
-- **bot**: reduce complexity in SafeWorkPDLBot
-- **gui**: finalize BaseBotPanel SRP decomposition
-- **core**: reduce complexity in DataSynchronizer and ContabilitaSyncEngine
-- **gui**: apply SRP to DonCiroWidget and integrate real weather
-- **gui**: apply SRP to WeatherWidget and NavigationController
-
-## v1.44.0 (2026-04-30)
-
-### Feat
-
-- **certificati**: implement professional toolbar and layout optimization
-- **pdf**: aggiunta categoria strumenti Assenti e perfezionamento layout padri
-- **certificati**: ripristino logica scadenze e ottimizzazione report PDF
-- **certificati**: aggiornamento elenco ubicazioni e migrazione dati
-- **certificati**: implementazione full mirroring 1:1, ripristino metadati da PDF e ricerca avanzata per ID-COEMI
-
-### Fix
-
 - **certificati**: ottimizzazione layout PDF e risoluzione crash in analisi scadenze
-
-### Refactor
-
-- scomposizione logica statistiche e fix qualità core
-- **certificati**: centralizzazione costanti e separazione logica statistiche
-
-## v1.43.2 (2026-04-21)
-
-## v1.43.1 (2026-04-21)
-
-## v1.43.0 (2026-04-21)
-
-### Feat
-
-- align project and improve browser security (removed large binaries)
-
-### Fix
-
 - **pw**: change password input type to text before submit to completely bypass chromium password compromised alert
 - **pw**: ultra-aggressive alert handling and hardened password suppression
 - **portale-fornitori**: implement ultra-robust PW interaction pattern and accelerate login
-
-## v1.42.1 (2026-04-20)
-
-### Fix
-
 - **portale-fornitori**: implement robust interaction pattern for PW bots and fix scarico_ts timeout
-
-### Refactor
-
-- rimozione globale emoji per risolvere l'errore di encoding charmap / cp1252
-
-## v1.42.0 (2026-04-20)
-
-### Feat
-
-- automate CHANGELOG.md generation in release process via Commitizen
-- aggiunto selettore SOCIETA' (ISAB/PSER) per login portale fornitori e aggiornata logica bot (Selenium/Playwright)
-- consolidamento architettura Playwright, fix locatori SafeWork e controlli dinamici nel footer
-- migrazione strutturale a Playwright con supporto dual-engine e migrazione di tutti i bot principali
-
-### Fix
-
 - **runner**: V5.3.1 - Fail-Fast aggressivo, isolamento coverage e bonifica suite test
 - **runner**: V5.1 - Fix 6 bug + 2 miglioramenti architetturali\n\nBUG-1: Fix doppio conteggio passed/failed nella fase isolamento SHOTGUN\nBUG-2: _parse_pytest_summary ora cattura sia 'failed' che 'error' con findall\nBUG-3: Commento correttivo su AssertionError match\nBUG-4: SNIPER retry usa --last-failed invece di rieseguire tutti i target\nBUG-5: Pattern E-prefix non piu' limitato a 'not failures'\nBUG-6: _extract_traceback_block matching preciso con delimitatori pytest\nARCH-2: sys.exit() centralizzato in __main__, metodi usano _exit_code\nARCH-4: Report IA troncato a MAX_OUTPUT_CHARS, -80% dimensione\n\nAggiunto test suite: tests/unit/test_runner_internals.py (34 test)"
 - implementato metodo show_settings in MainWindow per attivare l'ingranaggio dei parametri bot
@@ -392,18 +164,56 @@
 
 ### Refactor
 
+- **core&gui**: successfully reduce cyclomatic complexity to rank A/B for remaining targets
+- **core&gui**: reduce cyclomatic complexity, fix annotazioni UX and tests regression
+- **ai**: cleanup and restructure .gemini AI folder to new standard
+- **gui**: ottimizzazione componenti base bot e gestione asincrona worker
+- **poetry**: migrate config to standard PEP 621 metadata (Poetry 2.0)
+- apply refurb code style improvements (FURB113-183)
+- **core**: scomposizione SRP completa di AppInitializer e BackupManager
+- **core**: decouple autopilot scheduling and system diagnostics for SRP compliance
+- **gui**: decompose search_controller into search_results_menu for SRP
+- radical gui optimization for extreme fluidity (Zero-I/O UI)
+- ottimizzazione codice via refurb e personalizzazioni GUI
+- **bots**: enhance interaction robustness and migrate to structural locators
+- **core**: allineamento suite di test alla nuova architettura SRP e fix MyPy
+- **bots**: hardening pass dati, gestione sessione attiva, timesheet vuoti, race condition e click nativo cerca
+- reach zero Ruff/MyPy reports and fix bot logic type safety
+- complete SRP decomposition & industrial-grade standardization (final stability batch)
+- code quality cleanup (zero MyPy errors & Ruff optimization)
+- risolte violazioni MyPy e Ruff (standardizzazione tipi DB, logging e UI) e applicati fix automatici Ruff
+- global synchronization, structural hardening, and UI standardization -- [NO-HOOKS]
+- massive structural hardening and UI standardization
+- **quality**: 100% Ruff/MyPy compliance and UI hardening
+- **quality**: project-wide Rank B compliance and final hardening V9.2
+- **quality**: achieve 100% PASS on all quality tools (Ruff, MyPy, Xenon, Bandit) V9.0 Final Compliance
+- **quality**: resolve Ruff/MyPy issues and synchronize codebase standards V9.0
+- **quality**: project-wide hardening and PlaywrightBaseBot decomposition
+- finalize SRP and complexity improvements across bots and GUI
+- **bot**: reduce complexity in ScaricaTSBot
+- **core**: reduce complexity in ContabilitaImporter
+- **core**: reduce complexity in AuditManager
+- reduce complexity in TreeWidget helpers and Log Humanizer
+- **bot**: reduce complexity in SafeWorkPDLBot
+- **gui**: finalize BaseBotPanel SRP decomposition
+- **core**: reduce complexity in DataSynchronizer and ContabilitaSyncEngine
+- **gui**: apply SRP to DonCiroWidget and integrate real weather
+- **gui**: apply SRP to WeatherWidget and NavigationController
+- scomposizione logica statistiche e fix qualità core
+- **certificati**: centralizzazione costanti e separazione logica statistiche
+- rimozione globale emoji per risolvere l'errore di encoding charmap / cp1252
 - allineamento suite di test, fix linting ruff/mypy e aggiornamento componenti GUI
 - stabilizzazione Playwright, soppressione popup Chromium, bugfix switch account e 100% qualità (Ruff/MyPy/Interrogate)
 
-## v1.41.2 (2026-04-01)
+### Perf
 
-## v1.41.1 (2026-04-01)
-
-## v1.41.0 (2026-03-31)
-
-### Feat
-
-- update engine optimization and premium wave animation integration
+- **gui**: optimize splash screen and startup dialog with async license and HWID IPC
+- **core**: aggiunge riscaldamento WMI/psutil nello splashscreen per eliminare il blocco GIL causato dall'iterazione dei processi al primo avvio
+- **core**: pre-carica i moduli pesanti (Playwright, PDF, Excel) nello splashscreen per eliminare lag al primo avvio
+- **gui**: elimina freeze GIL al primo avvio centralizzando i log con QApplication.processEvents
+- **bots**: elimina timeout chiusura Playwright tramite rimozione page.close ridondanti e cleanup forzato dei processi
+- **gui**: elimina freeze GUI al termine del bot tramite QThread asincroni
+- implement industrial-grade PySide6 optimizations
 
 ## v1.40.3 (2026-03-30)
 
