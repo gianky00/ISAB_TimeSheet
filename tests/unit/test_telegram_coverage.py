@@ -2,8 +2,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.application.services.telegram_manager import TelegramService
 from src.application.services.telegram_bridge import TelegramUIBridge
+from src.application.services.telegram_manager import TelegramService
 
 
 class TestTelegramCoverage:

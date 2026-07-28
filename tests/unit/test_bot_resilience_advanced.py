@@ -110,14 +110,14 @@ class TestBotResilienceAdvanced:
         """Test: Verifica che un bot PF non riprovi e blocchi il config al fallimento."""
         from src.application.services.constants import URLs
         bot.ISAB_URL = URLs.ISAB_PORTAL  # Setto l'URL per farlo identificare come PF
-        
+
         with (
             patch.object(bot, "_init_driver"),
             patch.object(bot, "_login", return_value=False),
             patch("src.application.services.config_manager.set_config_value") as mock_set,
         ):
             res = bot._safe_login_with_retry(max_retries=2)
-            
+
             assert res is False
             mock_set.assert_called_once_with("portaleFornitoriLocked", True)
 
