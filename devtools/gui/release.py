@@ -20,11 +20,7 @@ VENV_PYTHON = (
     if sys.platform == "win32"
     else ROOT_DIR / ".venv" / "bin" / "python"
 )
-UV_EXE = (
-    ROOT_DIR / ".venv" / "Scripts" / "uv.exe"
-    if sys.platform == "win32"
-    else ROOT_DIR / ".venv" / "bin" / "uv"
-)
+UV_EXE = shutil.which("uv") or "uv"
 VENV_BIN = ROOT_DIR / ".venv" / "Scripts" if sys.platform == "win32" else ROOT_DIR / ".venv" / "bin"
 os.environ["PATH"] = f"{VENV_BIN}{os.pathsep}{os.environ.get('PATH', '')}"
 
