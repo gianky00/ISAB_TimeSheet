@@ -33,6 +33,7 @@ from src.application.services.database.migrations.pdl import (
     mig_pdl_v3,
     mig_pdl_v4,
     mig_pdl_v5,
+    mig_pdl_v6,
 )
 from src.application.services.database.migrations.storico_oda import (
     mig_storico_oda_v1,
@@ -84,6 +85,7 @@ class DatabaseManager:
         3: mig_pdl_v3,
         4: mig_pdl_v4,
         5: mig_pdl_v5,
+        6: mig_pdl_v6,
     }
 
     MIGRATIONS_STORICO_ODA: ClassVar[dict[int, Callable[[sqlite3.Connection], None]]] = {

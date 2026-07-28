@@ -17,7 +17,7 @@ def mig_pdl_v1(conn: sqlite3.Connection) -> None:
       unita TEXT,
       ditta TEXT,
       descrizione_lavoro TEXT,
-      tipologiàTEXT,
+      tipologia TEXT,
       stato TEXT,
       apparecchiatura TEXT,
       richiedente TEXT,
@@ -68,7 +68,7 @@ def mig_pdl_v2(conn: sqlite3.Connection) -> None:
       unita TEXT,
       ditta TEXT,
       descrizione_lavoro TEXT,
-      tipologiàTEXT,
+      tipologia TEXT,
       stato TEXT,
       apparecchiatura TEXT,
       richiedente TEXT,
@@ -134,3 +134,14 @@ def mig_pdl_v5(conn: sqlite3.Connection) -> None:
     cursor = conn.cursor()
     with contextlib.suppress(sqlite3.OperationalError):
         cursor.execute("ALTER TABLE pdl_programmazione ADD COLUMN unita TEXT")
+
+
+def mig_pdl_v6(conn: sqlite3.Connection) -> None:
+    """Fix column typo tipologiàTEXT to tipologia (v6)."""
+    cursor = conn.cursor()
+    columns = [row[1] for row in cursor.execute("PRAGMA table_info(pdl)").fetchall()]
+    if "tipologia" not in columns:
+        for col in columns:
+            if col.startswith("tipologi"):
+                cursor.execute(f'ALTER TABLE pdl RENAME COLUMN "{col}" TO tipologia')
+                break
