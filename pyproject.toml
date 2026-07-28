@@ -156,6 +156,7 @@ exclude = [
 ]
 
 [tool.ruff.lint]
+external = ["FURB"]
 select = [
     "E",     # pycodestyle errors
     "W",     # pycodestyle warnings
@@ -186,6 +187,7 @@ select = [
 ]
 
 ignore = [
+    "UP047",  # Incompatibile con la versione corrente di mypy
     "E501",   # line-too-long: gestito dal formatter
     "RET504", # unnecessary-assign: a volte migliora leggibilita'
     "DTZ005", # datetime.now() senza tz: troppo rumoroso su codice legacy
