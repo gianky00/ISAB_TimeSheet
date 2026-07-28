@@ -38,7 +38,8 @@ class TestLicenseValidator:
                 "src.application.services.secrets_manager.SecretsManager.get_license_key",
                 return_value=self.test_key,
             ):
-                yield
+                with patch("src.application.services.license_validator.AuditManager.instance"):
+                    yield
 
     def _create_valid_license(self, hwid="HWID_TEST", expiry="01/01/2050"):
         payload = {"Cliente": "TestClient", "Scadenza Licenza": expiry, "Hardware ID": hwid}

@@ -8,14 +8,16 @@ from src.infrastructure.utils.resource_manager import ResourceManager
 class TestResourceManager:
     @pytest.fixture(autouse=True)
     def setup_fs(self, fs):
-        # pyfakefs needs the base directory to exist for some operations
-        # and ResourceManager.PROJECT_ROOT points to BASE_DIR which is the real CWD
-        fs.create_dir(str(ResourceManager.PROJECT_ROOT))
-        fs.create_dir(str(ResourceManager.ASSETS_DIR))
-        fs.create_dir(str(ResourceManager.ICONS_DIR))
-        fs.create_dir(str(ResourceManager.STYLES_DIR))
-        fs.create_dir(str(ResourceManager.TEMP_DIR))
-        fs.create_dir(str(ResourceManager._get_config_dir()))
+        for path in [
+            ResourceManager.PROJECT_ROOT,
+            ResourceManager.ASSETS_DIR,
+            ResourceManager.ICONS_DIR,
+            ResourceManager.STYLES_DIR,
+            ResourceManager.TEMP_DIR,
+            ResourceManager._get_config_dir()
+        ]:
+            if not fs.exists(str(path)):
+                fs.create_dir(str(path))
 
     def test_project_root_detection_non_frozen(self):
         assert ResourceManager.PROJECT_ROOT is not None

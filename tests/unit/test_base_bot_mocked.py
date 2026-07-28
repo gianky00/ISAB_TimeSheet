@@ -7,6 +7,8 @@ from src.infrastructure.bots.base.base_bot import BaseBot
 
 
 class ConcreteBot(BaseBot):
+    ISAB_URL = "https://example.com"
+
     @property
     def name(self):
         return "TestBot"
