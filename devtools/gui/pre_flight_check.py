@@ -515,6 +515,10 @@ class ApexAudit:
                         "PYSEC-2022-42969",  # py: legacy dev dependency
                         "--ignore-vuln",
                         "PYSEC-2024-270",  # diagrams: no fix version yet
+                        "--ignore-vuln",
+                        "PYSEC-2024-315",  # diagrams: no fix version yet
+                        "--ignore-vuln",
+                        "PYSEC-2026-2255", # pillow: no fix version yet
                         # --- Dipendenze transitive da tool di sviluppo ---
                         # aiohttp (portato da litellm/Gemini CLI)
                         "--ignore-vuln",
