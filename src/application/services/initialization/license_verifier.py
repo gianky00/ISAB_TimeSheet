@@ -32,22 +32,33 @@ class LicenseVerifier:
         step_callback("Verifica Identità Hardware (HWID)...", 25)
         get_hardware_id()
 
-        step_callback("Handshake con Server Licenze in Background...", 28)
-
-        def _async_handshake() -> None:
-            try:
-                run_update()
-            except Exception as handshake_err:
-                if "REVOCATA" in str(handshake_err):
-                    logger.critical("Licenza REVOCATA rilevata dal background thread!")
-                    LicenseVerifier._trigger_revocation_shutdown()
-                else:
-                    logger.warning(f"Errore handshake licenza (non bloccante): {handshake_err}")
-
-        threading.Thread(target=_async_handshake, daemon=True).start()
-
         step_callback("Validazione Certificati di Licenza (Cache Locale)...", 31)
         status, msg = get_detailed_license_status()
+        if status != LicenseStatus.VALID:
+            step_callback("Aggiornamento licenza dal Server...", 35)
+            try:
+                run_update()
+            except Exception as update_err:
+                if "REVOCATA" in str(update_err):
+                    raise LicenseError(str(update_err)) from update_err
+                logger.warning(f"Errore aggiornamento licenza: {update_err}")
+            status, msg = get_detailed_license_status()
+
+        if status == LicenseStatus.VALID:
+            step_callback("Handshake con Server Licenze in Background...", 38)
+
+            def _async_handshake() -> None:
+                try:
+                    run_update()
+                except Exception as handshake_err:
+                    if "REVOCATA" in str(handshake_err):
+                        logger.critical("Licenza REVOCATA rilevata dal background thread!")
+                        LicenseVerifier._trigger_revocation_shutdown()
+                    else:
+                        logger.warning(f"Errore handshake licenza (non bloccante): {handshake_err}")
+
+            threading.Thread(target=_async_handshake, daemon=True).start()
+
         if status != LicenseStatus.VALID:
             raise LicenseError(f"Licenza non valida: {msg}")
 
