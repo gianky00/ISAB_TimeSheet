@@ -129,3 +129,10 @@ CI_CONTEXT.md
 coverage.json
 tests/.test_passed_state.json
 Report Certificati Campione Secondari ISAB SUD al 08-06-2026.pdf
+
+# Snapshot runtime (repo privato): DB, config, licenza, chiavi
+!runtime/
+!runtime/**
+!runtime/**/*.db
+!runtime/**/config.json
+!runtime/**/*.key

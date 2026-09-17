@@ -1,0 +1,12 @@
+{
+    "oda": {
+        "timestamp": "Mai",
+        "added": 0,
+        "removed": 0,
+        "duration": 0,
+        "last_ts": 0,
+        "last_attempt_success": false,
+        "last_attempt_ts": 1785221877.579088,
+        "last_error": ""
+    }
+}

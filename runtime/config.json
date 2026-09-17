@@ -1,0 +1,116 @@
+{
+    "accounts": [
+        {
+            "default": true,
+            "type": "Esecutore",
+            "username": "9psaraceno"
+        }
+    ],
+    "safework_accounts": [],
+    "contracts": [],
+    "default_contract": "",
+    "automation_engine": "selenium",
+    "browser_headless": false,
+    "browser_timeout": 300,
+    "download_path": "",
+    "fornitori": [
+        "COEMI"
+    ],
+    "last_ts_data": [],
+    "last_ts_date": "01.01.2026",
+    "last_ts_fornitore": "",
+    "last_carico_ts_data": [],
+    "last_oda_data": [
+        {
+            "numero_oda": "5400250150",
+            "numero_contratto": "",
+            "esito": ""
+        }
+    ],
+    "contabilita_file_path": "",
+    "enable_auto_update_contabilita": true,
+    "certificati_campione_path": "",
+    "master_preventivi_path": "",
+    "base_network_path_preventivi": "\\\\192.168.11.251\\Database_Tecnico_SMI\\Contabilità strumentale",
+    "preventivi_tcl": [
+        "MESSINA I.",
+        "AGUSTA D.",
+        "CALDARELLA F.",
+        "PREZZAVENTO M.",
+        "BOSCO F.",
+        "RUGGIERI F.",
+        "BARBAGALLO G."
+    ],
+    "preventivi_stati": [
+        "ATTIVITÀ DA COMPLETARE",
+        "IN ATTESA TCL",
+        "RICHIESTA ODC MIDOLO",
+        "CONTABILIZZATA"
+    ],
+    "reparti": [
+        "STRUMENTALE",
+        "ELETTRICO",
+        "CANTIERE",
+        "ANALISI"
+    ],
+    "cantieri": [],
+    "employee_mappings": {},
+    "quick_actions": [
+        "nav_scarico_ts",
+        "cmd_sync",
+        "cmd_open_folder"
+    ],
+    "roi_weights": {
+        "Scarico TS": 5.0,
+        "Carico TS": 8.0,
+        "Dettagli ODA": 3.0,
+        "Prenota BP": 10.0,
+        "Scarico PDL": 12.0,
+        "Ricerca PDL": 2.0,
+        "Sincronizzazione": 1.0,
+        "Export Excel": 5.0
+    },
+    "certificati_autopilot_enabled": false,
+    "certificati_autopilot_time": "08:30",
+    "certificati_autopilot_interval_days": 1,
+    "certificati_autopilot_last_sent": null,
+    "statistics": {
+        "scarico_ts": {
+            "runs": 1,
+            "errors": 0,
+            "last_run": "2026-07-28 08:54:53"
+        },
+        "dettagli_oda": {
+            "runs": 1,
+            "errors": 0,
+            "last_run": "2026-07-28 08:56:44"
+        }
+    },
+    "weather_show_details": false,
+    "last_login_date": "28/07/2026 08:56",
+    "reparti_timbrature": [],
+    "cantieri_timbrature": [],
+    "giornaliere_path": "",
+    "attivita_programmate_path": "",
+    "activity_db_path": "",
+    "certificati_root_path": "",
+    "dataease_db_path": "",
+    "telegram_token": "",
+    "telegram_chat_id": "",
+    "last_scarico_ts_data": [
+        {
+            "numero_oda": "5400250150",
+            "posizione_oda": "",
+            "esito": ""
+        }
+    ],
+    "last_scarico_ts_societa": "ISAB",
+    "last_scarico_ts_fornitore": "",
+    "path_scarico_ts": "",
+    "last_scarico_ts_elabora": true,
+    "last_oda_societa": "ISAB",
+    "last_oda_fornitore": "COEMI",
+    "last_oda_date_da": "01.01.2026",
+    "last_oda_date_a": "28.07.2026",
+    "path_dettagli_oda": ""
+}
