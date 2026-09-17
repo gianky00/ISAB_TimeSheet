@@ -1,0 +1,4 @@
+git clone <url-del-repo>
+cd ISAB_TimeSheet
+uv sync
+.\runtime\restore_to_appdata.ps1
