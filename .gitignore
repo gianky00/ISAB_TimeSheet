@@ -90,9 +90,9 @@ database.db
 
 # Project specific
 reports/
+# Clone locale del repo GitHub intelleo-licenses (non committare).
+# Il generatore (admin_license_gui.py), clients.json e i .bat restano tracciati.
 devtools/gui/Crea Licenze/_intelleo-licenses/
-devtools/gui/Crea Licenze/PC_COEMI_GIGLIUTO/
-devtools/gui/Crea Licenze/PC_MILLO_COEMI/
 *.pkl
 test_cache.pkl
 architecture.png
